@@ -12,7 +12,7 @@ class TradingDialog extends Dialog {
         // Merge with default dialog options
         const dialogOptions = foundry.utils.mergeObject({
             title: "Trading Places",
-            template: "modules/trading-places/templates/trading-dialog.hbs",
+            template: "modules/trading-places/templates/trading-simple.hbs",
             classes: ["wfrp-trading", "dialog"],
             width: 800,
             height: 600,

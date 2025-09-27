@@ -4,8 +4,8 @@
   "description": "Complete implementation of the WFRP 4E river trading algorithm from Death on the Reik Companion with full rule compliance and system-agnostic design.",
   "version": "1.0.0",
   "compatibility": {
-    "minimum": "10",
-    "verified": "11",
+    "minimum": "13",
+    "verified": "13",
     "maximum": "13"
   },
   "authors": [
@@ -15,6 +15,14 @@
     }
   ],
   "esmodules": [
+    "scripts/debug-logger.js",
+    "scripts/debug-ui.js",
+    "scripts/error-handler.js",
+    "scripts/config-validator.js",
+    "scripts/data-manager.js",
+    "scripts/system-adapter.js",
+    "scripts/trading-engine.js",
+    "scripts/trading-dialog.js",
     "scripts/main.js"
   ],
   "styles": [
@@ -44,7 +52,6 @@
     "systems": [
       {
         "id": "wfrp4e",
-        "type": "recommended",
         "manifest": "https://raw.githubusercontent.com/moo-man/WFRP4e-FoundryVTT/master/system.json",
         "compatibility": {}
       }

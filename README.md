@@ -1,6 +1,5 @@
-# WFRP River Trading Module
+# Trading Places Module
 
-A complete implementation of the WFRP 4E river trading algorithm from Death on the Reik Companion with full rule compliance and system-agnostic design.
 
 ## Features
 

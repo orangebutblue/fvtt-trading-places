@@ -11,6 +11,34 @@ class TradingEngine {
     constructor(dataManager) {
         this.dataManager = dataManager;
         this.currentSeason = null;
+        this.logger = null; // Will be set by integration
+    }
+
+    /**
+     * Set the debug logger instance
+     * @param {Object} logger - Debug logger instance
+     */
+    setLogger(logger) {
+        this.logger = logger;
+    }
+
+    /**
+     * Get logger or create a no-op logger if none set
+     * @returns {Object} - Logger instance
+     */
+    getLogger() {
+        if (this.logger) {
+            return this.logger;
+        }
+        
+        // Return no-op logger if none set
+        return {
+            logDiceRoll: () => {},
+            logCalculation: () => {},
+            logDecision: () => {},
+            logAlgorithmStep: () => {},
+            logSystem: () => {}
+        };
     }
 
     /**
@@ -22,6 +50,13 @@ class TradingEngine {
         if (!validSeasons.includes(season)) {
             throw new Error(`Invalid season: ${season}. Must be one of: ${validSeasons.join(', ')}`);
         }
+        
+        const logger = this.getLogger();
+        logger.logSystem('Season Change', `Trading season changed from ${this.currentSeason || 'none'} to ${season}`, {
+            previousSeason: this.currentSeason,
+            newSeason: season
+        });
+        
         this.currentSeason = season;
     }
 
@@ -56,11 +91,28 @@ class TradingEngine {
             throw new Error('Settlement object is required');
         }
 
+        const logger = this.getLogger();
         const properties = this.dataManager.getSettlementProperties(settlement);
         const chance = (properties.sizeNumeric + properties.wealthRating) * 10;
+        const cappedChance = Math.min(chance, 100);
         
-        // Cap at 100% maximum
-        return Math.min(chance, 100);
+        // Log the calculation step
+        logger.logCalculation(
+            'Availability Chance',
+            '(Size + Wealth) × 10',
+            {
+                settlementName: settlement.name,
+                settlementSize: settlement.size,
+                sizeNumeric: properties.sizeNumeric,
+                wealthRating: properties.wealthRating,
+                rawChance: chance,
+                cappedAt100: cappedChance !== chance
+            },
+            cappedChance,
+            `${settlement.name} has ${cappedChance}% cargo availability chance`
+        );
+        
+        return cappedChance;
     }
 
     /**
@@ -70,6 +122,17 @@ class TradingEngine {
      * @returns {Object} - Availability check result
      */
     async checkCargoAvailability(settlement, rollFunction = null) {
+        const logger = this.getLogger();
+        
+        // Log algorithm step start
+        logger.logAlgorithmStep(
+            'WFRP Buying Algorithm',
+            'Step 1',
+            'Cargo Availability Check',
+            { settlementName: settlement.name, settlementRegion: settlement.region },
+            'Death on the Reik Companion - Buying Algorithm Step 1'
+        );
+        
         const chance = this.calculateAvailabilityChance(settlement);
         
         let roll, rollResult;
@@ -85,14 +148,36 @@ class TradingEngine {
         }
         
         const available = roll <= chance;
+        
+        // Log the dice roll
+        logger.logDiceRoll(
+            'Cargo Availability Check',
+            'd100',
+            [],
+            roll,
+            chance,
+            available,
+            available ? `${roll} ≤ ${chance}` : `${roll} > ${chance}`
+        );
 
-        return {
+        const result = {
             available: available,
             chance: chance,
             roll: roll,
             rollResult: rollResult,
             settlement: settlement.name
         };
+        
+        // Log the decision outcome
+        logger.logDecision(
+            'Cargo Availability',
+            available ? 'Cargo Available' : 'No Cargo Available',
+            { roll, chance, settlement: settlement.name },
+            ['Cargo Available', 'No Cargo Available'],
+            `Roll of ${roll} ${available ? 'succeeded against' : 'failed against'} target of ${chance}`
+        );
+
+        return result;
     }
 
     /**
@@ -2084,4 +2169,9 @@ class TradingEngine {
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = TradingEngine;
+}
+
+// Global registration for FoundryVTT
+if (typeof window !== 'undefined') {
+    window.TradingEngine = TradingEngine;
 }

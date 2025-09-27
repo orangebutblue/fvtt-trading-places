@@ -12,6 +12,32 @@ class DataManager {
         this.cargoTypes = [];
         this.config = {};
         this.currentSeason = null;
+        this.logger = null; // Will be set by integration
+    }
+
+    /**
+     * Set the debug logger instance
+     * @param {Object} logger - Debug logger instance
+     */
+    setLogger(logger) {
+        this.logger = logger;
+    }
+
+    /**
+     * Get logger or create a no-op logger if none set
+     * @returns {Object} - Logger instance
+     */
+    getLogger() {
+        if (this.logger) {
+            return this.logger;
+        }
+        
+        // Return no-op logger if none set
+        return {
+            logSystem: () => {},
+            logCalculation: () => {},
+            logDecision: () => {}
+        };
     }
 
     /**
@@ -27,12 +53,12 @@ class DataManager {
 
         // Check for required fields (9 core fields as per requirements)
         const requiredFields = [
-            'region', 'name', 'size', 'ruler', 
+            'region', 'name', 'size', 'ruler',
             'population', 'wealth', 'source', 'garrison', 'notes'
         ];
 
         // Check for missing fields
-        const missingFields = requiredFields.filter(field => 
+        const missingFields = requiredFields.filter(field =>
             !settlement.hasOwnProperty(field) || settlement[field] === null || settlement[field] === undefined
         );
 
@@ -172,13 +198,13 @@ class DataManager {
         }
 
         let report = 'Dataset Validation Failed:\n';
-        report += '=' .repeat(50) + '\n\n';
-        
+        report += '='.repeat(50) + '\n\n';
+
         errors.forEach((error, index) => {
             report += `${index + 1}. ${error}\n`;
         });
 
-        report += '\n' + '=' .repeat(50) + '\n';
+        report += '\n' + '='.repeat(50) + '\n';
         report += 'Please fix these issues before loading the dataset.';
 
         return report;
@@ -191,7 +217,7 @@ class DataManager {
      */
     validateDatasetCompleteness(dataset) {
         const result = this.validateDatasetStructure(dataset);
-        
+
         if (!result.valid) {
             result.diagnosticReport = this.generateDiagnosticReport(result.errors);
         }
@@ -214,7 +240,7 @@ class DataManager {
         const requiredFields = ['name', 'category', 'basePrices', 'encumbrancePerUnit'];
 
         // Check for missing fields
-        const missingFields = requiredFields.filter(field => 
+        const missingFields = requiredFields.filter(field =>
             !cargo.hasOwnProperty(field) || cargo[field] === null || cargo[field] === undefined
         );
 
@@ -246,7 +272,7 @@ class DataManager {
                 result.errors.push('BasePrices must be an object');
             } else {
                 const requiredSeasons = ['spring', 'summer', 'autumn', 'winter'];
-                const missingSeasons = requiredSeasons.filter(season => 
+                const missingSeasons = requiredSeasons.filter(season =>
                     !cargo.basePrices.hasOwnProperty(season) || typeof cargo.basePrices[season] !== 'number'
                 );
 
@@ -590,18 +616,42 @@ class DataManager {
         try {
             // In FoundryVTT environment, use fetch to load JSON files
             if (typeof fetch !== 'undefined') {
-                const [settlementsResponse, cargoResponse, configResponse] = await Promise.all([
-                    fetch('modules/trading-places/datasets/active/settlements.json'),
+                // Load config and cargo types
+                const [cargoResponse, configResponse] = await Promise.all([
                     fetch('modules/trading-places/datasets/active/cargo-types.json'),
                     fetch('modules/trading-places/datasets/active/config.json')
                 ]);
 
-                const settlementsData = await settlementsResponse.json();
                 const cargoData = await cargoResponse.json();
                 const configData = await configResponse.json();
 
-                // Store loaded data
-                this.settlements = settlementsData.settlements || [];
+                // Load individual settlement files
+                const settlementFiles = [
+                    'Averland.json', 'Hochland.json', 'Middenland.json', 'Moot.json',
+                    'Nordland.json', 'Ostermark.json', 'Ostland.json', 'Reikland.json',
+                    'Stirland.json', 'Sudenland.json', 'Sylvania.json', 'Talabecland.json',
+                    'Wasteland.json', 'Wissenland.json'
+                ];
+
+                const settlementPromises = settlementFiles.map(file =>
+                    fetch(`modules/trading-places/datasets/active/settlements/${file}`)
+                        .then(response => response.json())
+                        .catch(error => {
+                            console.warn(`Failed to load settlement file ${file}:`, error);
+                            return { settlements: [] };
+                        })
+                );
+
+                const settlementDataArray = await Promise.all(settlementPromises);
+
+                // Combine all settlements into a single array
+                this.settlements = [];
+                settlementDataArray.forEach(data => {
+                    if (Array.isArray(data)) {
+                        this.settlements.push(...data);
+                    }
+                });
+
                 this.cargoTypes = cargoData.cargoTypes || [];
                 this.config = configData;
 
@@ -635,18 +685,42 @@ class DataManager {
     async switchDataset(datasetName) {
         try {
             if (typeof fetch !== 'undefined') {
-                const [settlementsResponse, cargoResponse, configResponse] = await Promise.all([
-                    fetch(`modules/trading-places/datasets/${datasetName}/settlements.json`),
+                // Load config and cargo types
+                const [cargoResponse, configResponse] = await Promise.all([
                     fetch(`modules/trading-places/datasets/${datasetName}/cargo-types.json`),
                     fetch(`modules/trading-places/datasets/${datasetName}/config.json`)
                 ]);
 
-                const settlementsData = await settlementsResponse.json();
                 const cargoData = await cargoResponse.json();
                 const configData = await configResponse.json();
 
-                // Store loaded data
-                this.settlements = settlementsData.settlements || [];
+                // Load individual settlement files
+                const settlementFiles = [
+                    'Averland.json', 'Hochland.json', 'Middenland.json', 'Moot.json',
+                    'Nordland.json', 'Ostermark.json', 'Ostland.json', 'Reikland.json',
+                    'Stirland.json', 'Sudenland.json', 'Sylvania.json', 'Talabecland.json',
+                    'Wasteland.json', 'Wissenland.json'
+                ];
+
+                const settlementPromises = settlementFiles.map(file =>
+                    fetch(`modules/trading-places/datasets/${datasetName}/settlements/${file}`)
+                        .then(response => response.json())
+                        .catch(error => {
+                            console.warn(`Failed to load settlement file ${file}:`, error);
+                            return [];
+                        })
+                );
+
+                const settlementDataArray = await Promise.all(settlementPromises);
+
+                // Combine all settlements into a single array
+                this.settlements = [];
+                settlementDataArray.forEach(data => {
+                    if (Array.isArray(data)) {
+                        this.settlements.push(...data);
+                    }
+                });
+
                 this.cargoTypes = cargoData.cargoTypes || [];
                 this.config = configData;
 
@@ -663,7 +737,7 @@ class DataManager {
 
                 // Update active dataset setting if in FoundryVTT
                 if (typeof game !== 'undefined' && game.settings) {
-                    await game.settings.set("wfrp-trading", "activeDataset", datasetName);
+                    await game.settings.set("trading-places", "activeDataset", datasetName);
                 }
 
                 console.log(`Switched to dataset '${datasetName}': ${this.settlements.length} settlements and ${this.cargoTypes.length} cargo types`);
@@ -687,9 +761,19 @@ class DataManager {
             return null;
         }
 
-        return this.settlements.find(settlement => 
+        const logger = this.getLogger();
+        const settlement = this.settlements.find(settlement =>
             settlement.name.toLowerCase() === name.toLowerCase()
         ) || null;
+        
+        logger.logSystem('Data Access', `Settlement lookup: ${name}`, {
+            searchName: name,
+            found: !!settlement,
+            settlementName: settlement?.name,
+            settlementRegion: settlement?.region
+        });
+
+        return settlement;
     }
 
     /**
@@ -702,7 +786,7 @@ class DataManager {
             return [];
         }
 
-        return this.settlements.filter(settlement => 
+        return this.settlements.filter(settlement =>
             settlement.region.toLowerCase() === region.toLowerCase()
         );
     }
@@ -717,7 +801,7 @@ class DataManager {
             return [];
         }
 
-        return this.settlements.filter(settlement => 
+        return this.settlements.filter(settlement =>
             settlement.size === size.toUpperCase()
         );
     }
@@ -732,9 +816,9 @@ class DataManager {
             return [];
         }
 
-        return this.settlements.filter(settlement => 
+        return this.settlements.filter(settlement =>
             settlement.source && Array.isArray(settlement.source) &&
-            settlement.source.some(source => 
+            settlement.source.some(source =>
                 source.toLowerCase() === category.toLowerCase()
             )
         );
@@ -750,7 +834,7 @@ class DataManager {
             return [];
         }
 
-        return this.settlements.filter(settlement => 
+        return this.settlements.filter(settlement =>
             settlement.wealth === wealthRating
         );
     }
@@ -770,30 +854,30 @@ class DataManager {
 
         // Filter by region
         if (criteria.region) {
-            results = results.filter(settlement => 
+            results = results.filter(settlement =>
                 settlement.region.toLowerCase() === criteria.region.toLowerCase()
             );
         }
 
         // Filter by size
         if (criteria.size) {
-            results = results.filter(settlement => 
+            results = results.filter(settlement =>
                 settlement.size === criteria.size.toUpperCase()
             );
         }
 
         // Filter by wealth
         if (criteria.wealth) {
-            results = results.filter(settlement => 
+            results = results.filter(settlement =>
                 settlement.wealth === criteria.wealth
             );
         }
 
         // Filter by production category
         if (criteria.production) {
-            results = results.filter(settlement => 
+            results = results.filter(settlement =>
                 settlement.source && Array.isArray(settlement.source) &&
-                settlement.source.some(source => 
+                settlement.source.some(source =>
                     source.toLowerCase() === criteria.production.toLowerCase()
                 )
             );
@@ -801,7 +885,7 @@ class DataManager {
 
         // Filter by name (partial match)
         if (criteria.name) {
-            results = results.filter(settlement => 
+            results = results.filter(settlement =>
                 settlement.name.toLowerCase().includes(criteria.name.toLowerCase())
             );
         }
@@ -869,7 +953,7 @@ class DataManager {
             return null;
         }
 
-        return this.cargoTypes.find(cargo => 
+        return this.cargoTypes.find(cargo =>
             cargo.name.toLowerCase() === name.toLowerCase()
         ) || null;
     }
@@ -884,7 +968,7 @@ class DataManager {
             return [];
         }
 
-        return this.cargoTypes.filter(cargo => 
+        return this.cargoTypes.filter(cargo =>
             cargo.category.toLowerCase() === category.toLowerCase()
         );
     }
@@ -916,7 +1000,7 @@ class DataManager {
         }
 
         // Filter cargo types that have pricing for the season
-        const availableCargo = this.cargoTypes.filter(cargo => 
+        const availableCargo = this.cargoTypes.filter(cargo =>
             cargo.basePrices && cargo.basePrices.hasOwnProperty(season)
         );
 
@@ -1040,7 +1124,7 @@ class DataManager {
     async getCurrentSeason() {
         try {
             if (typeof game !== 'undefined' && game.settings) {
-                const season = await game.settings.get("wfrp-trading", "currentSeason");
+                const season = await game.settings.get("trading-places", "currentSeason");
                 this.currentSeason = season || null;
                 return this.currentSeason;
             } else {
@@ -1071,7 +1155,7 @@ class DataManager {
 
             // Persist to FoundryVTT settings
             if (typeof game !== 'undefined' && game.settings) {
-                await game.settings.set("wfrp-trading", "currentSeason", season);
+                await game.settings.set("trading-places", "currentSeason", season);
             }
 
             // Notify season change
@@ -1105,7 +1189,7 @@ class DataManager {
 
             // Emit custom event for other modules to listen to
             if (typeof Hooks !== 'undefined') {
-                Hooks.callAll("wfrp-trading.seasonChanged", {
+                Hooks.callAll("trading-places.seasonChanged", {
                     newSeason: newSeason,
                     oldSeason: oldSeason,
                     timestamp: new Date().toISOString()
@@ -1147,13 +1231,13 @@ class DataManager {
     async validateSeasonSet() {
         try {
             const currentSeason = await this.getCurrentSeason();
-            
+
             if (!currentSeason) {
                 // Prompt for season selection in FoundryVTT
                 if (typeof ui !== 'undefined' && ui.notifications) {
                     ui.notifications.warn('Please set the current season before trading.');
                 }
-                
+
                 console.warn('Season validation failed: no season set');
                 return false;
             }
@@ -1290,7 +1374,7 @@ class DataManager {
         try {
             // Load current season from settings
             const currentSeason = await this.getCurrentSeason();
-            
+
             if (!currentSeason) {
                 console.log('No season set - trading operations will require season selection');
             } else {
@@ -1311,9 +1395,9 @@ class DataManager {
     async resetSeason() {
         try {
             this.currentSeason = null;
-            
+
             if (typeof game !== 'undefined' && game.settings) {
-                await game.settings.set("wfrp-trading", "currentSeason", null);
+                await game.settings.set("trading-places", "currentSeason", null);
             }
 
             console.log('Season reset to unset state');
@@ -1326,12 +1410,16 @@ class DataManager {
     /**
      * Settlement lookup and search methods
      */
+    getAllSettlements() {
+        return this.settlements || [];
+    }
+
     getSettlement(name) {
         if (!this.settlements || this.settlements.length === 0) {
             return null;
         }
-        
-        return this.settlements.find(settlement => 
+
+        return this.settlements.find(settlement =>
             settlement.name && settlement.name.toLowerCase() === name.toLowerCase()
         ) || null;
     }
@@ -1340,8 +1428,8 @@ class DataManager {
         if (!this.settlements || this.settlements.length === 0) {
             return [];
         }
-        
-        return this.settlements.filter(settlement => 
+
+        return this.settlements.filter(settlement =>
             settlement.region && settlement.region.toLowerCase() === region.toLowerCase()
         );
     }
@@ -1350,8 +1438,8 @@ class DataManager {
         if (!this.settlements || this.settlements.length === 0) {
             return [];
         }
-        
-        return this.settlements.filter(settlement => 
+
+        return this.settlements.filter(settlement =>
             settlement.size && settlement.size === size
         );
     }
@@ -1360,8 +1448,8 @@ class DataManager {
         if (!this.settlements || this.settlements.length === 0) {
             return [];
         }
-        
-        return this.settlements.filter(settlement => 
+
+        return this.settlements.filter(settlement =>
             settlement.wealth && settlement.wealth === wealthRating
         );
     }
@@ -1370,9 +1458,9 @@ class DataManager {
         if (!this.settlements || this.settlements.length === 0) {
             return [];
         }
-        
-        return this.settlements.filter(settlement => 
-            settlement.source && Array.isArray(settlement.source) && 
+
+        return this.settlements.filter(settlement =>
+            settlement.source && Array.isArray(settlement.source) &&
             settlement.source.includes(category)
         );
     }
@@ -1384,9 +1472,9 @@ class DataManager {
         if (!this.settlements || this.settlements.length === 0) {
             return [];
         }
-        
+
         const categories = new Set();
-        
+
         this.settlements.forEach(settlement => {
             if (settlement.source && Array.isArray(settlement.source)) {
                 settlement.source.forEach(category => {
@@ -1394,7 +1482,7 @@ class DataManager {
                 });
             }
         });
-        
+
         return Array.from(categories).sort();
     }
 
@@ -1402,15 +1490,15 @@ class DataManager {
         if (!this.settlements || this.settlements.length === 0) {
             return [];
         }
-        
+
         const regions = new Set();
-        
+
         this.settlements.forEach(settlement => {
             if (settlement.region) {
                 regions.add(settlement.region);
             }
         });
-        
+
         return Array.from(regions).sort();
     }
 
@@ -1418,15 +1506,15 @@ class DataManager {
         if (!this.settlements || this.settlements.length === 0) {
             return [];
         }
-        
+
         const sizes = new Set();
-        
+
         this.settlements.forEach(settlement => {
             if (settlement.size) {
                 sizes.add(settlement.size);
             }
         });
-        
+
         return Array.from(sizes).sort();
     }
 
@@ -1437,49 +1525,49 @@ class DataManager {
         if (!this.settlements || this.settlements.length === 0) {
             return [];
         }
-        
+
         return this.settlements.filter(settlement => {
             // Name search (partial match)
             if (criteria.name) {
-                const nameMatch = settlement.name && 
+                const nameMatch = settlement.name &&
                     settlement.name.toLowerCase().includes(criteria.name.toLowerCase());
                 if (!nameMatch) return false;
             }
-            
+
             // Region exact match
             if (criteria.region) {
-                const regionMatch = settlement.region && 
+                const regionMatch = settlement.region &&
                     settlement.region.toLowerCase() === criteria.region.toLowerCase();
                 if (!regionMatch) return false;
             }
-            
+
             // Size exact match
             if (criteria.size) {
                 if (settlement.size !== criteria.size) return false;
             }
-            
+
             // Wealth exact match
             if (criteria.wealth !== undefined) {
                 if (settlement.wealth !== criteria.wealth) return false;
             }
-            
+
             // Production category match
             if (criteria.production) {
-                const productionMatch = settlement.source && 
-                    Array.isArray(settlement.source) && 
+                const productionMatch = settlement.source &&
+                    Array.isArray(settlement.source) &&
                     settlement.source.includes(criteria.production);
                 if (!productionMatch) return false;
             }
-            
+
             // Population range
             if (criteria.minPopulation !== undefined) {
                 if (!settlement.population || settlement.population < criteria.minPopulation) return false;
             }
-            
+
             if (criteria.maxPopulation !== undefined) {
                 if (!settlement.population || settlement.population > criteria.maxPopulation) return false;
             }
-            
+
             return true;
         });
     }
@@ -1491,8 +1579,8 @@ class DataManager {
         if (!this.cargoTypes || this.cargoTypes.length === 0) {
             return null;
         }
-        
-        return this.cargoTypes.find(cargo => 
+
+        return this.cargoTypes.find(cargo =>
             cargo.name && cargo.name.toLowerCase() === name.toLowerCase()
         ) || null;
     }
@@ -1501,8 +1589,8 @@ class DataManager {
         if (!this.cargoTypes || this.cargoTypes.length === 0) {
             return [];
         }
-        
-        return this.cargoTypes.filter(cargo => 
+
+        return this.cargoTypes.filter(cargo =>
             cargo.category && cargo.category.toLowerCase() === category.toLowerCase()
         );
     }
@@ -1511,15 +1599,15 @@ class DataManager {
         if (!this.cargoTypes || this.cargoTypes.length === 0) {
             return [];
         }
-        
+
         const categories = new Set();
-        
+
         this.cargoTypes.forEach(cargo => {
             if (cargo.category) {
                 categories.add(cargo.category);
             }
         });
-        
+
         return Array.from(categories).sort();
     }
 
@@ -1527,16 +1615,16 @@ class DataManager {
         if (!this.cargoTypes || this.cargoTypes.length === 0) {
             return null;
         }
-        
+
         // Filter cargo types that have pricing for the specified season
-        const availableCargo = this.cargoTypes.filter(cargo => 
+        const availableCargo = this.cargoTypes.filter(cargo =>
             cargo.basePrices && cargo.basePrices.hasOwnProperty(season)
         );
-        
+
         if (availableCargo.length === 0) {
             return null;
         }
-        
+
         // Return random cargo type
         const randomIndex = Math.floor(Math.random() * availableCargo.length);
         return availableCargo[randomIndex];
@@ -1592,24 +1680,24 @@ class DataManager {
                 categories: this.buildAvailableCategories().length
             }
         };
-        
+
         // Test settlement data
         if (!this.settlements || this.settlements.length === 0) {
             results.errors.push('No settlement data loaded');
             results.success = false;
         }
-        
+
         // Test cargo data
         if (!this.cargoTypes || this.cargoTypes.length === 0) {
             results.errors.push('No cargo type data loaded');
             results.success = false;
         }
-        
+
         // Test configuration
         if (!this.config || Object.keys(this.config).length === 0) {
             results.warnings.push('No configuration data loaded');
         }
-        
+
         // Validate a few sample settlements
         if (this.settlements && this.settlements.length > 0) {
             const sampleSize = Math.min(3, this.settlements.length);
@@ -1621,7 +1709,7 @@ class DataManager {
                 }
             }
         }
-        
+
         // Validate a few sample cargo types
         if (this.cargoTypes && this.cargoTypes.length > 0) {
             const sampleSize = Math.min(3, this.cargoTypes.length);
@@ -1633,18 +1721,13 @@ class DataManager {
                 }
             }
         }
-        
+
         return results;
     }
 
     /**
      * Dataset loading methods (for FoundryVTT integration)
      */
-    async loadActiveDataset() {
-        // This would be implemented to load from FoundryVTT's file system
-        // For now, it's a placeholder that would be filled in during UI integration
-        throw new Error('loadActiveDataset() not yet implemented - requires FoundryVTT integration');
-    }
 
     async switchDataset(datasetName) {
         // This would be implemented to switch between different datasets
