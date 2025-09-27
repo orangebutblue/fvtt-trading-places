@@ -1,0 +1,21 @@
+{{!-- WFRP Trading Season Selection Dialog Template --}}
+<div class="season-selection-dialog-content">
+    <div class="season-message">
+        <i class="fas fa-calendar-alt" style="color: #2196f3; font-size: 20px; margin-bottom: 10px;"></i>
+        <p>Please select the current trading season:</p>
+    </div>
+    
+    <div class="season-selector">
+        <select id="season-choice">
+            {{#each seasons}}
+                <option value="{{value}}">{{label}}</option>
+            {{/each}}
+        </select>
+    </div>
+    
+    <div class="season-actions">
+        <button type="button" class="confirm-season-btn">
+            <i class="fas fa-check"></i> Confirm
+        </button>
+    </div>
+</div>

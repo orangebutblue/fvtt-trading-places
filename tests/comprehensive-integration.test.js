@@ -234,7 +234,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             // Requirements: 6.1, 6.10
             
             const dialogOptions = {
-                title: 'River Trading System',
+                title: 'Trading Places System',
                 width: 600,
                 height: 400,
                 resizable: true
@@ -254,7 +254,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             
             expect(dialog).toBeDefined();
             expect(dialog.data).toEqual(dialogData);
-            expect(dialog.options.title).toBe('River Trading System');
+            expect(dialog.options.title).toBe('Trading Places System');
             expect(dialog.options.width).toBe(600);
             
             // Test dialog rendering

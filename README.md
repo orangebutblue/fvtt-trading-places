@@ -22,7 +22,7 @@
 
 1. Enable the module in your world
 2. Set the current season in module settings
-3. Use the trading dialog to conduct river trading transactions
+3. Use the trading dialog to conduct Trading Places transactions
 4. All dice rolls and results are posted to chat with configurable visibility
 
 ## Configuration

@@ -1,0 +1,137 @@
+{{!-- WFRP Simple Trading V2 Template --}}
+<div class="simple-trading-content">
+    <div class="trading-grid">
+        
+        {{!-- Season Selection --}}
+        <div class="season-section">
+            <h3><i class="fas fa-calendar-alt"></i> Current Season</h3>
+            <div class="season-controls">
+                <label for="season-selector">Season:</label>
+                <select id="season-selector">
+                    <option value="spring" {{#if (eq currentSeason "spring")}}selected{{/if}}>Spring</option>
+                    <option value="summer" {{#if (eq currentSeason "summer")}}selected{{/if}}>Summer</option>
+                    <option value="autumn" {{#if (eq currentSeason "autumn")}}selected{{/if}}>Autumn</option>
+                    <option value="winter" {{#if (eq currentSeason "winter")}}selected{{/if}}>Winter</option>
+                </select>
+            </div>
+        </div>
+        
+        {{!-- Region Selection --}}
+        <div class="region-section">
+            <h3><i class="fas fa-map"></i> Region Selection</h3>
+            <div class="region-controls">
+                <label for="region-selector">Region:</label>
+                <select id="region-selector">
+                    <option value="">-- Select Region --</option>
+                    {{#each regions}}
+                        <option value="{{this}}" {{#if (eq ../selectedRegion this)}}selected{{/if}}>{{this}}</option>
+                    {{/each}}
+                </select>
+                <p class="region-info">Available regions: {{regions.length}}</p>
+            </div>
+        </div>
+        
+        {{!-- Settlement Selection --}}
+        <div class="settlement-section">
+            <h3><i class="fas fa-city"></i> Settlement Selection</h3>
+            <div class="settlement-controls">
+                <label for="settlement-selector">Settlement:</label>
+                <select id="settlement-selector" {{#unless selectedRegion}}disabled{{/unless}}>
+                    <option value="">-- Select Settlement --</option>
+                    {{#each regionSettlements}}
+                        <option value="{{name}}" {{#if (eq ../selectedSettlement.name name)}}selected{{/if}}>{{name}}</option>
+                    {{/each}}
+                </select>
+                {{#if selectedRegion}}
+                    <p class="settlement-info">Settlements in {{selectedRegion}}: {{regionSettlements.length}}</p>
+                {{else}}
+                    <p class="settlement-info">Select a region first</p>
+                {{/if}}
+            </div>
+        </div>
+        
+        {{!-- Settlement Details --}}
+        {{#if selectedSettlement}}
+            <div class="settlement-details">
+                <h3><i class="fas fa-info-circle"></i> Settlement Details</h3>
+                <div class="settlement-info-grid">
+                    <div class="info-item">
+                        <span class="label">Name:</span>
+                        <span class="value">{{selectedSettlement.name}}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Region:</span>
+                        <span class="value">{{selectedSettlement.region}}</span>
+                    </div>
+                    {{#if selectedSettlement.size}}
+                        <div class="info-item">
+                            <span class="label">Size:</span>
+                            <span class="value">{{selectedSettlement.size}}</span>
+                        </div>
+                    {{/if}}
+                    {{#if selectedSettlement.wealth}}
+                        <div class="info-item">
+                            <span class="label">Wealth:</span>
+                            <span class="value">{{selectedSettlement.wealth}}</span>
+                        </div>
+                    {{/if}}
+                    {{#if selectedSettlement.population}}
+                        <div class="info-item">
+                            <span class="label">Population:</span>
+                            <span class="value">{{formatNumber selectedSettlement.population}}</span>
+                        </div>
+                    {{/if}}
+                    {{#if selectedSettlement.source}}
+                        <div class="info-item">
+                            <span class="label">Production:</span>
+                            <span class="value">
+                                {{#each selectedSettlement.source}}
+                                    {{this}}{{#unless @last}}, {{/unless}}
+                                {{/each}}
+                            </span>
+                        </div>
+                    {{/if}}
+                </div>
+            </div>
+        {{/if}}
+        
+        {{!-- Actions --}}
+        <div class="actions-section">
+            <h3><i class="fas fa-cogs"></i> Actions</h3>
+            <div class="action-controls">
+                <button id="check-availability" type="button" {{#unless selectedSettlement}}disabled{{/unless}}>
+                    <i class="fas fa-search"></i> Check Cargo Availability
+                </button>
+                {{#unless selectedSettlement}}
+                    <p class="action-note">Select a settlement to check cargo availability</p>
+                {{/unless}}
+            </div>
+        </div>
+        
+        {{!-- Statistics --}}
+        <div class="stats-section">
+            <h3><i class="fas fa-chart-bar"></i> Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Total Settlements:</span>
+                    <span class="stat-value">{{settlements.length}}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Regions:</span>
+                    <span class="stat-value">{{regions.length}}</span>
+                </div>
+                {{#if selectedRegion}}
+                    <div class="stat-item">
+                        <span class="stat-label">Settlements in {{selectedRegion}}:</span>
+                        <span class="stat-value">{{regionSettlements.length}}</span>
+                    </div>
+                {{/if}}
+                <div class="stat-item">
+                    <span class="stat-label">Current Season:</span>
+                    <span class="stat-value">{{capitalize currentSeason}}</span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>

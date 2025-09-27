@@ -1,5 +1,5 @@
 /**
- * WFRP River Trading Module - Debug UI Components
+ * Trading Places Module - Debug UI Components
  * UI components for displaying debug logs in the trading interface
  */
 

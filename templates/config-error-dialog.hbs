@@ -1,0 +1,47 @@
+{{!-- WFRP Trading Configuration Error Dialog Template --}}
+<div class="config-error-dialog-content">
+    <div class="error-header">
+        <i class="fas fa-exclamation-circle" style="color: #f44336; font-size: 24px;"></i>
+        <h3>Configuration Validation Failed</h3>
+    </div>
+    
+    {{#if validationResult}}
+        <div class="error-details">
+            <p><strong>{{validationResult.errors.length}} error(s) found:</strong></p>
+            <ul class="error-list">
+                {{#each validationResult.errors}}
+                    <li>{{this}}</li>
+                {{/each}}
+            </ul>
+            
+            {{#if validationResult.warnings.length}}
+                <p><strong>{{validationResult.warnings.length}} warning(s):</strong></p>
+                <ul class="warning-list">
+                    {{#each validationResult.warnings}}
+                        <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            {{/if}}
+        </div>
+    {{/if}}
+    
+    {{#if recoveryProcedures}}
+        <div class="recovery-section">
+            <h4>Recommended Actions:</h4>
+            <ol class="recovery-list">
+                {{#each recoveryProcedures.general}}
+                    <li>{{this}}</li>
+                {{/each}}
+            </ol>
+        </div>
+    {{/if}}
+    
+    <div class="error-note">
+        <p><em>Check the browser console for a detailed diagnostic report.</em></p>
+    </div>
+    
+    <div class="error-actions">
+        <button type="button" class="view-console-btn">View Console Report</button>
+        <button type="button" class="close-btn">Close</button>
+    </div>
+</div>

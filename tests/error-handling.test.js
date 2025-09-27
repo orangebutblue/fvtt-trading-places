@@ -1,5 +1,5 @@
 /**
- * WFRP River Trading Module - Error Handling Tests
+ * Trading Places Module - Error Handling Tests
  * Tests for configuration validation and runtime error handling
  */
 

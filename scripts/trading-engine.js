@@ -1,5 +1,5 @@
 /**
- * WFRP River Trading Module - Trading Engine
+ * Trading Places Module - Trading Engine
  * Pure business logic implementation of WFRP trading algorithms
  */
 

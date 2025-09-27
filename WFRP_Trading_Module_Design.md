@@ -1,8 +1,8 @@
-# WFRP River Trading - FoundryVTT Module Design Document
+# Trading Places - FoundryVTT Module Design Document
 
 ## Project Overview
 
-A system-agnostic FoundryVTT module implementing the complete WFRP 4E river trading algorithm with full rule compliance. The module will provide realistic trading simulation with proper market dynamics, uncertainty, and economic restrictions.
+A system-agnostic FoundryVTT module implementing the complete WFRP 4E Trading Places algorithm with full rule compliance. The module will provide realistic trading simulation with proper market dynamics, uncertainty, and economic restrictions.
 
 ---
 

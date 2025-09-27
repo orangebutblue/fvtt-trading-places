@@ -1,0 +1,31 @@
+{{!-- Trading Places - Header Template --}}
+<div class="trading-header">
+    <div class="header-title">
+        <h2><i class="fas fa-coins"></i> Trading Places</h2>
+        {{#if debugLoggingEnabled}}
+            <span class="debug-indicator" title="Debug logging is enabled">
+                <i class="fas fa-bug"></i>
+            </span>
+        {{/if}}
+    </div>
+    
+    <div class="header-controls">
+        <div class="season-selector">
+            <label for="current-season">Current Season:</label>
+            <select id="current-season" name="currentSeason">
+                <option value="spring" {{#if (eq currentSeason "spring")}}selected{{/if}}>Spring</option>
+                <option value="summer" {{#if (eq currentSeason "summer")}}selected{{/if}}>Summer</option>
+                <option value="autumn" {{#if (eq currentSeason "autumn")}}selected{{/if}}>Autumn</option>
+                <option value="winter" {{#if (eq currentSeason "winter")}}selected{{/if}}>Winter</option>
+            </select>
+        </div>
+        
+        {{#if selectedSettlement}}
+            <div class="current-settlement">
+                <span class="settlement-label">Settlement:</span>
+                <span class="settlement-name">{{selectedSettlement.name}}</span>
+                <span class="settlement-region">({{selectedSettlement.region}})</span>
+            </div>
+        {{/if}}
+    </div>
+</div>

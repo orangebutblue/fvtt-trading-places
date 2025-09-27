@@ -2,7 +2,7 @@
 
 ## Overview
 
-This design document outlines the complete redesign of the WFRP River Trading FoundryVTT module interface. The new implementation will use FoundryVTT's V2 Application framework, provide native UI integration, and implement the official WFRP trading algorithms from `official-algorithm.md`.
+This design document outlines the complete redesign of the Trading Places FoundryVTT module interface. The new implementation will use FoundryVTT's V2 Application framework, provide native UI integration, and implement the official WFRP trading algorithms from `official-algorithm.md`.
 
 ## Architecture
 
@@ -18,7 +18,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         id: "wfrp-trading",
         tag: "div",
         window: {
-            title: "WFRP River Trading",
+            title: "Trading Places",
             icon: "fas fa-coins",
             resizable: true,
             minimizable: true

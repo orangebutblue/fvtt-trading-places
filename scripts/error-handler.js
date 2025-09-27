@@ -1,5 +1,5 @@
 /**
- * WFRP River Trading Module - Runtime Error Handler
+ * Trading Places Module - Runtime Error Handler
  * Comprehensive error handling and user feedback system
  */
 
@@ -89,7 +89,7 @@ class RuntimeErrorHandler {
         };
 
         this.logError(errorInfo);
-        this.notifyUser('critical', `Global error in WFRP River Trading: ${error.message}`, true);
+        this.notifyUser('critical', `Global error in Trading Places: ${error.message}`, true);
     }
 
     /**

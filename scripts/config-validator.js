@@ -1,5 +1,5 @@
 /**
- * WFRP River Trading Module - Configuration Validator
+ * Trading Places Module - Configuration Validator
  * Comprehensive validation system for startup configuration and system compatibility
  */
 
@@ -748,19 +748,39 @@ class ConfigValidator {
             const requiredClasses = [
                 { name: 'DataManager', class: window.DataManager },
                 { name: 'SystemAdapter', class: window.SystemAdapter },
-                { name: 'TradingEngine', class: window.TradingEngine },
-                { name: 'TradingDialog', class: window.TradingDialog }
+                { name: 'TradingEngine', class: window.TradingEngine }
+            ];
+
+            // Optional UI classes (not critical for core functionality)
+            const optionalClasses = [
+                { name: 'WFRPTradingApplication', class: window.WFRPTradingApplication },
+                { name: 'WFRPFallbackDialog', class: window.WFRPFallbackDialog },
+                { name: 'WFRPSimpleTradingApplication', class: window.WFRPSimpleTradingApplication }
             ];
 
             for (const dep of requiredClasses) {
                 result.dependencies[dep.name] = {
                     available: !!dep.class,
-                    type: typeof dep.class
+                    type: typeof dep.class,
+                    required: true
                 };
 
                 if (!dep.class) {
                     result.valid = false;
                     result.errors.push(`Required class not available: ${dep.name}`);
+                }
+            }
+
+            // Check optional classes (warnings only)
+            for (const dep of optionalClasses) {
+                result.dependencies[dep.name] = {
+                    available: !!dep.class,
+                    type: typeof dep.class,
+                    required: false
+                };
+
+                if (!dep.class) {
+                    result.warnings.push(`Optional UI class not available: ${dep.name}`);
                 }
             }
 
@@ -789,7 +809,7 @@ class ConfigValidator {
      * @returns {string} - Formatted diagnostic report
      */
     generateDiagnosticReport(validationResult) {
-        let report = 'WFRP River Trading - Configuration Validation Report\n';
+        let report = 'Trading Places - Configuration Validation Report\n';
         report += '=' .repeat(60) + '\n\n';
         
         report += `Validation Date: ${validationResult.timestamp}\n`;

@@ -1,5 +1,5 @@
 /**
- * WFRP River Trading Module - Data Manager
+ * Trading Places Module - Data Manager
  * Centralized data access and management with validation
  */
 

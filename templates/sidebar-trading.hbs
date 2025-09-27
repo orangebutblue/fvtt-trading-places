@@ -1,0 +1,39 @@
+<div class="wfrp-trading-sidebar-content">
+    <div class="sidebar-header">
+        <h3><i class="fas fa-coins"></i> WFRP Trading</h3>
+    </div>
+    
+    <div class="sidebar-content">
+        <div class="current-season">
+            <label>Current Season:</label>
+            <span class="season-display">{{capitalize currentSeason}}</span>
+        </div>
+        
+        <div class="trading-actions">
+            <button class="open-trading" type="button">
+                <i class="fas fa-store"></i>
+                Open Trading Interface
+            </button>
+            
+            <button class="quick-trade" type="button">
+                <i class="fas fa-handshake"></i>
+                Quick Trade
+            </button>
+        </div>
+        
+        {{#if isGM}}
+        <div class="gm-controls">
+            <h4>GM Controls</h4>
+            <div class="season-controls">
+                <label>Change Season:</label>
+                <select class="season-selector">
+                    <option value="spring" {{#if (eq currentSeason "spring")}}selected{{/if}}>Spring</option>
+                    <option value="summer" {{#if (eq currentSeason "summer")}}selected{{/if}}>Summer</option>
+                    <option value="autumn" {{#if (eq currentSeason "autumn")}}selected{{/if}}>Autumn</option>
+                    <option value="winter" {{#if (eq currentSeason "winter")}}selected{{/if}}>Winter</option>
+                </select>
+            </div>
+        </div>
+        {{/if}}
+    </div>
+</div>

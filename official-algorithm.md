@@ -12,8 +12,8 @@ Dieser Prozess bestimmt, ob in der Siedlung Fracht verfügbar ist, welcher Art u
 
 Bestimmen Sie für die aktuelle Siedlung die folgenden Werte aus dem Gazetteer:
 
-1.  **Größen-Rating (Size)** (1–4).
-2.  **Wohlstands-Rating (Wealth)** (1–4).
+1.  **Größen-Rating (Size)** 
+2.  **Wohlstands-Rating (Wealth)**
 3.  **Produziert (Produces)** (Liste der Güter oder "Trade").
 
 ### Schritt 1: Verfügbarkeit prüfen
@@ -48,7 +48,7 @@ Bestimmen Sie für die aktuelle Siedlung die folgenden Werte aus dem Gazetteer:
 
 Der Verkaufsprozess folgt der Suche nach der lokalen Nachfrage und dem Feilschen um den Preis.
 
-### Schritt 1: Verkaufsberechtigung prüfen
+### Schritt 1: Verkaufsberechtigung prüfen (nicht relevant für Modul)
 
 1.  **Ort:** Die Charaktere können die Ware **niemals an dem Ort verkaufen, an dem sie sie gekauft haben**.
 2.  **Zeit:** Alternativ müssen sie mindestens eine Woche warten, bevor sie am selben Ort einen Käufer suchen.

@@ -1,0 +1,396 @@
+{{!-- Player Cargo Management Template --}}
+<div class="player-cargo-management">
+    <div class="cargo-header">
+        <h3>Player Cargo Inventory</h3>
+        <div class="cargo-summary">
+            <span class="total-items">Items: {{totalItems}}</span>
+            <span class="total-quantity">Total: {{totalQuantity}} EP</span>
+        </div>
+    </div>
+
+    <div class="cargo-actions">
+        <button type="button" class="add-cargo-btn" data-action="add-cargo">
+            <i class="fas fa-plus"></i> Add Cargo
+        </button>
+        <button type="button" class="clear-cargo-btn" data-action="clear-cargo">
+            <i class="fas fa-trash"></i> Clear All
+        </button>
+    </div>
+
+    <div class="cargo-list">
+        {{#if cargo.length}}
+            <div class="cargo-items">
+                {{#each cargo}}
+                <div class="cargo-item" data-cargo-id="{{id}}">
+                    <div class="cargo-info">
+                        <div class="cargo-type">
+                            <strong>{{type}}</strong>
+                            <span class="cargo-quality quality-{{quality}}">{{quality}}</span>
+                        </div>
+                        <div class="cargo-quantity">{{quantity}} EP</div>
+                        {{#if purchaseLocation}}
+                        <div class="cargo-details">
+                            <small>From: {{purchaseLocation}}</small>
+                            {{#if purchasePrice}}
+                            <small>Cost: {{purchasePrice}} GC</small>
+                            {{/if}}
+                        </div>
+                        {{/if}}
+                        {{#if notes}}
+                        <div class="cargo-notes">
+                            <small><em>{{notes}}</em></small>
+                        </div>
+                        {{/if}}
+                    </div>
+                    <div class="cargo-actions">
+                        <button type="button" class="modify-cargo-btn" data-action="modify-cargo" data-cargo-id="{{id}}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="remove-cargo-btn" data-action="remove-cargo" data-cargo-id="{{id}}">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button type="button" class="sell-cargo-btn" data-action="sell-cargo" data-cargo-id="{{id}}">
+                            <i class="fas fa-coins"></i> Sell
+                        </button>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        {{else}}
+            <div class="empty-cargo">
+                <p>No cargo in inventory</p>
+                <p><small>Use the "Add Cargo" button to manually add items or purchase cargo from settlements.</small></p>
+            </div>
+        {{/if}}
+    </div>
+</div>
+
+{{!-- Add Cargo Modal --}}
+<div class="add-cargo-modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4>Add Cargo to Inventory</h4>
+            <button type="button" class="close-modal" data-action="close-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form class="add-cargo-form">
+                <div class="form-group">
+                    <label for="cargo-type">Cargo Type:</label>
+                    <select id="cargo-type" name="cargoType" required>
+                        <option value="">Select cargo type...</option>
+                        {{#each availableCargoTypes}}
+                        <option value="{{name}}">{{name}} ({{category}})</option>
+                        {{/each}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cargo-quantity">Quantity (EP):</label>
+                    <input type="number" id="cargo-quantity" name="quantity" min="1" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="cargo-quality">Quality:</label>
+                    <select id="cargo-quality" name="quality" required>
+                        {{#each qualityOptions}}
+                        <option value="{{value}}" {{#if (eq value 'average')}}selected{{/if}}>
+                            {{label}} ({{modifier}}x price)
+                        </option>
+                        {{/each}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="purchase-location">Purchase Location (optional):</label>
+                    <input type="text" id="purchase-location" name="purchaseLocation" placeholder="Settlement name">
+                </div>
+                <div class="form-group">
+                    <label for="purchase-price">Purchase Price (optional):</label>
+                    <input type="number" id="purchase-price" name="purchasePrice" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="cargo-notes">Notes (optional):</label>
+                    <textarea id="cargo-notes" name="notes" rows="2" placeholder="Additional notes about this cargo"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="cancel-btn" data-action="close-modal">Cancel</button>
+            <button type="button" class="add-btn" data-action="confirm-add-cargo">Add Cargo</button>
+        </div>
+    </div>
+</div>
+
+{{!-- Modify Cargo Modal --}}
+<div class="modify-cargo-modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4>Modify Cargo</h4>
+            <button type="button" class="close-modal" data-action="close-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form class="modify-cargo-form">
+                <input type="hidden" name="cargoId" value="">
+                <div class="form-group">
+                    <label>Cargo Type:</label>
+                    <span class="readonly-field" id="modify-cargo-type"></span>
+                </div>
+                <div class="form-group">
+                    <label for="modify-cargo-quantity">Quantity (EP):</label>
+                    <input type="number" id="modify-cargo-quantity" name="quantity" min="1" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="modify-cargo-quality">Quality:</label>
+                    <select id="modify-cargo-quality" name="quality" required>
+                        {{#each qualityOptions}}
+                        <option value="{{value}}">{{label}} ({{modifier}}x price)</option>
+                        {{/each}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="modify-cargo-notes">Notes:</label>
+                    <textarea id="modify-cargo-notes" name="notes" rows="2" placeholder="Additional notes about this cargo"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="cancel-btn" data-action="close-modal">Cancel</button>
+            <button type="button" class="save-btn" data-action="confirm-modify-cargo">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+{{!-- Remove Cargo Modal --}}
+<div class="remove-cargo-modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4>Remove Cargo</h4>
+            <button type="button" class="close-modal" data-action="close-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form class="remove-cargo-form">
+                <input type="hidden" name="cargoId" value="">
+                <div class="cargo-info">
+                    <p>Removing cargo: <strong id="remove-cargo-type"></strong> (<span id="remove-cargo-quality"></span>)</p>
+                    <p>Current quantity: <span id="remove-cargo-current"></span> EP</p>
+                </div>
+                <div class="form-group">
+                    <label for="remove-quantity">Quantity to remove (EP):</label>
+                    <input type="number" id="remove-quantity" name="removeQuantity" min="1" step="1" required>
+                    <small>Leave empty to remove all</small>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="cancel-btn" data-action="close-modal">Cancel</button>
+            <button type="button" class="remove-btn" data-action="confirm-remove-cargo">Remove Cargo</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.player-cargo-management {
+    padding: 1rem;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: 4px;
+}
+
+.cargo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border-secondary);
+}
+
+.cargo-summary {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+}
+
+.cargo-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.cargo-actions button {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-border-primary);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.cargo-actions button:hover {
+    background: var(--color-bg-hover);
+}
+
+.cargo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: 4px;
+}
+
+.cargo-info {
+    flex: 1;
+}
+
+.cargo-type {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.cargo-quality {
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.quality-poor { background: #dc3545; color: white; }
+.quality-average { background: #6c757d; color: white; }
+.quality-good { background: #28a745; color: white; }
+.quality-excellent { background: #007bff; color: white; }
+
+.cargo-quantity {
+    font-weight: bold;
+    color: var(--color-text-primary);
+}
+
+.cargo-details {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.25rem;
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+}
+
+.cargo-notes {
+    margin-top: 0.25rem;
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+}
+
+.cargo-item .cargo-actions {
+    display: flex;
+    gap: 0.25rem;
+    margin: 0;
+}
+
+.cargo-item .cargo-actions button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    min-width: auto;
+}
+
+.empty-cargo {
+    text-align: center;
+    padding: 2rem;
+    color: var(--color-text-secondary);
+}
+
+/* Modal Styles */
+.add-cargo-modal,
+.modify-cargo-modal,
+.remove-cargo-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-border-secondary);
+}
+
+.modal-body {
+    padding: 1rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-top: 1px solid var(--color-border-secondary);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 4px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+}
+
+.readonly-field {
+    padding: 0.5rem;
+    background: var(--color-bg-disabled);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: 4px;
+    display: block;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+}
+
+.close-modal:hover {
+    color: var(--color-text-primary);
+}
+</style>

@@ -1,5 +1,5 @@
 /**
- * WFRP River Trading Module - Comprehensive Debug Logging System
+ * Trading Places Module - Comprehensive Debug Logging System
  * Provides structured logging for all trading operations with consistent format
  */
 

@@ -1,4 +1,4 @@
-/* WFRP River Trading Module Styles */
+/* Trading Places Module Styles */
 
 .wfrp-trading-dialog {
     font-family: var(--font-primary);
@@ -153,6 +153,153 @@
     background: var(--color-bg-option);
     font-size: 14px;
     transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Settlement Selector Component Styles */
+.settlement-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.selector-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    align-items: end;
+}
+
+.region-selector,
+.settlement-selector-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.region-selector label,
+.settlement-selector-dropdown label {
+    font-weight: bold;
+    color: var(--color-text-dark-secondary);
+    font-size: 14px;
+}
+
+.region-dropdown,
+.settlement-dropdown {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border-light);
+    border-radius: 5px;
+    background: var(--color-bg-option);
+    font-size: 14px;
+    color: var(--color-text-dark-primary);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.region-dropdown:focus,
+.settlement-dropdown:focus {
+    outline: none;
+    border-color: var(--color-border-highlight, #ff6400);
+    box-shadow: 0 0 0 2px rgba(255, 100, 0, 0.2);
+}
+
+.settlement-dropdown:disabled {
+    background: var(--color-bg-alt);
+    color: var(--color-text-dark-secondary);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.settlement-details {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-light);
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.settlement-info h3 {
+    margin: 0 0 15px 0;
+    color: var(--color-text-dark-primary);
+    font-size: 20px;
+    border-bottom: 2px solid var(--color-border-light);
+    padding-bottom: 8px;
+}
+
+.settlement-properties {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.property-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.property-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--color-bg-alt);
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px;
+}
+
+.property-label {
+    font-weight: bold;
+    color: var(--color-text-dark-secondary);
+    font-size: 13px;
+}
+
+.property-value {
+    color: var(--color-text-dark-primary);
+    font-weight: 500;
+    text-align: right;
+}
+
+.settlement-notes {
+    border-top: 1px solid var(--color-border-light);
+    padding-top: 15px;
+}
+
+.settlement-notes .property-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.notes-content {
+    background: var(--color-bg-alt);
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px;
+    padding: 10px;
+    color: var(--color-text-dark-primary);
+    font-style: italic;
+    min-height: 40px;
+}
+
+/* Responsive adjustments for settlement selector */
+@media (max-width: 800px) {
+    .selector-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .property-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .property-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .property-value {
+        text-align: left;
+    }
 }
 
 .settlement-selector:focus,
@@ -1008,4 +1155,1573 @@ Message Styles */
 .value.failure {
     color: #f44336;
     font-weight: bold;
+}
+/* ==
+=== V2 APPLICATION FRAMEWORK STYLES ===== */
+
+/* Main Application Container */
+.wfrp-trading.application-v2 {
+    font-family: var(--font-primary);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-dark);
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    min-width: 1200px;
+    min-height: 800px;
+}
+
+.wfrp-trading.application-v2 .window-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0;
+}
+
+/* Header Styles */
+.trading-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 2px solid var(--color-border-light);
+    background: var(--color-bg-alt);
+    flex-shrink: 0;
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-title h2 {
+    margin: 0;
+    color: var(--color-text-dark-primary);
+    font-size: 24px;
+}
+
+.header-title i {
+    color: #ff6400;
+    font-size: 24px;
+}
+
+.debug-indicator {
+    background: #ff9800;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.current-settlement {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-bg);
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid var(--color-border-light);
+}
+
+.settlement-label {
+    font-weight: bold;
+    color: var(--color-text-dark-secondary);
+}
+
+.settlement-name {
+    color: var(--color-text-dark-primary);
+    font-weight: bold;
+}
+
+.settlement-region {
+    color: var(--color-text-dark-secondary);
+    font-style: italic;
+}
+
+/* Content Styles */
+.trading-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 20px;
+    height: 100%;
+}
+
+.settlement-section {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.cargo-section {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.player-cargo-section {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.transaction-section {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.settlement-section,
+.cargo-section,
+.player-cargo-section,
+.transaction-section {
+    border: 1px solid var(--color-border-light);
+    border-radius: 5px;
+    padding: 15px;
+    background: var(--color-bg-alt);
+    display: flex;
+    flex-direction: column;
+}
+
+.settlement-section h3,
+.cargo-section h3,
+.player-cargo-section h3,
+.transaction-section h3 {
+    margin: 0 0 15px 0;
+    color: var(--color-text-dark-primary);
+    border-bottom: 2px solid var(--color-border-light);
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+}
+
+.settlement-section h3 i,
+.cargo-section h3 i,
+.player-cargo-section h3 i,
+.transaction-section h3 i {
+    color: #ff6400;
+}
+
+/* Player Cargo Management Styles */
+.player-cargo-list {
+    flex: 1;
+    margin-bottom: 15px;
+}
+
+.player-cargo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px;
+    margin-bottom: 8px;
+}
+
+.cargo-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.cargo-name {
+    font-weight: bold;
+    color: var(--color-text-dark-primary);
+}
+
+.cargo-quantity {
+    color: var(--color-text-dark-secondary);
+}
+
+.cargo-quality {
+    font-size: 12px;
+    background: var(--color-bg-option);
+    color: var(--color-text-light-primary);
+    padding: 2px 6px;
+    border-radius: 10px;
+    text-transform: capitalize;
+}
+
+.sell-cargo-button {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sell-cargo-button:hover {
+    background: #45a049;
+}
+
+.add-cargo-section {
+    border-top: 1px solid var(--color-border-light);
+    padding-top: 15px;
+}
+
+.add-cargo-section h4 {
+    margin: 0 0 10px 0;
+    color: var(--color-text-dark-primary);
+    font-size: 14px;
+}
+
+.add-cargo-form {
+    display: grid;
+    grid-template-columns: 1fr 80px 100px auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.add-cargo-form input,
+.add-cargo-form select {
+    padding: 6px;
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px;
+    background: var(--color-bg-option);
+    font-size: 12px;
+}
+
+.add-cargo-button {
+    background: #2196f3;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.add-cargo-button:hover {
+    background: #1976d2;
+}
+
+.no-player-cargo {
+    color: var(--color-text-dark-secondary);
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Transaction Controls Enhanced */
+.control-group {
+    margin-bottom: 20px;
+}
+
+.control-group label {
+    display: block;
+    font-weight: bold;
+    color: var(--color-text-dark-secondary);
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.haggle-button,
+.sale-button,
+.desperate-sale-button,
+.rumor-sale-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.haggle-button {
+    background: #ff9800;
+    color: white;
+}
+
+.haggle-button:hover:not(:disabled) {
+    background: #f57c00;
+}
+
+.sale-button {
+    background: #4caf50;
+    color: white;
+}
+
+.sale-button:hover:not(:disabled) {
+    background: #45a049;
+}
+
+.desperate-sale-button {
+    background: #f44336;
+    color: white;
+}
+
+.desperate-sale-button:hover:not(:disabled) {
+    background: #d32f2f;
+}
+
+.rumor-sale-button {
+    background: #9c27b0;
+    color: white;
+}
+
+.rumor-sale-button:hover:not(:disabled) {
+    background: #7b1fa2;
+}
+
+/* Footer Styles */
+.trading-footer {
+    border-top: 2px solid var(--color-border-light);
+    background: var(--color-bg-alt);
+    flex-shrink: 0;
+}
+
+.footer-content {
+    padding: 15px 20px;
+}
+
+.transaction-history {
+    margin-bottom: 15px;
+}
+
+.transaction-history h4 {
+    margin: 0 0 10px 0;
+    color: var(--color-text-dark-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.transaction-history h4 i {
+    color: #ff6400;
+}
+
+.history-list {
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px;
+    margin-bottom: 5px;
+}
+
+.transaction-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.transaction-type {
+    font-weight: bold;
+    color: var(--color-text-dark-primary);
+    text-transform: capitalize;
+}
+
+.transaction-cargo {
+    color: var(--color-text-dark-secondary);
+}
+
+.transaction-price {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+.transaction-settlement {
+    color: var(--color-text-dark-secondary);
+    font-style: italic;
+}
+
+.transaction-timestamp {
+    font-size: 12px;
+    color: var(--color-text-dark-secondary);
+}
+
+/* Debug Log Section */
+.debug-log-section {
+    margin-bottom: 15px;
+}
+
+.debug-log-section h4 {
+    margin: 0 0 10px 0;
+    color: var(--color-text-dark-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.debug-log-section h4 i {
+    color: #ff9800;
+}
+
+.clear-debug-log {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.clear-debug-log:hover {
+    background: #d32f2f;
+}
+
+.debug-log-display {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px;
+    padding: 10px;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.debug-log-content {
+    font-size: 12px;
+    color: var(--color-text-dark-secondary);
+}
+
+.debug-info {
+    margin: 0 0 5px 0;
+    font-style: italic;
+}
+
+.debug-note {
+    margin: 0;
+    color: var(--color-text-dark-secondary);
+}
+
+/* Application Status */
+.application-status {
+    border-top: 1px solid var(--color-border-light);
+    padding-top: 15px;
+}
+
+.status-indicators {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-item i {
+    font-size: 14px;
+}
+
+.status-ok {
+    background: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-warning {
+    background: rgba(255, 152, 0, 0.1);
+    color: #ff9800;
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.status-info {
+    background: rgba(33, 150, 243, 0.1);
+    color: #2196f3;
+    border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+/* Responsive Design for V2 Application */
+@media (max-width: 1400px) {
+    .wfrp-trading.application-v2 {
+        min-width: 1000px;
+    }
+    
+    .content-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+    }
+    
+    .settlement-section {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    
+    .cargo-section {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    
+    .player-cargo-section {
+        grid-column: 1;
+        grid-row: 3;
+    }
+    
+    .transaction-section {
+        grid-column: 1;
+        grid-row: 4;
+    }
+}
+
+@media (max-width: 1200px) {
+    .wfrp-trading.application-v2 {
+        min-width: 800px;
+        min-height: 600px;
+    }
+    
+    .header-controls {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-end;
+    }
+    
+    .add-cargo-form {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+    
+    .status-indicators {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .wfrp-trading.application-v2 {
+        min-width: 600px;
+    }
+    
+    .trading-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .header-controls {
+        align-items: flex-start;
+        width: 100%;
+    }
+    
+    .current-settlement {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+/* ===== V2 FALLBACK DIALOGS STYLES ===== */
+
+/* Fallback Dialog */
+.wfrp-fallback.application-v2 .fallback-dialog-content {
+    padding: 20px;
+    text-align: center;
+}
+
+.wfrp-fallback.application-v2 .fallback-message {
+    margin-bottom: 20px;
+}
+
+.wfrp-fallback.application-v2 .fallback-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.wfrp-fallback.application-v2 .close-btn {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.wfrp-fallback.application-v2 .close-btn:hover {
+    background: #d32f2f;
+}
+
+/* Config Error Dialog */
+.wfrp-config-error.application-v2 .config-error-dialog-content {
+    padding: 20px;
+}
+
+.wfrp-config-error.application-v2 .error-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.wfrp-config-error.application-v2 .error-list,
+.wfrp-config-error.application-v2 .warning-list,
+.wfrp-config-error.application-v2 .recovery-list {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.wfrp-config-error.application-v2 .error-list li {
+    color: #f44336;
+    margin: 5px 0;
+}
+
+.wfrp-config-error.application-v2 .warning-list li {
+    color: #ff9800;
+    margin: 5px 0;
+}
+
+.wfrp-config-error.application-v2 .error-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.wfrp-config-error.application-v2 .view-console-btn {
+    background: #2196f3;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.wfrp-config-error.application-v2 .view-console-btn:hover {
+    background: #1976d2;
+}
+
+/* Season Selection Dialog */
+.wfrp-season-selection.application-v2 .season-selection-dialog-content {
+    padding: 20px;
+    text-align: center;
+}
+
+.wfrp-season-selection.application-v2 .season-selector {
+    margin: 15px 0;
+}
+
+.wfrp-season-selection.application-v2 #season-choice {
+    padding: 8px;
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px;
+    background: var(--color-bg-option);
+    font-size: 14px;
+    width: 150px;
+}
+
+.wfrp-season-selection.application-v2 .confirm-season-btn {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0 auto;
+}
+
+.wfrp-season-selection.application-v2 .confirm-season-btn:hover {
+    background: #45a049;
+}
+
+/* Simple Trading V2 Application */
+.wfrp-simple-trading.application-v2 .simple-trading-content {
+    padding: 20px;
+}
+
+.wfrp-simple-trading.application-v2 .trading-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.wfrp-simple-trading.application-v2 .season-section,
+.wfrp-simple-trading.application-v2 .region-section,
+.wfrp-simple-trading.application-v2 .settlement-section,
+.wfrp-simple-trading.application-v2 .settlement-details,
+.wfrp-simple-trading.application-v2 .actions-section,
+.wfrp-simple-trading.application-v2 .stats-section {
+    border: 1px solid var(--color-border-light);
+    border-radius: 5px;
+    padding: 15px;
+    background: var(--color-bg-alt);
+}
+
+.wfrp-simple-trading.application-v2 h3 {
+    margin: 0 0 15px 0;
+    color: var(--color-text-dark-primary);
+    border-bottom: 2px solid var(--color-border-light);
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wfrp-simple-trading.application-v2 h3 i {
+    color: #ff6400;
+}
+
+.wfrp-simple-trading.application-v2 .season-controls,
+.wfrp-simple-trading.application-v2 .region-controls,
+.wfrp-simple-trading.application-v2 .settlement-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.wfrp-simple-trading.application-v2 label {
+    font-weight: bold;
+    color: var(--color-text-dark-secondary);
+}
+
+.wfrp-simple-trading.application-v2 select {
+    padding: 8px;
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px;
+    background: var(--color-bg-option);
+    font-size: 14px;
+}
+
+.wfrp-simple-trading.application-v2 .info-item,
+.wfrp-simple-trading.application-v2 .stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.wfrp-simple-trading.application-v2 .info-item:last-child,
+.wfrp-simple-trading.application-v2 .stat-item:last-child {
+    border-bottom: none;
+}
+
+.wfrp-simple-trading.application-v2 .label,
+.wfrp-simple-trading.application-v2 .stat-label {
+    font-weight: bold;
+    color: var(--color-text-dark-secondary);
+}
+
+.wfrp-simple-trading.application-v2 .value,
+.wfrp-simple-trading.application-v2 .stat-value {
+    color: var(--color-text-dark-primary);
+}
+
+.wfrp-simple-trading.application-v2 #check-availability {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+}
+
+.wfrp-simple-trading.application-v2 #check-availability:hover:not(:disabled) {
+    background: #45a049;
+}
+
+.wfrp-simple-trading.application-v2 #check-availability:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.wfrp-simple-trading.application-v2 .region-info,
+.wfrp-simple-trading.application-v2 .settlement-info,
+.wfrp-simple-trading.application-v2 .action-note {
+    font-size: 12px;
+    color: var(--color-text-dark-secondary);
+    font-style: italic;
+    margin-top: 5px;
+}
+
+/* Test Dialog */
+.wfrp-test.application-v2 .test-dialog {
+    padding: 20px;
+    text-align: center;
+}
+
+.wfrp-test.application-v2 h2 {
+    color: var(--color-text-dark-primary);
+    margin-bottom: 15px;
+}
+
+.wfrp-test.application-v2 p {
+    color: var(--color-text-dark-secondary);
+    margin: 10px 0;
+}
+/* =====
+ WINDOW MANAGEMENT STYLES ===== */
+
+/* Ensure landscape orientation and proper window behavior */
+.wfrp-trading.application-v2 {
+    /* Enforce minimum landscape dimensions */
+    min-width: 800px;
+    min-height: 600px;
+    
+    /* Ensure proper aspect ratio (landscape) */
+    aspect-ratio: 4/3;
+    
+    /* Smooth resize transitions */
+    transition: width 0.1s ease, height 0.1s ease;
+}
+
+/* Window content responsive behavior */
+.wfrp-trading.application-v2 .window-content {
+    /* Ensure content adapts to window size */
+    overflow: hidden;
+    resize: both;
+}
+
+/* Content grid responsive adjustments */
+.wfrp-trading.application-v2 .content-grid {
+    /* Ensure grid adapts to available space */
+    min-height: 0;
+    height: 100%;
+}
+
+/* Scrollable sections for smaller windows */
+.wfrp-trading.application-v2 .settlement-section,
+.wfrp-trading.application-v2 .cargo-section,
+.wfrp-trading.application-v2 .player-cargo-section,
+.wfrp-trading.application-v2 .transaction-section {
+    /* Enable scrolling when content overflows */
+    overflow-y: auto;
+    min-height: 200px;
+}
+
+/* Window resize handle visibility */
+.wfrp-trading.application-v2 .window-resizable-handle {
+    opacity: 0.3;
+    transition: opacity 0.2s ease;
+}
+
+.wfrp-trading.application-v2:hover .window-resizable-handle {
+    opacity: 0.7;
+}
+
+/* Responsive breakpoints for window management */
+@media (max-width: 1200px) {
+    .wfrp-trading.application-v2 {
+        /* Adjust minimum size for smaller screens */
+        min-width: 700px;
+        min-height: 500px;
+    }
+}
+
+@media (max-width: 900px) {
+    .wfrp-trading.application-v2 {
+        /* Further adjust for mobile/tablet */
+        min-width: 600px;
+        min-height: 450px;
+    }
+    
+    /* Stack content vertically on smaller screens */
+    .wfrp-trading.application-v2 .content-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, auto);
+    }
+    
+    .wfrp-trading.application-v2 .settlement-section,
+    .wfrp-trading.application-v2 .cargo-section,
+    .wfrp-trading.application-v2 .player-cargo-section,
+    .wfrp-trading.application-v2 .transaction-section {
+        grid-column: 1;
+        min-height: 150px;
+    }
+}
+
+/* Window state persistence indicators */
+.wfrp-trading.application-v2.window-state-loading {
+    opacity: 0.8;
+}
+
+.wfrp-trading.application-v2.window-state-loading::after {
+    content: "Loading window state...";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    z-index: 1000;
+}
+
+/* Debug indicators for window management */
+.window-debug-info {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-family: monospace;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.wfrp-trading.application-v2:hover .window-debug-info {
+    opacity: 1;
+}
+
+/* Ensure proper window behavior on different screen sizes */
+@media (min-width: 1400px) {
+    .wfrp-trading.application-v2 {
+        /* Allow larger windows on bigger screens */
+        max-width: 90vw;
+        max-height: 90vh;
+    }
+}
+
+/* Window position constraints */
+.wfrp-trading.application-v2 {
+    /* Ensure window stays within viewport */
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 40px);
+}
+
+/* Smooth window operations */
+.wfrp-trading.application-v2.window-moving {
+    transition: transform 0.1s ease;
+}
+
+.wfrp-trading.application-v2.window-resizing {
+    transition: width 0.1s ease, height 0.1s ease;
+}
+/* =====
+ PRICE CALCULATOR STYLES ===== */
+
+.price-calculator-display {
+    background: var(--color-bg-option);
+    border: 1px solid var(--color-border-light);
+    border-radius: 5px;
+    padding: 15px;
+    margin: 10px 0;
+    font-family: var(--font-primary);
+}
+
+/* Header Section */
+.price-calculator-display .price-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.price-calculator-display .cargo-title {
+    margin: 0;
+    color: var(--color-text-dark-primary);
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.price-calculator-display .calculation-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Badge Styles */
+.season-badge, .quality-badge, .calculation-type {
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.season-badge {
+    background: var(--color-bg-btn);
+    color: var(--color-text-light-primary);
+}
+
+.season-spring { background-color: #4CAF50; }
+.season-summer { background-color: #FF9800; }
+.season-autumn { background-color: #795548; }
+.season-winter { background-color: #2196F3; }
+
+.quality-badge {
+    background: var(--color-bg-btn-secondary);
+    color: var(--color-text-dark-primary);
+}
+
+.quality-poor { background-color: #f44336; color: white; }
+.quality-average { background-color: #9E9E9E; color: white; }
+.quality-good { background-color: #4CAF50; color: white; }
+.quality-excellent { background-color: #FFD700; color: black; }
+
+.calculation-type {
+    background: var(--color-bg-btn-primary);
+    color: var(--color-text-light-primary);
+}
+
+/* Quantity and Settlement Info */
+.quantity-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: var(--color-bg);
+    border-radius: 3px;
+}
+
+.quantity-display, .settlement-info {
+    font-size: 0.9em;
+}
+
+.wealth-indicator {
+    color: var(--color-text-dark-secondary);
+    font-style: italic;
+}
+
+/* Base Price Section */
+.base-price-section {
+    margin-bottom: 20px;
+}
+
+.base-price-section h4 {
+    margin: 0 0 10px 0;
+    color: var(--color-text-dark-primary);
+    font-size: 1.1em;
+}
+
+.price-display {
+    padding: 10px;
+    border-radius: 3px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.base-price {
+    background: var(--color-bg-option);
+    border: 1px solid var(--color-border-light);
+}
+
+.price-value {
+    font-size: 1.2em;
+    color: var(--color-text-dark-primary);
+}
+
+/* Seasonal Comparison */
+.seasonal-comparison {
+    margin-top: 15px;
+    padding: 10px;
+    background: var(--color-bg);
+    border-radius: 3px;
+}
+
+.seasonal-comparison h5 {
+    margin: 0 0 10px 0;
+    color: var(--color-text-dark-secondary);
+    font-size: 0.9em;
+}
+
+.season-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.season-item {
+    padding: 8px;
+    background: var(--color-bg-option);
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px;
+    text-align: center;
+    position: relative;
+}
+
+.season-item.current-season {
+    border-color: var(--color-border-highlight);
+    background: var(--color-bg-btn-secondary);
+}
+
+.season-name {
+    display: block;
+    font-size: 0.8em;
+    color: var(--color-text-dark-secondary);
+    text-transform: capitalize;
+}
+
+.season-price {
+    display: block;
+    font-weight: bold;
+    color: var(--color-text-dark-primary);
+}
+
+.price-indicator {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    padding: 2px 4px;
+    font-size: 0.7em;
+    border-radius: 2px;
+    font-weight: bold;
+}
+
+.price-indicator.best-buy {
+    background: #4CAF50;
+    color: white;
+}
+
+.price-indicator.best-sell {
+    background: #FF9800;
+    color: white;
+}
+
+.price-range-info {
+    text-align: center;
+    color: var(--color-text-dark-secondary);
+}
+
+/* Price Modifiers Section */
+.modifiers-section {
+    margin-bottom: 20px;
+}
+
+.modifiers-section h4 {
+    margin: 0 0 10px 0;
+    color: var(--color-text-dark-primary);
+    font-size: 1.1em;
+}
+
+.modifiers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modifier-item {
+    padding: 10px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px;
+}
+
+.modifier-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modifier-description {
+    font-weight: bold;
+    color: var(--color-text-dark-primary);
+}
+
+.modifier-amount {
+    font-weight: bold;
+}
+
+.modifier-amount.positive {
+    color: #4CAF50;
+}
+
+.modifier-amount.negative {
+    color: #f44336;
+}
+
+.modifier-explanation {
+    margin-top: 5px;
+    color: var(--color-text-dark-secondary);
+    font-style: italic;
+}
+
+/* Haggling Section */
+.haggling-section {
+    margin-bottom: 20px;
+}
+
+.haggling-section h4, .haggling-section h5 {
+    margin: 0 0 10px 0;
+    color: var(--color-text-dark-primary);
+}
+
+.haggling-section h4 {
+    font-size: 1.1em;
+}
+
+.haggling-section h5 {
+    font-size: 1em;
+    margin-top: 15px;
+}
+
+.haggle-outcomes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.haggle-outcome {
+    padding: 10px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-light);
+    border-radius: 3px;
+    text-align: center;
+}
+
+.haggle-outcome.successfulHaggle,
+.haggle-outcome.successfulHaggleWithDealmaker {
+    border-color: #4CAF50;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.outcome-description {
+    font-size: 0.9em;
+    color: var(--color-text-dark-secondary);
+    margin-bottom: 5px;
+}
+
+.outcome-price {
+    font-weight: bold;
+    color: var(--color-text-dark-primary);
+}
+
+.price-change {
+    font-size: 0.9em;
+}
+
+.price-change.positive {
+    color: #4CAF50;
+}
+
+.price-change.negative {
+    color: #f44336;
+}
+
+.outcome-percentage {
+    font-size: 0.8em;
+    color: var(--color-text-dark-secondary);
+    margin-top: 3px;
+}
+
+.success-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.success-item {
+    padding: 8px;
+    background: var(--color-bg-option);
+    border-radius: 3px;
+}
+
+.success-item.dealmaker {
+    border-left: 3px solid #FFD700;
+}
+
+/* Final Price Section */
+.final-price-section {
+    margin-bottom: 15px;
+    padding: 15px;
+    background: var(--color-bg-btn-secondary);
+    border: 2px solid var(--color-border-highlight);
+    border-radius: 5px;
+}
+
+.final-price-section h4 {
+    margin: 0 0 15px 0;
+    color: var(--color-text-dark-primary);
+    font-size: 1.2em;
+    text-align: center;
+}
+
+.price-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.price-per-unit, .total-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: var(--color-bg);
+    border-radius: 3px;
+}
+
+.total-price {
+    font-size: 1.1em;
+    font-weight: bold;
+    border: 1px solid var(--color-border-highlight);
+}
+
+.total-amount {
+    color: var(--color-text-dark-primary);
+    font-size: 1.3em;
+}
+
+/* Special Sale Information */
+.special-sale-info {
+    margin-bottom: 15px;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.sale-type-badge {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 3px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.sale-desperate {
+    background: #f44336;
+    color: white;
+}
+
+.sale-rumor {
+    background: #FFD700;
+    color: black;
+}
+
+.special-sale-details {
+    color: var(--color-text-dark-secondary);
+    font-style: italic;
+}
+
+/* Debug Information */
+.debug-info {
+    margin-top: 20px;
+    padding: 10px;
+    background: var(--color-bg);
+    border: 1px dashed var(--color-border-light);
+    border-radius: 3px;
+}
+
+.debug-info h5 {
+    margin: 0 0 10px 0;
+    color: var(--color-text-dark-secondary);
+    font-size: 0.9em;
+}
+
+.debug-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+    font-size: 0.8em;
+    color: var(--color-text-dark-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .season-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .haggle-outcomes {
+        grid-template-columns: 1fr;
+    }
+    
+    .debug-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .quantity-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
+
+/* Animation for price updates */
+.price-calculator-display {
+    transition: all 0.3s ease;
+}
+
+.price-calculator-display.updating {
+    opacity: 0.7;
+}
+
+.total-amount {
+    transition: color 0.3s ease;
+}
+
+.total-amount.highlight {
+    color: var(--color-text-highlight);
+}
+/* 
+WFRP Trading Sidebar Styles */
+.wfrp-trading-sidebar-content {
+    padding: 10px;
+    font-family: var(--font-primary);
+}
+
+.wfrp-trading-sidebar-content .sidebar-header {
+    border-bottom: 1px solid var(--color-border-light);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+.wfrp-trading-sidebar-content .sidebar-header h3 {
+    margin: 0;
+    color: var(--color-text-dark-primary);
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.wfrp-trading-sidebar-content .current-season {
+    margin-bottom: 15px;
+    padding: 8px;
+    background: var(--color-bg-option);
+    border-radius: 3px;
+}
+
+.wfrp-trading-sidebar-content .current-season label {
+    font-weight: bold;
+    color: var(--color-text-dark-secondary);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+}
+
+.wfrp-trading-sidebar-content .season-display {
+    color: var(--color-text-dark-primary);
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+.wfrp-trading-sidebar-content .trading-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.wfrp-trading-sidebar-content .trading-actions button {
+    background: linear-gradient(135deg, var(--color-bg-btn), var(--color-bg-btn-hover));
+    border: 1px solid var(--color-border-dark);
+    border-radius: 3px;
+    color: var(--color-text-light-primary);
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wfrp-trading-sidebar-content .trading-actions button:hover {
+    background: linear-gradient(135deg, var(--color-bg-btn-hover), var(--color-bg-btn));
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.wfrp-trading-sidebar-content .trading-actions button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.wfrp-trading-sidebar-content .gm-controls {
+    border-top: 1px solid var(--color-border-light);
+    padding-top: 12px;
+}
+
+.wfrp-trading-sidebar-content .gm-controls h4 {
+    margin: 0 0 8px 0;
+    color: var(--color-text-dark-primary);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.wfrp-trading-sidebar-content .season-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wfrp-trading-sidebar-content .season-controls label {
+    font-size: 11px;
+    color: var(--color-text-dark-secondary);
+    font-weight: bold;
+}
+
+.wfrp-trading-sidebar-content .season-selector {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-dark);
+    border-radius: 3px;
+    color: var(--color-text-dark-primary);
+    padding: 4px 6px;
+    font-size: 11px;
+    width: 100%;
+}
+
+.wfrp-trading-sidebar-content .season-selector:focus {
+    outline: none;
+    border-color: var(--color-border-highlight);
+    box-shadow: 0 0 3px var(--color-shadow-highlight);
+}
+
+/* Sidebar tab button styling */
+#sidebar .directory-tabs .item[data-tab="wfrp-trading-sidebar"] {
+    color: var(--color-text-light-6);
+}
+
+#sidebar .directory-tabs .item[data-tab="wfrp-trading-sidebar"]:hover {
+    color: var(--color-text-light-primary);
+    text-shadow: 0 0 8px var(--color-shadow-primary);
+}
+
+#sidebar .directory-tabs .item[data-tab="wfrp-trading-sidebar"].active {
+    color: var(--color-text-light-primary);
+    text-shadow: 0 0 8px var(--color-shadow-primary);
 }

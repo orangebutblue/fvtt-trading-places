@@ -1,7 +1,7 @@
 {
   "id": "trading-places",
   "title": "Trading Places",
-  "description": "Complete implementation of the WFRP 4E river trading algorithm from Death on the Reik Companion with full rule compliance and system-agnostic design.",
+  "description": "Complete implementation of the WFRP 4E Trading Places algorithm from Death on the Reik Companion with full rule compliance and system-agnostic design.",
   "version": "1.0.0",
   "compatibility": {
     "minimum": "13",
@@ -22,7 +22,15 @@
     "scripts/data-manager.js",
     "scripts/system-adapter.js",
     "scripts/trading-engine.js",
-    "scripts/trading-dialog.js",
+    "scripts/buying-algorithm.js",
+    "scripts/selling-algorithm.js",
+    "scripts/price-calculator.js",
+    "scripts/settlement-selector.js",
+    "scripts/player-cargo-manager.js",
+    "scripts/fallback-dialogs-v2.js",
+    "scripts/simple-trading-v2.js",
+    "scripts/trading-application-v2.js",
+    "scripts/native-ui-integration.js",
     "scripts/main.js"
   ],
   "styles": [

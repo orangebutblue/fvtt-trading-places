@@ -1,8 +1,8 @@
-# WFRP 4E River Trading: Official vs. Script Algorithm Comparison
+# WFRP 4E Trading Places: Official vs. Script Algorithm Comparison
 
 ## Executive Summary
 
-The river trading scripts **partially implement** the official WFRP 4E trading rules but with significant simplifications and deviations. The scripts focus on user convenience over strict rule adherence.
+The Trading Places scripts **partially implement** the official WFRP 4E trading rules but with significant simplifications and deviations. The scripts focus on user convenience over strict rule adherence.
 
 ---
 

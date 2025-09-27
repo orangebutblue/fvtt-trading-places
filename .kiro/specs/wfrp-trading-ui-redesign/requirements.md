@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This specification defines a complete redesign of the WFRP River Trading FoundryVTT module interface. The current implementation has fundamental design flaws and needs to be rebuilt from scratch using modern FoundryVTT V2 Application framework with proper native integration and user experience.
+This specification defines a complete redesign of the Trading Places FoundryVTT module interface. The current implementation has fundamental design flaws and needs to be rebuilt from scratch using modern FoundryVTT V2 Application framework with proper native integration and user experience.
 
 ## Requirements
 

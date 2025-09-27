@@ -1,0 +1,213 @@
+{{!-- Price Calculator Display Template --}}
+<div class="price-calculator-display">
+    {{!-- Header Section --}}
+    <div class="price-header">
+        <h3 class="cargo-title">{{cargoType}} Price Calculation</h3>
+        <div class="calculation-meta">
+            <span class="season-badge season-{{season}}">{{capitalize season}}</span>
+            {{#if quality}}
+                <span class="quality-badge quality-{{quality}}">{{capitalize quality}} Quality</span>
+            {{/if}}
+            <span class="calculation-type">{{capitalize calculationType}}</span>
+        </div>
+    </div>
+
+    {{!-- Quantity and Basic Info --}}
+    <div class="quantity-info">
+        <div class="quantity-display">
+            <strong>Quantity:</strong> {{formattedPrices.quantityDescription}}
+        </div>
+        {{#if settlement}}
+            <div class="settlement-info">
+                <strong>Settlement:</strong> {{settlement}}
+                {{#if settlementInfo.wealthDescription}}
+                    <span class="wealth-indicator">({{settlementInfo.wealthDescription}})</span>
+                {{/if}}
+            </div>
+        {{/if}}
+    </div>
+
+    {{!-- Base Price Section --}}
+    <div class="base-price-section">
+        <h4>Base Seasonal Price</h4>
+        <div class="price-display base-price">
+            <span class="price-value">{{formattedPrices.basePrice}}</span>
+        </div>
+        
+        {{!-- Seasonal Comparison --}}
+        {{#if seasonalComparison}}
+            <div class="seasonal-comparison">
+                <h5>Seasonal Price Comparison</h5>
+                <div class="season-grid">
+                    {{#each seasonalComparison.prices}}
+                        <div class="season-item {{#if (eq @key ../season)}}current-season{{/if}}">
+                            <span class="season-name">{{capitalize @key}}</span>
+                            <span class="season-price">{{this}} GC</span>
+                            {{#if (eq @key ../seasonalComparison.bestBuyingSeason)}}
+                                <span class="price-indicator best-buy">Best Buy</span>
+                            {{/if}}
+                            {{#if (eq @key ../seasonalComparison.bestSellingSeason)}}
+                                <span class="price-indicator best-sell">Best Sell</span>
+                            {{/if}}
+                        </div>
+                    {{/each}}
+                </div>
+                <div class="price-range-info">
+                    <small>
+                        Price varies by {{seasonalComparison.priceRange.percentageVariation}}% 
+                        ({{seasonalComparison.priceRange.min}} - {{seasonalComparison.priceRange.max}} GC)
+                    </small>
+                </div>
+            </div>
+        {{/if}}
+    </div>
+
+    {{!-- Price Modifiers Section --}}
+    {{#if modifiers}}
+        <div class="modifiers-section">
+            <h4>Price Modifiers</h4>
+            <div class="modifiers-list">
+                {{#each modifiers}}
+                    <div class="modifier-item modifier-{{type}}">
+                        <div class="modifier-header">
+                            <span class="modifier-description">{{description}}</span>
+                            <span class="modifier-amount {{#if (gt amount 0)}}positive{{else}}negative{{/if}}">
+                                {{#if (gt amount 0)}}+{{/if}}{{amount}} GC
+                                {{#if percentage}}
+                                    ({{#if (gt percentage 0)}}+{{/if}}{{percentage}}%)
+                                {{/if}}
+                            </span>
+                        </div>
+                        {{#if explanation}}
+                            <div class="modifier-explanation">
+                                <small>{{explanation}}</small>
+                            </div>
+                        {{/if}}
+                    </div>
+                {{/each}}
+            </div>
+        </div>
+    {{/if}}
+
+    {{!-- Haggling Outcomes Section --}}
+    {{#if haggleOutcomes}}
+        <div class="haggling-section">
+            <h4>Haggling Potential</h4>
+            <div class="haggle-outcomes">
+                {{#each haggleOutcomes}}
+                    <div class="haggle-outcome {{@key}}">
+                        <div class="outcome-description">{{description}}</div>
+                        <div class="outcome-price">
+                            {{pricePerUnit}} GC per 10 EP
+                            {{#if change}}
+                                <span class="price-change {{#if (gt change 0)}}positive{{else}}negative{{/if}}">
+                                    ({{#if (gt change 0)}}+{{/if}}{{change}} GC)
+                                </span>
+                            {{/if}}
+                        </div>
+                        {{#if percentage}}
+                            <div class="outcome-percentage">
+                                {{#if (gt percentage 0)}}+{{/if}}{{percentage}}%
+                            </div>
+                        {{/if}}
+                    </div>
+                {{/each}}
+            </div>
+            <div class="haggle-success-ranges">
+                <h5>Success Ranges</h5>
+                <div class="success-info">
+                    <div class="success-item">
+                        <strong>Standard Haggle:</strong> 
+                        {{#if (eq calculationType "buying")}}
+                            Save {{haggleOutcomes.successfulHaggle.change}} GC ({{haggleOutcomes.successfulHaggle.percentage}}%)
+                        {{else}}
+                            Gain {{haggleOutcomes.successfulHaggle.change}} GC (+{{haggleOutcomes.successfulHaggle.percentage}}%)
+                        {{/if}}
+                    </div>
+                    <div class="success-item dealmaker">
+                        <strong>With Dealmaker Talent:</strong> 
+                        {{#if (eq calculationType "buying")}}
+                            Save {{haggleOutcomes.successfulHaggleWithDealmaker.change}} GC ({{haggleOutcomes.successfulHaggleWithDealmaker.percentage}}%)
+                        {{else}}
+                            Gain {{haggleOutcomes.successfulHaggleWithDealmaker.change}} GC (+{{haggleOutcomes.successfulHaggleWithDealmaker.percentage}}%)
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{/if}}
+
+    {{!-- Final Price Section --}}
+    <div class="final-price-section">
+        <h4>Final Calculated Price</h4>
+        <div class="price-breakdown">
+            <div class="price-per-unit">
+                <span class="label">Price per 10 EP:</span>
+                <span class="value">{{formattedPrices.finalPrice}}</span>
+            </div>
+            <div class="total-price">
+                <span class="label">Total {{capitalize calculationType}} Price:</span>
+                <span class="value total-amount">{{formattedPrices.totalPrice}}</span>
+            </div>
+        </div>
+    </div>
+
+    {{!-- Special Sale Information --}}
+    {{#if (eq calculationType "special_sale")}}
+        <div class="special-sale-info">
+            <div class="sale-type-badge sale-{{saleType}}">
+                {{#if (eq saleType "desperate")}}
+                    Desperate Sale - Emergency Pricing
+                {{else if (eq saleType "rumor")}}
+                    Rumor Sale - High Demand Pricing
+                {{/if}}
+            </div>
+            <div class="special-sale-details">
+                {{#each modifiers}}
+                    {{#if (eq type ../saleType)}}
+                        <p>{{explanation}}</p>
+                    {{/if}}
+                {{/each}}
+            </div>
+        </div>
+    {{/if}}
+
+    {{!-- Debug Information (if enabled) --}}
+    {{#if showDebugInfo}}
+        <div class="debug-info">
+            <h5>Debug Information</h5>
+            <div class="debug-details">
+                <div><strong>Encumbrance per Unit:</strong> {{encumbrancePerUnit}} EP</div>
+                <div><strong>Total Units:</strong> {{totalUnits}}</div>
+                <div><strong>Calculation Type:</strong> {{calculationType}}</div>
+                {{#if settlementInfo}}
+                    <div><strong>Settlement Size Rating:</strong> {{settlementInfo.sizeNumeric}}</div>
+                    <div><strong>Settlement Wealth Rating:</strong> {{settlementInfo.wealthRating}}</div>
+                    <div><strong>Wealth Modifier:</strong> {{settlementInfo.wealthModifier}}</div>
+                {{/if}}
+            </div>
+        </div>
+    {{/if}}
+</div>
+
+{{!-- Handlebars Helpers (to be registered) --}}
+<script>
+// Helper functions for template rendering
+if (typeof Handlebars !== 'undefined') {
+    // Capitalize helper
+    Handlebars.registerHelper('capitalize', function(str) {
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    });
+    
+    // Equality helper
+    Handlebars.registerHelper('eq', function(a, b) {
+        return a === b;
+    });
+    
+    // Greater than helper
+    Handlebars.registerHelper('gt', function(a, b) {
+        return a > b;
+    });
+}
+</script>

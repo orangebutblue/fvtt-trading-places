@@ -1,8 +1,8 @@
-# WFRP River Trading - Debug Logging System
+# Trading Places - Debug Logging System
 
 ## Overview
 
-The WFRP River Trading module includes a comprehensive debug logging system that provides detailed insights into all trading operations, calculations, and decisions. This system is designed to help developers and GMs understand exactly what's happening during trading operations and troubleshoot any issues.
+The Trading Places module includes a comprehensive debug logging system that provides detailed insights into all trading operations, calculations, and decisions. This system is designed to help developers and GMs understand exactly what's happening during trading operations and troubleshoot any issues.
 
 ## Features
 
@@ -49,7 +49,7 @@ The WFRP River Trading module includes a comprehensive debug logging system that
 Debug logging can be enabled in the module settings:
 
 1. Go to **Game Settings** → **Module Settings**
-2. Find **WFRP River Trading** settings
+2. Find **Trading Places** settings
 3. Enable **Debug Logging**
 4. Logs will appear in the browser console during trading operations
 

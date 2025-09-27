@@ -1,5 +1,5 @@
 /**
- * WFRP River Trading Module - Debug Logging Tests
+ * Trading Places Module - Debug Logging Tests
  * Comprehensive tests for the debug logging system
  */
 

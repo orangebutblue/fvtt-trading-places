@@ -1,7 +1,7 @@
-# WFRP 4E River Trading System - Design Document
+# WFRP 4E Trading Places System - Design Document
 
 ## Overview
-A unified script that combines cargo availability generation, purchase price calculation, and sale price calculation for WFRP 4E river trading campaigns. Based on rules from *Death on the Reik Companion* pages 71-78.
+A unified script that combines cargo availability generation, purchase price calculation, and sale price calculation for WFRP 4E Trading Places campaigns. Based on rules from *Death on the Reik Companion* pages 71-78.
 
 ## Core Features
 

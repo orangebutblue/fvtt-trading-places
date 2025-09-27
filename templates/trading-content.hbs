@@ -1,0 +1,146 @@
+{{!-- Trading Places - Content Template --}}
+<div class="trading-content">
+    <div class="content-grid">
+        
+        {{!-- Settlement Selection Panel --}}
+        <div class="settlement-section">
+            <h3><i class="fas fa-map-marker-alt"></i> Settlement Selection</h3>
+            <div class="settlement-info">
+                {{!-- Settlement selector component will be initialized here by JavaScript --}}
+                <div class="settlement-selector-container">
+                    <p class="loading-message">Loading settlement selector...</p>
+                </div>
+                
+                {{!-- Settlement actions (will be shown when settlement is selected) --}}
+                {{#if selectedSettlement}}
+                <div class="settlement-actions">
+                    <button class="check-availability" type="button">
+                        <i class="fas fa-search"></i> Check Cargo Availability
+                    </button>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+        
+        {{!-- Available Cargo Panel --}}
+        <div class="cargo-section">
+            <h3><i class="fas fa-boxes"></i> Available Cargo</h3>
+            <div class="cargo-list">
+                {{#if availableCargo.length}}
+                    {{#each availableCargo}}
+                        <div class="cargo-item" data-cargo="{{name}}">
+                            <div class="cargo-header">
+                                <h5>{{name}}</h5>
+                                <span class="cargo-category">{{category}}</span>
+                            </div>
+                            <div class="cargo-details">
+                                <div class="cargo-price">
+                                    <span class="price-label">Base Price:</span>
+                                    <span class="price-value">{{currentPrice}} GC</span>
+                                </div>
+                                {{#if availableQuantity}}
+                                <div class="cargo-quantity">
+                                    <span class="quantity-label">Available:</span>
+                                    <span class="quantity-value">{{availableQuantity}} EP</span>
+                                </div>
+                                {{/if}}
+                            </div>
+                            <div class="cargo-actions">
+                                <input type="number" class="quantity-input" data-cargo="{{name}}" 
+                                       placeholder="Quantity (EP)" min="1" max="{{availableQuantity}}" />
+                                <button class="purchase-button" data-cargo="{{name}}" type="button">
+                                    <i class="fas fa-shopping-cart"></i> Purchase
+                                </button>
+                            </div>
+                        </div>
+                    {{/each}}
+                {{else}}
+                    <p class="no-cargo">
+                        {{#if hasSettlement}}
+                            Check cargo availability to see available goods.
+                        {{else}}
+                            Select a settlement and check cargo availability to see available goods.
+                        {{/if}}
+                    </p>
+                {{/if}}
+            </div>
+        </div>
+        
+        {{!-- Player Cargo Management Panel --}}
+        <div class="player-cargo-section">
+            <h3><i class="fas fa-inventory"></i> Player Cargo</h3>
+            <div class="player-cargo-list">
+                {{#if playerCargo.length}}
+                    {{#each playerCargo}}
+                        <div class="player-cargo-item" data-cargo-id="{{id}}">
+                            <div class="cargo-info">
+                                <span class="cargo-name">{{type}}</span>
+                                <span class="cargo-quantity">{{quantity}} EP</span>
+                                <span class="cargo-quality">{{quality}}</span>
+                            </div>
+                            <div class="cargo-actions">
+                                <button class="sell-cargo-button" data-cargo-id="{{id}}" type="button">
+                                    <i class="fas fa-hand-holding-usd"></i> Sell
+                                </button>
+                            </div>
+                        </div>
+                    {{/each}}
+                {{else}}
+                    <p class="no-player-cargo">No cargo in inventory. Purchase cargo to add to your inventory.</p>
+                {{/if}}
+            </div>
+            
+            <div class="add-cargo-section">
+                <h4>Add Cargo Manually</h4>
+                <div class="add-cargo-form">
+                    <input type="text" id="cargo-type-input" placeholder="Cargo Type" />
+                    <input type="number" id="cargo-quantity-input" placeholder="Quantity (EP)" min="1" />
+                    <select id="cargo-quality-input">
+                        <option value="poor">Poor</option>
+                        <option value="average" selected>Average</option>
+                        <option value="good">Good</option>
+                        <option value="excellent">Excellent</option>
+                    </select>
+                    <button class="add-cargo-button" type="button">
+                        <i class="fas fa-plus"></i> Add Cargo
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        {{!-- Transaction Controls Panel --}}
+        <div class="transaction-section">
+            <h3><i class="fas fa-handshake"></i> Transaction Controls</h3>
+            <div class="transaction-controls">
+                <div class="control-group">
+                    <label>Trading Actions:</label>
+                    <div class="action-buttons">
+                        <button class="haggle-button" type="button" 
+                                {{#unless (and hasSettlement hasCargo hasSeason)}}disabled{{/unless}}>
+                            <i class="fas fa-comments"></i> Attempt Haggle
+                        </button>
+                        <button class="sale-button" type="button" 
+                                {{#unless (and hasSettlement hasSeason)}}disabled{{/unless}}>
+                            <i class="fas fa-coins"></i> Sell Cargo
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Special Sales:</label>
+                    <div class="action-buttons">
+                        <button class="desperate-sale-button" type="button" 
+                                {{#unless (and hasSettlement hasSeason)}}disabled{{/unless}}>
+                            <i class="fas fa-exclamation-triangle"></i> Desperate Sale
+                        </button>
+                        <button class="rumor-sale-button" type="button" 
+                                {{#unless (and hasSettlement hasSeason)}}disabled{{/unless}}>
+                            <i class="fas fa-ear-listen"></i> Rumor Sale
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>

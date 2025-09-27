@@ -9,7 +9,7 @@
   - Add algorithm step logging with official rule references
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 2. Create V2 Application Framework Foundation
+- [x] 2. Create V2 Application Framework Foundation
   - Create new WFRPTradingApplication class extending ApplicationV2
   - Define proper DEFAULT_OPTIONS with window configuration
   - Set up PARTS structure for modular templates
@@ -17,7 +17,7 @@
   - Integrate debug logging into application lifecycle
   - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-- [ ] 3. Implement Native UI Integration
+- [x] 3. Implement Native UI Integration
   - Remove floating button overlay from current implementation
   - Add scene controls integration with trading tool
   - Add sidebar integration option
@@ -25,7 +25,7 @@
   - Add debug logging for all UI interactions
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 4. Create Proper Window Management
+- [x] 4. Create Proper Window Management
   - Configure ApplicationV2 for landscape orientation (wider than tall)
   - Implement proper resizable window behavior
   - Set reasonable default dimensions (1200x800)
@@ -33,7 +33,7 @@
   - Add debug logging for window operations
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 5. Build Settlement Selection Component
+- [x] 5. Build Settlement Selection Component
   - Create SettlementSelector class with progressive disclosure
   - Implement region dropdown with all available regions
   - Implement dependent settlement dropdown
@@ -41,7 +41,7 @@
   - Display detailed settlement information on selection
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 6. Implement WFRP Buying Algorithm
+- [x] 6. Implement WFRP Buying Algorithm
   - Create BuyingAlgorithm class following official-algorithm.md
   - Implement Step 0: Settlement information extraction
   - Implement Step 1: Availability check with (Size + Wealth) × 10%
@@ -51,7 +51,7 @@
   - Add comprehensive logging for every calculation step
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 7. Implement WFRP Selling Algorithm
+- [x] 7. Implement WFRP Selling Algorithm
   - Create SellingAlgorithm class following official-algorithm.md
   - Implement Step 1: Selling eligibility checks (location/time restrictions)
   - Implement Step 2: Buyer availability with (Size × 10) + Trade bonus
@@ -61,7 +61,7 @@
   - Add comprehensive logging for every calculation step
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 8. Create Player Cargo Management System
+- [x] 8. Create Player Cargo Management System
   - Create PlayerCargoManager class with CRUD operations
   - Implement add cargo interface with type, quantity, quality selection
   - Implement cargo inventory display with current holdings
@@ -70,7 +70,7 @@
   - Add comprehensive logging for all cargo operations
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 9. Build Price Calculation Display System
+- [x] 9. Build Price Calculation Display System
   - Create PriceCalculator component for transparent pricing
   - Display base prices with seasonal modifiers
   - Show haggling potential outcomes and success ranges

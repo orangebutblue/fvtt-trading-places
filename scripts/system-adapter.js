@@ -1,5 +1,5 @@
 /**
- * WFRP River Trading Module - System Adapter
+ * Trading Places Module - System Adapter
  * Configuration-driven adapter for currency and inventory management across different game systems
  */
 

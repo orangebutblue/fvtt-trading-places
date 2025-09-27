@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This document outlines the requirements for a FoundryVTT module that implements the complete WFRP 4E river trading algorithm with full rule compliance. The module will provide a system-agnostic trading simulation with proper market dynamics, uncertainty, and economic restrictions as specified in the Death on the Reik Companion pages 71-78.
+This document outlines the requirements for a FoundryVTT module that implements the complete WFRP 4E Trading Places algorithm with full rule compliance. The module will provide a system-agnostic trading simulation with proper market dynamics, uncertainty, and economic restrictions as specified in the Death on the Reik Companion pages 71-78.
 
 ## Requirements
 

@@ -31,7 +31,7 @@
       "Winter": "Winter"
     },
     "Dialog": {
-      "Title": "River Trading",
+      "Title": "Trading Places",
       "Settlement": "Settlement",
       "Cargo": "Cargo",
       "Season": "Season",
@@ -44,7 +44,7 @@
       "DatasetSwitched": "Switched to dataset: {dataset}",
       "DatasetValidationFailed": "Dataset validation failed: {errors}",
       "SystemCompatibilityWarning": "System '{system}' may not be fully supported. Configuration may need adjustment.",
-      "WelcomeMessage": "Welcome to WFRP River Trading! Check the module settings to configure your trading system."
+      "WelcomeMessage": "Welcome to Trading Places! Check the module settings to configure your trading system."
     },
     "Errors": {
       "NoSeason": "Please set the current season before trading",
@@ -76,7 +76,7 @@
       }
     },
     "dialog": {
-      "title": "River Trading",
+      "title": "Trading Places",
       "settlement": "Settlement",
       "cargo": "Cargo",
       "season": "Season",

@@ -1,0 +1,68 @@
+{{!-- Trading Places - Footer Template --}}
+<div class="trading-footer">
+    <div class="footer-content">
+        
+        {{!-- Transaction History Panel --}}
+        <div class="transaction-history">
+            <h4><i class="fas fa-history"></i> Recent Transactions</h4>
+            <div class="history-list">
+                {{#if transactionHistory.length}}
+                    {{#each transactionHistory}}
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <span class="transaction-type">{{type}}</span>
+                                <span class="transaction-cargo">{{cargoType}} ({{quantity}} EP)</span>
+                                <span class="transaction-price">{{price}} GC</span>
+                                <span class="transaction-settlement">{{settlement}}</span>
+                            </div>
+                            <div class="transaction-timestamp">{{timestamp}}</div>
+                        </div>
+                    {{/each}}
+                {{else}}
+                    <p class="no-history">No transactions yet.</p>
+                {{/if}}
+            </div>
+        </div>
+        
+        {{!-- Debug Log Display (if debug logging enabled) --}}
+        {{#if debugLoggingEnabled}}
+            <div class="debug-log-section">
+                <h4>
+                    <i class="fas fa-bug"></i> Debug Log 
+                    <button class="clear-debug-log" type="button" title="Clear debug log">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </h4>
+                <div class="debug-log-display">
+                    <div class="debug-log-content">
+                        <p class="debug-info">Debug logging is enabled. Check browser console for detailed logs.</p>
+                        <p class="debug-note">Recent actions and calculations will be logged here in future updates.</p>
+                    </div>
+                </div>
+            </div>
+        {{/if}}
+        
+        {{!-- Application Status --}}
+        <div class="application-status">
+            <div class="status-indicators">
+                <div class="status-item {{#if hasSeason}}status-ok{{else}}status-warning{{/if}}">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Season: {{#if currentSeason}}{{currentSeason}}{{else}}Not Set{{/if}}</span>
+                </div>
+                <div class="status-item {{#if hasSettlement}}status-ok{{else}}status-info{{/if}}">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Settlement: {{#if selectedSettlement}}{{selectedSettlement.name}}{{else}}None Selected{{/if}}</span>
+                </div>
+                <div class="status-item {{#if hasCargo}}status-ok{{else}}status-info{{/if}}">
+                    <i class="fas fa-boxes"></i>
+                    <span>Available Cargo: {{availableCargo.length}} types</span>
+                </div>
+                <div class="status-item {{#if hasPlayerCargo}}status-ok{{else}}status-info{{/if}}">
+                    <i class="fas fa-inventory"></i>
+                    <span>Player Cargo: {{playerCargo.length}} items</span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The WFRP River Trading FoundryVTT module implements a complete, rule-compliant trading system based on the official WFRP 4E algorithm from Death on the Reik Companion. The module follows a system-agnostic architecture with clean separation of concerns, allowing for community extensibility through dataset swapping while maintaining full integration with FoundryVTT's native systems.
+The Trading Places FoundryVTT module implements a complete, rule-compliant trading system based on the official WFRP 4E algorithm from Death on the Reik Companion. The module follows a system-agnostic architecture with clean separation of concerns, allowing for community extensibility through dataset swapping while maintaining full integration with FoundryVTT's native systems.
 
 ## Architecture
 
