@@ -1,0 +1,80 @@
+
+[
+  {
+    "region": "Ostland",
+    "name": "WOLFENBURG",
+    "size": "T",
+    "ruler": "Grand Prince Valmir von Raukov",
+    "population": 8900,
+    "wealth": 3,
+    "source": ["Trade", "Timber", "Government", "Pewter Ware"],
+    "garrison": ["150a/200c"],
+    "notes": "Provincial capital"
+  },
+  {
+    "region": "Ostland",
+    "name": "Dassel",
+    "size": "V",
+    "ruler": "Grand Prince von Raukov",
+    "population": 54,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/5c"],
+    "notes": " "
+  },
+  {
+    "region": "Ostland",
+    "name": "Felde",
+    "size": "V",
+    "ruler": "Grand Prince von Raukov",
+    "population": 78,
+    "wealth": 2,
+    "source": ["Agriculture"],
+    "garrison": ["-17c"],
+    "notes": " "
+  },
+  {
+    "region": "Ostland",
+    "name": "Grünackeren",
+    "size": "ST",
+    "ruler": "Grand Prince von Raukov",
+    "population": 350,
+    "wealth": 2,
+    "source": ["Timber", "Woodcraft"],
+    "garrison": ["16b/30c"],
+    "notes": " "
+  },
+  {
+    "region": "Ostland",
+    "name": "Melbeck",
+    "size": "V",
+    "ruler": "Grand Prince von Raukov",
+    "population": 61,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/6c"],
+    "notes": " "
+  },
+  {
+    "region": "Ostland",
+    "name": "Ristedt",
+    "size": "M",
+    "ruler": "Grand Prince von Raukov",
+    "population": 82,
+    "wealth": 3,
+    "source": ["Tin", "Tourmaline"],
+    "garrison": ["8b/60c"],
+    "notes": "Mining Village"
+  },
+  {
+    "region": "Ostland",
+    "name": "Wendorf",
+    "size": "ST",
+    "ruler": "Grand Prince von Raukov",
+    "population": 250,
+    "wealth": 2,
+    "source": ["Timber", "Pigs", "Cheese"],
+    "garrison": ["12b/30c"],
+    "notes": " "
+  }
+]

@@ -1,0 +1,170 @@
+{{!-- WFRP River Trading Dialog Template --}}
+<div class="wfrp-trading-dialog">
+    <div class="trading-header">
+        <h2>River Trading</h2>
+        <div class="season-selector">
+            <label for="current-season">Current Season:</label>
+            <select id="current-season" name="currentSeason">
+                <option value="spring" {{#if (eq currentSeason "spring")}}selected{{/if}}>Spring</option>
+                <option value="summer" {{#if (eq currentSeason "summer")}}selected{{/if}}>Summer</option>
+                <option value="autumn" {{#if (eq currentSeason "autumn")}}selected{{/if}}>Autumn</option>
+                <option value="winter" {{#if (eq currentSeason "winter")}}selected{{/if}}>Winter</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="trading-content">
+        <div class="settlement-section">
+            <h3>Settlement Selection</h3>
+            <div class="settlement-info">
+                <div class="settlement-selector-container">
+                    <label for="settlement-selector">Select Settlement:</label>
+                    <select id="settlement-selector" class="settlement-selector">
+                        <option value="">-- Select Settlement --</option>
+                        {{#each settlements}}
+                        <option value="{{name}}" data-region="{{region}}">{{name}} ({{region}})</option>
+                        {{/each}}
+                    </select>
+                    <input type="text" class="settlement-search" placeholder="Search settlements..." />
+                </div>
+                <div class="settlement-details">
+                    {{#if selectedSettlement}}
+                    <div class="settlement-details-content">
+                        <h4>{{selectedSettlement.name}}</h4>
+                        <div class="settlement-stats">
+                            <div class="stat-row">
+                                <span class="stat-label">Region:</span>
+                                <span class="stat-value">{{selectedSettlement.region}}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Size:</span>
+                                <span class="stat-value">{{selectedSettlement.size}}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Wealth:</span>
+                                <span class="stat-value">{{selectedSettlement.wealth}}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Population:</span>
+                                <span class="stat-value">{{selectedSettlement.population}}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Production:</span>
+                                <span class="stat-value">{{join selectedSettlement.source ", "}}</span>
+                            </div>
+                        </div>
+                        {{#if (includes selectedSettlement.source "Trade")}}
+                        <div class="trade-center-badge">Trade Center</div>
+                        {{/if}}
+                        <div class="settlement-actions">
+                            <button class="check-availability" type="button" data-settlement="{{selectedSettlement.name}}">
+                                Check Cargo Availability
+                            </button>
+                        </div>
+                    </div>
+                    {{else}}
+                    <p class="no-selection">Select a settlement to view details and check cargo availability.</p>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+        
+        <div class="cargo-section">
+            <h3>Available Cargo</h3>
+            {{#if currentSeason}}
+            <div class="season-info">
+                <span class="season-label">Current Season:</span>
+                <span class="season-value">{{currentSeason}}</span>
+                <span class="season-note">(affects all pricing)</span>
+            </div>
+            {{/if}}
+            <div class="cargo-list">
+                {{#if availableCargo}}
+                    {{#each availableCargo}}
+                    <div class="cargo-item" data-cargo="{{name}}">
+                        <div class="cargo-header">
+                            <h5>{{name}}</h5>
+                            <span class="cargo-category">{{category}}</span>
+                        </div>
+                        <div class="cargo-details">
+                            <div class="cargo-price">
+                                <span class="price-label">Base Price:</span>
+                                <span class="price-value">{{currentPrice}} GC</span>
+                                {{#if seasonalModifier}}
+                                <span class="seasonal-modifier">({{seasonalModifier}})</span>
+                                {{/if}}
+                            </div>
+                            {{#if availableQuantity}}
+                            <div class="cargo-quantity">
+                                <span class="quantity-label">Available:</span>
+                                <span class="quantity-value">{{availableQuantity}} EP</span>
+                            </div>
+                            {{/if}}
+                            {{#if qualityTiers}}
+                            <div class="cargo-quality">
+                                <span class="quality-label">Quality:</span>
+                                <select class="quality-selector" data-cargo="{{name}}">
+                                    {{#each qualityTiers}}
+                                    <option value="{{@key}}" data-modifier="{{this}}">{{@key}} ({{this}}x)</option>
+                                    {{/each}}
+                                </select>
+                            </div>
+                            {{/if}}
+                        </div>
+                        <div class="cargo-actions">
+                            <input type="number" class="quantity-input" data-cargo="{{name}}" 
+                                   placeholder="Quantity (EP)" min="1" max="{{availableQuantity}}" />
+                            <button class="purchase-button" data-cargo="{{name}}" type="button">Purchase</button>
+                        </div>
+                    </div>
+                    {{/each}}
+                {{else}}
+                <p class="no-cargo">Select a settlement and check cargo availability to see available goods.</p>
+                {{/if}}
+            </div>
+        </div>
+        
+        <div class="transaction-section">
+            <h3>Transaction Controls</h3>
+            <div class="transaction-controls">
+                <div class="control-group">
+                    <label>Actions:</label>
+                    <div class="action-buttons">
+                        <button class="haggle-button" type="button" disabled>Attempt Haggle</button>
+                        <button class="sale-button" type="button" disabled>Sell Cargo</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Special Sales:</label>
+                    <div class="special-buttons">
+                        <button class="desperate-sale-button" type="button" disabled>Desperate Sale</button>
+                        <button class="rumor-sale-button" type="button" disabled>Rumor Sale</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="trading-footer">
+        <div class="transaction-history">
+            <h4>Recent Transactions</h4>
+            {{#if transactionHistory}}
+                <div class="history-list">
+                    {{#each transactionHistory}}
+                    <div class="history-item">
+                        <div class="history-header">
+                            <span class="transaction-type">{{type}}</span>
+                            <span class="transaction-date">{{timestamp}}</span>
+                        </div>
+                        <div class="history-details">
+                            {{cargo}} ({{quantity}} EP) at {{settlement}} - {{totalPrice}} GC
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            {{else}}
+                <p class="no-history">No transactions yet.</p>
+            {{/if}}
+        </div>
+    </div>
+</div>

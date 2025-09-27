@@ -1,0 +1,80 @@
+
+[
+  {
+    "region": "Ostermark",
+    "name": "BECHAFEN",
+    "size": "T",
+    "ruler": "Chancellor Wolfram Hertwig",
+    "population": 7600,
+    "wealth": 4,
+    "source": ["Trade", "Government", "Timber", "Agriculture", "Boatbuilding"],
+    "garrison": ["20a & 40b/250c"],
+    "notes": "Provincial capital. Famous for its boatyards. Ferry across Upper Talabec"
+  },
+  {
+    "region": "Ostermark",
+    "name": "Dorna",
+    "size": "V",
+    "ruler": "Chancellor Hertwig",
+    "population": 98,
+    "wealth": 2,
+    "source": ["Agriculture", "Timber"],
+    "garrison": ["-/12c"],
+    "notes": " "
+  },
+  {
+    "region": "Ostermark",
+    "name": "Kruganhof",
+    "size": "V",
+    "ruler": "Chancellor Hertwig",
+    "population": 32,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": [],
+    "notes": " "
+  },
+  {
+    "region": "Ostermark",
+    "name": "Münkenhof",
+    "size": "V",
+    "ruler": "Chancellor Hertwig",
+    "population": 86,
+    "wealth": 2,
+    "source": ["Agriculture", "Fishing"],
+    "garrison": ["-/10c"],
+    "notes": "Ferry across River Brunwasser"
+  },
+  {
+    "region": "Ostermark",
+    "name": "Pausin",
+    "size": "V",
+    "ruler": "Chancellor Hertwig",
+    "population": 29,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": [],
+    "notes": " "
+  },
+  {
+    "region": "Ostermark",
+    "name": "Reitwein",
+    "size": "V",
+    "ruler": "Chancellor Hertwig",
+    "population": 45,
+    "wealth": 1,
+    "source": ["Agriculture"],
+    "garrison": ["-/6c"],
+    "notes": "Ferry across River Brunwasser"
+  },
+  {
+    "region": "Ostermark",
+    "name": "Rugenbuttle",
+    "size": "V",
+    "ruler": "Chancellor Hertwig",
+    "population": 42,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/6c"],
+    "notes": " "
+  }
+]

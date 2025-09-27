@@ -1,0 +1,100 @@
+{
+  "TRADING-PLACES": {
+    "Settings": {
+      "ActiveDataset": {
+        "Name": "Active Dataset",
+        "Hint": "Currently loaded trading dataset. Changing this will reload all settlement and cargo data."
+      },
+      "CurrentSeason": {
+        "Name": "Current Season",
+        "Hint": "Current trading season for price calculations. This affects all cargo pricing throughout the system."
+      },
+      "ChatVisibility": {
+        "Name": "Chat Message Visibility",
+        "Hint": "Controls who can see trading dice rolls and transaction results in chat.",
+        "GM": "GM Only (Recommended)",
+        "All": "All Players"
+      },
+      "DialogPosition": {
+        "Name": "Dialog Position",
+        "Hint": "Remembers the position and size of the trading dialog window."
+      },
+      "DebugLogging": {
+        "Name": "Debug Logging",
+        "Hint": "Enable detailed logging for troubleshooting. Only enable if requested by support."
+      }
+    },
+    "Seasons": {
+      "Spring": "Spring",
+      "Summer": "Summer",
+      "Autumn": "Autumn",
+      "Winter": "Winter"
+    },
+    "Dialog": {
+      "Title": "River Trading",
+      "Settlement": "Settlement",
+      "Cargo": "Cargo",
+      "Season": "Season",
+      "Price": "Price",
+      "Purchase": "Purchase",
+      "Sell": "Sell"
+    },
+    "Notifications": {
+      "SeasonChanged": "Trading season changed to {season}. All prices updated.",
+      "DatasetSwitched": "Switched to dataset: {dataset}",
+      "DatasetValidationFailed": "Dataset validation failed: {errors}",
+      "SystemCompatibilityWarning": "System '{system}' may not be fully supported. Configuration may need adjustment.",
+      "WelcomeMessage": "Welcome to WFRP River Trading! Check the module settings to configure your trading system."
+    },
+    "Errors": {
+      "NoSeason": "Please set the current season before trading",
+      "InvalidSettlement": "Invalid settlement selected",
+      "InsufficientFunds": "Insufficient funds for this transaction",
+      "NoCargoAvailable": "No cargo available at this settlement",
+      "InvalidSeason": "Invalid season: {season}",
+      "InvalidChatVisibility": "Invalid chat visibility setting: {visibility}",
+      "DatasetNotFound": "Dataset '{dataset}' not found. Available datasets: {available}",
+      "MigrationFailed": "Migration failed: {error}",
+      "ComponentInitializationFailed": "Component initialization failed: {error}",
+      "DatasetLoadingFailed": "Failed to load dataset: {error}",
+      "FoundryVersionTooOld": "FoundryVTT version {minVersion} or higher required. Current version: {currentVersion}"
+    }
+  },
+  "trading-places": {
+    "settings": {
+      "activeDataset": {
+        "name": "Active Dataset",
+        "hint": "Currently loaded trading dataset"
+      },
+      "currentSeason": {
+        "name": "Current Season",
+        "hint": "Current trading season for price calculations"
+      },
+      "chatVisibility": {
+        "name": "Chat Message Visibility",
+        "hint": "Who can see trading dice rolls and transaction results"
+      }
+    },
+    "dialog": {
+      "title": "River Trading",
+      "settlement": "Settlement",
+      "cargo": "Cargo",
+      "season": "Season",
+      "price": "Price",
+      "purchase": "Purchase",
+      "sell": "Sell"
+    },
+    "seasons": {
+      "spring": "Spring",
+      "summer": "Summer",
+      "autumn": "Autumn",
+      "winter": "Winter"
+    },
+    "errors": {
+      "noSeason": "Please set the current season before trading",
+      "invalidSettlement": "Invalid settlement selected",
+      "insufficientFunds": "Insufficient funds for this transaction",
+      "noCargoAvailable": "No cargo available at this settlement"
+    }
+  }
+}

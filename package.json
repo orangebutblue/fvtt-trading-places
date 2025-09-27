@@ -1,0 +1,18 @@
+{
+  "name": "trading-places",
+  "version": "1.0.0",
+  "description": "FoundryVTT module for WFRP 4E river trading system",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  }
+}

@@ -1,0 +1,91 @@
+
+[
+  {
+    "region": "Wasteland",
+    "name": "MARIENBURG",
+    "size": "C",
+    "ruler": "Directorate",
+    "population": 135000,
+    "wealth": 5,
+    "source": ["Trade", "government", "fishing", "smuggling", "boat-building", "textiles"],
+    "garrison": ["2,000b/5,000a (Private Militias), 20,000c (City Militia)"],
+    "notes": "Largest city and port in the Old World"
+  },
+  {
+    "region": "Wasteland",
+    "name": "AARNAU",
+    "size": "T",
+    "ruler": "Baron Martinus van Buuren",
+    "population": 4000,
+    "wealth": 3,
+    "source": ["Agriculture", "fishing"],
+    "garrison": ["150a/1,000c"],
+    "notes": " "
+  },
+  {
+    "region": "Wasteland",
+    "name": "Diever",
+    "size": "V",
+    "ruler": "Baron van Buuren",
+    "population": 88,
+    "wealth": 2,
+    "source": ["Timber", "cattle"],
+    "garrison": ["-/16c"],
+    "notes": " "
+  },
+  {
+    "region": "Wasteland",
+    "name": "Harskamp",
+    "size": "V",
+    "ruler": "Baron van Buuren",
+    "population": 34,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/6c"],
+    "notes": " "
+  },
+  {
+    "region": "Wasteland",
+    "name": "Hollum",
+    "size": "V",
+    "ruler": "Baron van Buuren",
+    "population": 48,
+    "wealth": 2,
+    "source": ["Fishing", "salvaging"],
+    "garrison": ["-/10c"],
+    "notes": " "
+  },
+  {
+    "region": "Wasteland",
+    "name": "BROEKWATER",
+    "size": "V",
+    "ruler": "Village Elder",
+    "population": 84,
+    "wealth": 1,
+    "source": ["Fishing", "salvaging", "(rumoured) piracy"],
+    "garrison": ["-/20c"],
+    "notes": " "
+  },
+  {
+    "region": "Wasteland",
+    "name": "ERLACH",
+    "size": "ST",
+    "ruler": "Town Council",
+    "population": 818,
+    "wealth": 2,
+    "source": ["Ore", "sheep"],
+    "garrison": ["10b/40c"],
+    "notes": "Largest settlement in Kleinland (Little Country)"
+  },
+  {
+    "region": "Wasteland",
+    "name": "FORT BERGBRES",
+    "size": "F",
+    "ruler": "Directorate of Marienburg/Duc du Gisoreux",
+    "population": 225,
+    "wealth": 2,
+    "source": ["Bribes", "duties from transport of goods"],
+    "garrison": ["120b/-"],
+    "notes": "Border keep jointly run by Bretonnia and Marienburg"
+  }
+]

@@ -1,0 +1,60 @@
+{
+  "id": "trading-places",
+  "title": "Trading Places",
+  "description": "Complete implementation of the WFRP 4E river trading algorithm from Death on the Reik Companion with full rule compliance and system-agnostic design.",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "10",
+    "verified": "11",
+    "maximum": "13"
+  },
+  "authors": [
+    {
+      "name": "WFRP Trading Module",
+      "discord": "wfrp-trading"
+    }
+  ],
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/trading.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "url": "https://github.com/foundry-modules/trading-places",
+  "manifest": "https://github.com/foundry-modules/trading-places/releases/latest/download/module.json",
+  "download": "https://github.com/foundry-modules/trading-places/releases/latest/download/trading-places.zip",
+  "license": "LICENSE",
+  "readme": "README.md",
+  "bugs": "https://github.com/foundry-modules/trading-places/issues",
+  "changelog": "https://github.com/foundry-modules/trading-places/releases",
+  "flags": {
+    "hotReload": {
+      "extensions": ["css", "hbs"],
+      "paths": ["templates", "styles"]
+    }
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "wfrp4e",
+        "type": "recommended",
+        "manifest": "https://raw.githubusercontent.com/moo-man/WFRP4e-FoundryVTT/master/system.json",
+        "compatibility": {}
+      }
+    ],
+    "requires": [],
+    "conflicts": [],
+    "flags": {}
+  },
+  "socket": false,
+  "manifest": "https://github.com/foundry-modules/trading-places/releases/latest/download/module.json",
+  "protected": false,
+  "coreTranslation": false
+}
