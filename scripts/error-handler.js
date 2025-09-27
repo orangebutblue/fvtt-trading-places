@@ -110,17 +110,17 @@ class RuntimeErrorHandler {
         
         switch (errorInfo.severity) {
             case 'critical':
-                this.originalConsole.error(`WFRP Trading | CRITICAL: ${logMessage}`, errorInfo);
+                this.originalConsole.error(`Trading Places | CRITICAL: ${logMessage}`, errorInfo);
                 break;
             case 'error':
-                this.originalConsole.error(`WFRP Trading | ERROR: ${logMessage}`, errorInfo);
+                this.originalConsole.error(`Trading Places | ERROR: ${logMessage}`, errorInfo);
                 break;
             case 'warning':
-                this.originalConsole.warn(`WFRP Trading | WARNING: ${logMessage}`, errorInfo);
+                this.originalConsole.warn(`Trading Places | WARNING: ${logMessage}`, errorInfo);
                 break;
             case 'info':
                 if (this.debugMode) {
-                    this.originalConsole.log(`WFRP Trading | INFO: ${logMessage}`, errorInfo);
+                    this.originalConsole.log(`Trading Places | INFO: ${logMessage}`, errorInfo);
                 }
                 break;
         }
@@ -528,7 +528,7 @@ class RuntimeErrorHandler {
             }
         } else {
             // Fallback to console if UI notifications not available
-            console.log(`WFRP Trading | ${severity.toUpperCase()}: ${message}`);
+            console.log(`Trading Places | ${severity.toUpperCase()}: ${message}`);
         }
     }
 

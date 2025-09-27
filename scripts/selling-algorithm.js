@@ -1,3 +1,5 @@
+console.log('Trading Places | Loading selling-algorithm.js');
+
 /**
  * Trading Places Module - WFRP Selling Algorithm Implementation
  * Implements the complete WFRP selling algorithm from official-algorithm.md

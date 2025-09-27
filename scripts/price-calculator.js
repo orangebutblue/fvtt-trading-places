@@ -1,3 +1,5 @@
+console.log('Trading Places | Loading price-calculator.js');
+
 /**
  * Trading Places Module - Price Calculator Component
  * Provides transparent pricing display with seasonal modifiers, haggling outcomes, and comprehensive logging

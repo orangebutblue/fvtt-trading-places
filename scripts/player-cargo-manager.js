@@ -1,3 +1,5 @@
+console.log('Trading Places | Loading player-cargo-manager.js');
+
 /**
  * Trading Places Module - Player Cargo Management System
  * Provides CRUD operations for managing player cargo inventory

@@ -48,7 +48,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
    Hooks.on('getSceneControlButtons', (controls) => {
        controls.push({
            name: 'trading',
-           title: 'WFRP Trading',
+           title: 'Trading Places',
            icon: 'fas fa-coins',
            layer: 'TradingLayer',
            tools: [{

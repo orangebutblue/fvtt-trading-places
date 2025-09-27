@@ -1,7 +1,7 @@
 {
   "name": "trading-places",
   "version": "1.0.0",
-  "description": "FoundryVTT module for WFRP 4E Trading Places system",
+  "description": "FoundryVTT module for trading",
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch"

@@ -1,3 +1,5 @@
+console.log('Trading Places | Loading trading-engine.js');
+
 /**
  * Trading Places Module - Trading Engine
  * Pure business logic implementation of WFRP trading algorithms

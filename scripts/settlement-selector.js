@@ -1,3 +1,5 @@
+console.log('Trading Places | Loading settlement-selector.js');
+
 /**
  * Trading Places Module - Settlement Selection Component
  * Provides progressive disclosure interface for region and settlement selection
@@ -510,4 +512,6 @@ class SettlementSelector {
 }
 
 // Export for ES6 modules
-export { SettlementSelector };
+// Export for global access
+window.SettlementSelector = SettlementSelector;
+console.log('Trading Places | SettlementSelector class registered globally');

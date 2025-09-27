@@ -1,7 +1,7 @@
 {
   "id": "trading-places",
   "title": "Trading Places",
-  "description": "Complete implementation of the WFRP 4E Trading Places algorithm from Death on the Reik Companion with full rule compliance and system-agnostic design.",
+  "description": "Trading Module",
   "version": "1.0.0",
   "compatibility": {
     "minimum": "13",
@@ -10,7 +10,7 @@
   },
   "authors": [
     {
-      "name": "WFRP Trading Module",
+      "name": "Trading Places Module",
       "discord": "wfrp-trading"
     }
   ],
@@ -30,7 +30,7 @@
     "scripts/fallback-dialogs-v2.js",
     "scripts/simple-trading-v2.js",
     "scripts/trading-application-v2.js",
-    "scripts/native-ui-integration.js",
+    "scripts/proper-scene-controls.js",
     "scripts/main.js"
   ],
   "styles": [

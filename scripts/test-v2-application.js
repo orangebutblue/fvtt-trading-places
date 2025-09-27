@@ -5,7 +5,7 @@
 
 // Test function to validate V2 Application Framework
 function testV2ApplicationFramework() {
-    console.log('=== Testing WFRP Trading V2 Application Framework ===');
+    console.log('=== Testing Trading Places V2 Application Framework ===');
     
     try {
         // Check if the class is available

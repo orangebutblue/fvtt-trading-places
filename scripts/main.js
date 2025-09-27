@@ -28,6 +28,65 @@ Hooks.once('init', () => {
     // Register settings change handlers
     registerSettingsChangeHandlers();
 
+    // Register scene controls hook EARLY during init
+    console.log('Trading Places | Registering scene controls hook during init...');
+    Hooks.on('getSceneControlButtons', (controls) => {
+        console.log('Trading Places | *** EARLY getSceneControlButtons hook FIRED! ***');
+        console.log('Trading Places | Controls array:', controls ? controls.length : 'undefined', 'controls');
+        
+        // Safety check - make sure controls array is valid
+        if (!controls || !Array.isArray(controls)) {
+            console.log('Trading Places | Controls array is invalid, skipping this call');
+            return;
+        }
+        
+        // Check if our control already exists
+        const existingControl = controls.find(c => c.name === 'wfrp-trading');
+        if (existingControl) {
+            console.log('Trading Places | Trading control already exists, skipping');
+            return;
+        }
+        
+        const tradingControls = {
+            name: 'wfrp-trading',
+            title: 'Trading Places Places',
+            icon: 'fas fa-coins',
+            visible: true,
+            layer: 'TokenLayer',
+            tools: [{
+                name: 'open-trading',
+                title: 'Open Trading Interface',
+                icon: 'fas fa-store',
+                button: true,
+                onClick: () => {
+                    console.log('Trading Places | Scene controls button clicked!');
+                    
+                    // Try to open the trading interface
+                    try {
+                        if (window.WFRPTradingApplication) {
+                            const app = new window.WFRPTradingApplication();
+                            app.render(true);
+                            console.log('Trading Places | Opened WFRPTradingApplication');
+                        } else if (window.WFRPSimpleTradingV2) {
+                            window.WFRPSimpleTradingV2.openDialog();
+                            console.log('Trading Places | Opened WFRPSimpleTradingV2');
+                        } else {
+                            ui.notifications.info('Trading button clicked! Applications will be available after module fully loads.');
+                            console.log('Trading Places | Trading applications not yet available');
+                        }
+                    } catch (error) {
+                        console.error('Trading Places | Error opening trading interface:', error);
+                        ui.notifications.error('Error opening trading interface. Check console for details.');
+                    }
+                }
+            }]
+        };
+        
+        controls.push(tradingControls);
+        console.log('Trading Places | Trading controls added successfully');
+    });
+    console.log('Trading Places | Scene controls hook registered during init');
+
     console.log('Trading Places | Module initialized');
 });
 
@@ -121,8 +180,10 @@ Hooks.once('ready', async () => {
             dataManager.setLogger(debugLogger);
         }
 
+        // Scene controls will be initialized by the proper class-based approach below
+
         // Initialize native UI integration
-        await initializeNativeUIIntegration();
+        await initializeProperSceneControls();
 
         console.log('Trading Places | Setup complete');
         ui.notifications.info('Trading Places loaded successfully');
@@ -536,7 +597,7 @@ async function showValidationErrorDialog(validationResult, recoveryProcedures) {
         } else {
             // Fallback to notification
             ui.notifications.error(`Configuration validation failed with ${validationResult.errors.length} errors. Check console for details.`);
-            console.error('WFRP Trading | Validation errors:', validationResult.errors);
+            console.error('Trading Places | Validation errors:', validationResult.errors);
             resolve();
         }
     });
@@ -701,44 +762,112 @@ async function loadActiveDataset() {
 }
 
 /**
- * Initialize native UI integration
+ * Initialize proper scene controls integration ONLY
  */
-async function initializeNativeUIIntegration() {
-    console.log('Trading Places | Initializing native UI integration');
+async function initializeProperSceneControls() {
+    console.log('Trading Places | Initializing proper scene controls integration');
 
     try {
-        // Initialize native UI integration if available
-        if (typeof WFRPNativeUIIntegration !== 'undefined') {
-            const nativeUI = new WFRPNativeUIIntegration(debugLogger);
-            
-            // Remove any existing floating button overlays
-            nativeUI.removeFloatingButtonOverlays();
-            
-            // Initialize all native UI integration points
-            await nativeUI.initialize();
-            
-            console.log('Trading Places | Native UI integration initialized successfully');
+        // Initialize proper scene controls integration if available
+        if (typeof WFRPProperSceneControls !== 'undefined') {
+            const sceneControls = new WFRPProperSceneControls(debugLogger);
+            await sceneControls.initialize();
+            console.log('Trading Places | Proper scene controls initialized successfully');
         } else {
-            console.warn('Trading Places | WFRPNativeUIIntegration class not available');
-            
-            // Fallback: register basic macro commands
-            game.wfrpTrading = game.wfrpTrading || {};
-            game.wfrpTrading.openTrading = () => {
-                if (typeof WFRPSimpleTradingApplication !== 'undefined') {
-                    WFRPSimpleTradingApplication.create();
-                } else {
-                    ui.notifications.error('Trading interface not available.');
-                }
-            };
+            console.warn('Trading Places | WFRPProperSceneControls class not available, using basic fallback');
+            await initializeBasicSceneControls();
         }
     } catch (error) {
-        console.error('Trading Places | Native UI integration failed:', error);
-        ui.notifications.warn('Trading UI integration partially failed. Some features may not be available.');
+        console.error('Trading Places | Scene controls integration failed:', error);
+        ui.notifications.warn('Trading scene controls integration failed.');
     }
 }
 
 /**
- * Export module API for other modules/macros
+ * Basic scene controls fallback when WFRPProperSceneControls class is not available
+ */
+async function initializeBasicSceneControls() {
+    console.log('Trading Places | Initializing basic scene controls fallback');
+    
+    try {
+        // Register the scene controls hook directly since the class approach isn't working
+        console.log('Trading Places | Registering scene controls hook directly as fallback');
+        
+        Hooks.on('getSceneControlButtons', (controls) => {
+            console.log('Trading Places | getSceneControlButtons hook fired - adding trading controls');
+            
+            // Check if our control already exists to prevent duplicates
+            const existingControl = controls.find(c => c.name === 'wfrp-trading');
+            if (existingControl) {
+                console.log('Trading Places | Trading control already exists, skipping duplicate');
+                return;
+            }
+            
+            const tradingControls = {
+                name: 'wfrp-trading',
+                title: 'Trading Places Places',
+                icon: 'fas fa-coins',
+                visible: true,
+                layer: 'TokenLayer',
+                tools: [{
+                    name: 'open-trading',
+                    title: 'Open Trading Interface',
+                    icon: 'fas fa-store',
+                    button: true,
+                    onClick: () => {
+                        console.log('Trading Places | Trading button clicked!');
+                        
+                        // Try to open the trading interface
+                        try {
+                            if (window.WFRPTradingApplication) {
+                                const app = new window.WFRPTradingApplication();
+                                app.render(true);
+                            } else if (window.WFRPSimpleTradingV2) {
+                                window.WFRPSimpleTradingV2.openDialog();
+                            } else {
+                                ui.notifications.info('Trading interface clicked! (Interface classes not yet available)');
+                            }
+                        } catch (error) {
+                            console.error('Trading Places | Error opening trading interface:', error);
+                            ui.notifications.error('Error opening trading interface. Check console for details.');
+                        }
+                    }
+                }]
+            };
+            
+            controls.push(tradingControls);
+            console.log('Trading Places | Trading controls added successfully to scene controls');
+        });
+        
+        console.log('Trading Places | Basic scene controls fallback complete - hook registered');
+        
+    } catch (error) {
+        console.error('Trading Places | Basic scene controls integration failed:', error);
+        ui.notifications.warn('Trading scene controls integration failed.');
+    }
+}
+
+/**
+ * Open the trading interface
+ */
+function openTradingInterface() {
+    try {
+        if (typeof WFRPTradingApplication !== 'undefined') {
+            const app = new WFRPTradingApplication();
+            app.render(true);
+        } else if (typeof WFRPSimpleTradingApplication !== 'undefined') {
+            WFRPSimpleTradingApplication.create();
+        } else {
+            ui.notifications.error('Trading interface not available.');
+        }
+    } catch (error) {
+        console.error('Trading Places | Error opening trading interface:', error);
+        ui.notifications.error('Error opening trading interface. Check console for details.');
+    }
+}
+
+/**
+ * Export clean module API
  */
 window.WFRPRiverTrading = {
     getDataManager: () => dataManager,
@@ -746,12 +875,6 @@ window.WFRPRiverTrading = {
     getSystemAdapter: () => systemAdapter,
     getDebugLogger: () => debugLogger,
     
-    // Utility functions
-    openTradingDialog: () => {
-        if (game.wfrpTrading && game.wfrpTrading.openTrading) {
-            game.wfrpTrading.openTrading();
-        } else {
-            ui.notifications.error('Trading interface not available.');
-        }
-    }
+    // Simple utility function
+    openTradingDialog: () => openTradingInterface()
 };

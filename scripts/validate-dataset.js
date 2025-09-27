@@ -1,5 +1,5 @@
 /**
- * Dataset validation script for WFRP Trading Module
+ * Dataset validation script for Trading Places Module
  * Validates the complete dataset structure against task 10 requirements
  */
 
@@ -21,7 +21,7 @@ class DatasetValidator {
     }
 
     validateDataset() {
-        console.log('🔍 Validating WFRP Trading Dataset...\n');
+        console.log('🔍 Validating Trading Places Dataset...\n');
         
         // Validate settlements data
         this.validateSettlements();

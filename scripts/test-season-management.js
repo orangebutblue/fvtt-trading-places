@@ -42,7 +42,7 @@ global.Hooks = {
  */
 async function testSeasonManagement() {
     console.log('='.repeat(70));
-    console.log('WFRP Trading Module - Season Management Tests');
+    console.log('Trading Places Module - Season Management Tests');
     console.log('='.repeat(70));
 
     const dataManager = new DataManager();

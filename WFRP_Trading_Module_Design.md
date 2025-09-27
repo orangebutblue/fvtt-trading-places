@@ -24,7 +24,7 @@ A system-agnostic FoundryVTT module implementing the complete WFRP 4E Trading Pl
 
 ### Module Structure
 ```
-wfrp-river-trading/
+wfrp-trading-places/
 ├── module.json              # Foundry manifest
 ├── scripts/
 │   ├── main.js             # Module initialization

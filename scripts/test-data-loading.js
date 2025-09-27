@@ -11,7 +11,7 @@ const DataManager = require('./data-manager.js');
  */
 async function testDataLoading() {
     console.log('='.repeat(60));
-    console.log('WFRP Trading Module - Data Loading Tests');
+    console.log('Trading Places Module - Data Loading Tests');
     console.log('='.repeat(60));
 
     const dataManager = new DataManager();

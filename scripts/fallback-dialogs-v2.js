@@ -1,3 +1,5 @@
+console.log('Trading Places | Loading fallback-dialogs-v2.js');
+
 /**
  * Trading Places Module - V2 Fallback Dialogs
  * Simple V2 ApplicationV2 dialogs to replace deprecated V1 Dialog usage
@@ -6,13 +8,19 @@
 /**
  * Simple fallback dialog for when main trading interface fails
  */
+// Check if ApplicationV2 is available before defining the class
+if (typeof foundry?.applications?.api?.ApplicationV2 === 'undefined') {
+    console.warn('Trading Places | ApplicationV2 not available, WFRPFallbackDialog will not be loaded');
+} else {
+    console.log('Trading Places | ApplicationV2 available, defining WFRPFallbackDialog');
+
 class WFRPFallbackDialog extends foundry.applications.api.ApplicationV2 {
     
     static DEFAULT_OPTIONS = {
         id: "wfrp-fallback-dialog",
         tag: "div",
         window: {
-            title: "WFRP Trading (Fallback)",
+            title: "Trading Places (Fallback)",
             icon: "fas fa-exclamation-triangle",
             resizable: false,
             minimizable: false,
@@ -99,7 +107,7 @@ class WFRPConfigErrorDialog extends foundry.applications.api.ApplicationV2 {
                 const report = this.validationResult ? 
                     `Validation Errors: ${this.validationResult.errors.join(', ')}` : 
                     'No detailed report available';
-                console.log('WFRP Trading | Diagnostic Report:', report);
+                console.log('Trading Places | Diagnostic Report:', report);
                 ui.notifications.info("Diagnostic report printed to console");
             });
         }
@@ -237,4 +245,6 @@ window.WFRPFallbackDialog = WFRPFallbackDialog;
 window.WFRPConfigErrorDialog = WFRPConfigErrorDialog;
 window.WFRPSeasonSelectionDialog = WFRPSeasonSelectionDialog;
 window.WFRPTestDialog = WFRPTestDialog;
-console.log('WFRP Trading | V2 Fallback Dialog classes registered globally');
+console.log('Trading Places | V2 Fallback Dialog classes registered globally');
+
+} // End of ApplicationV2 availability check

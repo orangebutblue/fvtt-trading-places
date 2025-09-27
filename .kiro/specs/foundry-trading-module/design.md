@@ -32,7 +32,7 @@ The module follows a layered architecture with clear separation between the trad
 ### Module Structure
 
 ```
-wfrp-river-trading/
+wfrp-trading-places/
 ├── module.json              # FoundryVTT manifest
 ├── scripts/
 │   ├── main.js             # Module initialization and registration
@@ -735,7 +735,7 @@ Hooks.once('ready', () => {
 class TradingDialog extends Dialog {
     static get defaultOptions() {
         return mergeObject(super.defaultOptions, {
-            template: "modules/wfrp-river-trading/templates/trading-dialog.hbs",
+            template: "modules/wfrp-trading-places/templates/trading-dialog.hbs",
             classes: ["wfrp-trading"],
             width: 600,
             height: 400

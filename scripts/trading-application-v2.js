@@ -1,16 +1,26 @@
+console.log('Trading Places | Loading trading-application-v2.js');
+
 /**
  * Trading Places Module - V2 Application Framework
  * Modern FoundryVTT ApplicationV2 implementation replacing deprecated Dialog class
  */
 
-import { SettlementSelector } from './settlement-selector.js';
+// Settlement selector will be available via window.SettlementSelector
 
 /**
  * Main Trading Application using FoundryVTT V2 Application framework
  * Replaces the deprecated Dialog-based implementation
  */
-class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
+
+// Check if ApplicationV2 is available before defining the class
+if (typeof foundry?.applications?.api?.ApplicationV2 === 'undefined') {
+    console.warn('Trading Places | ApplicationV2 not available, WFRPTradingApplication will not be loaded');
+    // Don't define the class if ApplicationV2 isn't available
+} else {
+    console.log('Trading Places | ApplicationV2 available, defining WFRPTradingApplication');
     
+class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
+
     /** @override */
     static DEFAULT_OPTIONS = {
         id: "wfrp-trading",
@@ -23,7 +33,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
             maximizable: false
         },
         position: {
-            width: 1200,
+            width: 1600,
             height: 800,
             top: 100,
             left: 100
@@ -33,15 +43,15 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
 
     /** @override */
     static PARTS = {
-        header: { 
+        header: {
             template: "modules/trading-places/templates/trading-header.hbs",
             scrollable: []
         },
-        content: { 
+        content: {
             template: "modules/trading-places/templates/trading-content.hbs",
             scrollable: [".settlement-section", ".cargo-section"]
         },
-        footer: { 
+        footer: {
             template: "modules/trading-places/templates/trading-footer.hbs",
             scrollable: [".debug-log-display"]
         }
@@ -61,7 +71,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         this.availableCargo = [];
         this.transactionHistory = [];
         this.playerCargo = [];
-        
+
         // Get module components with validation
         this.dataManager = window.WFRPRiverTrading?.getDataManager();
         this.tradingEngine = window.WFRPRiverTrading?.getTradingEngine();
@@ -72,23 +82,28 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         if (!this.dataManager || !this.tradingEngine) {
             const error = 'Trading components not initialized. Please ensure the module is properly loaded.';
             this._logError('Component Validation', error);
-            
+
             // Show user-friendly error message
             if (typeof ui !== 'undefined' && ui.notifications) {
                 ui.notifications.error('Trading system not ready. Please wait for the module to finish loading.');
             }
-            
+
             throw new Error(error);
         }
 
         // Initialize debug logging integration
         this._initializeDebugLogging();
 
-        // Initialize settlement selector component
-        this.settlementSelector = new SettlementSelector(this.dataManager, this.debugLogger);
+        // Initialize settlement selector component if available
+        if (typeof window.SettlementSelector !== 'undefined') {
+            this.settlementSelector = new window.SettlementSelector(this.dataManager, this.debugLogger);
+        } else {
+            console.warn('Trading Places | SettlementSelector not available, some features may be limited');
+            this.settlementSelector = null;
+        }
 
         this._logInfo('Application Initialization', 'WFRPTradingApplication created successfully');
-        
+
         // Initialize window management
         this._initializeWindowManagement();
     }
@@ -99,13 +114,13 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      */
     _initializeWindowManagement() {
         this._logDebug('Window Management', 'Initializing window management features');
-        
+
         // Load saved window position and size
         this._loadWindowState();
-        
+
         // Set up window state persistence
         this._setupWindowStatePersistence();
-        
+
         this._logInfo('Window Management', 'Window management initialized successfully');
     }
 
@@ -116,16 +131,16 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
     async _loadWindowState() {
         try {
             const savedState = await game.settings.get("trading-places", "windowState");
-            
+
             if (savedState && typeof savedState === 'object') {
                 this._logDebug('Window Management', 'Loading saved window state', savedState);
-                
+
                 // Apply saved dimensions if valid
                 if (savedState.width && savedState.height) {
                     // Ensure landscape orientation (width > height)
                     const width = Math.max(savedState.width, 800); // Minimum width
                     const height = Math.max(savedState.height, 600); // Minimum height
-                    
+
                     // Enforce landscape orientation
                     if (width <= height) {
                         this._logDebug('Window Management', 'Adjusting dimensions to maintain landscape orientation');
@@ -144,23 +159,23 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
                         };
                     }
                 }
-                
+
                 // Apply saved position if valid (ensure it's on screen)
                 if (savedState.top !== undefined && savedState.left !== undefined) {
                     const screenWidth = window.innerWidth;
                     const screenHeight = window.innerHeight;
-                    
+
                     // Ensure window is visible on screen
                     const left = Math.max(0, Math.min(savedState.left, screenWidth - 400));
                     const top = Math.max(0, Math.min(savedState.top, screenHeight - 200));
-                    
+
                     this.options.position = {
                         ...this.options.position,
                         left: left,
                         top: top
                     };
                 }
-                
+
                 this._logInfo('Window Management', 'Window state loaded successfully', {
                     width: this.options.position.width,
                     height: this.options.position.height,
@@ -211,9 +226,9 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
             };
 
             await game.settings.set("trading-places", "windowState", windowState);
-            
+
             this._logDebug('Window Management', 'Window state saved', windowState);
-            
+
         } catch (error) {
             this._logError('Window Management', 'Failed to save window state', { error: error.message });
         }
@@ -226,12 +241,12 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      */
     _onWindowResize(event) {
         this._logDebug('Window Management', 'Window resize detected');
-        
+
         // Debounce the save operation
         if (this._resizeTimeout) {
             clearTimeout(this._resizeTimeout);
         }
-        
+
         this._resizeTimeout = setTimeout(() => {
             this._saveWindowState();
         }, 500); // Save after 500ms of no resize activity
@@ -244,12 +259,12 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      */
     _onWindowMove(event) {
         this._logDebug('Window Management', 'Window move detected');
-        
+
         // Debounce the save operation
         if (this._moveTimeout) {
             clearTimeout(this._moveTimeout);
         }
-        
+
         this._moveTimeout = setTimeout(() => {
             this._saveWindowState();
         }, 500); // Save after 500ms of no move activity
@@ -267,28 +282,28 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         const minHeight = 600;
         const maxWidth = window.innerWidth * 0.9;
         const maxHeight = window.innerHeight * 0.9;
-        
+
         // Ensure minimum dimensions
         width = Math.max(width, minWidth);
         height = Math.max(height, minHeight);
-        
+
         // Ensure maximum dimensions
         width = Math.min(width, maxWidth);
         height = Math.min(height, maxHeight);
-        
+
         // Enforce landscape orientation (width should be at least 1.2x height)
         const minLandscapeRatio = 1.2;
         if (width / height < minLandscapeRatio) {
             // Adjust width to maintain landscape ratio
             width = Math.floor(height * minLandscapeRatio);
-            
+
             // If adjusted width exceeds screen, adjust height instead
             if (width > maxWidth) {
                 width = maxWidth;
                 height = Math.floor(width / minLandscapeRatio);
             }
         }
-        
+
         this._logDebug('Window Management', 'Validated landscape orientation', {
             originalWidth: arguments[0],
             originalHeight: arguments[1],
@@ -296,7 +311,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
             validatedHeight: height,
             ratio: (width / height).toFixed(2)
         });
-        
+
         return { width, height };
     }
 
@@ -319,7 +334,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         if (this.debugLogger) {
             this._logInfo('Debug Logging', 'Debug logging integration initialized');
         } else {
-            console.warn('WFRP Trading | Debug logger not available');
+            console.warn('Trading Places | Debug logger not available');
         }
     }
 
@@ -334,7 +349,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         if (this.debugLogger) {
             this.debugLogger.logInfo(category, message, data);
         } else {
-            console.log(`WFRP Trading | ${category}: ${message}`, data);
+            console.log(`Trading Places | ${category}: ${message}`, data);
         }
     }
 
@@ -349,7 +364,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         if (this.debugLogger) {
             this.debugLogger.logError(category, message, data);
         } else {
-            console.error(`WFRP Trading | ${category}: ${message}`, data);
+            console.error(`Trading Places | ${category}: ${message}`, data);
         }
     }
 
@@ -364,14 +379,14 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         if (this.debugLogger) {
             this.debugLogger.logDebug(category, message, data);
         } else {
-            console.debug(`WFRP Trading | ${category}: ${message}`, data);
+            console.debug(`Trading Places | ${category}: ${message}`, data);
         }
     }
 
     /** @override */
     async _prepareContext(options) {
         const context = await super._prepareContext(options);
-        
+
         this._logDebug('Template Context', 'Preparing template context data');
 
         // Add trading-specific data for templates
@@ -381,7 +396,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         context.transactionHistory = this.transactionHistory;
         context.playerCargo = this.playerCargo;
         context.settlements = this.dataManager?.getAllSettlements() || [];
-        
+
         // Add UI state data
         context.hasSettlement = !!this.selectedSettlement;
         context.hasCargo = this.availableCargo.length > 0;
@@ -405,7 +420,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
     /** @override */
     _onRender(context, options) {
         super._onRender(context, options);
-        
+
         this._logInfo('Application Lifecycle', 'Application rendered successfully');
 
         // Set up window management listeners
@@ -445,7 +460,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
                     this._onWindowResize();
                 }
             });
-            
+
             this._resizeObserver.observe(windowElement);
             this._logDebug('Window Management', 'ResizeObserver attached');
         }
@@ -454,14 +469,14 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         if (window.MutationObserver) {
             this._positionObserver = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
-                    if (mutation.type === 'attributes' && 
+                    if (mutation.type === 'attributes' &&
                         (mutation.attributeName === 'style')) {
                         this._logDebug('Window Management', 'Position change observed');
                         this._onWindowMove();
                     }
                 });
             });
-            
+
             this._positionObserver.observe(windowElement, {
                 attributes: true,
                 attributeFilter: ['style']
@@ -481,13 +496,13 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
     /** @override */
     async close(options = {}) {
         this._logInfo('Application Lifecycle', 'Application closing');
-        
+
         // Clean up window management observers
         this._cleanupWindowEventListeners();
-        
+
         // Save final window state
         await this._saveWindowState();
-        
+
         // Call parent close
         return super.close(options);
     }
@@ -498,32 +513,32 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      */
     _cleanupWindowEventListeners() {
         this._logDebug('Window Management', 'Cleaning up window event listeners');
-        
+
         // Clean up resize observer
         if (this._resizeObserver) {
             this._resizeObserver.disconnect();
             this._resizeObserver = null;
             this._logDebug('Window Management', 'ResizeObserver disconnected');
         }
-        
+
         // Clean up position observer
         if (this._positionObserver) {
             this._positionObserver.disconnect();
             this._positionObserver = null;
             this._logDebug('Window Management', 'MutationObserver disconnected');
         }
-        
+
         // Clear any pending timeouts
         if (this._resizeTimeout) {
             clearTimeout(this._resizeTimeout);
             this._resizeTimeout = null;
         }
-        
+
         if (this._moveTimeout) {
             clearTimeout(this._moveTimeout);
             this._moveTimeout = null;
         }
-        
+
         this._logInfo('Window Management', 'Window event listeners cleaned up');
     }
 
@@ -559,8 +574,14 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
                 }
             }
 
-            // Initialize the settlement selector
-            this.settlementSelector.initialize(selectorContainer);
+            // Initialize the settlement selector if available
+            if (this.settlementSelector) {
+                this.settlementSelector.initialize(selectorContainer);
+            } else {
+                this._logWarn('Settlement Selector', 'Settlement selector not available, using fallback');
+                // Create a simple fallback selector
+                this._createFallbackSettlementSelector(selectorContainer);
+            }
 
             // Set up event listeners for settlement selection
             this._setupSettlementSelectorEvents();
@@ -603,11 +624,11 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      */
     _onSettlementSelectorRegionChange(regionName) {
         this._logDebug('Settlement Selector', 'Region changed via selector', { region: regionName });
-        
+
         // Clear current settlement selection
         this.selectedSettlement = null;
         this.availableCargo = [];
-        
+
         // Update UI state
         this._updateUIState();
     }
@@ -619,7 +640,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      */
     async _onSettlementSelectorSettlementChange(settlementName) {
         this._logDebug('Settlement Selector', 'Settlement changed via selector', { settlement: settlementName });
-        
+
         if (!settlementName) {
             this.selectedSettlement = null;
             this.availableCargo = [];
@@ -632,7 +653,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         if (settlement) {
             this.selectedSettlement = settlement;
             this.availableCargo = []; // Clear cargo until availability is checked
-            
+
             this._logInfo('Settlement Selector', 'Settlement selected via selector', {
                 name: settlement.name,
                 region: settlement.region,
@@ -662,7 +683,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
 
             // Load current season
             await this._loadCurrentSeason();
-            
+
             // Check if season is set, prompt if not
             if (!this.currentSeason) {
                 await this._promptForSeasonSelection();
@@ -670,9 +691,9 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
 
             // Update UI state
             this._updateUIState();
-            
+
             this._logInfo('Application State', 'Application state initialized successfully');
-            
+
         } catch (error) {
             this._logError('Application State', 'Failed to initialize application state', { error: error.message });
             ui.notifications.error(`Application initialization failed: ${error.message}`);
@@ -704,30 +725,30 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         const hasSettlement = !!this.selectedSettlement;
         const hasCargo = this.availableCargo.length > 0;
         const hasSeason = !!this.currentSeason;
-        
+
         // Get button elements
         const haggleBtn = this.element.querySelector('.haggle-button');
         const saleBtn = this.element.querySelector('.sale-button');
         const desperateSaleBtn = this.element.querySelector('.desperate-sale-button');
         const rumorSaleBtn = this.element.querySelector('.rumor-sale-button');
-        
+
         // Enable/disable buttons based on context
         if (haggleBtn) {
             haggleBtn.disabled = !hasSettlement || !hasCargo || !hasSeason;
             haggleBtn.title = this._getButtonTooltip('haggle', hasSettlement, hasCargo, hasSeason);
         }
-        
+
         if (saleBtn) {
             saleBtn.disabled = !hasSettlement || !hasSeason;
             saleBtn.title = this._getButtonTooltip('sale', hasSettlement, hasCargo, hasSeason);
         }
-        
+
         if (desperateSaleBtn) {
             const isTradeSettlement = this.dataManager?.isTradeSettlement(this.selectedSettlement);
             desperateSaleBtn.disabled = !hasSettlement || !hasSeason || !isTradeSettlement;
             desperateSaleBtn.title = this._getButtonTooltip('desperate_sale', hasSettlement, hasCargo, hasSeason, isTradeSettlement);
         }
-        
+
         if (rumorSaleBtn) {
             rumorSaleBtn.disabled = !hasSettlement || !hasSeason;
             rumorSaleBtn.title = this._getButtonTooltip('rumor_sale', hasSettlement, hasCargo, hasSeason);
@@ -770,8 +791,8 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
             case 'sale':
                 return 'Sell cargo from inventory';
             case 'desperate_sale':
-                return isTradeSettlement 
-                    ? 'Sell at 50% price (Trade settlements only)' 
+                return isTradeSettlement
+                    ? 'Sell at 50% price (Trade settlements only)'
                     : 'Only available at Trade settlements';
             case 'rumor_sale':
                 return 'Attempt to find premium buyers (requires Gossip test)';
@@ -803,7 +824,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         this._logInfo('Season Management', `Setting current season to: ${season}`);
 
         this.currentSeason = season;
-        
+
         // Update trading engine
         if (this.tradingEngine) {
             this.tradingEngine.setCurrentSeason(season);
@@ -811,7 +832,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
 
         // Update FoundryVTT setting
         await game.settings.set("trading-places", "currentSeason", season);
-        
+
         // Update pricing for any selected cargo
         if (this.selectedCargo) {
             await this._updateCargoPricing();
@@ -833,7 +854,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
     async _loadCurrentSeason() {
         try {
             this.currentSeason = await game.settings.get("trading-places", "currentSeason");
-            
+
             if (this.tradingEngine && this.currentSeason) {
                 this.tradingEngine.setCurrentSeason(this.currentSeason);
             }
@@ -861,11 +882,11 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
             this.availableCargo = this.availableCargo.map(cargo => {
                 try {
                     const basePrice = this.tradingEngine.calculateBasePrice(
-                        cargo.name, 
-                        this.currentSeason, 
+                        cargo.name,
+                        this.currentSeason,
                         cargo.quality || 'average'
                     );
-                    
+
                     return {
                         ...cargo,
                         currentPrice: basePrice,
@@ -879,9 +900,9 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
 
             // Re-render content to show updated prices
             await this.render(false);
-            
+
             this._logInfo('Pricing Update', 'Cargo pricing updated successfully');
-            
+
         } catch (error) {
             this._logError('Pricing Update', 'Failed to update cargo pricing', { error: error.message });
         }
@@ -912,7 +933,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      */
     _notifySeasonChange(season) {
         ui.notifications.info(`Trading season changed to ${season}. All prices updated.`);
-        
+
         // Post to chat if enabled
         this._postSeasonChangeToChat(season);
 
@@ -942,7 +963,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
             });
 
             this._logDebug('Chat Integration', 'Season change posted to chat', { season, visibility: chatVisibility });
-            
+
         } catch (error) {
             this._logError('Chat Integration', 'Failed to post season change to chat', { error: error.message });
         }
@@ -951,7 +972,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
     /** @override */
     _attachPartListeners(partId, htmlElement, options) {
         super._attachPartListeners(partId, htmlElement, options);
-        
+
         this._logDebug('Event Listeners', `Attaching listeners for part: ${partId}`);
 
         // Attach listeners based on part
@@ -999,7 +1020,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         if (settlementSearch) {
             settlementSearch.addEventListener('input', this._onSettlementSearch.bind(this));
         }
-        
+
         // Cargo selection and interaction
         const cargoItems = html.querySelectorAll('.cargo-item');
         cargoItems.forEach(item => {
@@ -1010,7 +1031,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         if (checkAvailabilityBtn) {
             checkAvailabilityBtn.addEventListener('click', this._onCheckAvailability.bind(this));
         }
-        
+
         // Transaction controls
         const purchaseButtons = html.querySelectorAll('.purchase-button');
         purchaseButtons.forEach(btn => {
@@ -1026,7 +1047,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         if (haggleBtn) {
             haggleBtn.addEventListener('click', this._onHaggleAttempt.bind(this));
         }
-        
+
         // Quantity controls
         const quantityInputs = html.querySelectorAll('.quantity-input');
         quantityInputs.forEach(input => {
@@ -1037,7 +1058,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         qualitySelectors.forEach(selector => {
             selector.addEventListener('change', this._onQualityChange.bind(this));
         });
-        
+
         // Special sale buttons
         const desperateSaleBtn = html.querySelector('.desperate-sale-button');
         if (desperateSaleBtn) {
@@ -1076,7 +1097,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      */
     async _onSeasonChange(event) {
         const newSeason = event.target.value;
-        
+
         try {
             this._logDebug('Event Handler', 'Season change requested', { newSeason });
             await this.setCurrentSeason(newSeason);
@@ -1094,7 +1115,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      */
     async _onSettlementSelect(event) {
         const settlementName = event.target.value;
-        
+
         this._logDebug('Event Handler', 'Settlement selection requested', { settlementName });
 
         if (!settlementName) {
@@ -1111,18 +1132,18 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
             }
 
             this.selectedSettlement = settlement;
-            
+
             // Clear previous cargo
             this.availableCargo = [];
-            
+
             // Update UI
             await this.render(false);
-            
-            this._logInfo('Settlement Selection', 'Settlement selected successfully', { 
-                settlement: settlement.name, 
-                region: settlement.region 
+
+            this._logInfo('Settlement Selection', 'Settlement selected successfully', {
+                settlement: settlement.name,
+                region: settlement.region
             });
-            
+
         } catch (error) {
             this._logError('Event Handler', 'Settlement selection failed', { error: error.message });
             ui.notifications.error(`Failed to select settlement: ${error.message}`);
@@ -1137,7 +1158,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
     _onSettlementSearch(event) {
         const searchTerm = event.target.value.toLowerCase();
         const selector = this.element.querySelector('.settlement-selector');
-        
+
         if (!selector) return;
 
         const options = selector.querySelectorAll('option');
@@ -1158,14 +1179,14 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      */
     _onCargoSelect(event) {
         const cargoName = event.currentTarget.dataset.cargo;
-        
+
         // Remove previous selection
         const cargoItems = this.element.querySelectorAll('.cargo-item');
         cargoItems.forEach(item => item.classList.remove('selected'));
-        
+
         // Add selection to clicked item
         event.currentTarget.classList.add('selected');
-        
+
         this.selectedCargo = cargoName;
 
         this._logDebug('Event Handler', 'Cargo selected', { cargoName });
@@ -1201,7 +1222,7 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
 
             // Perform availability check
             const result = await this.tradingEngine.performCompleteAvailabilityCheck(
-                this.selectedSettlement, 
+                this.selectedSettlement,
                 this.currentSeason
             );
 
@@ -1227,11 +1248,11 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
             // Restore button
             button.textContent = originalText;
             button.disabled = false;
-            
+
         } catch (error) {
             this._logError('Event Handler', 'Availability check failed', { error: error.message });
             ui.notifications.error(`Availability check failed: ${error.message}`);
-            
+
             // Restore button on error
             const button = event.target;
             button.textContent = 'Check Cargo Availability';
@@ -1284,4 +1305,6 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
 
 // Export for global access
 window.WFRPTradingApplication = WFRPTradingApplication;
-console.log('WFRP Trading | WFRPTradingApplication class registered globally');
+console.log('Trading Places | WFRPTradingApplication class registered globally');
+
+} // End of ApplicationV2 availability check

@@ -1,5 +1,7 @@
+console.log('Trading Places | Loading simple-trading-v2.js');
+
 /**
- * WFRP River Trading Module - Simple Trading V2 Application
+ * Trading Places Places Module - Simple Trading V2 Application
  * Simplified trading interface using ApplicationV2 framework
  */
 
@@ -7,6 +9,12 @@
  * Simple Trading Application using FoundryVTT V2 Application framework
  * Provides a basic trading interface for development and fallback purposes
  */
+// Check if ApplicationV2 is available before defining the class
+if (typeof foundry?.applications?.api?.ApplicationV2 === 'undefined') {
+    console.warn('Trading Places | ApplicationV2 not available, WFRPSimpleTradingApplication will not be loaded');
+} else {
+    console.log('Trading Places | ApplicationV2 available, defining WFRPSimpleTradingApplication');
+
 class WFRPSimpleTradingApplication extends foundry.applications.api.ApplicationV2 {
     
     /** @override */
@@ -14,7 +22,7 @@ class WFRPSimpleTradingApplication extends foundry.applications.api.ApplicationV
         id: "wfrp-simple-trading",
         tag: "div",
         window: {
-            title: "River Trading",
+            title: "Trading Places",
             icon: "fas fa-coins",
             resizable: true,
             minimizable: true,
@@ -141,7 +149,7 @@ class WFRPSimpleTradingApplication extends foundry.applications.api.ApplicationV
         if (this.logger && this.logger.log) {
             this.logger.log('Simple Trading', message, data);
         } else {
-            console.log(`WFRP Trading | Simple Trading: ${message}`, data || '');
+            console.log(`Trading Places | Simple Trading: ${message}`, data || '');
         }
     }
 
@@ -280,4 +288,6 @@ class WFRPSimpleTradingApplication extends foundry.applications.api.ApplicationV
 
 // Export for global access
 window.WFRPSimpleTradingApplication = WFRPSimpleTradingApplication;
-console.log('WFRP Trading | WFRPSimpleTradingApplication class registered globally');
+console.log('Trading Places | WFRPSimpleTradingApplication class registered globally');
+
+} // End of ApplicationV2 availability check

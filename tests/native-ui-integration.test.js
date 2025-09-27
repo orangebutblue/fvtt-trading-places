@@ -117,7 +117,7 @@ describe('WFRPNativeUIIntegration', () => {
             expect(controls).toHaveLength(1);
             expect(controls[0]).toMatchObject({
                 name: 'wfrp-trading',
-                title: 'WFRP Trading',
+                title: 'Trading Places',
                 icon: 'fas fa-coins',
                 layer: 'WFRPTradingLayer'
             });
@@ -253,7 +253,7 @@ describe('WFRPNativeUIIntegration', () => {
 
             nativeUINoLogger.log('test message', { data: 'test' });
 
-            expect(consoleSpy).toHaveBeenCalledWith('WFRP Trading | UI Integration: test message', { data: 'test' });
+            expect(consoleSpy).toHaveBeenCalledWith('Trading Places | UI Integration: test message', { data: 'test' });
 
             consoleSpy.mockRestore();
         });
