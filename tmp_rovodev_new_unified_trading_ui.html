@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WFRP Trading Places - New Unified UI Design</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            /* Modern color palette */
+            --bg-primary: #1a1d23;
+            --bg-secondary: #252932;
+            --bg-tertiary: #2f3439;
+            --bg-accent: #3a4048;
+            
+            --text-primary: #ffffff;
+            --text-secondary: #b8bcc8;
+            --text-muted: #8b92a5;
+            
+            --accent-primary: #ffa726;
+            --accent-secondary: #66bb6a;
+            --accent-warning: #ef5350;
+            --accent-info: #42a5f5;
+            
+            --border-light: #3a4048;
+            --border-medium: #4a5058;
+            
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+            
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            
+            --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .trading-app {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .app-header {
+            background: linear-gradient(135deg, var(--accent-primary), #ff8f00);
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-title h1 {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .app-title i {
+            font-size: 32px;
+            color: white;
+        }
+
+        .season-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            backdrop-filter: blur(10px);
+        }
+
+        .season-control label {
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .season-control select {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            color: var(--bg-primary);
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .app-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            min-height: 600px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-tertiary);
+            padding: 32px;
+            border-right: 1px solid var(--border-light);
+        }
+
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .section-title i {
+            color: var(--accent-primary);
+            width: 20px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            background: var(--bg-accent);
+            border: 2px solid var(--border-light);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.1);
+        }
+
+        .form-select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Settlement Info */
+        .settlement-info {
+            background: var(--bg-accent);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-medium);
+        }
+
+        .settlement-info h3 {
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .trade-badge {
+            display: inline-block;
+            background: var(--accent-secondary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            background: var(--bg-accent);
+            border: 2px solid var(--border-medium);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #ff8f00;
+            border-color: #ff8f00;
+        }
+
+        .btn-success {
+            background: var(--accent-secondary);
+            border-color: var(--accent-secondary);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #4caf50;
+            border-color: #4caf50;
+        }
+
+        .btn-warning {
+            background: var(--accent-warning);
+            border-color: var(--accent-warning);
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #d32f2f;
+            border-color: #d32f2f;
+        }
+
+        /* Main Panel */
+        .main-panel {
+            padding: 32px;
+            background: var(--bg-secondary);
+            overflow-y: auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 32px;
+            background: var(--bg-tertiary);
+            padding: 6px;
+            border-radius: var(--radius-md);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: var(--bg-accent);
+            color: var(--text-primary);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Cargo Grid */
+        .cargo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .cargo-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .cargo-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .cargo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .cargo-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .cargo-category {
+            background: var(--accent-info);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .cargo-details {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .price-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price-label {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .price-value {
+            color: var(--accent-secondary);
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .cargo-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .quantity-input {
+            flex: 1;
+            background: var(--bg-accent);
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+        }
+
+        /* Player Inventory */
+        .inventory-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-info h4 {
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .item-details {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .quality-badge {
+            background: var(--accent-info);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        /* Transaction History */
+        .transaction-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .transaction-info h4 {
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .transaction-details {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .transaction-amount {
+            color: var(--accent-secondary);
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .empty-state .sub-text {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .app-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid var(--border-light);
+            }
+            
+            .cargo-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .app-header {
+                padding: 20px;
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .main-panel, .sidebar {
+                padding: 20px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="trading-app">
+        <!-- Header -->
+        <div class="app-header">
+            <div class="app-title">
+                <i class="fas fa-coins"></i>
+                <h1>Trading Places</h1>
+            </div>
+            <div class="season-control">
+                <label>Current Season:</label>
+                <select id="season-select">
+                    <option value="spring">Spring</option>
+                    <option value="summer" selected>Summer</option>
+                    <option value="autumn">Autumn</option>
+                    <option value="winter">Winter</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="app-content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Location Selection -->
+                <div class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Location
+                    </h2>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select class="form-select" id="region-select">
+                            <option value="">Select a region...</option>
+                            <option value="Reikland" selected>Reikland</option>
+                            <option value="Middenland">Middenland</option>
+                            <option value="Nordland">Nordland</option>
+                            <option value="Ostland">Ostland</option>
+                            <option value="Ostermark">Ostermark</option>
+                            <option value="Stirland">Stirland</option>
+                            <option value="Averland">Averland</option>
+                            <option value="Wissenland">Wissenland</option>
+                            <option value="Talabecland">Talabecland</option>
+                            <option value="Hochland">Hochland</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Settlement</label>
+                        <select class="form-select" id="settlement-select">
+                            <option value="">Select a settlement...</option>
+                            <option value="Altdorf" selected>Altdorf</option>
+                            <option value="Auerswald">Auerswald</option>
+                            <option value="Bögenhafen">Bögenhafen</option>
+                            <option value="Grissenwald">Grissenwald</option>
+                            <option value="Kemperbad">Kemperbad</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Settlement Info -->
+                <div class="section">
+                    <div class="settlement-info">
+                        <h3>Altdorf</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Region</span>
+                                <span class="info-value">Reikland</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Size</span>
+                                <span class="info-value">Metropolis</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Wealth</span>
+                                <span class="info-value">Very Rich</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Population</span>
+                                <span class="info-value">105,000</span>
+                            </div>
+                        </div>
+                        <div class="trade-badge">Major Trade Center</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-bolt"></i>
+                        Quick Actions
+                    </h2>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="check-availability">
+                            <i class="fas fa-search"></i>
+                            Check Availability
+                        </button>
+                        <button class="btn btn-success" id="quick-sell">
+                            <i class="fas fa-hand-holding-usd"></i>
+                            Quick Sell
+                        </button>
+                        <button class="btn" id="haggle">
+                            <i class="fas fa-handshake"></i>
+                            Negotiate
+                        </button>
+                        <button class="btn btn-warning" id="desperate-sale">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Desperate Sale
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Panel -->
+            <div class="main-panel">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" data-tab="market">
+                        <i class="fas fa-store"></i>
+                        Market
+                    </button>
+                    <button class="tab" data-tab="inventory">
+                        <i class="fas fa-boxes"></i>
+                        Inventory
+                    </button>
+                    <button class="tab" data-tab="history">
+                        <i class="fas fa-history"></i>
+                        History
+                    </button>
+                </div>
+
+                <!-- Market Tab -->
+                <div class="tab-content active" id="market-tab">
+                    <div class="cargo-grid">
+                        <div class="cargo-card">
+                            <div class="cargo-header">
+                                <div class="cargo-name">Iron Ore</div>
+                                <div class="cargo-category">Raw Materials</div>
+                            </div>
+                            <div class="cargo-details">
+                                <div class="price-info">
+                                    <span class="price-label">Base Price:</span>
+                                    <span class="price-value">15 GC</span>
+                                </div>
+                                <div class="price-info">
+                                    <span class="price-label">Available:</span>
+                                    <span class="price-value">25 EP</span>
+                                </div>
+                                <div class="price-info">
+                                    <span class="price-label">Seasonal Modifier:</span>
+                                    <span class="price-value">+10%</span>
+                                </div>
+                            </div>
+                            <div class="cargo-actions">
+                                <input type="number" class="quantity-input" placeholder="Quantity (EP)" min="1" max="25">
+                                <button class="btn btn-primary">Buy</button>
+                            </div>
+                        </div>
+
+                        <div class="cargo-card">
+                            <div class="cargo-header">
+                                <div class="cargo-name">Fine Textiles</div>
+                                <div class="cargo-category">Luxury</div>
+                            </div>
+                            <div class="cargo-details">
+                                <div class="price-info">
+                                    <span class="price-label">Base Price:</span>
+                                    <span class="price-value">32 GC</span>
+                                </div>
+                                <div class="price-info">
+                                    <span class="price-label">Available:</span>
+                                    <span class="price-value">12 EP</span>
+                                </div>
+                                <div class="price-info">
+                                    <span class="price-label">Seasonal Modifier:</span>
+                                    <span class="price-value">-5%</span>
+                                </div>
+                            </div>
+                            <div class="cargo-actions">
+                                <input type="number" class="quantity-input" placeholder="Quantity (EP)" min="1" max="12">
+                                <button class="btn btn-primary">Buy</button>
+                            </div>
+                        </div>
+
+                        <div class="cargo-card">
+                            <div class="cargo-header">
+                                <div class="cargo-name">Grain</div>
+                                <div class="cargo-category">Food</div>
+                            </div>
+                            <div class="cargo-details">
+                                <div class="price-info">
+                                    <span class="price-label">Base Price:</span>
+                                    <span class="price-value">8 GC</span>
+                                </div>
+                                <div class="price-info">
+                                    <span class="price-label">Available:</span>
+                                    <span class="price-value">40 EP</span>
+                                </div>
+                                <div class="price-info">
+                                    <span class="price-label">Seasonal Modifier:</span>
+                                    <span class="price-value">+0%</span>
+                                </div>
+                            </div>
+                            <div class="cargo-actions">
+                                <input type="number" class="quantity-input" placeholder="Quantity (EP)" min="1" max="40">
+                                <button class="btn btn-primary">Buy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Tab -->
+                <div class="tab-content" id="inventory-tab">
+                    <div class="inventory-item">
+                        <div class="item-info">
+                            <h4>Weapons <span class="quality-badge">Good</span></h4>
+                            <div class="item-details">8 EP • Purchased in Nuln • 3 days ago</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn btn-success">Sell</button>
+                        </div>
+                    </div>
+
+                    <div class="inventory-item">
+                        <div class="item-info">
+                            <h4>Spices <span class="quality-badge">Excellent</span></h4>
+                            <div class="item-details">3 EP • Purchased in Marienburg • 1 week ago</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn btn-success">Sell</button>
+                        </div>
+                    </div>
+
+                    <div class="empty-state" style="display: none;">
+                        <i class="fas fa-box-open"></i>
+                        <p>Your inventory is empty</p>
+                        <div class="sub-text">Purchase some cargo to get started</div>
+                    </div>
+                </div>
+
+                <!-- History Tab -->
+                <div class="tab-content" id="history-tab">
+                    <div class="transaction-list">
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <h4>Sold: Weapons (8 EP)</h4>
+                                <div class="transaction-details">Altdorf • 2 hours ago</div>
+                            </div>
+                            <div class="transaction-amount">+240 GC</div>
+                        </div>
+
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <h4>Bought: Iron Ore (5 EP)</h4>
+                                <div class="transaction-details">Nuln • 1 day ago</div>
+                            </div>
+                            <div class="transaction-amount">-75 GC</div>
+                        </div>
+
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <h4>Sold: Grain (15 EP)</h4>
+                                <div class="transaction-details">Bögenhafen • 3 days ago</div>
+                            </div>
+                            <div class="transaction-amount">+180 GC</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Show corresponding content
+                const targetTab = tab.getAttribute('data-tab');
+                document.getElementById(targetTab + '-tab').classList.add('active');
+            });
+        });
+
+        // Form interactions
+        document.getElementById('region-select').addEventListener('change', function() {
+            console.log('Region changed to:', this.value);
+        });
+
+        document.getElementById('settlement-select').addEventListener('change', function() {
+            console.log('Settlement changed to:', this.value);
+        });
+
+        document.getElementById('season-select').addEventListener('change', function() {
+            console.log('Season changed to:', this.value);
+        });
+
+        // Button interactions
+        document.getElementById('check-availability').addEventListener('click', function() {
+            console.log('Checking availability...');
+            // Could refresh the market data here
+        });
+
+        // Purchase buttons
+        document.querySelectorAll('.cargo-card .btn-primary').forEach(button => {
+            button.addEventListener('click', function() {
+                const card = this.closest('.cargo-card');
+                const cargoName = card.querySelector('.cargo-name').textContent;
+                const quantityInput = card.querySelector('.quantity-input');
+                const quantity = quantityInput.value;
+                
+                if (quantity && quantity > 0) {
+                    console.log(`Purchasing ${quantity} EP of ${cargoName}`);
+                    quantityInput.value = '';
+                } else {
+                    alert('Please enter a valid quantity');
+                }
+            });
+        });
+
+        // Sell buttons
+        document.querySelectorAll('.inventory-item .btn-success').forEach(button => {
+            button.addEventListener('click', function() {
+                const item = this.closest('.inventory-item');
+                const itemName = item.querySelector('h4').textContent;
+                console.log(`Selling ${itemName}`);
+            });
+        });
+
+        // Quick action buttons
+        document.getElementById('quick-sell').addEventListener('click', function() {
+            console.log('Quick sell clicked');
+        });
+
+        document.getElementById('haggle').addEventListener('click', function() {
+            console.log('Haggle clicked');
+        });
+
+        document.getElementById('desperate-sale').addEventListener('click', function() {
+            console.log('Desperate sale clicked');
+        });
+    </script>
+</body>
+</html>

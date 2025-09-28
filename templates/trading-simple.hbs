@@ -1,10 +1,8 @@
-{{!-- Simplified Trading Places Dialog Template --}}
-<div class="wfrp-trading-dialog">
-    <div class="trading-header">
-        <h2>Trading Places</h2>
-        <div class="season-selector">
-            <label for="current-season">Current Season:</label>
-            <select id="current-season" name="currentSeason">
+<div class="trading-interface">
+    <div class="controls-row">
+        <div class="control-group">
+            <label>Season:</label>
+            <select id="season-select" class="compact">
                 <option value="spring">Spring</option>
                 <option value="summer">Summer</option>
                 <option value="autumn">Autumn</option>
@@ -12,53 +10,46 @@
             </select>
         </div>
     </div>
-    
-    <div class="trading-content">
-        <div class="settlement-section">
-            <h3>Settlement Selection</h3>
-            <div class="settlement-info">
-                <div class="settlement-selector-container">
-                    <label for="settlement-selector">Select Settlement:</label>
-                    <select id="settlement-selector" class="settlement-selector">
-                        <option value="">-- Select Settlement --</option>
-                        {{#each settlements}}
-                        <option value="{{name}}" data-region="{{region}}">{{name}} ({{region}})</option>
-                        {{/each}}
-                    </select>
-                    <input type="text" class="settlement-search" placeholder="Search settlements..." />
-                </div>
-                <div class="settlement-details">
-                    <p class="no-selection">Select a settlement to view details and check cargo availability.</p>
-                </div>
-            </div>
+
+    <div class="settlement-selection">
+        <div class="control-group">
+            <label>Region:</label>
+            <select id="region-select" class="compact">
+                <option value="">Select region...</option>
+                <option value="Reikland">Reikland</option>
+                <option value="Middenland">Middenland</option>
+                <option value="Nordland">Nordland</option>
+                <option value="Ostland">Ostland</option>
+                <option value="Ostermark">Ostermark</option>
+                <option value="Stirland">Stirland</option>
+                <option value="Averland">Averland</option>
+                <option value="Wissenland">Wissenland</option>
+                <option value="Talabecland">Talabecland</option>
+                <option value="Hochland">Hochland</option>
+                <option value="Sylvania">Sylvania</option>
+                <option value="Moot">The Moot</option>
+                <option value="Sudenland">Sudenland</option>
+                <option value="Wasteland">Wasteland</option>
+            </select>
         </div>
-        
-        <div class="cargo-section">
-            <h3>Available Cargo</h3>
-            <div class="cargo-list">
-                <p class="no-cargo">Select a settlement and check cargo availability to see available goods.</p>
-            </div>
-        </div>
-        
-        <div class="transaction-section">
-            <h3>Transaction Controls</h3>
-            <div class="transaction-controls">
-                <div class="control-group">
-                    <label>Actions:</label>
-                    <div class="action-buttons">
-                        <button class="check-availability" type="button">Check Cargo Availability</button>
-                        <button class="haggle-button" type="button" disabled>Attempt Haggle</button>
-                        <button class="sale-button" type="button" disabled>Sell Cargo</button>
-                    </div>
-                </div>
-            </div>
+        <div class="control-group">
+            <label>Settlement:</label>
+            <select id="settlement-select" class="compact" disabled>
+                <option value="">Select region first...</option>
+            </select>
         </div>
     </div>
-    
-    <div class="trading-footer">
-        <div class="transaction-history">
-            <h4>Recent Transactions</h4>
-            <p class="no-history">No transactions yet.</p>
+
+    <div class="actions-section">
+        <button class="btn btn-primary" id="check-availability">Check Availability</button>
+        <button class="btn btn-secondary" id="buy-cargo">Buy Cargo</button>
+        <button class="btn btn-secondary" id="sell-cargo">Sell Cargo</button>
+    </div>
+
+    <div class="results-section" id="results">
+        <h3>Results</h3>
+        <div id="results-content">
+            <p>Select a settlement and check availability to see results.</p>
         </div>
     </div>
 </div>

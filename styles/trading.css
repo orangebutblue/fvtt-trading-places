@@ -1,5 +1,147 @@
 /* Trading Places Module Styles */
 
+/* Responsive trading interface */
+.wfrp-trading.application-v2 {
+    background: #2a2a2a;
+    color: #ffffff;
+}
+
+.wfrp-trading .window-content {
+    background: #2a2a2a;
+    padding: 15px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.trading-interface {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    min-width: 280px;
+}
+
+/* Controls row - responsive layout */
+.controls-row,
+.settlement-selection,
+.actions-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    padding: 10px;
+    background: #333;
+    border-radius: 5px;
+    border: 1px solid #555;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.control-group label {
+    color: #fff;
+    font-size: 14px;
+    white-space: nowrap;
+    min-width: fit-content;
+}
+
+/* Compact selects - size based on content */
+select.compact {
+    background: #1a1a1a;
+    color: #ffffff;
+    border: 1px solid #666;
+    padding: 6px 10px;
+    border-radius: 3px;
+    font-size: 14px;
+    min-width: 120px;
+    width: auto;
+    flex: 1;
+}
+
+select:disabled {
+    background: #444;
+    color: #888;
+}
+
+/* Buttons */
+.btn {
+    background: #1a1a1a;
+    color: #ffffff;
+    border: 1px solid #666;
+    padding: 8px 16px;
+    border-radius: 3px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) {
+    background: #444;
+}
+
+.btn-primary {
+    background: #0066cc;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #0052a3;
+}
+
+/* Results section */
+.results-section {
+    background: #333;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #555;
+    flex: 1;
+}
+
+.results-section h3 {
+    margin: 0 0 10px 0;
+    color: #fff;
+    font-size: 16px;
+}
+
+#results-content {
+    color: #ccc;
+    line-height: 1.4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+    .controls-row,
+    .settlement-selection,
+    .actions-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .control-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+    }
+    
+    select.compact {
+        width: 100%;
+    }
+}
+
+@media (min-width: 600px) {
+    .settlement-selection {
+        justify-content: space-between;
+    }
+    
+    .control-group {
+        flex: 1;
+        max-width: 250px;
+    }
+}
+
 .wfrp-trading-dialog {
     font-family: var(--font-primary);
     background: var(--color-bg);

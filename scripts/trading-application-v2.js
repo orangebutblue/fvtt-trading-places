@@ -19,7 +19,7 @@ if (typeof foundry?.applications?.api?.ApplicationV2 === 'undefined') {
 } else {
     console.log('Trading Places | ApplicationV2 available, defining WFRPTradingApplication');
     
-class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
+class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
 
     /** @override */
     static DEFAULT_OPTIONS = {
@@ -33,27 +33,18 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
             maximizable: false
         },
         position: {
-            width: 1600,
-            height: 800,
+            width: 500,
+            height: 600,
             top: 100,
             left: 100
         },
-        classes: ["wfrp-trading", "application-v2"]
+        classes: ["wfrp-trading", "application-v2", "modern-trading"]
     };
 
     /** @override */
     static PARTS = {
-        header: {
-            template: "modules/trading-places/templates/trading-header.hbs",
-            scrollable: []
-        },
         content: {
-            template: "modules/trading-places/templates/trading-content.hbs",
-            scrollable: [".settlement-section", ".cargo-section"]
-        },
-        footer: {
-            template: "modules/trading-places/templates/trading-footer.hbs",
-            scrollable: [".debug-log-display"]
+            template: "modules/trading-places/templates/trading-simple.hbs"
         }
     };
 
@@ -346,8 +337,8 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      * @private
      */
     _logInfo(category, message, data = {}) {
-        if (this.debugLogger) {
-            this.debugLogger.logInfo(category, message, data);
+        if (this.debugLogger && this.debugLogger.log) {
+            this.debugLogger.log('INFO', category, message, data, 'INFO');
         } else {
             console.log(`Trading Places | ${category}: ${message}`, data);
         }
@@ -361,8 +352,8 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      * @private
      */
     _logError(category, message, data = {}) {
-        if (this.debugLogger) {
-            this.debugLogger.logError(category, message, data);
+        if (this.debugLogger && this.debugLogger.log) {
+            this.debugLogger.log('ERROR', category, message, data, 'ERROR');
         } else {
             console.error(`Trading Places | ${category}: ${message}`, data);
         }
@@ -376,8 +367,8 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
      * @private
      */
     _logDebug(category, message, data = {}) {
-        if (this.debugLogger) {
-            this.debugLogger.logDebug(category, message, data);
+        if (this.debugLogger && this.debugLogger.log) {
+            this.debugLogger.log('DEBUG', category, message, data, 'DEBUG');
         } else {
             console.debug(`Trading Places | ${category}: ${message}`, data);
         }
@@ -422,6 +413,26 @@ class WFRPTradingApplication extends foundry.applications.api.ApplicationV2 {
         super._onRender(context, options);
 
         this._logInfo('Application Lifecycle', 'Application rendered successfully');
+
+        // Debug: Log the actual HTML structure
+        console.log('WFRP Trading | Application element:', this.element);
+        console.log('WFRP Trading | Application classes:', this.element?.className);
+        console.log('WFRP Trading | Parent element:', this.element?.parentElement);
+        console.log('WFRP Trading | Window element:', this.element?.closest('.app'));
+        
+        // Force background styles for debugging
+        if (this.element) {
+            this.element.style.backgroundColor = '#2c2c2c';
+            this.element.style.border = '2px solid #333';
+            console.log('WFRP Trading | Forced styles applied to element');
+            
+            const windowElement = this.element.closest('.app');
+            if (windowElement) {
+                windowElement.style.backgroundColor = '#2c2c2c';
+                windowElement.style.border = '2px solid #333';
+                console.log('WFRP Trading | Forced styles applied to window element');
+            }
+        }
 
         // Set up window management listeners
         this._setupWindowEventListeners();

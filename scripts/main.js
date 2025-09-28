@@ -32,11 +32,13 @@ Hooks.once('init', () => {
     console.log('Trading Places | Registering scene controls hook during init...');
     Hooks.on('getSceneControlButtons', (controls) => {
         console.log('Trading Places | *** EARLY getSceneControlButtons hook FIRED! ***');
-        console.log('Trading Places | Controls array:', controls ? controls.length : 'undefined', 'controls');
+        console.log('Trading Places | Controls parameter type:', typeof controls);
+        console.log('Trading Places | Controls parameter:', controls);
         
-        // Safety check - make sure controls array is valid
+        // The controls parameter should be an array for us to modify
         if (!controls || !Array.isArray(controls)) {
-            console.log('Trading Places | Controls array is invalid, skipping this call');
+            console.log('Trading Places | Controls is not an array, cannot add trading controls');
+            console.log('Trading Places | Expected array, got:', typeof controls, controls);
             return;
         }
         
@@ -84,6 +86,8 @@ Hooks.once('init', () => {
         
         controls.push(tradingControls);
         console.log('Trading Places | Trading controls added successfully');
+        console.log('Trading Places | Controls array now has', controls.length, 'controls');
+        console.log('Trading Places | All control names:', controls.map(c => c.name));
     });
     console.log('Trading Places | Scene controls hook registered during init');
 
