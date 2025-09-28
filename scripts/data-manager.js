@@ -41,15 +41,25 @@ class DataManager {
     }
 
     /**
-     * Validate a single settlement object
+     * Enhanced settlement validation with detailed error reporting and user feedback support
      * @param {Object} settlement - Settlement object to validate
-     * @returns {Object} - Validation result with success flag and errors
+     * @returns {Object} - Enhanced validation result with detailed error information
      */
     validateSettlement(settlement) {
         const result = {
             valid: true,
-            errors: []
+            errors: [],
+            errorType: null,
+            settlement: settlement
         };
+
+        // Check if settlement object exists
+        if (!settlement) {
+            result.valid = false;
+            result.errorType = 'missing_settlement';
+            result.errors.push('No settlement selected');
+            return result;
+        }
 
         // Check for required fields (9 core fields as per requirements)
         const requiredFields = [
@@ -57,17 +67,37 @@ class DataManager {
             'population', 'wealth', 'source', 'garrison', 'notes'
         ];
 
-        // Check for missing fields
+        // Check for missing fields (maintain backward compatibility)
         const missingFields = requiredFields.filter(field =>
             !settlement.hasOwnProperty(field) || settlement[field] === null || settlement[field] === undefined
         );
 
         if (missingFields.length > 0) {
             result.valid = false;
+            result.errorType = 'missing_fields';
             result.errors.push(`Missing required fields: ${missingFields.join(', ')}`);
         }
 
-        // Type validation for specific fields
+        // Additional enhanced validation for empty string fields (new feature)
+        // Note: We don't validate empty arrays here for backward compatibility
+        // Note: 'notes' field is optional and can be empty or whitespace-only
+        const emptyStringFields = [];
+        const criticalStringFields = ['region', 'name', 'ruler']; // Notes is optional
+        criticalStringFields.forEach(field => {
+            if (settlement.hasOwnProperty(field) && settlement[field] !== null && settlement[field] !== undefined) {
+                if (typeof settlement[field] === 'string' && settlement[field].trim() === '') {
+                    emptyStringFields.push(field + ' (empty)');
+                }
+            }
+        });
+
+        if (emptyStringFields.length > 0) {
+            result.valid = false;
+            result.errorType = result.errorType || 'empty_fields';
+            result.errors.push(`Settlement has empty critical fields: ${emptyStringFields.join(', ')}`);
+        }
+
+        // Enhanced type validation for specific fields
         if (settlement.hasOwnProperty('population')) {
             if (typeof settlement.population !== 'number' || settlement.population < 0) {
                 result.valid = false;
@@ -75,6 +105,7 @@ class DataManager {
             }
         }
 
+        // Enhanced wealth validation (maintain backward compatibility)
         if (settlement.hasOwnProperty('wealth')) {
             if (typeof settlement.wealth !== 'number' || settlement.wealth < 1 || settlement.wealth > 5) {
                 result.valid = false;
@@ -82,6 +113,7 @@ class DataManager {
             }
         }
 
+        // Enhanced source array validation (maintain backward compatibility)
         if (settlement.hasOwnProperty('source')) {
             if (!Array.isArray(settlement.source)) {
                 result.valid = false;
@@ -89,10 +121,19 @@ class DataManager {
             } else if (settlement.source.length === 0) {
                 result.valid = false;
                 result.errors.push('Source array cannot be empty');
+            } else {
+                // Enhanced validation: check each source item is a non-empty string
+                const invalidSources = settlement.source.filter(source => 
+                    typeof source !== 'string' || source.trim() === ''
+                );
+                if (invalidSources.length > 0) {
+                    result.valid = false;
+                    result.errors.push(`Source array contains ${invalidSources.length} invalid entries`);
+                }
             }
         }
 
-        // Validate size enumeration
+        // Enhanced size enumeration validation (maintain backward compatibility)
         if (settlement.hasOwnProperty('size')) {
             const validSizes = ['CS', 'C', 'T', 'ST', 'V', 'F', 'M'];
             if (!validSizes.includes(settlement.size)) {
@@ -101,9 +142,10 @@ class DataManager {
             }
         }
 
-        // Validate string fields are not empty
-        const stringFields = ['region', 'name', 'ruler'];
-        stringFields.forEach(field => {
+        // Enhanced string field validation (maintain backward compatibility)
+        // Notes field is optional and doesn't need to be validated for emptiness
+        const requiredStringFields = ['region', 'name', 'ruler'];
+        requiredStringFields.forEach(field => {
             if (settlement.hasOwnProperty(field)) {
                 if (typeof settlement[field] !== 'string' || settlement[field].trim() === '') {
                     result.valid = false;
@@ -112,13 +154,28 @@ class DataManager {
             }
         });
 
-        // Validate garrison is an array
+        // Validate notes field if it exists - it must be a string but can be empty or whitespace
+        if (settlement.hasOwnProperty('notes')) {
+            if (settlement.notes !== null && settlement.notes !== undefined && typeof settlement.notes !== 'string') {
+                result.valid = false;
+                result.errors.push('notes must be a string (can be empty)');
+            }
+        }
+
+        // Enhanced garrison validation (maintain backward compatibility)
         if (settlement.hasOwnProperty('garrison')) {
             if (!Array.isArray(settlement.garrison)) {
                 result.valid = false;
                 result.errors.push('Garrison must be an array');
             }
         }
+
+        // Set error type for validation failures
+        if (!result.valid && !result.errorType) {
+            result.errorType = 'validation_failed';
+        }
+
+        return result;
 
         return result;
     }

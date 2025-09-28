@@ -1,2869 +1,835 @@
-/* Trading Places Module Styles */
+/* WFRP Trading Places - Modern Unified UI Styles */
 
-/* Responsive trading interface */
-.wfrp-trading.application-v2 {
-    background: #2a2a2a;
-    color: #ffffff;
-}
-
-.wfrp-trading .window-content {
-    background: #2a2a2a;
-    padding: 15px;
-    height: 100%;
-    overflow-y: auto;
-}
-
-.trading-interface {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    min-width: 280px;
-}
-
-/* Controls row - responsive layout */
-.controls-row,
-.settlement-selection,
-.actions-section {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    align-items: center;
-    padding: 10px;
-    background: #333;
-    border-radius: 5px;
-    border: 1px solid #555;
-}
-
-.control-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 120px;
-}
-
-.control-group label {
-    color: #fff;
-    font-size: 14px;
-    white-space: nowrap;
-    min-width: fit-content;
-}
-
-/* Compact selects - size based on content */
-select.compact {
-    background: #1a1a1a;
-    color: #ffffff;
-    border: 1px solid #666;
-    padding: 6px 10px;
-    border-radius: 3px;
-    font-size: 14px;
-    min-width: 120px;
-    width: auto;
-    flex: 1;
-}
-
-select:disabled {
-    background: #444;
-    color: #888;
-}
-
-/* Buttons */
-.btn {
-    background: #1a1a1a;
-    color: #ffffff;
-    border: 1px solid #666;
-    padding: 8px 16px;
-    border-radius: 3px;
-    font-size: 14px;
-    cursor: pointer;
-    margin-right: 10px;
-    white-space: nowrap;
-}
-
-.btn:hover:not(:disabled) {
-    background: #444;
-}
-
-.btn-primary {
-    background: #0066cc;
-}
-
-.btn-primary:hover:not(:disabled) {
-    background: #0052a3;
-}
-
-/* Results section */
-.results-section {
-    background: #333;
-    padding: 15px;
-    border-radius: 5px;
-    border: 1px solid #555;
-    flex: 1;
-}
-
-.results-section h3 {
-    margin: 0 0 10px 0;
-    color: #fff;
-    font-size: 16px;
-}
-
-#results-content {
-    color: #ccc;
-    line-height: 1.4;
-}
-
-/* Responsive adjustments */
-@media (max-width: 400px) {
-    .controls-row,
-    .settlement-selection,
-    .actions-section {
-        flex-direction: column;
-        align-items: stretch;
-    }
+:root {
+    /* Modern color palette */
+    --bg-primary: #1a1d23;
+    --bg-secondary: #252932;
+    --bg-tertiary: #2f3439;
+    --bg-accent: #3a4048;
     
-    .control-group {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 5px;
-    }
+    --text-primary: #ffffff;
+    --text-secondary: #b8bcc8;
+    --text-muted: #8b92a5;
     
-    select.compact {
-        width: 100%;
-    }
+    --accent-primary: #ffa726;
+    --accent-secondary: #66bb6a;
+    --accent-warning: #ef5350;
+    --accent-info: #42a5f5;
+    
+    --border-light: #3a4048;
+    --border-medium: #4a5058;
+    
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+    
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    
+    --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-@media (min-width: 600px) {
-    .settlement-selection {
-        justify-content: space-between;
-    }
-    
-    .control-group {
-        flex: 1;
-        max-width: 250px;
-    }
-}
-
-.wfrp-trading-dialog {
+.trading-app {
     font-family: var(--font-primary);
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-dark);
-    border-radius: 5px;
-    padding: 10px;
-    position: relative;
-    min-width: 600px;
-    min-height: 400px;
-}
-
-/* FoundryVTT Dialog Integration */
-.dialog .wfrp-trading-dialog {
-    border: none;
-    border-radius: 0;
-    padding: 0;
-    background: transparent;
-}
-
-.dialog .window-content .wfrp-trading-dialog {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow: hidden;
+    width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
-.trading-header {
+/* Header */
+.app-header {
+    background: linear-gradient(135deg, var(--accent-primary), #ff8f00);
+    padding: 24px 32px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--color-border-light);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
-.trading-header h2 {
-    margin: 0;
-    color: var(--color-text-dark-primary);
-}
-
-.season-selector {
+.app-title {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
-.season-selector label {
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
+.app-title h1 {
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0;
 }
 
-.season-selector select {
-    padding: 5px;
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    background: var(--color-bg-option);
+.app-title i {
+    font-size: 32px;
+    color: white;
 }
 
-.trading-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 15px;
+.season-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(10px);
 }
 
-.settlement-section,
-.cargo-section {
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
+.season-control label {
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
 }
 
-.transaction-section {
-    grid-column: 1 / -1;
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-}
-
-.settlement-section h3,
-.cargo-section h3,
-.transaction-section h3 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-    border-bottom: 1px solid var(--color-border-light);
-    padding-bottom: 5px;
-}
-
-.settlement-info,
-.cargo-list,
-.transaction-controls {
-    min-height: 100px;
-}
-
-.trading-footer {
-    border-top: 1px solid var(--color-border-light);
-    padding-top: 10px;
-}
-
-.transaction-history {
-    max-height: 150px;
-    overflow-y: auto;
-}
-
-/* Season Info Styles */
-.season-info {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
+.season-control select {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
     padding: 8px 12px;
-    margin-bottom: 15px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    color: var(--bg-primary);
+    cursor: pointer;
+}
+
+/* Debug Toggle Styles */
+.debug-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(10px);
+}
+
+.debug-toggle label {
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.season-label {
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-}
-
-.season-value {
-    color: var(--color-text-dark-primary);
-    font-weight: bold;
-    text-transform: capitalize;
-}
-
-.season-note {
-    color: var(--color-text-dark-secondary);
-    font-style: italic;
-    font-size: 12px;
-}
-
-/* Settlement Selection Styles */
-.settlement-selector-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.settlement-selector-container label {
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-}
-
-.settlement-selector,
-.settlement-search {
-    padding: 8px;
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    background: var(--color-bg-option);
-    font-size: 14px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-/* Settlement Selector Component Styles */
-.settlement-selector {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.selector-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    align-items: end;
-}
-
-.region-selector,
-.settlement-selector-dropdown {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.region-selector label,
-.settlement-selector-dropdown label {
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-    font-size: 14px;
-}
-
-.region-dropdown,
-.settlement-dropdown {
-    padding: 8px 12px;
-    border: 1px solid var(--color-border-light);
-    border-radius: 5px;
-    background: var(--color-bg-option);
-    font-size: 14px;
-    color: var(--color-text-dark-primary);
-    transition: border-color 0.2s, box-shadow 0.2s;
+.debug-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
     cursor: pointer;
 }
 
-.region-dropdown:focus,
-.settlement-dropdown:focus {
-    outline: none;
-    border-color: var(--color-border-highlight, #ff6400);
-    box-shadow: 0 0 0 2px rgba(255, 100, 0, 0.2);
-}
-
-.settlement-dropdown:disabled {
-    background: var(--color-bg-alt);
-    color: var(--color-text-dark-secondary);
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.settlement-details {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 5px;
-    padding: 15px;
-    margin-top: 10px;
-}
-
-.settlement-info h3 {
-    margin: 0 0 15px 0;
-    color: var(--color-text-dark-primary);
-    font-size: 20px;
-    border-bottom: 2px solid var(--color-border-light);
-    padding-bottom: 8px;
-}
-
-.settlement-properties {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.property-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 10px;
-}
-
-.property-item {
-    display: flex;
-    justify-content: space-between;
+/* Error Display Styles */
+.error-display {
+    background: var(--accent-warning);
+    color: white;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    display: none;
     align-items: center;
-    padding: 8px 12px;
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
+    gap: 8px;
 }
 
-.property-label {
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-    font-size: 13px;
+.error-display.show {
+    display: flex;
 }
 
-.property-value {
-    color: var(--color-text-dark-primary);
-    font-weight: 500;
-    text-align: right;
+.error-display i {
+    font-size: 18px;
 }
 
-.settlement-notes {
-    border-top: 1px solid var(--color-border-light);
-    padding-top: 15px;
+/* Main Content */
+.app-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    flex: 1;
+    overflow: hidden;
 }
 
-.settlement-notes .property-label {
+/* Sidebar */
+.sidebar {
+    background: var(--bg-tertiary);
+    padding: 32px;
+    border-right: 1px solid var(--border-light);
+    overflow-y: auto;
+}
+
+.section {
+    margin-bottom: 32px;
+}
+
+.section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.section-title i {
+    color: var(--accent-primary);
+    width: 20px;
+}
+
+/* Form Controls */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
     display: block;
+    color: var(--text-secondary);
+    font-weight: 500;
     margin-bottom: 8px;
     font-size: 14px;
 }
 
-.notes-content {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-    color: var(--color-text-dark-primary);
-    font-style: italic;
-    min-height: 40px;
+.form-select, .form-input {
+    width: 100%;
+    height: auto;
+    background: var(--bg-accent);
+    border: 2px solid var(--border-light);
+    color: var(--text-primary);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
 
-/* Responsive adjustments for settlement selector */
-@media (max-width: 800px) {
-    .selector-row {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    .property-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .property-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-    }
-    
-    .property-value {
-        text-align: left;
-    }
-}
-
-.settlement-selector:focus,
-.settlement-search:focus,
-.quantity-input:focus,
-.quality-selector:focus,
-#current-season:focus {
+.form-select:focus, .form-input:focus {
     outline: none;
-    border-color: var(--color-border-highlight, #ff6400);
-    box-shadow: 0 0 0 2px rgba(255, 100, 0, 0.2);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.1);
 }
 
-.settlement-search {
-    font-style: italic;
-}
-
-.settlement-details-content {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-}
-
-.settlement-details-content h4 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-}
-
-.settlement-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5px;
-    margin-bottom: 10px;
-}
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-}
-
-.stat-label {
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-}
-
-.stat-value {
-    color: var(--color-text-dark-primary);
-}
-
-.trade-center-badge {
-    background: var(--color-bg-option);
-    color: var(--color-text-light-primary);
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: bold;
-    display: inline-block;
-    margin-top: 5px;
-}
-
-.settlement-actions {
-    margin-top: 10px;
-}
-
-.check-availability {
-    background: var(--color-bg-option);
-    color: var(--color-text-light-primary);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.check-availability:hover {
-    background: var(--color-bg-option-hover, #4a4a4a);
-}
-
-.check-availability:disabled {
-    opacity: 0.6;
+.form-select:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
-/* Cargo List Styles */
-.cargo-item {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-    margin-bottom: 10px;
+/* Settlement Info */
+.settlement-display {
+    background: var(--bg-accent);
+    padding: 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-medium);
+    margin-bottom: 24px;
+}
+
+.settlement-display h3 {
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    font-size: 20px;
+}
+
+.info-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.info-value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.info-value.highlight {
+    color: var(--accent-primary);
+    font-weight: 700;
+    background: rgba(255, 167, 38, 0.1);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+}
+
+.trade-badge {
+    display: inline-block;
+    background: var(--accent-secondary);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 12px;
+}
+
+/* Buttons */
+.btn {
+    background: var(--bg-accent);
+    border: 2px solid var(--border-medium);
+    color: var(--text-primary);
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    text-decoration: none;
 }
 
-.cargo-item:hover {
-    background: var(--color-bg-option);
+.btn:hover:not(:disabled) {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
 }
 
-.cargo-item.selected {
-    border-color: var(--color-border-highlight, #ff6400);
-    background: var(--color-bg-option);
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-primary {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #ff8f00;
+    border-color: #ff8f00;
+}
+
+.btn-success {
+    background: var(--accent-secondary);
+    border-color: var(--accent-secondary);
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: #4caf50;
+    border-color: #4caf50;
+}
+
+.btn-warning {
+    background: var(--accent-warning);
+    border-color: var(--accent-warning);
+    color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+    background: #d32f2f;
+    border-color: #d32f2f;
+}
+
+/* Main Panel */
+.main-panel {
+    padding: 32px;
+    background: var(--bg-secondary);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 32px;
+    background: var(--bg-tertiary);
+    padding: 6px;
+    border-radius: var(--radius-md);
+}
+
+.tab {
+    flex: 1;
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tab.active {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.tab:hover:not(.active) {
+    background: var(--bg-accent);
+    color: var(--text-primary);
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.tab-content.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Cargo Grid */
+.cargo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.cargo-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    transition: all 0.2s ease;
+}
+
+.cargo-card:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .cargo-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 16px;
 }
 
-.cargo-header h5 {
-    margin: 0;
-    color: var(--color-text-dark-primary);
+.cargo-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .cargo-category {
+    background: var(--accent-info);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
     font-size: 12px;
-    color: var(--color-text-dark-secondary);
-    background: var(--color-bg);
-    padding: 2px 6px;
-    border-radius: 10px;
+    font-weight: 500;
 }
 
 .cargo-details {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
-.cargo-price,
-.cargo-quantity {
+.price-info {
     display: flex;
     justify-content: space-between;
-}
-
-.price-label,
-.quantity-label {
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-}
-
-.price-value,
-.quantity-value {
-    color: var(--color-text-dark-primary);
-}
-
-.seasonal-modifier {
-    font-size: 11px;
-    color: var(--color-text-dark-secondary);
-    font-style: italic;
-    margin-left: 4px;
-}
-
-.cargo-quality {
-    grid-column: 1 / -1;
-    display: flex;
     align-items: center;
-    gap: 10px;
 }
 
-.quality-selector {
-    padding: 4px;
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    background: var(--color-bg-option);
-    font-size: 12px;
+.price-label {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.price-value {
+    color: var(--accent-secondary);
+    font-weight: 700;
+    font-size: 16px;
 }
 
 .cargo-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
 }
 
 .quantity-input {
     flex: 1;
-    padding: 6px;
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    background: var(--color-bg-option);
-}
-
-.purchase-button,
-.sale-button,
-.haggle-button,
-.desperate-sale-button,
-.rumor-sale-button {
-    background: var(--color-bg-option);
-    color: var(--color-text-light-primary);
-    border: none;
-    padding: 6px 12px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.purchase-button:hover,
-.sale-button:hover,
-.haggle-button:hover {
-    background: var(--color-bg-option-hover, #4a4a4a);
-}
-
-.purchase-button:disabled,
-.sale-button:disabled,
-.haggle-button:disabled,
-.desperate-sale-button:disabled,
-.rumor-sale-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-/* Transaction Controls Styles */
-.control-group {
-    margin-bottom: 15px;
-}
-
-.control-group label {
-    display: block;
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-    margin-bottom: 5px;
-}
-
-.action-buttons,
-.special-buttons {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-/* Transaction History Styles */
-.trading-footer h4 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-}
-
-.history-list {
-    max-height: 120px;
-    overflow-y: auto;
-}
-
-.history-item {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 8px;
-    margin-bottom: 5px;
-}
-
-.history-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 3px;
-}
-
-.transaction-type {
-    font-weight: bold;
-    color: var(--color-text-dark-primary);
-    text-transform: capitalize;
-}
-
-.transaction-date {
-    font-size: 11px;
-    color: var(--color-text-dark-secondary);
-}
-
-.history-details {
-    font-size: 12px;
-    color: var(--color-text-dark-secondary);
-}
-
-/* Utility Styles */
-.no-selection,
-.no-cargo,
-.no-history {
-    color: var(--color-text-dark-secondary);
-    font-style: italic;
-    text-align: center;
-    padding: 20px;
-}
-
-/* Visual feedback for transaction states */
-.wfrp-trading-dialog.processing {
-    opacity: 0.8;
-    pointer-events: none;
-}
-
-.wfrp-trading-dialog.processing::after {
-    content: "Processing...";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--color-bg-option);
-    color: var(--color-text-light-primary);
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-weight: bold;
-    z-index: 1000;
-}
-
-.transaction-success {
-    border-left: 4px solid #4caf50;
-    background: rgba(76, 175, 80, 0.1);
-}
-
-.transaction-error {
-    border-left: 4px solid #f44336;
-    background: rgba(244, 67, 54, 0.1);
-}
-
-.transaction-warning {
-    border-left: 4px solid #ff9800;
-    background: rgba(255, 152, 0, 0.1);
-}
-
-/* Enhanced button states */
-.purchase-button.loading,
-.sale-button.loading,
-.haggle-button.loading,
-.check-availability.loading {
-    position: relative;
-    color: transparent;
-}
-
-.purchase-button.loading::after,
-.sale-button.loading::after,
-.haggle-button.loading::after,
-.check-availability.loading::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 16px;
-    height: 16px;
-    border: 2px solid transparent;
-    border-top: 2px solid currentColor;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-/* Responsive design for smaller screens */
-@media (max-width: 800px) {
-    .trading-content {
-        grid-template-columns: 1fr;
-    }
-    
-    .settlement-stats {
-        grid-template-columns: 1fr;
-    }
-    
-    .cargo-details {
-        grid-template-columns: 1fr;
-    }
-    
-    .action-buttons,
-    .special-buttons {
-        flex-direction: column;
-    }
-    
-    .season-info {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-    }
-}
-
-@media (max-width: 600px) {
-    .wfrp-trading-dialog {
-        padding: 8px;
-    }
-    
-    .trading-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    
-    .settlement-selector-container {
-        gap: 8px;
-    }
-    
-    .cargo-actions {
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .quantity-input {
-        width: 100%;
-    }
-}
-/* Chat 
-Message Styles */
-.wfrp-trading-chat {
-    border: 1px solid var(--color-border-light);
-    border-radius: 5px;
-    background: var(--color-bg-alt);
-    margin: 5px 0;
-    font-family: var(--font-primary);
-}
-
-.trading-chat-header {
-    background: var(--color-bg-option);
-    color: var(--color-text-light-primary);
+    background: var(--bg-accent);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
     padding: 8px 12px;
-    border-radius: 5px 5px 0 0;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.trading-chat-header i {
-    color: #4a90e2;
-}
-
-.trading-chat-content {
-    padding: 12px;
-}
-
-/* Dice Roll Results */
-.dice-roll-result {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-    margin: 5px 0;
-}
-
-.dice-roll-result h4 {
-    margin: 0 0 8px 0;
-    color: var(--color-text-dark-primary);
-    border-bottom: 1px solid var(--color-border-light);
-    padding-bottom: 4px;
-}
-
-.roll-details {
-    display: grid;
-    gap: 4px;
-}
-
-.roll-formula,
-.roll-result,
-.roll-target {
-    display: flex;
-    justify-content: space-between;
-}
-
-.roll-success {
-    display: flex;
-    justify-content: space-between;
-    font-weight: bold;
-    padding: 4px;
-    border-radius: 3px;
-    margin-top: 4px;
-}
-
-.roll-success.success {
-    background: rgba(76, 175, 80, 0.2);
-    color: #4caf50;
-}
-
-.roll-success.failure {
-    background: rgba(244, 67, 54, 0.2);
-    color: #f44336;
-}
-
-.roll-description {
-    font-style: italic;
-    color: var(--color-text-dark-secondary);
-    margin-top: 4px;
-}
-
-/* Transaction Summary */
-.transaction-summary {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 5px;
-    padding: 15px;
-    margin: 10px 0;
-}
-
-.transaction-summary h3 {
-    margin: 0 0 15px 0;
-    color: var(--color-text-dark-primary);
-    border-bottom: 2px solid var(--color-border-light);
-    padding-bottom: 8px;
-}
-
-.summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
-}
-
-.summary-section {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 12px;
-}
-
-.summary-section h4 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-    font-size: 14px;
-    border-bottom: 1px solid var(--color-border-light);
-    padding-bottom: 4px;
-}
-
-.detail-grid {
-    display: grid;
-    gap: 6px;
-}
-
-.detail-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 2px 0;
-}
-
-.detail-row.total {
-    border-top: 1px solid var(--color-border-light);
-    padding-top: 6px;
-    margin-top: 4px;
-    font-weight: bold;
-}
-
-.detail-row .label {
-    color: var(--color-text-dark-secondary);
-    font-weight: 500;
-}
-
-.detail-row .value {
-    color: var(--color-text-dark-primary);
-    font-weight: bold;
-}
-
-.detail-row .value.profit {
-    color: #4caf50;
-}
-
-.detail-row .value.cost {
-    color: #f44336;
-}
-
-/* Price Modifiers */
-.modifier-list {
-    display: grid;
-    gap: 4px;
-}
-
-.modifier-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 8px;
-    border-radius: 3px;
-    font-size: 13px;
-}
-
-.modifier-row.positive {
-    background: rgba(76, 175, 80, 0.1);
-    border-left: 3px solid #4caf50;
-}
-
-.modifier-row.negative {
-    background: rgba(244, 67, 54, 0.1);
-    border-left: 3px solid #f44336;
-}
-
-.modifier-row.neutral {
-    background: rgba(158, 158, 158, 0.1);
-    border-left: 3px solid #9e9e9e;
-}
-
-.modifier-desc {
-    color: var(--color-text-dark-secondary);
-}
-
-.modifier-amount {
-    font-weight: bold;
-    color: var(--color-text-dark-primary);
-}
-
-/* Error Messages */
-.trading-error {
-    background: rgba(244, 67, 54, 0.1);
-    border: 1px solid #f44336;
-    border-radius: 3px;
-    padding: 10px;
-    margin: 5px 0;
-}
-
-.trading-error h4 {
-    margin: 0 0 8px 0;
-    color: #f44336;
-}
-
-.error-details {
-    color: var(--color-text-dark-primary);
-    margin-bottom: 4px;
-}
-
-.error-timestamp {
-    color: var(--color-text-dark-secondary);
-    font-size: 12px;
-}
-
-/* Availability Check Results */
-.availability-check {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 12px;
-    margin: 8px 0;
-}
-
-.availability-check h3 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-}
-
-.check-details {
-    display: grid;
-    gap: 8px;
-}
-
-.settlement-info,
-.roll-info,
-.result-info,
-.cargo-info {
-    padding: 6px;
-    background: var(--color-bg-alt);
-    border-radius: 3px;
-}
-
-/* Buyer Search Results */
-.buyer-search {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 12px;
-    margin: 8px 0;
-}
-
-.buyer-search h3 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-}
-
-.search-details {
-    display: grid;
-    gap: 8px;
-}
-
-/* Haggle Test Results */
-.haggle-test-result {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 12px;
-    margin: 8px 0;
-}
-
-.haggle-test-result h3 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-}
-
-.test-comparison {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-
-.player-result,
-.merchant-result {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-}
-
-.player-result h4,
-.merchant-result h4 {
-    margin: 0 0 8px 0;
-    color: var(--color-text-dark-primary);
+    border-radius: var(--radius-sm);
     font-size: 14px;
 }
 
-.haggle-outcome {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
+/* Selling Tab Styles */
+.resource-selection {
+    margin-bottom: 24px;
 }
 
-.haggle-outcome h4 {
-    margin: 0 0 8px 0;
-    color: var(--color-text-dark-primary);
-    font-size: 14px;
-}
-
-/* Gossip Test Results */
-.gossip-test-result {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 12px;
-    margin: 8px 0;
-}
-
-.gossip-test-result h3 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-}
-
-.test-details {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-    margin-bottom: 10px;
-}
-
-.rumor-result {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-}
-
-/* Season Change Messages */
-.season-change {
-    background: rgba(33, 150, 243, 0.1);
-    border: 1px solid #2196f3;
-    border-radius: 3px;
-    padding: 10px;
-    margin: 5px 0;
-}
-
-.season-change h3 {
-    margin: 0 0 8px 0;
-    color: #2196f3;
-}
-
-/* Responsive adjustments for chat messages */
-@media (max-width: 600px) {
-    .summary-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .test-comparison {
-        grid-template-columns: 1fr;
-    }
-    
-    .detail-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
-    }
-    
-    .modifier-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
-    }
-}/*
- Dice Breakdown Dialog */
-.dice-breakdown {
-    font-family: var(--font-primary);
-}
-
-.dice-breakdown h3,
-.dice-breakdown h4 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-    border-bottom: 1px solid var(--color-border-light);
-    padding-bottom: 5px;
-}
-
-.breakdown-details {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-    margin-bottom: 15px;
-}
-
-.breakdown-description {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-    margin-bottom: 15px;
-}
-
-.breakdown-description p {
-    margin: 0;
-    color: var(--color-text-dark-secondary);
-    font-style: italic;
-}
-
-.breakdown-dice {
-    background: var(--color-bg-alt);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-}
-
-.dice-terms {
-    display: grid;
-    gap: 5px;
-}
-
-.dice-term {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 8px;
-    background: var(--color-bg);
-    border-radius: 3px;
-}
-
-.term-formula {
-    font-weight: bold;
-    color: var(--color-text-dark-primary);
-}
-
-.term-results {
-    font-family: monospace;
-    color: var(--color-text-dark-secondary);
-}
-
-.value.success {
-    color: #4caf50;
-    font-weight: bold;
-}
-
-.value.failure {
-    color: #f44336;
-    font-weight: bold;
-}
-/* ==
-=== V2 APPLICATION FRAMEWORK STYLES ===== */
-
-/* Main Application Container */
-.wfrp-trading.application-v2 {
-    font-family: var(--font-primary);
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-dark);
-    border-radius: 5px;
-    display: flex;
-    flex-direction: column;
-    min-width: 1200px;
-    min-height: 800px;
-}
-
-.wfrp-trading.application-v2 .window-content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 0;
-}
-
-/* Header Styles */
-.trading-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    border-bottom: 2px solid var(--color-border-light);
-    background: var(--color-bg-alt);
-    flex-shrink: 0;
-}
-
-.header-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.header-title h2 {
-    margin: 0;
-    color: var(--color-text-dark-primary);
-    font-size: 24px;
-}
-
-.header-title i {
-    color: #ff6400;
-    font-size: 24px;
-}
-
-.debug-indicator {
-    background: #ff9800;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.header-controls {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.current-settlement {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--color-bg);
-    padding: 8px 12px;
-    border-radius: 5px;
-    border: 1px solid var(--color-border-light);
-}
-
-.settlement-label {
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-}
-
-.settlement-name {
-    color: var(--color-text-dark-primary);
-    font-weight: bold;
-}
-
-.settlement-region {
-    color: var(--color-text-dark-secondary);
-    font-style: italic;
-}
-
-/* Content Styles */
-.trading-content {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-}
-
-.content-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto;
-    gap: 20px;
-    height: 100%;
-}
-
-.settlement-section {
-    grid-column: 1;
-    grid-row: 1;
-}
-
-.cargo-section {
-    grid-column: 2;
-    grid-row: 1;
-}
-
-.player-cargo-section {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-.transaction-section {
-    grid-column: 2;
-    grid-row: 2;
-}
-
-.settlement-section,
-.cargo-section,
-.player-cargo-section,
-.transaction-section {
-    border: 1px solid var(--color-border-light);
-    border-radius: 5px;
-    padding: 15px;
-    background: var(--color-bg-alt);
-    display: flex;
-    flex-direction: column;
-}
-
-.settlement-section h3,
-.cargo-section h3,
-.player-cargo-section h3,
-.transaction-section h3 {
-    margin: 0 0 15px 0;
-    color: var(--color-text-dark-primary);
-    border-bottom: 2px solid var(--color-border-light);
-    padding-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.resource-selection h3 {
+    color: var(--text-primary);
+    margin-bottom: 16px;
     font-size: 18px;
+    font-weight: 600;
 }
 
-.settlement-section h3 i,
-.cargo-section h3 i,
-.player-cargo-section h3 i,
-.transaction-section h3 i {
-    color: #ff6400;
-}
-
-/* Player Cargo Management Styles */
-.player-cargo-list {
-    flex: 1;
-    margin-bottom: 15px;
-}
-
-.player-cargo-item {
+.resource-buttons {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    margin-bottom: 8px;
-}
-
-.cargo-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.cargo-name {
-    font-weight: bold;
-    color: var(--color-text-dark-primary);
-}
-
-.cargo-quantity {
-    color: var(--color-text-dark-secondary);
-}
-
-.cargo-quality {
-    font-size: 12px;
-    background: var(--color-bg-option);
-    color: var(--color-text-light-primary);
-    padding: 2px 6px;
-    border-radius: 10px;
-    text-transform: capitalize;
-}
-
-.sell-cargo-button {
-    background: #4caf50;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.sell-cargo-button:hover {
-    background: #45a049;
-}
-
-.add-cargo-section {
-    border-top: 1px solid var(--color-border-light);
-    padding-top: 15px;
-}
-
-.add-cargo-section h4 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-    font-size: 14px;
-}
-
-.add-cargo-form {
-    display: grid;
-    grid-template-columns: 1fr 80px 100px auto;
-    gap: 8px;
-    align-items: center;
-}
-
-.add-cargo-form input,
-.add-cargo-form select {
-    padding: 6px;
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    background: var(--color-bg-option);
-    font-size: 12px;
-}
-
-.add-cargo-button {
-    background: #2196f3;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-}
-
-.add-cargo-button:hover {
-    background: #1976d2;
-}
-
-.no-player-cargo {
-    color: var(--color-text-dark-secondary);
-    font-style: italic;
-    text-align: center;
-    padding: 20px;
-}
-
-/* Transaction Controls Enhanced */
-.control-group {
+    flex-wrap: wrap;
+    gap: 12px;
     margin-bottom: 20px;
 }
 
-.control-group label {
-    display: block;
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-
-.action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.haggle-button,
-.sale-button,
-.desperate-sale-button,
-.rumor-sale-button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
+.resource-btn {
+    background: var(--bg-accent);
+    border: 2px solid var(--border-medium);
+    color: var(--text-primary);
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
     cursor: pointer;
-    font-weight: bold;
-    font-size: 14px;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+    justify-content: center;
 }
 
-.haggle-button {
-    background: #ff9800;
+.resource-btn:hover:not(:disabled) {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
     color: white;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
-.haggle-button:hover:not(:disabled) {
-    background: #f57c00;
-}
-
-.sale-button {
-    background: #4caf50;
+.resource-btn.selected {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
     color: white;
+    box-shadow: var(--shadow-md);
 }
 
-.sale-button:hover:not(:disabled) {
-    background: #45a049;
+.resource-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
 }
 
-.desperate-sale-button {
-    background: #f44336;
-    color: white;
+.selling-interface {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 24px;
 }
 
-.desperate-sale-button:hover:not(:disabled) {
-    background: #d32f2f;
+.quantity-section {
+    margin-bottom: 20px;
 }
 
-.rumor-sale-button {
-    background: #9c27b0;
-    color: white;
+.selling-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-.rumor-sale-button:hover:not(:disabled) {
-    background: #7b1fa2;
+.selling-actions .btn {
+    flex: 1;
+    min-width: 140px;
 }
 
-/* Footer Styles */
-.trading-footer {
-    border-top: 2px solid var(--color-border-light);
-    background: var(--color-bg-alt);
-    flex-shrink: 0;
+.selling-results {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 24px;
 }
 
-.footer-content {
-    padding: 15px 20px;
-}
-
-.transaction-history {
-    margin-bottom: 15px;
-}
-
-.transaction-history h4 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
+.selling-results h4 {
+    color: var(--text-primary);
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.transaction-history h4 i {
-    color: #ff6400;
+.selling-results .success-icon {
+    color: var(--accent-secondary);
 }
 
-.history-list {
-    max-height: 120px;
+.selling-results .warning-icon {
+    color: var(--accent-warning);
+}
+
+/* Availability Results */
+.availability-section {
+    margin-bottom: 24px;
+}
+
+.availability-results {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-top: 16px;
+}
+
+.availability-results h4 {
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.availability-results .success-icon {
+    color: var(--accent-secondary);
+}
+
+.availability-results .failure-icon {
+    color: var(--accent-warning);
+}
+
+/* Transaction History */
+.transaction-list {
+    max-height: 300px;
     overflow-y: auto;
 }
 
 .transaction-item {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    margin-bottom: 5px;
 }
 
-.transaction-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+.transaction-info h4 {
+    color: var(--text-primary);
+    margin-bottom: 4px;
 }
 
-.transaction-type {
-    font-weight: bold;
-    color: var(--color-text-dark-primary);
-    text-transform: capitalize;
-}
-
-.transaction-cargo {
-    color: var(--color-text-dark-secondary);
-}
-
-.transaction-price {
-    color: #4caf50;
-    font-weight: bold;
-}
-
-.transaction-settlement {
-    color: var(--color-text-dark-secondary);
-    font-style: italic;
-}
-
-.transaction-timestamp {
-    font-size: 12px;
-    color: var(--color-text-dark-secondary);
-}
-
-/* Debug Log Section */
-.debug-log-section {
-    margin-bottom: 15px;
-}
-
-.debug-log-section h4 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.debug-log-section h4 i {
-    color: #ff9800;
-}
-
-.clear-debug-log {
-    background: #f44336;
-    color: white;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.clear-debug-log:hover {
-    background: #d32f2f;
-}
-
-.debug-log-display {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    padding: 10px;
-    max-height: 100px;
-    overflow-y: auto;
-}
-
-.debug-log-content {
-    font-size: 12px;
-    color: var(--color-text-dark-secondary);
-}
-
-.debug-info {
-    margin: 0 0 5px 0;
-    font-style: italic;
-}
-
-.debug-note {
-    margin: 0;
-    color: var(--color-text-dark-secondary);
-}
-
-/* Application Status */
-.application-status {
-    border-top: 1px solid var(--color-border-light);
-    padding-top: 15px;
-}
-
-.status-indicators {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 10px;
-}
-
-.status-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 5px;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.status-item i {
+.transaction-details {
+    color: var(--text-muted);
     font-size: 14px;
 }
 
-.status-ok {
-    background: rgba(76, 175, 80, 0.1);
-    color: #4caf50;
-    border: 1px solid rgba(76, 175, 80, 0.3);
+.transaction-amount {
+    color: var(--accent-secondary);
+    font-weight: 700;
+    font-size: 16px;
 }
 
-.status-warning {
-    background: rgba(255, 152, 0, 0.1);
-    color: #ff9800;
-    border: 1px solid rgba(255, 152, 0, 0.3);
-}
-
-.status-info {
-    background: rgba(33, 150, 243, 0.1);
-    color: #2196f3;
-    border: 1px solid rgba(33, 150, 243, 0.3);
-}
-
-/* Responsive Design for V2 Application */
-@media (max-width: 1400px) {
-    .wfrp-trading.application-v2 {
-        min-width: 1000px;
-    }
-    
-    .content-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto auto;
-    }
-    
-    .settlement-section {
-        grid-column: 1;
-        grid-row: 1;
-    }
-    
-    .cargo-section {
-        grid-column: 1;
-        grid-row: 2;
-    }
-    
-    .player-cargo-section {
-        grid-column: 1;
-        grid-row: 3;
-    }
-    
-    .transaction-section {
-        grid-column: 1;
-        grid-row: 4;
-    }
-}
-
-@media (max-width: 1200px) {
-    .wfrp-trading.application-v2 {
-        min-width: 800px;
-        min-height: 600px;
-    }
-    
-    .header-controls {
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-end;
-    }
-    
-    .add-cargo-form {
-        grid-template-columns: 1fr;
-        gap: 5px;
-    }
-    
-    .status-indicators {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    }
-}
-
-@media (max-width: 900px) {
-    .wfrp-trading.application-v2 {
-        min-width: 600px;
-    }
-    
-    .trading-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-    
-    .header-controls {
-        align-items: flex-start;
-        width: 100%;
-    }
-    
-    .current-settlement {
-        width: 100%;
-        justify-content: space-between;
-    }
-}
-/* ===== V2 FALLBACK DIALOGS STYLES ===== */
-
-/* Fallback Dialog */
-.wfrp-fallback.application-v2 .fallback-dialog-content {
-    padding: 20px;
+/* Empty States */
+.empty-state {
     text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
 }
 
-.wfrp-fallback.application-v2 .fallback-message {
-    margin-bottom: 20px;
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
 }
 
-.wfrp-fallback.application-v2 .fallback-actions {
-    display: flex;
-    justify-content: center;
+.empty-state p {
+    font-size: 16px;
+    margin-bottom: 8px;
 }
 
-.wfrp-fallback.application-v2 .close-btn {
-    background: #f44336;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.wfrp-fallback.application-v2 .close-btn:hover {
-    background: #d32f2f;
-}
-
-/* Config Error Dialog */
-.wfrp-config-error.application-v2 .config-error-dialog-content {
-    padding: 20px;
-}
-
-.wfrp-config-error.application-v2 .error-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.wfrp-config-error.application-v2 .error-list,
-.wfrp-config-error.application-v2 .warning-list,
-.wfrp-config-error.application-v2 .recovery-list {
-    margin: 10px 0;
-    padding-left: 20px;
-}
-
-.wfrp-config-error.application-v2 .error-list li {
-    color: #f44336;
-    margin: 5px 0;
-}
-
-.wfrp-config-error.application-v2 .warning-list li {
-    color: #ff9800;
-    margin: 5px 0;
-}
-
-.wfrp-config-error.application-v2 .error-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin-top: 20px;
-}
-
-.wfrp-config-error.application-v2 .view-console-btn {
-    background: #2196f3;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.wfrp-config-error.application-v2 .view-console-btn:hover {
-    background: #1976d2;
-}
-
-/* Season Selection Dialog */
-.wfrp-season-selection.application-v2 .season-selection-dialog-content {
-    padding: 20px;
-    text-align: center;
-}
-
-.wfrp-season-selection.application-v2 .season-selector {
-    margin: 15px 0;
-}
-
-.wfrp-season-selection.application-v2 #season-choice {
-    padding: 8px;
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    background: var(--color-bg-option);
+.empty-state .sub-text {
     font-size: 14px;
-    width: 150px;
+    opacity: 0.7;
 }
 
-.wfrp-season-selection.application-v2 .confirm-season-btn {
-    background: #4caf50;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-weight: bold;
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .app-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    
+    .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        overflow-y: visible;
+    }
+    
+    .cargo-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-header {
+        padding: 20px;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .app-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    
+    .sidebar {
+        order: 1;
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        padding: 20px;
+        overflow-y: visible;
+    }
+    
+    .main-panel {
+        order: 2;
+        padding: 20px;
+    }
+    
+    .tabs {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-light);
+        margin-bottom: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+    }
+    
+    .tab-content {
+        padding-top: 20px;
+        flex: 1;
+    }
+}
+
+/* FoundryVTT Application Window Overrides */
+.wfrp-trading.application-v2 {
+    background: var(--bg-primary);
+}
+
+.wfrp-trading.application-v2 .window-content {
+    padding: 0;
+    background: var(--bg-primary);
+    height: 100%;
     display: flex;
-    align-items: center;
-    gap: 5px;
-    margin: 0 auto;
+    flex-direction: column;
 }
 
-.wfrp-season-selection.application-v2 .confirm-season-btn:hover {
-    background: #45a049;
+.wfrp-trading.application-v2 .window-header {
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-light);
 }
 
-/* Simple Trading V2 Application */
-.wfrp-simple-trading.application-v2 .simple-trading-content {
-    padding: 20px;
+.wfrp-trading.application-v2 .window-title {
+    color: var(--text-primary);
 }
 
-.wfrp-simple-trading.application-v2 .trading-grid {
+/* Ensure the trading app fills the entire window content */
+.wfrp-trading .trading-app {
+    border-radius: 0; /* Remove border radius when inside FoundryVTT window */
+    box-shadow: none; /* Remove shadow when inside FoundryVTT window */
+    margin: 0; /* Remove margin when inside FoundryVTT window */
+}
+
+/* Make sure the content area takes full height */
+.wfrp-trading .app-content {
+    height: 100%;
+}
+
+/* Ensure proper scrolling behavior in FoundryVTT */
+.wfrp-trading .sidebar {
+    max-height: 100%;
+}
+
+.wfrp-trading .main-panel {
+    max-height: 100%;
+}
+
+.wfrp-trading .tab-content {
+    max-height: 100%;
+}
+
+/* Minimum window size constraints */
+.wfrp-trading.application-v2 {
+    min-width: 800px;
+    min-height: 600px;
+}
+
+/* Flexible cargo grid that adapts to container size */
+.cargo-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
 }
 
-.wfrp-simple-trading.application-v2 .season-section,
-.wfrp-simple-trading.application-v2 .region-section,
-.wfrp-simple-trading.application-v2 .settlement-section,
-.wfrp-simple-trading.application-v2 .settlement-details,
-.wfrp-simple-trading.application-v2 .actions-section,
-.wfrp-simple-trading.application-v2 .stats-section {
-    border: 1px solid var(--color-border-light);
-    border-radius: 5px;
-    padding: 15px;
-    background: var(--color-bg-alt);
+/* Ensure settlement display doesn't get too wide */
+.settlement-display {
+    max-width: 100%;
 }
 
-.wfrp-simple-trading.application-v2 h3 {
-    margin: 0 0 15px 0;
-    color: var(--color-text-dark-primary);
-    border-bottom: 2px solid var(--color-border-light);
-    padding-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.wfrp-simple-trading.application-v2 h3 i {
-    color: #ff6400;
-}
-
-.wfrp-simple-trading.application-v2 .season-controls,
-.wfrp-simple-trading.application-v2 .region-controls,
-.wfrp-simple-trading.application-v2 .settlement-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.wfrp-simple-trading.application-v2 label {
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-}
-
-.wfrp-simple-trading.application-v2 select {
-    padding: 8px;
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    background: var(--color-bg-option);
-    font-size: 14px;
-}
-
-.wfrp-simple-trading.application-v2 .info-item,
-.wfrp-simple-trading.application-v2 .stat-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 0;
-    border-bottom: 1px solid var(--color-border-light);
-}
-
-.wfrp-simple-trading.application-v2 .info-item:last-child,
-.wfrp-simple-trading.application-v2 .stat-item:last-child {
-    border-bottom: none;
-}
-
-.wfrp-simple-trading.application-v2 .label,
-.wfrp-simple-trading.application-v2 .stat-label {
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-}
-
-.wfrp-simple-trading.application-v2 .value,
-.wfrp-simple-trading.application-v2 .stat-value {
-    color: var(--color-text-dark-primary);
-}
-
-.wfrp-simple-trading.application-v2 #check-availability {
-    background: #4caf50;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    justify-content: center;
-}
-
-.wfrp-simple-trading.application-v2 #check-availability:hover:not(:disabled) {
-    background: #45a049;
-}
-
-.wfrp-simple-trading.application-v2 #check-availability:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.wfrp-simple-trading.application-v2 .region-info,
-.wfrp-simple-trading.application-v2 .settlement-info,
-.wfrp-simple-trading.application-v2 .action-note {
-    font-size: 12px;
-    color: var(--color-text-dark-secondary);
-    font-style: italic;
-    margin-top: 5px;
-}
-
-/* Test Dialog */
-.wfrp-test.application-v2 .test-dialog {
-    padding: 20px;
-    text-align: center;
-}
-
-.wfrp-test.application-v2 h2 {
-    color: var(--color-text-dark-primary);
-    margin-bottom: 15px;
-}
-
-.wfrp-test.application-v2 p {
-    color: var(--color-text-dark-secondary);
-    margin: 10px 0;
-}
-/* =====
- WINDOW MANAGEMENT STYLES ===== */
-
-/* Ensure landscape orientation and proper window behavior */
-.wfrp-trading.application-v2 {
-    /* Enforce minimum landscape dimensions */
-    min-width: 800px;
-    min-height: 600px;
-    
-    /* Ensure proper aspect ratio (landscape) */
-    aspect-ratio: 4/3;
-    
-    /* Smooth resize transitions */
-    transition: width 0.1s ease, height 0.1s ease;
-}
-
-/* Window content responsive behavior */
-.wfrp-trading.application-v2 .window-content {
-    /* Ensure content adapts to window size */
-    overflow: hidden;
-    resize: both;
-}
-
-/* Content grid responsive adjustments */
-.wfrp-trading.application-v2 .content-grid {
-    /* Ensure grid adapts to available space */
-    min-height: 0;
-    height: 100%;
-}
-
-/* Scrollable sections for smaller windows */
-.wfrp-trading.application-v2 .settlement-section,
-.wfrp-trading.application-v2 .cargo-section,
-.wfrp-trading.application-v2 .player-cargo-section,
-.wfrp-trading.application-v2 .transaction-section {
-    /* Enable scrolling when content overflows */
-    overflow-y: auto;
-    min-height: 200px;
-}
-
-/* Window resize handle visibility */
-.wfrp-trading.application-v2 .window-resizable-handle {
-    opacity: 0.3;
-    transition: opacity 0.2s ease;
-}
-
-.wfrp-trading.application-v2:hover .window-resizable-handle {
-    opacity: 0.7;
-}
-
-/* Responsive breakpoints for window management */
-@media (max-width: 1200px) {
-    .wfrp-trading.application-v2 {
-        /* Adjust minimum size for smaller screens */
-        min-width: 700px;
-        min-height: 500px;
-    }
-}
-
-@media (max-width: 900px) {
-    .wfrp-trading.application-v2 {
-        /* Further adjust for mobile/tablet */
-        min-width: 600px;
-        min-height: 450px;
+/* Very small window handling */
+@media (max-width: 600px) {
+    .app-header {
+        padding: 12px 16px;
     }
     
-    /* Stack content vertically on smaller screens */
-    .wfrp-trading.application-v2 .content-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: repeat(4, auto);
+    .app-header .app-title h1 {
+        font-size: 20px;
     }
     
-    .wfrp-trading.application-v2 .settlement-section,
-    .wfrp-trading.application-v2 .cargo-section,
-    .wfrp-trading.application-v2 .player-cargo-section,
-    .wfrp-trading.application-v2 .transaction-section {
-        grid-column: 1;
-        min-height: 150px;
-    }
-}
-
-/* Window state persistence indicators */
-.wfrp-trading.application-v2.window-state-loading {
-    opacity: 0.8;
-}
-
-.wfrp-trading.application-v2.window-state-loading::after {
-    content: "Loading window state...";
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 3px;
-    font-size: 12px;
-    z-index: 1000;
-}
-
-/* Debug indicators for window management */
-.window-debug-info {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 3px;
-    font-size: 10px;
-    font-family: monospace;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.wfrp-trading.application-v2:hover .window-debug-info {
-    opacity: 1;
-}
-
-/* Ensure proper window behavior on different screen sizes */
-@media (min-width: 1400px) {
-    .wfrp-trading.application-v2 {
-        /* Allow larger windows on bigger screens */
-        max-width: 90vw;
-        max-height: 90vh;
-    }
-}
-
-/* Window position constraints */
-.wfrp-trading.application-v2 {
-    /* Ensure window stays within viewport */
-    max-width: calc(100vw - 40px);
-    max-height: calc(100vh - 40px);
-}
-
-/* Smooth window operations */
-.wfrp-trading.application-v2.window-moving {
-    transition: transform 0.1s ease;
-}
-
-.wfrp-trading.application-v2.window-resizing {
-    transition: width 0.1s ease, height 0.1s ease;
-}
-/* =====
- PRICE CALCULATOR STYLES ===== */
-
-.price-calculator-display {
-    background: var(--color-bg-option);
-    border: 1px solid var(--color-border-light);
-    border-radius: 5px;
-    padding: 15px;
-    margin: 10px 0;
-    font-family: var(--font-primary);
-}
-
-/* Header Section */
-.price-calculator-display .price-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--color-border-light);
-}
-
-.price-calculator-display .cargo-title {
-    margin: 0;
-    color: var(--color-text-dark-primary);
-    font-size: 1.2em;
-    font-weight: bold;
-}
-
-.price-calculator-display .calculation-meta {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-/* Badge Styles */
-.season-badge, .quality-badge, .calculation-type {
-    padding: 4px 8px;
-    border-radius: 3px;
-    font-size: 0.8em;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.season-badge {
-    background: var(--color-bg-btn);
-    color: var(--color-text-light-primary);
-}
-
-.season-spring { background-color: #4CAF50; }
-.season-summer { background-color: #FF9800; }
-.season-autumn { background-color: #795548; }
-.season-winter { background-color: #2196F3; }
-
-.quality-badge {
-    background: var(--color-bg-btn-secondary);
-    color: var(--color-text-dark-primary);
-}
-
-.quality-poor { background-color: #f44336; color: white; }
-.quality-average { background-color: #9E9E9E; color: white; }
-.quality-good { background-color: #4CAF50; color: white; }
-.quality-excellent { background-color: #FFD700; color: black; }
-
-.calculation-type {
-    background: var(--color-bg-btn-primary);
-    color: var(--color-text-light-primary);
-}
-
-/* Quantity and Settlement Info */
-.quantity-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding: 10px;
-    background: var(--color-bg);
-    border-radius: 3px;
-}
-
-.quantity-display, .settlement-info {
-    font-size: 0.9em;
-}
-
-.wealth-indicator {
-    color: var(--color-text-dark-secondary);
-    font-style: italic;
-}
-
-/* Base Price Section */
-.base-price-section {
-    margin-bottom: 20px;
-}
-
-.base-price-section h4 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-    font-size: 1.1em;
-}
-
-.price-display {
-    padding: 10px;
-    border-radius: 3px;
-    text-align: center;
-    font-weight: bold;
-}
-
-.base-price {
-    background: var(--color-bg-option);
-    border: 1px solid var(--color-border-light);
-}
-
-.price-value {
-    font-size: 1.2em;
-    color: var(--color-text-dark-primary);
-}
-
-/* Seasonal Comparison */
-.seasonal-comparison {
-    margin-top: 15px;
-    padding: 10px;
-    background: var(--color-bg);
-    border-radius: 3px;
-}
-
-.seasonal-comparison h5 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-secondary);
-    font-size: 0.9em;
-}
-
-.season-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 10px;
-}
-
-.season-item {
-    padding: 8px;
-    background: var(--color-bg-option);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    text-align: center;
-    position: relative;
-}
-
-.season-item.current-season {
-    border-color: var(--color-border-highlight);
-    background: var(--color-bg-btn-secondary);
-}
-
-.season-name {
-    display: block;
-    font-size: 0.8em;
-    color: var(--color-text-dark-secondary);
-    text-transform: capitalize;
-}
-
-.season-price {
-    display: block;
-    font-weight: bold;
-    color: var(--color-text-dark-primary);
-}
-
-.price-indicator {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    padding: 2px 4px;
-    font-size: 0.7em;
-    border-radius: 2px;
-    font-weight: bold;
-}
-
-.price-indicator.best-buy {
-    background: #4CAF50;
-    color: white;
-}
-
-.price-indicator.best-sell {
-    background: #FF9800;
-    color: white;
-}
-
-.price-range-info {
-    text-align: center;
-    color: var(--color-text-dark-secondary);
-}
-
-/* Price Modifiers Section */
-.modifiers-section {
-    margin-bottom: 20px;
-}
-
-.modifiers-section h4 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-    font-size: 1.1em;
-}
-
-.modifiers-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.modifier-item {
-    padding: 10px;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-}
-
-.modifier-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.modifier-description {
-    font-weight: bold;
-    color: var(--color-text-dark-primary);
-}
-
-.modifier-amount {
-    font-weight: bold;
-}
-
-.modifier-amount.positive {
-    color: #4CAF50;
-}
-
-.modifier-amount.negative {
-    color: #f44336;
-}
-
-.modifier-explanation {
-    margin-top: 5px;
-    color: var(--color-text-dark-secondary);
-    font-style: italic;
-}
-
-/* Haggling Section */
-.haggling-section {
-    margin-bottom: 20px;
-}
-
-.haggling-section h4, .haggling-section h5 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-primary);
-}
-
-.haggling-section h4 {
-    font-size: 1.1em;
-}
-
-.haggling-section h5 {
-    font-size: 1em;
-    margin-top: 15px;
-}
-
-.haggle-outcomes {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.haggle-outcome {
-    padding: 10px;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 3px;
-    text-align: center;
-}
-
-.haggle-outcome.successfulHaggle,
-.haggle-outcome.successfulHaggleWithDealmaker {
-    border-color: #4CAF50;
-    background: rgba(76, 175, 80, 0.1);
-}
-
-.outcome-description {
-    font-size: 0.9em;
-    color: var(--color-text-dark-secondary);
-    margin-bottom: 5px;
-}
-
-.outcome-price {
-    font-weight: bold;
-    color: var(--color-text-dark-primary);
-}
-
-.price-change {
-    font-size: 0.9em;
-}
-
-.price-change.positive {
-    color: #4CAF50;
-}
-
-.price-change.negative {
-    color: #f44336;
-}
-
-.outcome-percentage {
-    font-size: 0.8em;
-    color: var(--color-text-dark-secondary);
-    margin-top: 3px;
-}
-
-.success-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.success-item {
-    padding: 8px;
-    background: var(--color-bg-option);
-    border-radius: 3px;
-}
-
-.success-item.dealmaker {
-    border-left: 3px solid #FFD700;
-}
-
-/* Final Price Section */
-.final-price-section {
-    margin-bottom: 15px;
-    padding: 15px;
-    background: var(--color-bg-btn-secondary);
-    border: 2px solid var(--color-border-highlight);
-    border-radius: 5px;
-}
-
-.final-price-section h4 {
-    margin: 0 0 15px 0;
-    color: var(--color-text-dark-primary);
-    font-size: 1.2em;
-    text-align: center;
-}
-
-.price-breakdown {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.price-per-unit, .total-price {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px;
-    background: var(--color-bg);
-    border-radius: 3px;
-}
-
-.total-price {
-    font-size: 1.1em;
-    font-weight: bold;
-    border: 1px solid var(--color-border-highlight);
-}
-
-.total-amount {
-    color: var(--color-text-dark-primary);
-    font-size: 1.3em;
-}
-
-/* Special Sale Information */
-.special-sale-info {
-    margin-bottom: 15px;
-    padding: 15px;
-    border-radius: 5px;
-}
-
-.sale-type-badge {
-    display: inline-block;
-    padding: 8px 12px;
-    border-radius: 3px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.sale-desperate {
-    background: #f44336;
-    color: white;
-}
-
-.sale-rumor {
-    background: #FFD700;
-    color: black;
-}
-
-.special-sale-details {
-    color: var(--color-text-dark-secondary);
-    font-style: italic;
-}
-
-/* Debug Information */
-.debug-info {
-    margin-top: 20px;
-    padding: 10px;
-    background: var(--color-bg);
-    border: 1px dashed var(--color-border-light);
-    border-radius: 3px;
-}
-
-.debug-info h5 {
-    margin: 0 0 10px 0;
-    color: var(--color-text-dark-secondary);
-    font-size: 0.9em;
-}
-
-.debug-details {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 5px;
-    font-size: 0.8em;
-    color: var(--color-text-dark-secondary);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .season-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .sidebar {
+        padding: 16px;
     }
     
-    .haggle-outcomes {
+    .main-panel {
+        padding: 16px;
+    }
+    
+    .section-title {
+        font-size: 16px;
+    }
+    
+    .cargo-grid {
         grid-template-columns: 1fr;
     }
     
-    .debug-details {
-        grid-template-columns: 1fr;
-    }
-    
-    .quantity-info {
+    .selling-actions {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
     }
-}
-
-/* Animation for price updates */
-.price-calculator-display {
-    transition: all 0.3s ease;
-}
-
-.price-calculator-display.updating {
-    opacity: 0.7;
-}
-
-.total-amount {
-    transition: color 0.3s ease;
-}
-
-.total-amount.highlight {
-    color: var(--color-text-highlight);
-}
-/* 
-Trading Places Sidebar Styles */
-.wfrp-trading-sidebar-content {
-    padding: 10px;
-    font-family: var(--font-primary);
-}
-
-.wfrp-trading-sidebar-content .sidebar-header {
-    border-bottom: 1px solid var(--color-border-light);
-    padding-bottom: 8px;
-    margin-bottom: 12px;
-}
-
-.wfrp-trading-sidebar-content .sidebar-header h3 {
-    margin: 0;
-    color: var(--color-text-dark-primary);
-    font-size: 14px;
-    font-weight: bold;
-}
-
-.wfrp-trading-sidebar-content .current-season {
-    margin-bottom: 15px;
-    padding: 8px;
-    background: var(--color-bg-option);
-    border-radius: 3px;
-}
-
-.wfrp-trading-sidebar-content .current-season label {
-    font-weight: bold;
-    color: var(--color-text-dark-secondary);
-    display: block;
-    margin-bottom: 4px;
-    font-size: 12px;
-}
-
-.wfrp-trading-sidebar-content .season-display {
-    color: var(--color-text-dark-primary);
-    font-weight: bold;
-    text-transform: capitalize;
-}
-
-.wfrp-trading-sidebar-content .trading-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 15px;
-}
-
-.wfrp-trading-sidebar-content .trading-actions button {
-    background: linear-gradient(135deg, var(--color-bg-btn), var(--color-bg-btn-hover));
-    border: 1px solid var(--color-border-dark);
-    border-radius: 3px;
-    color: var(--color-text-light-primary);
-    padding: 8px 12px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: bold;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.wfrp-trading-sidebar-content .trading-actions button:hover {
-    background: linear-gradient(135deg, var(--color-bg-btn-hover), var(--color-bg-btn));
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.wfrp-trading-sidebar-content .trading-actions button:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-
-.wfrp-trading-sidebar-content .gm-controls {
-    border-top: 1px solid var(--color-border-light);
-    padding-top: 12px;
-}
-
-.wfrp-trading-sidebar-content .gm-controls h4 {
-    margin: 0 0 8px 0;
-    color: var(--color-text-dark-primary);
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.wfrp-trading-sidebar-content .season-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.wfrp-trading-sidebar-content .season-controls label {
-    font-size: 11px;
-    color: var(--color-text-dark-secondary);
-    font-weight: bold;
-}
-
-.wfrp-trading-sidebar-content .season-selector {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-dark);
-    border-radius: 3px;
-    color: var(--color-text-dark-primary);
-    padding: 4px 6px;
-    font-size: 11px;
-    width: 100%;
-}
-
-.wfrp-trading-sidebar-content .season-selector:focus {
-    outline: none;
-    border-color: var(--color-border-highlight);
-    box-shadow: 0 0 3px var(--color-shadow-highlight);
-}
-
-/* Sidebar tab button styling */
-#sidebar .directory-tabs .item[data-tab="wfrp-trading-sidebar"] {
-    color: var(--color-text-light-6);
-}
-
-#sidebar .directory-tabs .item[data-tab="wfrp-trading-sidebar"]:hover {
-    color: var(--color-text-light-primary);
-    text-shadow: 0 0 8px var(--color-shadow-primary);
-}
-
-#sidebar .directory-tabs .item[data-tab="wfrp-trading-sidebar"].active {
-    color: var(--color-text-light-primary);
-    text-shadow: 0 0 8px var(--color-shadow-primary);
+    
+    .selling-actions .btn {
+        min-width: auto;
+    }
 }

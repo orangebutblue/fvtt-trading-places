@@ -1,0 +1,259 @@
+{{!-- WFRP Trading Places - Unified Modern UI Template --}}
+<div class="trading-app">
+    <!-- Header -->
+    <div class="app-header">
+        <div class="app-title">
+            <i class="fas fa-coins"></i>
+            <h1>Trading Places</h1>
+        </div>
+        <div class="season-control">
+            <label>Current Season:</label>
+            <select id="season-select">
+                <option value="spring" {{#if (eq currentSeason "spring")}}selected{{/if}}>Spring</option>
+                <option value="summer" {{#if (eq currentSeason "summer")}}selected{{/if}}>Summer</option>
+                <option value="autumn" {{#if (eq currentSeason "autumn")}}selected{{/if}}>Autumn</option>
+                <option value="winter" {{#if (eq currentSeason "winter")}}selected{{/if}}>Winter</option>
+            </select>
+        </div>
+        {{#if debugLoggingEnabled}}
+        <div class="debug-toggle">
+            <label>
+                <input type="checkbox" id="debug-mode" checked>
+                <i class="fas fa-bug"></i>
+                Debug Logging
+            </label>
+        </div>
+        {{/if}}
+    </div>
+
+    <!-- Main Content -->
+    <div class="app-content">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Location Selection -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Location
+                </h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Region</label>
+                    <select class="form-select" id="region-select">
+                        <option value="">Select a region...</option>
+                        <option value="Reikland" {{#if (eq selectedRegion "Reikland")}}selected{{/if}}>Reikland</option>
+                        <option value="Middenland" {{#if (eq selectedRegion "Middenland")}}selected{{/if}}>Middenland</option>
+                        <option value="Nordland" {{#if (eq selectedRegion "Nordland")}}selected{{/if}}>Nordland</option>
+                        <option value="Ostland" {{#if (eq selectedRegion "Ostland")}}selected{{/if}}>Ostland</option>
+                        <option value="Ostermark" {{#if (eq selectedRegion "Ostermark")}}selected{{/if}}>Ostermark</option>
+                        <option value="Stirland" {{#if (eq selectedRegion "Stirland")}}selected{{/if}}>Stirland</option>
+                        <option value="Averland" {{#if (eq selectedRegion "Averland")}}selected{{/if}}>Averland</option>
+                        <option value="Wissenland" {{#if (eq selectedRegion "Wissenland")}}selected{{/if}}>Wissenland</option>
+                        <option value="Talabecland" {{#if (eq selectedRegion "Talabecland")}}selected{{/if}}>Talabecland</option>
+                        <option value="Hochland" {{#if (eq selectedRegion "Hochland")}}selected{{/if}}>Hochland</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Settlement</label>
+                    <select class="form-select" id="settlement-select" {{#unless selectedRegion}}disabled{{/unless}}>
+                        {{#if selectedRegion}}
+                            <option value="">Select a settlement...</option>
+                            {{#each settlements}}
+                            <option value="{{name}}" {{#if (eq ../selectedSettlement.name name)}}selected{{/if}}>{{name}}</option>
+                            {{/each}}
+                        {{else}}
+                            <option value="">Select a region first...</option>
+                        {{/if}}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Settlement Info Section -->
+            {{#if selectedSettlement}}
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Settlement Info
+                </h2>
+                <div class="settlement-display">
+                    <h3>{{selectedSettlement.name}}</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Region</div>
+                            <div class="info-value">{{selectedSettlement.region}}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Size</div>
+                            <div class="info-value">{{getSizeDescription selectedSettlement.size}} ({{selectedSettlement.size}})</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Size Rating</div>
+                            <div class="info-value highlight">{{getSizeRating selectedSettlement.size}}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Wealth</div>
+                            <div class="info-value">{{getWealthDescription selectedSettlement.wealth}}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Wealth Rating</div>
+                            <div class="info-value highlight">{{selectedSettlement.wealth}}</div>
+                        </div>
+                        {{#if selectedSettlement.population}}
+                        <div class="info-item">
+                            <div class="info-label">Population</div>
+                            <div class="info-value">{{formatNumber selectedSettlement.population}}</div>
+                        </div>
+                        {{/if}}
+                    </div>
+                    {{#if (isTradeSettlement selectedSettlement)}}
+                    <div class="trade-badge">Major Trade Center</div>
+                    {{/if}}
+                </div>
+            </div>
+            {{/if}}
+
+            <!-- Check Availability Section -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-search"></i>
+                    Market Check
+                </h2>
+                <button class="btn btn-primary check-availability" id="check-availability" style="width: 100%;" {{#unless hasSettlement}}disabled{{/unless}}>
+                    <i class="fas fa-search"></i>
+                    Check Availability
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Panel -->
+        <div class="main-panel">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="buying">
+                    <i class="fas fa-shopping-cart"></i>
+                    Buying
+                </button>
+                <button class="tab" data-tab="selling">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    Selling
+                </button>
+                <button class="tab" data-tab="history">
+                    <i class="fas fa-history"></i>
+                    History
+                </button>
+            </div>
+
+            <!-- Buying Tab -->
+            <div class="tab-content active" id="buying-tab">
+                <!-- Error Display -->
+                <div class="error-display" id="buying-error-display">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="buying-error-message"></span>
+                </div>
+
+                <!-- Availability Results Section -->
+                <div class="availability-section">
+                    <div class="availability-results" id="availability-results" style="display: none;">
+                        <h4>
+                            <i class="fas fa-check-circle success-icon"></i>
+                            Cargo Available!
+                        </h4>
+                        <div id="availability-details">
+                            <!-- Availability details will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Negotiate Button -->
+                <div class="buying-actions" {{#unless selectedSettlement}}style="display: none;"{{/unless}}>
+                    <button class="btn btn-success" id="negotiate-buy" style="display: none;">
+                        <i class="fas fa-handshake"></i>
+                        Negotiate
+                    </button>
+                </div>
+
+                <!-- Cargo Grid -->
+                <div class="cargo-grid" id="buying-cargo-grid" style="display: none;">
+                    <!-- Cargo cards will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Selling Tab -->
+            <div class="tab-content" id="selling-tab">
+                <!-- Error Display -->
+                <div class="error-display" id="selling-error-display">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="selling-error-message"></span>
+                </div>
+
+                <!-- Resource Selection -->
+                <div class="resource-selection">
+                    <h3>Select Resource to Sell</h3>
+                    <div class="resource-buttons" id="resource-buttons">
+                        <!-- Resource buttons will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Selling Interface -->
+                <div class="selling-interface" id="selling-interface" style="display: none;">
+                    <div class="quantity-section">
+                        <label class="form-label">Quantity to Sell (EP)</label>
+                        <input type="number" class="form-input" id="sell-quantity" min="1" placeholder="Enter quantity...">
+                    </div>
+                    <div class="selling-actions">
+                        <button class="btn btn-primary" id="look-for-sellers" style="display: none;">
+                            <i class="fas fa-search"></i>
+                            Look for Sellers
+                        </button>
+                        <button class="btn btn-success" id="negotiate-sell" style="display: none;">
+                            <i class="fas fa-handshake"></i>
+                            Negotiate
+                        </button>
+                        <button class="btn btn-warning" id="desperate-sale" style="display: none;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Desperate Sale
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selling Results -->
+                <div class="selling-results" id="selling-results" style="display: none;">
+                    <!-- Selling results will be populated by JavaScript -->
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="selling-empty-state">
+                    <i class="fas fa-box-open"></i>
+                    <p>Select a settlement to see selling options</p>
+                    <div class="sub-text">Choose resources to sell based on settlement demand</div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div class="tab-content" id="history-tab">
+                {{#if transactionHistory.length}}
+                <div class="transaction-list">
+                    {{#each transactionHistory}}
+                    <div class="transaction-item">
+                        <div class="transaction-info">
+                            <h4>{{type}} - {{cargo}}</h4>
+                            <div class="transaction-details">
+                                {{quantity}} EP at {{settlement}} • {{timestamp}}
+                            </div>
+                        </div>
+                        <div class="transaction-amount">{{totalPrice}} GC</div>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="empty-state">
+                    <i class="fas fa-history"></i>
+                    <p>No transactions yet</p>
+                    <div class="sub-text">Your trading history will appear here</div>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+</div>

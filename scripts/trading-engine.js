@@ -1622,11 +1622,11 @@ class TradingEngine {
         }
 
         const roll = new Roll(formula);
-        await roll.evaluate({ async: true });
+        await roll.evaluate();
 
         // Post to chat if not in testing mode
         if (options.flavor) {
-            const chatVisibility = game?.settings?.get("wfrp-trading", "chatVisibility") || "gm";
+            const chatVisibility = game?.settings?.get("trading-places", "chatVisibility") || "gm";
             const shouldWhisper = options.whisper !== false && chatVisibility === "gm";
             
             await roll.toMessage({

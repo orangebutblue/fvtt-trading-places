@@ -113,6 +113,53 @@
             cursor: pointer;
         }
 
+        /* Debug Toggle Styles */
+        .debug-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            backdrop-filter: blur(10px);
+        }
+
+        .debug-toggle label {
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .debug-toggle input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        /* Error Display Styles */
+        .error-display {
+            background: var(--accent-warning);
+            color: white;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .error-display.show {
+            display: flex;
+        }
+
+        .error-display i {
+            font-size: 18px;
+        }
+
         /* Main Content */
         .app-content {
             display: grid;
@@ -241,12 +288,7 @@
             margin-top: 12px;
         }
 
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+
 
         .btn {
             background: var(--bg-accent);
@@ -475,6 +517,289 @@
             margin-left: 8px;
         }
 
+        /* Availability Results */
+        .availability-section {
+            margin-bottom: 24px;
+        }
+
+        .availability-results {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-top: 16px;
+        }
+
+        .availability-results h4 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .availability-results .success-icon {
+            color: var(--accent-secondary);
+        }
+
+        .availability-results .failure-icon {
+            color: var(--accent-warning);
+        }
+
+        /* Settlement Display in Buying Tab */
+        .settlement-display {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .settlement-display h3 {
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .settlement-display .info-grid {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .settlement-display .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .settlement-display .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .settlement-display .info-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .settlement-display .info-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Highlighted algorithm-relevant values */
+        .settlement-display .info-value.highlight {
+            color: var(--accent-primary);
+            font-weight: 700;
+            background: rgba(255, 167, 38, 0.1);
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        .settlement-display .trade-badge {
+            display: inline-block;
+            background: var(--accent-secondary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        /* Negotiate button in buying context */
+        .buying-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .buying-actions .btn {
+            flex: 1;
+        }
+
+        /* Selling Tab Styles */
+        .resource-selection {
+            margin-bottom: 24px;
+        }
+
+        .resource-selection h3 {
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .resource-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .resource-btn {
+            background: var(--bg-accent);
+            border: 2px solid var(--border-medium);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .resource-btn:hover:not(:disabled) {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .resource-btn.selected {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .resource-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .selling-interface {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .quantity-section {
+            margin-bottom: 20px;
+        }
+
+        .quantity-section .form-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .selling-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .selling-actions .btn {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        /* Ensure desperate sale button is only visible in selling tab */
+        #desperate-sale {
+            display: none;
+        }
+
+        #selling-tab.active #desperate-sale {
+            display: flex;
+        }
+
+        /* Button states for selling workflow */
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn:disabled:hover {
+            background: var(--bg-accent);
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-primary:disabled:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+            opacity: 0.5;
+        }
+
+        .selling-results {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .selling-results h4 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .selling-results .success-icon {
+            color: var(--accent-secondary);
+        }
+
+        .selling-results .warning-icon {
+            color: var(--accent-warning);
+        }
+
+        .selling-results .result-details {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .selling-results .result-details p {
+            margin-bottom: 8px;
+        }
+
+        .selling-results .result-details hr {
+            border: none;
+            border-top: 1px solid var(--border-light);
+            margin: 16px 0;
+        }
+
+        .selling-results .total-price {
+            color: var(--accent-primary);
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .selling-results .algorithm-details {
+            background: var(--bg-accent);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            margin-top: 12px;
+        }
+
+        .selling-results .algorithm-details small {
+            color: var(--text-muted);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .selling-results .no-buyer-message {
+            color: var(--accent-warning);
+            font-style: italic;
+        }
+
         /* Transaction History */
         .transaction-list {
             max-height: 300px;
@@ -547,6 +872,28 @@
             }
         }
 
+        @media (max-width: 900px) and (min-width: 769px) {
+            /* Tablet-specific adjustments */
+            .tabs {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background: var(--bg-secondary);
+                border-bottom: 1px solid var(--border-light);
+                margin-bottom: 0;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                transition: box-shadow 0.2s ease;
+            }
+            
+            .tabs.sticky {
+                box-shadow: var(--shadow-md);
+            }
+            
+            .tab-content {
+                padding-top: 20px;
+            }
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -558,16 +905,53 @@
                 gap: 16px;
             }
             
-            .main-panel, .sidebar {
+            .app-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            
+            .sidebar {
+                order: 1;
+                border-right: none;
+                border-bottom: 1px solid var(--border-light);
                 padding: 20px;
             }
             
+            .main-panel {
+                order: 2;
+                padding: 0;
+            }
+            
             .tabs {
-                flex-direction: column;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background: var(--bg-secondary);
+                border-bottom: 1px solid var(--border-light);
+                margin-bottom: 0;
+                padding: 6px;
+                border-radius: 0;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                transition: box-shadow 0.2s ease;
+                flex-direction: row;
+            }
+            
+            .tabs.sticky {
+                box-shadow: var(--shadow-md);
             }
             
             .tab {
-                justify-content: flex-start;
+                justify-content: center;
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            
+            .tab i {
+                font-size: 16px;
+            }
+            
+            .tab-content {
+                padding: 20px;
             }
         }
     </style>
@@ -588,6 +972,13 @@
                     <option value="autumn">Autumn</option>
                     <option value="winter">Winter</option>
                 </select>
+            </div>
+            <div class="debug-toggle">
+                <label>
+                    <input type="checkbox" id="debug-mode" checked>
+                    <i class="fas fa-bug"></i>
+                    Debug Logging
+                </label>
             </div>
         </div>
 
@@ -632,9 +1023,60 @@
                     </div>
                 </div>
 
-                <!-- Settlement Info -->
+                <!-- Check Availability Section -->
                 <div class="section">
-                    <div class="settlement-info">
+                    <h2 class="section-title">
+                        <i class="fas fa-search"></i>
+                        Market Check
+                    </h2>
+                    <button class="btn btn-primary" id="check-availability" style="width: 100%;">
+                        <i class="fas fa-search"></i>
+                        Check Availability
+                    </button>
+                </div>
+
+
+            </div>
+
+            <!-- Main Panel -->
+            <div class="main-panel">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" data-tab="buying">
+                        <i class="fas fa-shopping-cart"></i>
+                        Buying
+                    </button>
+                    <button class="tab" data-tab="selling">
+                        <i class="fas fa-hand-holding-usd"></i>
+                        Selling
+                    </button>
+                    <button class="tab" data-tab="history">
+                        <i class="fas fa-history"></i>
+                        History
+                    </button>
+                </div>
+
+                <!-- Buying Tab -->
+                <div class="tab-content active" id="buying-tab">
+                    <!-- Error Display -->
+                    <div class="error-display" id="buying-error-display">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span id="buying-error-message"></span>
+                    </div>
+
+                    <!-- Availability Results Section -->
+                    <div class="availability-section">
+                        <div class="availability-results" id="availability-results" style="display: none;">
+                            <h4>
+                                <i class="fas fa-check-circle success-icon"></i>
+                                Cargo Available!
+                            </h4>
+                            <p>Market check successful. Available cargo will be displayed below.</p>
+                        </div>
+                    </div>
+
+                    <!-- Settlement Info Display -->
+                    <div class="settlement-display" id="settlement-display">
                         <h3>Altdorf</h3>
                         <div class="info-grid">
                             <div class="info-item">
@@ -643,11 +1085,19 @@
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Size</span>
-                                <span class="info-value">Metropolis</span>
+                                <span class="info-value">Metropolis (CS)</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Size Rating</span>
+                                <span class="info-value highlight">4</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Wealth</span>
                                 <span class="info-value">Very Rich</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Wealth Rating</span>
+                                <span class="info-value highlight">5</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Population</span>
@@ -655,58 +1105,18 @@
                             </div>
                         </div>
                         <div class="trade-badge">Major Trade Center</div>
+                        
+                        <!-- Buying Actions -->
+                        <div class="buying-actions">
+                            <button class="btn" id="negotiate-buy" style="display: none;">
+                                <i class="fas fa-handshake"></i>
+                                Negotiate
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Quick Actions -->
-                <div class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-bolt"></i>
-                        Quick Actions
-                    </h2>
-                    
-                    <div class="action-buttons">
-                        <button class="btn btn-primary" id="check-availability">
-                            <i class="fas fa-search"></i>
-                            Check Availability
-                        </button>
-                        <button class="btn btn-success" id="quick-sell">
-                            <i class="fas fa-hand-holding-usd"></i>
-                            Quick Sell
-                        </button>
-                        <button class="btn" id="haggle">
-                            <i class="fas fa-handshake"></i>
-                            Negotiate
-                        </button>
-                        <button class="btn btn-warning" id="desperate-sale">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Desperate Sale
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Main Panel -->
-            <div class="main-panel">
-                <!-- Tabs -->
-                <div class="tabs">
-                    <button class="tab active" data-tab="market">
-                        <i class="fas fa-store"></i>
-                        Market
-                    </button>
-                    <button class="tab" data-tab="inventory">
-                        <i class="fas fa-boxes"></i>
-                        Inventory
-                    </button>
-                    <button class="tab" data-tab="history">
-                        <i class="fas fa-history"></i>
-                        History
-                    </button>
-                </div>
-
-                <!-- Market Tab -->
-                <div class="tab-content active" id="market-tab">
-                    <div class="cargo-grid">
+                    <!-- Available Cargo Grid -->
+                    <div class="cargo-grid" id="buying-cargo-grid" style="display: none;">
                         <div class="cargo-card">
                             <div class="cargo-header">
                                 <div class="cargo-name">Iron Ore</div>
@@ -784,32 +1194,57 @@
                     </div>
                 </div>
 
-                <!-- Inventory Tab -->
-                <div class="tab-content" id="inventory-tab">
-                    <div class="inventory-item">
-                        <div class="item-info">
-                            <h4>Weapons <span class="quality-badge">Good</span></h4>
-                            <div class="item-details">8 EP • Purchased in Nuln • 3 days ago</div>
-                        </div>
-                        <div class="item-actions">
-                            <button class="btn btn-success">Sell</button>
+                <!-- Selling Tab -->
+                <div class="tab-content" id="selling-tab">
+                    <!-- Error Display -->
+                    <div class="error-display" id="selling-error-display">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span id="selling-error-message"></span>
+                    </div>
+
+                    <!-- Resource Selection -->
+                    <div class="resource-selection">
+                        <h3>Select Resource to Sell</h3>
+                        <div class="resource-buttons" id="resource-buttons">
+                            <!-- Resource buttons will be populated by JavaScript -->
                         </div>
                     </div>
 
-                    <div class="inventory-item">
-                        <div class="item-info">
-                            <h4>Spices <span class="quality-badge">Excellent</span></h4>
-                            <div class="item-details">3 EP • Purchased in Marienburg • 1 week ago</div>
+                    <!-- Selling Interface -->
+                    <div class="selling-interface" id="selling-interface" style="display: none;">
+                        <div class="quantity-section">
+                            <label class="form-label">Quantity (EP):</label>
+                            <input type="number" id="sell-quantity" min="1" class="form-input" placeholder="Enter quantity to sell">
                         </div>
-                        <div class="item-actions">
-                            <button class="btn btn-success">Sell</button>
+                        
+                        <div class="selling-actions">
+                            <button class="btn btn-primary" id="look-for-sellers" style="display: none;">
+                                <i class="fas fa-search"></i>
+                                Look for Sellers
+                            </button>
+                            
+                            <button class="btn" id="negotiate-sell" style="display: none;">
+                                <i class="fas fa-handshake"></i>
+                                Negotiate
+                            </button>
+                            
+                            <button class="btn btn-warning" id="desperate-sale" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Desperate Sale
+                            </button>
                         </div>
                     </div>
 
-                    <div class="empty-state" style="display: none;">
-                        <i class="fas fa-box-open"></i>
-                        <p>Your inventory is empty</p>
-                        <div class="sub-text">Purchase some cargo to get started</div>
+                    <!-- Selling Results -->
+                    <div class="selling-results" id="selling-results" style="display: none;">
+                        <!-- Results will be populated by selling algorithm -->
+                    </div>
+
+                    <!-- Empty State (shown when no settlement selected) -->
+                    <div class="empty-state" id="selling-empty-state">
+                        <i class="fas fa-hand-holding-usd"></i>
+                        <p>Select a settlement to see selling options</p>
+                        <div class="sub-text">Choose resources to sell based on settlement demand</div>
                     </div>
                 </div>
 
@@ -846,6 +1281,1111 @@
     </div>
 
     <script>
+        // =============================================================================
+        // GLOBAL STATE AND DEBUG FUNCTIONALITY
+        // =============================================================================
+        
+        // Debug mode state
+        let debugMode = true;
+
+        /**
+         * Debug logging function that respects debug mode setting
+         * @param {...any} args - Arguments to log
+         */
+        function debugLog(...args) {
+            if (debugMode) {
+                console.log(...args);
+            }
+        }
+
+        // Mock cargo data for the algorithm (in real implementation, this would come from JSON files)
+        const mockCargoData = {
+            'Grain': {
+                name: 'Grain',
+                category: 'Bulk Goods',
+                basePrices: {
+                    spring: 2,
+                    summer: 3,
+                    autumn: 1,
+                    winter: 4
+                },
+                encumbrancePerUnit: 10
+            },
+            'Wine': {
+                name: 'Wine',
+                category: 'Luxury Goods',
+                basePrices: {
+                    spring: 15,
+                    summer: 15,
+                    autumn: 20,
+                    winter: 25
+                },
+                encumbrancePerUnit: 5,
+                qualityTiers: {
+                    poor: 0.5,
+                    average: 1.0,
+                    good: 1.5,
+                    excellent: 2.0
+                }
+            },
+            'Timber': {
+                name: 'Timber',
+                category: 'Raw Materials',
+                basePrices: {
+                    spring: 5,
+                    summer: 6,
+                    autumn: 4,
+                    winter: 8
+                },
+                encumbrancePerUnit: 15
+            },
+            'Trade': {
+                name: 'Trade',
+                category: 'Services',
+                basePrices: {
+                    spring: 0,
+                    summer: 0,
+                    autumn: 0,
+                    winter: 0
+                },
+                encumbrancePerUnit: 0
+            }
+        };
+
+        // Mock settlement data for the algorithm (in real implementation, this would come from JSON files)
+        const mockSettlementData = {
+            'Altdorf': {
+                region: 'Reikland',
+                name: 'ALTDORF',
+                size: 'CS',
+                ruler: 'Emperor Karl-Franz I Holswig-Schliestein',
+                population: 105000,
+                wealth: 5,
+                source: ['Trade', 'Government'],
+                garrison: ['500a/8000c'],
+                notes: 'Imperial Capital, Great Cathedral of Sigmar, University of Altdorf, Schools of Wizardry'
+            },
+            'Auerswald': {
+                region: 'Reikland',
+                name: 'Auerswald',
+                size: 'T',
+                ruler: 'Baron Manfred von Holzenauer',
+                population: 1200,
+                wealth: 3,
+                source: ['Timber', 'Trade'],
+                garrison: ['20a/120c'],
+                notes: 'River port, timber trade'
+            },
+            'Bögenhafen': {
+                region: 'Reikland',
+                name: 'Bögenhafen',
+                size: 'T',
+                ruler: 'Steinhäger family',
+                population: 2500,
+                wealth: 4,
+                source: ['Trade'],
+                garrison: ['30a/200c'],
+                notes: 'Major trading town'
+            },
+            'Grissenwald': {
+                region: 'Reikland',
+                name: 'Grissenwald',
+                size: 'V',
+                ruler: 'Emperor',
+                population: 150,
+                wealth: 2,
+                source: ['Timber'],
+                garrison: ['-/15c'],
+                notes: 'Logging village'
+            },
+            'Kemperbad': {
+                region: 'Reikland',
+                name: 'Kemperbad',
+                size: 'T',
+                ruler: 'Elector Count of Talabecland',
+                population: 1800,
+                wealth: 3,
+                source: ['Trade', 'River tolls'],
+                garrison: ['25a/150c'],
+                notes: 'River crossing, toll collection'
+            }
+        };
+
+        // =============================================================================
+        // SETTLEMENT VALIDATION AND SIZE RATING FUNCTIONS
+        // =============================================================================
+
+        /**
+         * Calculate size rating from settlement size code with proper error handling
+         * @param {string} sizeCode - Settlement size code (CS, C, T, ST, V, F, M)
+         * @returns {number|null} Size rating (1-4) or null if invalid
+         */
+        function calculateSizeRating(sizeCode) {
+            debugLog('=== calculateSizeRating() ===');
+            debugLog('Input size code:', sizeCode);
+            
+            const sizeRatings = {
+                'CS': 4,  // City State / Metropolis
+                'C': 3,   // City
+                'T': 2,   // Town
+                'ST': 1,  // Small Town
+                'V': 1,   // Village
+                'F': 1,   // Fort
+                'M': 1    // Manor
+            };
+            
+            if (!sizeCode || typeof sizeCode !== 'string') {
+                debugLog('ERROR: Invalid size code - not a string:', sizeCode);
+                return null;
+            }
+            
+            const rating = sizeRatings[sizeCode.toUpperCase()];
+            
+            if (rating === undefined) {
+                debugLog('ERROR: Unknown size code:', sizeCode);
+                debugLog('Valid size codes:', Object.keys(sizeRatings));
+                return null;
+            }
+            
+            debugLog('Size code', sizeCode, '→ Rating:', rating);
+            return rating;
+        }
+
+        /**
+         * Comprehensive settlement validation function with enhanced error reporting
+         * @param {Object} settlement - Settlement data object
+         * @returns {Object} Validation result with valid flag, error message, and detailed errors array
+         */
+        function validateSettlement(settlement) {
+            debugLog('=== validateSettlement() ===');
+            debugLog('Validating settlement:', settlement);
+            
+            const errors = [];
+            
+            // Check if settlement object exists
+            if (!settlement) {
+                const error = 'No settlement selected';
+                debugLog('ERROR:', error);
+                return { 
+                    valid: false, 
+                    error: error,
+                    errors: [error],
+                    errorType: 'missing_settlement'
+                };
+            }
+            
+            // Check all required properties exist and are not empty
+            const requiredProperties = ['name', 'size', 'wealth', 'region', 'source'];
+            const missingProperties = [];
+            
+            requiredProperties.forEach(prop => {
+                if (settlement[prop] === undefined || settlement[prop] === null) {
+                    missingProperties.push(prop);
+                } else if (typeof settlement[prop] === 'string' && settlement[prop].trim() === '') {
+                    missingProperties.push(prop + ' (empty)');
+                } else if (Array.isArray(settlement[prop]) && settlement[prop].length === 0) {
+                    missingProperties.push(prop + ' (empty array)');
+                }
+            });
+            
+            if (missingProperties.length > 0) {
+                const error = `Settlement missing required properties: ${missingProperties.join(', ')}`;
+                errors.push(error);
+                debugLog('ERROR:', error, settlement);
+            }
+            
+            // Validate size code against known values
+            const validSizeCodes = ['CS', 'C', 'T', 'ST', 'V', 'F', 'M'];
+            if (settlement.size) {
+                const sizeCode = settlement.size.toString().toUpperCase();
+                if (!validSizeCodes.includes(sizeCode)) {
+                    const error = `Invalid size code: "${settlement.size}". Valid codes: ${validSizeCodes.join(', ')}`;
+                    errors.push(error);
+                    debugLog('ERROR:', error);
+                } else {
+                    debugLog('Size code validation PASSED:', sizeCode);
+                }
+            }
+            
+            // Validate wealth rating is within valid range (1-5)
+            if (settlement.wealth !== undefined && settlement.wealth !== null) {
+                const wealth = Number(settlement.wealth);
+                if (isNaN(wealth) || !Number.isInteger(wealth) || wealth < 1 || wealth > 5) {
+                    const error = `Invalid wealth rating: "${settlement.wealth}". Must be integer between 1-5`;
+                    errors.push(error);
+                    debugLog('ERROR:', error);
+                } else {
+                    debugLog('Wealth rating validation PASSED:', wealth);
+                }
+            }
+            
+            // Validate source array structure
+            if (settlement.source !== undefined && settlement.source !== null) {
+                if (!Array.isArray(settlement.source)) {
+                    const error = `Source must be an array, got: ${typeof settlement.source}`;
+                    errors.push(error);
+                    debugLog('ERROR:', error);
+                } else if (settlement.source.length === 0) {
+                    const error = 'Source array cannot be empty';
+                    errors.push(error);
+                    debugLog('ERROR:', error);
+                } else {
+                    // Validate each source item is a non-empty string
+                    const invalidSources = settlement.source.filter(source => 
+                        typeof source !== 'string' || source.trim() === ''
+                    );
+                    if (invalidSources.length > 0) {
+                        const error = `Source array contains invalid items: ${invalidSources.length} invalid entries`;
+                        errors.push(error);
+                        debugLog('ERROR:', error);
+                    } else {
+                        debugLog('Source array validation PASSED:', settlement.source);
+                    }
+                }
+            }
+            
+            // Validate region is a non-empty string
+            if (settlement.region !== undefined && settlement.region !== null) {
+                if (typeof settlement.region !== 'string' || settlement.region.trim() === '') {
+                    const error = `Region must be a non-empty string, got: "${settlement.region}"`;
+                    errors.push(error);
+                    debugLog('ERROR:', error);
+                } else {
+                    debugLog('Region validation PASSED:', settlement.region);
+                }
+            }
+            
+            // Validate name is a non-empty string
+            if (settlement.name !== undefined && settlement.name !== null) {
+                if (typeof settlement.name !== 'string' || settlement.name.trim() === '') {
+                    const error = `Name must be a non-empty string, got: "${settlement.name}"`;
+                    errors.push(error);
+                    debugLog('ERROR:', error);
+                } else {
+                    debugLog('Name validation PASSED:', settlement.name);
+                }
+            }
+            
+            // Return validation result
+            if (errors.length > 0) {
+                const mainError = errors[0]; // Use first error as main error message
+                debugLog('Settlement validation FAILED with', errors.length, 'errors:', errors);
+                return { 
+                    valid: false, 
+                    error: mainError,
+                    errors: errors,
+                    errorType: 'validation_failed',
+                    settlement: settlement
+                };
+            }
+            
+            debugLog('Settlement validation PASSED - all checks successful');
+            return { 
+                valid: true,
+                errors: [],
+                settlement: settlement
+            };
+        }
+
+        /**
+         * Get seasonal price for a cargo type
+         * @param {string} cargoType - Name of the cargo type
+         * @param {string} season - Season name (spring, summer, autumn, winter)
+         * @param {string} quality - Quality tier (poor, average, good, excellent)
+         * @returns {number} Calculated price per EP
+         */
+        function getSeasonalPrice(cargoType, season, quality = 'average') {
+            debugLog('=== getSeasonalPrice() ===');
+            debugLog('Cargo:', cargoType, 'Season:', season, 'Quality:', quality);
+            
+            const cargo = mockCargoData[cargoType];
+            if (!cargo) {
+                debugLog('ERROR: Cargo type not found:', cargoType);
+                return null;
+            }
+            
+            if (!cargo.basePrices || !cargo.basePrices[season]) {
+                debugLog('ERROR: No price data for season:', season);
+                return null;
+            }
+            
+            let basePrice = cargo.basePrices[season];
+            debugLog('Base price for', season + ':', basePrice, 'GC per EP');
+            
+            // Apply quality tier multiplier if available
+            if (cargo.qualityTiers && cargo.qualityTiers[quality]) {
+                const multiplier = cargo.qualityTiers[quality];
+                basePrice = basePrice * multiplier;
+                debugLog('Quality tier', quality, 'multiplier:', multiplier, '→ Final price:', basePrice, 'GC per EP');
+            }
+            
+            return basePrice;
+        }
+
+        /**
+         * Check if settlement has Trade bonus
+         * @param {Object} settlement - Settlement data
+         * @returns {boolean} True if settlement has Trade in source
+         */
+        function hasTradeBonus(settlement) {
+            return settlement.source && settlement.source.includes('Trade');
+        }
+
+        /**
+         * Calculate wealth modifier for offer prices
+         * @param {number} wealthRating - Settlement wealth rating (1-5)
+         * @returns {number} Price multiplier
+         */
+        function getWealthModifier(wealthRating) {
+            const wealthModifiers = {
+                1: 0.50,  // Squalid - 50%
+                2: 0.80,  // Poor - 80%
+                3: 1.00,  // Average - 100%
+                4: 1.05,  // Bustling - 105%
+                5: 1.10   // Prosperous - 110%
+            };
+            
+            return wealthModifiers[wealthRating] || 1.00;
+        }
+
+        // =============================================================================
+        // WFRP SELLING ALGORITHM IMPLEMENTATION
+        // =============================================================================
+
+        /**
+         * Main selling algorithm implementation following SELLING_ALGORITHM_IMPLEMENTATION.md
+         * @param {Object} settlement - Settlement data
+         * @param {string} cargoType - Type of cargo to sell
+         * @param {number} quantity - Quantity in EP to sell
+         * @param {string} season - Current season
+         * @param {Object} options - Additional options (saleType, haggleResult, etc.)
+         * @returns {Object} Selling result with buyer found, price, and details
+         */
+        function lookForSellers(settlement, cargoType, quantity, season, options = {}) {
+            debugLog('=== WFRP Selling Algorithm - Buyer Search ===');
+            debugLog('Settlement:', settlement.name, '(', settlement.region, ')');
+            debugLog('Cargo Type:', cargoType);
+            debugLog('Quantity:', quantity, 'EP');
+            debugLog('Season:', season);
+            debugLog('Options:', options);
+            
+            // Step 1: Selling Eligibility Checks (simplified for mockup)
+            debugLog('=== Step 1: Selling Eligibility Checks ===');
+            debugLog('Location restrictions: Simplified for mockup - assuming eligible');
+            
+            // Step 2: Buyer Availability Check
+            debugLog('=== Step 2: Buyer Availability Check ===');
+            
+            const sizeRating = calculateSizeRating(settlement.size);
+            if (sizeRating === null) {
+                debugLog('ERROR: Invalid settlement size code');
+                return { success: false, error: 'Invalid settlement size code' };
+            }
+            
+            let buyerChance = sizeRating * 10;
+            debugLog('Size Rating:', sizeRating);
+            debugLog('Base Buyer Chance: Size × 10 =', sizeRating, '× 10 =', buyerChance, '%');
+            
+            // Check for Trade bonus
+            if (hasTradeBonus(settlement)) {
+                buyerChance += 30;
+                debugLog('Trade Settlement Bonus: +30%');
+                debugLog('Total Buyer Chance:', buyerChance, '%');
+            }
+            
+            // Cap at 100%
+            if (buyerChance > 100) {
+                debugLog('Capping buyer chance at 100% (was', buyerChance + '%)');
+                buyerChance = 100;
+            }
+            
+            // Handle Village Special Case (Size 1)
+            if (sizeRating === 1 && settlement.size === 'V') {
+                debugLog('=== Village Special Case ===');
+                
+                // Check for Spring Grain Exception
+                if (season === 'spring' && cargoType === 'Grain') {
+                    debugLog('Spring Grain Exception: Normal rules apply for grain sales in Spring');
+                } else {
+                    debugLog('Village Limitation: Rolling 1d10 for maximum EP that can be sold');
+                    const maxEP = Math.floor(Math.random() * 10) + 1;
+                    debugLog('Village can only buy up to', maxEP, 'EP');
+                    
+                    if (quantity > maxEP) {
+                        debugLog('Quantity', quantity, 'exceeds village limit of', maxEP, 'EP');
+                        return { 
+                            success: false, 
+                            error: `Village can only buy ${maxEP} EP (rolled 1d10)`,
+                            villageLimit: maxEP
+                        };
+                    }
+                }
+            }
+            
+            // Roll for buyer availability
+            const buyerRoll = Math.floor(Math.random() * 100) + 1;
+            const buyerFound = buyerRoll <= buyerChance;
+            
+            debugLog('Rolling d100 for buyer availability...');
+            debugLog('Roll Result:', buyerRoll, '/', buyerChance, '=', buyerFound ? 'BUYER FOUND' : 'NO BUYER');
+            debugLog('Reason:', buyerFound ? 'Roll ≤ target' : 'Roll > target');
+            
+            if (!buyerFound) {
+                debugLog('No buyer found. Consider desperate sale or try elsewhere.');
+                return { 
+                    success: false, 
+                    noBuyer: true,
+                    buyerRoll: buyerRoll,
+                    buyerTarget: buyerChance,
+                    message: 'No buyer found'
+                };
+            }
+            
+            // Step 3: Offer Price Calculation
+            debugLog('=== Step 3: Offer Price Calculation ===');
+            
+            const basePrice = getSeasonalPrice(cargoType, season);
+            if (basePrice === null) {
+                debugLog('ERROR: Could not determine base price');
+                return { success: false, error: 'Could not determine base price' };
+            }
+            
+            debugLog('Base Price:', basePrice, 'GC per EP');
+            
+            // Apply wealth modifier
+            const wealthModifier = getWealthModifier(settlement.wealth);
+            const wealthNames = { 1: 'Squalid', 2: 'Poor', 3: 'Average', 4: 'Bustling', 5: 'Prosperous' };
+            
+            debugLog('Settlement Wealth:', settlement.wealth, '(' + wealthNames[settlement.wealth] + ')');
+            debugLog('Wealth Modifier:', wealthModifier, '(' + (wealthModifier * 100) + '%)');
+            
+            let offerPrice = basePrice * wealthModifier;
+            debugLog('Offer Price: Base × Wealth =', basePrice, '×', wealthModifier, '=', offerPrice.toFixed(2), 'GC per EP');
+            
+            // Step 4: Apply Haggling Results (if provided)
+            if (options.haggleResult) {
+                debugLog('=== Step 4: Haggling Results ===');
+                
+                if (options.haggleResult.success) {
+                    const haggleBonus = options.haggleResult.hasDealmakertTalent ? 0.20 : 0.10;
+                    const bonusPercent = haggleBonus * 100;
+                    
+                    debugLog('Haggling Successful!');
+                    debugLog('Bonus:', bonusPercent + '% (' + (options.haggleResult.hasDealmakertTalent ? 'with Dealmaker Talent' : 'standard') + ')');
+                    
+                    offerPrice = offerPrice * (1 + haggleBonus);
+                    debugLog('Final Price after haggling:', offerPrice.toFixed(2), 'GC per EP');
+                } else {
+                    debugLog('Haggling Failed: No penalty applied (GM discretion)');
+                }
+            }
+            
+            // Calculate total price
+            const totalPrice = offerPrice * quantity;
+            
+            debugLog('=== Final Calculation ===');
+            debugLog('Price per EP:', offerPrice.toFixed(2), 'GC');
+            debugLog('Quantity:', quantity, 'EP');
+            debugLog('Total Price:', totalPrice.toFixed(2), 'GC');
+            
+            return {
+                success: true,
+                buyerFound: true,
+                buyerRoll: buyerRoll,
+                buyerTarget: buyerChance,
+                basePrice: basePrice,
+                wealthModifier: wealthModifier,
+                offerPricePerEP: offerPrice,
+                totalPrice: totalPrice,
+                quantity: quantity,
+                cargoType: cargoType,
+                settlement: settlement.name,
+                season: season,
+                hasTradeBonus: hasTradeBonus(settlement),
+                haggleApplied: options.haggleResult ? options.haggleResult.success : false
+            };
+        }
+
+        /**
+         * Show error message in UI
+         * @param {string} message - Error message to display
+         */
+        function showError(message) {
+            const errorDisplay = document.getElementById('buying-error-display');
+            const errorMessage = document.getElementById('buying-error-message');
+            
+            errorMessage.textContent = message;
+            errorDisplay.classList.add('show');
+            
+            debugLog('Showing error in UI:', message);
+        }
+
+        /**
+         * Hide error message in UI
+         */
+        function hideError() {
+            const errorDisplay = document.getElementById('buying-error-display');
+            errorDisplay.classList.remove('show');
+            
+            debugLog('Hiding error display');
+        }
+
+        /**
+         * Show validation error with warning symbols and specific error messages
+         * @param {Object} validationResult - Result from validateSettlement function
+         * @param {string} context - Context where validation failed ('buying' or 'selling')
+         */
+        function showValidationError(validationResult, context = 'buying') {
+            debugLog('=== showValidationError() ===');
+            debugLog('Validation result:', validationResult);
+            debugLog('Context:', context);
+            
+            if (validationResult.valid) {
+                debugLog('No validation errors to show');
+                return;
+            }
+            
+            const errorDisplayId = context === 'selling' ? 'selling-error-display' : 'buying-error-display';
+            const errorMessageId = context === 'selling' ? 'selling-error-message' : 'buying-error-message';
+            
+            const errorDisplay = document.getElementById(errorDisplayId);
+            const errorMessage = document.getElementById(errorMessageId);
+            
+            if (!errorDisplay || !errorMessage) {
+                debugLog('ERROR: Could not find error display elements for context:', context);
+                return;
+            }
+            
+            // Create detailed error message with warning symbols
+            let errorText = '';
+            
+            if (validationResult.errorType === 'missing_settlement') {
+                errorText = '⚠️ No settlement selected. Please select a settlement first.';
+            } else if (validationResult.errorType === 'validation_failed') {
+                if (validationResult.errors.length === 1) {
+                    errorText = `⚠️ Settlement data invalid: ${validationResult.errors[0]}`;
+                } else {
+                    errorText = `⚠️ Settlement data has ${validationResult.errors.length} validation errors. Check data validity.`;
+                }
+            } else {
+                errorText = `⚠️ ${validationResult.error}`;
+            }
+            
+            errorMessage.textContent = errorText;
+            errorDisplay.classList.add('show');
+            
+            debugLog('Validation error displayed:', errorText);
+            
+            // Log all detailed errors to console for debugging
+            if (validationResult.errors && validationResult.errors.length > 1) {
+                debugLog('Detailed validation errors:');
+                validationResult.errors.forEach((error, index) => {
+                    debugLog(`  ${index + 1}. ${error}`);
+                });
+            }
+        }
+
+        /**
+         * Hide validation error display for specified context
+         * @param {string} context - Context to hide errors for ('buying' or 'selling')
+         */
+        function hideValidationError(context = 'buying') {
+            debugLog('Hiding validation error for context:', context);
+            
+            const errorDisplayId = context === 'selling' ? 'selling-error-display' : 'buying-error-display';
+            const errorDisplay = document.getElementById(errorDisplayId);
+            
+            if (errorDisplay) {
+                errorDisplay.classList.remove('show');
+                debugLog('Validation error hidden for context:', context);
+            }
+        }
+
+        /**
+         * Validate settlement and show user feedback if validation fails
+         * @param {Object} settlement - Settlement data to validate
+         * @param {string} context - Context for error display ('buying' or 'selling')
+         * @returns {Object} Validation result
+         */
+        function validateSettlementWithFeedback(settlement, context = 'buying') {
+            debugLog('=== validateSettlementWithFeedback() ===');
+            debugLog('Context:', context);
+            
+            // Clear any previous validation errors
+            hideValidationError(context);
+            
+            // Run comprehensive validation
+            const validation = validateSettlement(settlement);
+            
+            // Show user feedback if validation failed
+            if (!validation.valid) {
+                showValidationError(validation, context);
+                debugLog('Settlement validation failed - user feedback displayed');
+            } else {
+                debugLog('Settlement validation passed - no user feedback needed');
+            }
+            
+            return validation;
+        }
+
+        // =============================================================================
+        // WFRP BUYING ALGORITHM IMPLEMENTATION
+        // =============================================================================
+
+        /**
+         * Step 1: Availability Check - (Size + Wealth) × 10% formula
+         * @param {Object} settlement - Settlement data
+         * @returns {Object} Result with success flag, roll details, and calculations
+         */
+        function checkAvailability(settlement) {
+            debugLog('=== WFRP Buying Algorithm - Step 1: Availability Check ===');
+            debugLog('Settlement:', settlement.name, '(', settlement.region, ')');
+            
+            const sizeRating = calculateSizeRating(settlement.size);
+            const wealthRating = settlement.wealth;
+            
+            debugLog('Size:', settlement.size, '→ Rating:', sizeRating);
+            debugLog('Wealth Rating:', wealthRating);
+            
+            const baseChance = (sizeRating + wealthRating) * 10;
+            debugLog('Availability Formula: (Size + Wealth) × 10 = (', sizeRating, '+', wealthRating, ') × 10 =', baseChance, '%');
+            
+            const roll = Math.floor(Math.random() * 100) + 1;
+            const available = roll <= baseChance;
+            
+            debugLog('Rolling d100 for availability...');
+            debugLog('Roll Result:', roll, '/', baseChance, '=', available ? 'SUCCESS' : 'FAILURE');
+            debugLog('Reason:', available ? 'Roll ≤ target' : 'Roll > target');
+            
+            return {
+                success: available,
+                roll: roll,
+                target: baseChance,
+                sizeRating: sizeRating,
+                wealthRating: wealthRating,
+                calculation: `(${sizeRating} + ${wealthRating}) × 10 = ${baseChance}%`
+            };
+        }
+
+        /**
+         * Step 2A: Determine cargo type from settlement source data
+         * @param {Object} settlement - Settlement data
+         * @returns {Array} Array of available cargo types
+         */
+        function determineCargoTypes(settlement) {
+            debugLog('=== WFRP Buying Algorithm - Step 2A: Cargo Type Determination ===');
+            debugLog('Settlement source data:', settlement.source);
+            
+            let cargoTypes = [];
+            
+            if (!settlement.source || settlement.source.length === 0) {
+                debugLog('No source data available - using random cargo');
+                cargoTypes = ['Random Cargo']; // Fallback
+            } else {
+                // Filter out "Trade" as it's not a cargo type, it's a modifier
+                const actualCargo = settlement.source.filter(item => item !== 'Trade');
+                
+                if (actualCargo.length === 0) {
+                    debugLog('Only "Trade" in source - using random cargo table');
+                    cargoTypes = ['Random Cargo']; // Would use cargo table in real implementation
+                } else if (actualCargo.length === 1) {
+                    debugLog('Single cargo type available:', actualCargo[0]);
+                    cargoTypes = actualCargo;
+                } else {
+                    debugLog('Multiple cargo types available:', actualCargo);
+                    // In real implementation, would either choose randomly or offer all
+                    cargoTypes = actualCargo;
+                }
+                
+                // Special case: Trade centers can have additional random cargo
+                if (settlement.source.includes('Trade')) {
+                    debugLog('Trade center detected - additional cargo opportunities available');
+                    cargoTypes.push('Trade Goods'); // Represents additional trade opportunities
+                }
+            }
+            
+            debugLog('Final cargo types:', cargoTypes);
+            return cargoTypes;
+        }
+
+        /**
+         * Step 2B: Calculate cargo quantity using d100 method
+         * @param {Object} settlement - Settlement data
+         * @returns {Object} Quantity calculation details
+         */
+        function calculateCargoQuantity(settlement) {
+            debugLog('=== WFRP Buying Algorithm - Step 2B: Cargo Quantity Calculation ===');
+            
+            const sizeRating = calculateSizeRating(settlement.size);
+            const wealthRating = settlement.wealth;
+            const baseValue = sizeRating + wealthRating;
+            
+            debugLog('Base Value: Size + Wealth =', sizeRating, '+', wealthRating, '=', baseValue);
+            
+            // Roll d100 and round up to nearest 10
+            const d100Roll = Math.floor(Math.random() * 100) + 1;
+            const multiplier = Math.ceil(d100Roll / 10) * 10;
+            
+            debugLog('Rolling d100 for multiplier...');
+            debugLog('d100 Roll:', d100Roll);
+            debugLog('Rounded up to nearest 10:', multiplier);
+            
+            // Special case for trade centers - reverse the roll and take higher
+            let finalMultiplier = multiplier;
+            if (settlement.source && settlement.source.includes('Trade')) {
+                const reversedRoll = 101 - d100Roll;
+                const reversedMultiplier = Math.ceil(reversedRoll / 10) * 10;
+                finalMultiplier = Math.max(multiplier, reversedMultiplier);
+                
+                debugLog('Trade Center Special Rule:');
+                debugLog('Reversed roll:', reversedRoll, '→ multiplier:', reversedMultiplier);
+                debugLog('Taking higher multiplier:', finalMultiplier);
+            }
+            
+            const totalQuantity = baseValue * finalMultiplier;
+            
+            debugLog('Final Calculation: Base × Multiplier =', baseValue, '×', finalMultiplier, '=', totalQuantity, 'EP');
+            
+            return {
+                baseValue: baseValue,
+                d100Roll: d100Roll,
+                multiplier: finalMultiplier,
+                totalQuantity: totalQuantity,
+                isTradeCenter: settlement.source && settlement.source.includes('Trade')
+            };
+        }
+
+        /**
+         * Main buying algorithm function that orchestrates all steps
+         * @param {Object} settlement - Settlement data
+         * @returns {Object} Complete algorithm results
+         */
+        function runBuyingAlgorithm(settlement) {
+            debugLog('=== STARTING WFRP BUYING ALGORITHM ===');
+            debugLog('Timestamp:', new Date().toISOString());
+            
+            // Step 0: Validate settlement data with user feedback
+            const validation = validateSettlementWithFeedback(settlement, 'buying');
+            if (!validation.valid) {
+                debugLog('ALGORITHM ABORTED: Settlement validation failed');
+                debugLog('Validation errors:', validation.errors);
+                return {
+                    success: false,
+                    error: validation.error,
+                    errors: validation.errors,
+                    step: 'validation',
+                    validationResult: validation
+                };
+            }
+            
+            // Step 1: Check availability
+            const availabilityResult = checkAvailability(settlement);
+            if (!availabilityResult.success) {
+                debugLog('ALGORITHM RESULT: No cargo available');
+                return {
+                    success: false,
+                    reason: 'availability_failed',
+                    availabilityResult: availabilityResult
+                };
+            }
+            
+            // Step 2: Determine cargo and quantity
+            const cargoTypes = determineCargoTypes(settlement);
+            const quantityResult = calculateCargoQuantity(settlement);
+            
+            debugLog('=== ALGORITHM COMPLETED SUCCESSFULLY ===');
+            debugLog('Available cargo types:', cargoTypes);
+            debugLog('Total quantity available:', quantityResult.totalQuantity, 'EP');
+            
+            return {
+                success: true,
+                availabilityResult: availabilityResult,
+                cargoTypes: cargoTypes,
+                quantityResult: quantityResult,
+                settlement: settlement
+            };
+        }
+
+        // =============================================================================
+        // SELLING TAB RESOURCE SELECTION FUNCTIONALITY
+        // =============================================================================
+
+        // Global state for selected resource
+        let selectedResource = null;
+
+        /**
+         * Populate resource buttons based on settlement source data
+         * @param {Object} settlement - Settlement data object
+         */
+        function populateResourceButtons(settlement) {
+            debugLog('=== populateResourceButtons() ===');
+            
+            const resourceButtons = document.getElementById('resource-buttons');
+            const sellingInterface = document.getElementById('selling-interface');
+            const sellingEmptyState = document.getElementById('selling-empty-state');
+            const sellingErrorDisplay = document.getElementById('selling-error-display');
+            
+            // Clear previous state
+            resourceButtons.innerHTML = '';
+            selectedResource = null;
+            hideSellingInterface();
+            hideSellingError();
+            
+            if (!settlement) {
+                debugLog('No settlement selected - showing empty state');
+                sellingEmptyState.style.display = 'block';
+                return;
+            }
+            
+            // Validate settlement data with user feedback
+            const validation = validateSettlementWithFeedback(settlement, 'selling');
+            if (!validation.valid) {
+                debugLog('Settlement validation failed:', validation.error);
+                debugLog('Validation errors:', validation.errors);
+                sellingEmptyState.style.display = 'none';
+                return;
+            }
+            
+            debugLog('Settlement source data:', settlement.source);
+            
+            if (!settlement.source || settlement.source.length === 0) {
+                debugLog('No source data available for settlement');
+                showSellingError('No sellable resources available in this settlement');
+                sellingEmptyState.style.display = 'none';
+                return;
+            }
+            
+            // Filter out "Trade" as it's a modifier, not a sellable resource
+            const sellableResources = settlement.source.filter(resource => resource !== 'Trade');
+            
+            debugLog('Sellable resources in', settlement.name + ':', sellableResources);
+            
+            if (sellableResources.length === 0) {
+                debugLog('No sellable resources after filtering out Trade');
+                showSellingError('No sellable resources available (settlement only provides trade bonuses)');
+                sellingEmptyState.style.display = 'none';
+                return;
+            }
+            
+            // Hide empty state and show resource selection
+            sellingEmptyState.style.display = 'none';
+            
+            // Create resource buttons
+            sellableResources.forEach(resource => {
+                const button = document.createElement('button');
+                button.className = 'btn resource-btn';
+                button.textContent = resource;
+                button.onclick = () => selectResource(resource, settlement);
+                resourceButtons.appendChild(button);
+                
+                debugLog('Created resource button for:', resource);
+            });
+            
+            // Check if settlement has Trade bonus
+            const hasTradeBonus = settlement.source.includes('Trade');
+            if (hasTradeBonus) {
+                debugLog('Settlement has Trade bonus: +30% to buyer availability');
+            }
+            
+            debugLog('Resource buttons populated successfully');
+        }
+
+        /**
+         * Handle resource selection
+         * @param {string} resource - Selected resource name
+         * @param {Object} settlement - Current settlement data
+         */
+        function selectResource(resource, settlement) {
+            debugLog('=== selectResource() ===');
+            debugLog('Selected resource:', resource);
+            debugLog('Settlement:', settlement.name);
+            
+            // Update selected resource state
+            selectedResource = resource;
+            
+            // Update button highlighting
+            document.querySelectorAll('.resource-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if (btn.textContent === resource) {
+                    btn.classList.add('selected');
+                }
+            });
+            
+            // Show selling interface
+            showSellingInterface();
+            
+            // Clear previous state and hide elements
+            document.getElementById('sell-quantity').value = '';
+            hideSellingResults();
+            hideSellingButtons();
+            hideSellingError();
+            
+            // Reset Look for Sellers button to default state
+            const lookForSellersBtn = document.getElementById('look-for-sellers');
+            lookForSellersBtn.disabled = false;
+            lookForSellersBtn.innerHTML = '<i class="fas fa-search"></i> Look for Sellers';
+            
+            debugLog('Resource selected successfully:', resource);
+        }
+
+        /**
+         * Show the selling interface (quantity input and buttons)
+         */
+        function showSellingInterface() {
+            debugLog('Showing selling interface');
+            const sellingInterface = document.getElementById('selling-interface');
+            sellingInterface.style.display = 'block';
+            
+            // Focus on quantity input
+            setTimeout(() => {
+                document.getElementById('sell-quantity').focus();
+            }, 100);
+        }
+
+        /**
+         * Hide the selling interface
+         */
+        function hideSellingInterface() {
+            debugLog('Hiding selling interface');
+            const sellingInterface = document.getElementById('selling-interface');
+            sellingInterface.style.display = 'none';
+        }
+
+        /**
+         * Show selling error message
+         * @param {string} message - Error message to display
+         */
+        function showSellingError(message) {
+            debugLog('Showing selling error:', message);
+            const errorDisplay = document.getElementById('selling-error-display');
+            const errorMessage = document.getElementById('selling-error-message');
+            
+            errorMessage.textContent = message;
+            errorDisplay.classList.add('show');
+        }
+
+        /**
+         * Hide selling error message
+         */
+        function hideSellingError() {
+            debugLog('Hiding selling error');
+            const errorDisplay = document.getElementById('selling-error-display');
+            errorDisplay.classList.remove('show');
+        }
+
+        /**
+         * Show selling results section
+         */
+        function showSellingResults() {
+            debugLog('Showing selling results');
+            const sellingResults = document.getElementById('selling-results');
+            sellingResults.style.display = 'block';
+        }
+
+        /**
+         * Hide selling results section
+         */
+        function hideSellingResults() {
+            debugLog('Hiding selling results');
+            const sellingResults = document.getElementById('selling-results');
+            sellingResults.style.display = 'none';
+        }
+
+        /**
+         * Show selling action buttons based on quantity input
+         * Only shows "Look for Sellers" initially - other buttons appear after seller search
+         */
+        function showSellingButtons() {
+            debugLog('Showing "Look for Sellers" button');
+            document.getElementById('look-for-sellers').style.display = 'flex';
+            // Hide contextual buttons until seller search is performed
+            hideContextualSellingButtons();
+        }
+
+        /**
+         * Hide all selling action buttons
+         */
+        function hideSellingButtons() {
+            debugLog('Hiding all selling buttons');
+            document.getElementById('look-for-sellers').style.display = 'none';
+            document.getElementById('negotiate-sell').style.display = 'none';
+            document.getElementById('desperate-sale').style.display = 'none';
+        }
+
+        /**
+         * Handle quantity input changes and show/hide selling interface elements
+         */
+        function handleQuantityInput() {
+            const quantityInput = document.getElementById('sell-quantity');
+            const quantity = parseInt(quantityInput.value);
+            const lookForSellersBtn = document.getElementById('look-for-sellers');
+            
+            debugLog('Quantity input changed:', quantity);
+            
+            // Clear any previous errors when user starts typing
+            hideSellingError();
+            
+            if (quantity && quantity > 0 && selectedResource) {
+                showSellingButtons();
+                // Enable the Look for Sellers button
+                lookForSellersBtn.disabled = false;
+                debugLog('Look for Sellers button enabled');
+            } else {
+                hideSellingButtons();
+                // Disable the Look for Sellers button
+                lookForSellersBtn.disabled = true;
+                debugLog('Look for Sellers button disabled');
+            }
+            
+            // Hide results and contextual buttons when quantity changes
+            hideSellingResults();
+            hideContextualSellingButtons();
+        }
+
+        /**
+         * Show contextual selling buttons after successful seller search
+         */
+        function showContextualSellingButtons() {
+            debugLog('Showing contextual selling buttons (negotiate and desperate sale)');
+            document.getElementById('negotiate-sell').style.display = 'flex';
+            document.getElementById('desperate-sale').style.display = 'flex';
+        }
+
+        /**
+         * Hide contextual selling buttons
+         */
+        function hideContextualSellingButtons() {
+            debugLog('Hiding contextual selling buttons');
+            document.getElementById('negotiate-sell').style.display = 'none';
+            document.getElementById('desperate-sale').style.display = 'none';
+        }
+
+        // =============================================================================
+        // UI INTERACTION AND EVENT HANDLERS
+        // =============================================================================
+
+        // Debug mode toggle functionality
+        function initDebugToggle() {
+            const debugToggle = document.getElementById('debug-mode');
+            
+            debugToggle.addEventListener('change', function() {
+                debugMode = this.checked;
+                debugLog('Debug mode', debugMode ? 'enabled' : 'disabled');
+                
+                // Save debug mode preference to localStorage
+                localStorage.setItem('wfrp-trading-debug-mode', debugMode);
+            });
+            
+            // Load debug mode preference from localStorage
+            const savedDebugMode = localStorage.getItem('wfrp-trading-debug-mode');
+            if (savedDebugMode !== null) {
+                debugMode = savedDebugMode === 'true';
+                debugToggle.checked = debugMode;
+            }
+            
+            debugLog('Debug toggle initialized. Current state:', debugMode);
+        }
+
         // Tab functionality
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -859,26 +2399,194 @@
                 // Show corresponding content
                 const targetTab = tab.getAttribute('data-tab');
                 document.getElementById(targetTab + '-tab').classList.add('active');
+                
+                debugLog('Switched to tab:', targetTab);
             });
         });
 
+        // Sticky tabs functionality for responsive design
+        function initStickyTabs() {
+            const tabs = document.querySelector('.tabs');
+            if (!tabs) return;
+
+            // Create intersection observer to detect when tabs become sticky
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach(entry => {
+                        // When tabs are not fully visible (sticky), add shadow class
+                        if (entry.intersectionRatio < 1) {
+                            tabs.classList.add('sticky');
+                            debugLog('Tabs are now sticky - shadow applied');
+                        } else {
+                            tabs.classList.remove('sticky');
+                            debugLog('Tabs are not sticky - shadow removed');
+                        }
+                    });
+                },
+                {
+                    threshold: [1],
+                    rootMargin: '-1px 0px 0px 0px'
+                }
+            );
+
+            observer.observe(tabs);
+
+            // Also handle scroll events for additional feedback
+            let isSticky = false;
+            window.addEventListener('scroll', () => {
+                const tabsRect = tabs.getBoundingClientRect();
+                const shouldBeSticky = tabsRect.top <= 0;
+                
+                if (shouldBeSticky !== isSticky) {
+                    isSticky = shouldBeSticky;
+                    if (isSticky) {
+                        tabs.classList.add('sticky');
+                        debugLog('Tabs became sticky on scroll');
+                    } else {
+                        tabs.classList.remove('sticky');
+                        debugLog('Tabs no longer sticky on scroll');
+                    }
+                }
+            });
+
+            debugLog('Sticky tabs functionality initialized');
+        }
+
         // Form interactions
         document.getElementById('region-select').addEventListener('change', function() {
-            console.log('Region changed to:', this.value);
+            debugLog('Region changed to:', this.value);
+            hideError(); // Clear any previous errors when region changes
+            hideValidationError('buying'); // Clear validation errors for buying tab
+            hideValidationError('selling'); // Clear validation errors for selling tab
         });
 
         document.getElementById('settlement-select').addEventListener('change', function() {
-            console.log('Settlement changed to:', this.value);
+            debugLog('Settlement changed to:', this.value);
+            hideError(); // Clear any previous errors when settlement changes
+            hideValidationError('buying'); // Clear validation errors for buying tab
+            hideValidationError('selling'); // Clear validation errors for selling tab
+            
+            // Update selling tab resource selection and reset interface
+            const selectedSettlement = this.value;
+            if (selectedSettlement && mockSettlementData[selectedSettlement]) {
+                const settlementData = mockSettlementData[selectedSettlement];
+                debugLog('Updating selling tab for settlement:', settlementData.name);
+                populateResourceButtons(settlementData);
+            } else {
+                debugLog('No settlement selected or data not found - clearing selling tab');
+                populateResourceButtons(null);
+            }
+            
+            // Reset selling interface state when settlement changes
+            selectedResource = null;
+            hideSellingInterface();
+            hideSellingResults();
+            hideSellingError();
         });
 
         document.getElementById('season-select').addEventListener('change', function() {
-            console.log('Season changed to:', this.value);
+            debugLog('Season changed to:', this.value);
         });
 
-        // Button interactions
+        // Main Check Availability button functionality with full algorithm implementation
         document.getElementById('check-availability').addEventListener('click', function() {
-            console.log('Checking availability...');
-            // Could refresh the market data here
+            debugLog('=== Check Availability Button Clicked ===');
+            
+            // Hide any previous errors
+            hideError();
+            hideValidationError('buying');
+            
+            const selectedSettlement = document.getElementById('settlement-select').value;
+            const selectedRegion = document.getElementById('region-select').value;
+            
+            // Basic input validation
+            if (!selectedSettlement || !selectedRegion) {
+                const errorMsg = 'Please select both a region and settlement first.';
+                showError(errorMsg);
+                debugLog('ERROR:', errorMsg);
+                return;
+            }
+            
+            // Get settlement data (in real implementation, this would load from JSON files)
+            const settlementData = mockSettlementData[selectedSettlement];
+            if (!settlementData) {
+                const errorMsg = `Settlement data not found for: ${selectedSettlement}`;
+                showError(errorMsg);
+                debugLog('ERROR:', errorMsg);
+                return;
+            }
+            
+            // Pre-validate settlement data before running algorithm
+            const preValidation = validateSettlementWithFeedback(settlementData, 'buying');
+            if (!preValidation.valid) {
+                debugLog('Pre-validation failed - algorithm will not run');
+                return;
+            }
+            
+            debugLog('Using settlement data:', settlementData);
+            
+            // Run the complete buying algorithm
+            const algorithmResult = runBuyingAlgorithm(settlementData);
+            
+            // Update UI based on algorithm results
+            const availabilityResults = document.getElementById('availability-results');
+            const cargoGrid = document.getElementById('buying-cargo-grid');
+            const negotiateButton = document.getElementById('negotiate-buy');
+            
+            if (algorithmResult.success) {
+                // Success - show results
+                const avail = algorithmResult.availabilityResult;
+                const quantity = algorithmResult.quantityResult;
+                
+                availabilityResults.innerHTML = `
+                    <h4>
+                        <i class="fas fa-check-circle success-icon"></i>
+                        Cargo Available!
+                    </h4>
+                    <p><strong>Availability Check:</strong> Rolled ${avail.roll} ≤ ${avail.target} (${avail.calculation})</p>
+                    <p><strong>Quantity Available:</strong> ${quantity.totalQuantity} EP (Base: ${quantity.baseValue}, Multiplier: ${quantity.multiplier})</p>
+                    <p><strong>Cargo Types:</strong> ${algorithmResult.cargoTypes.join(', ')}</p>
+                `;
+                
+                availabilityResults.style.display = 'block';
+                cargoGrid.style.display = 'grid';
+                negotiateButton.style.display = 'block';
+                
+                debugLog('SUCCESS: Cargo available - UI updated to show results');
+                
+            } else if (algorithmResult.step === 'validation') {
+                // Validation error
+                showError(`Settlement data validation failed: ${algorithmResult.error}`);
+                availabilityResults.style.display = 'none';
+                cargoGrid.style.display = 'none';
+                negotiateButton.style.display = 'none';
+                
+            } else {
+                // Availability check failed
+                const avail = algorithmResult.availabilityResult;
+                
+                availabilityResults.innerHTML = `
+                    <h4>
+                        <i class="fas fa-times-circle failure-icon"></i>
+                        No Cargo Available
+                    </h4>
+                    <p><strong>Availability Check:</strong> Rolled ${avail.roll} > ${avail.target} (${avail.calculation})</p>
+                    <p>No cargo available at this time. Try again later or visit a different settlement.</p>
+                `;
+                
+                availabilityResults.style.display = 'block';
+                cargoGrid.style.display = 'none';
+                negotiateButton.style.display = 'none';
+                
+                debugLog('FAILURE: No cargo available - UI updated to show failure');
+            }
+        });
+
+        // Negotiate button functionality
+        document.getElementById('negotiate-buy').addEventListener('click', function() {
+            debugLog('=== Negotiate Button Clicked (Buying Context) ===');
+            debugLog('Opening negotiation interface for buying...');
+            alert('Negotiation interface would open here (to be implemented in future tasks)');
         });
 
         // Purchase buttons
@@ -890,7 +2598,7 @@
                 const quantity = quantityInput.value;
                 
                 if (quantity && quantity > 0) {
-                    console.log(`Purchasing ${quantity} EP of ${cargoName}`);
+                    debugLog(`Purchasing ${quantity} EP of ${cargoName}`);
                     quantityInput.value = '';
                 } else {
                     alert('Please enter a valid quantity');
@@ -898,27 +2606,301 @@
             });
         });
 
-        // Sell buttons
-        document.querySelectorAll('.inventory-item .btn-success').forEach(button => {
-            button.addEventListener('click', function() {
-                const item = this.closest('.inventory-item');
-                const itemName = item.querySelector('h4').textContent;
-                console.log(`Selling ${itemName}`);
-            });
+        // Selling tab quantity input event listener
+        document.getElementById('sell-quantity').addEventListener('input', handleQuantityInput);
+
+        // Look for Sellers button functionality with proper validation and UI updates
+        document.getElementById('look-for-sellers').addEventListener('click', function() {
+            debugLog('=== Look for Sellers Button Clicked ===');
+            
+            const quantity = parseInt(document.getElementById('sell-quantity').value);
+            const selectedSettlement = document.getElementById('settlement-select').value;
+            
+            // Validation checks
+            if (!selectedResource) {
+                showSellingError('Please select a resource first');
+                debugLog('ERROR: No resource selected');
+                return;
+            }
+            
+            if (!quantity || quantity <= 0) {
+                showSellingError('Please enter a valid quantity');
+                debugLog('ERROR: Invalid quantity:', quantity);
+                return;
+            }
+            
+            if (!selectedSettlement) {
+                showSellingError('Please select a settlement first');
+                debugLog('ERROR: No settlement selected');
+                return;
+            }
+            
+            // Get settlement data
+            const settlementData = mockSettlementData[selectedSettlement];
+            if (!settlementData) {
+                showSellingError(`Settlement data not found for: ${selectedSettlement}`);
+                debugLog('ERROR: Settlement data not found');
+                return;
+            }
+            
+            // Validate settlement data with user feedback
+            const validation = validateSettlementWithFeedback(settlementData, 'selling');
+            if (!validation.valid) {
+                debugLog('ERROR: Settlement validation failed:', validation.error);
+                debugLog('Validation errors:', validation.errors);
+                return;
+            }
+            
+            // Clear any previous errors
+            hideSellingError();
+            
+            // Get current season
+            const currentSeason = document.getElementById('season-select').value || 'spring';
+            
+            debugLog('Looking for sellers for:', selectedResource, 'Quantity:', quantity, 'EP');
+            debugLog('Settlement:', settlementData.name);
+            debugLog('Season:', currentSeason);
+            
+            // Disable the button during processing
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+            
+            // Run the actual selling algorithm
+            setTimeout(() => {
+                try {
+                    // Execute the selling algorithm
+                    const sellingResult = lookForSellers(settlementData, selectedResource, quantity, currentSeason);
+                    
+                    // Re-enable button
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-search"></i> Look for Sellers';
+                    
+                    if (sellingResult.success) {
+                        // Show successful results
+                        showSellingResults();
+                        showContextualSellingButtons();
+                        
+                        // Update results display with actual algorithm results
+                        const sellingResults = document.getElementById('selling-results');
+                        sellingResults.innerHTML = `
+                            <h4>
+                                <i class="fas fa-users success-icon"></i>
+                                Buyer Found!
+                            </h4>
+                            <div class="result-details">
+                                <p><strong>Resource:</strong> ${sellingResult.cargoType}</p>
+                                <p><strong>Quantity:</strong> ${sellingResult.quantity} EP</p>
+                                <p><strong>Settlement:</strong> ${sellingResult.settlement}</p>
+                                <p><strong>Season:</strong> ${sellingResult.season}</p>
+                                <hr>
+                                <p><strong>Base Price:</strong> ${sellingResult.basePrice.toFixed(2)} GC per EP</p>
+                                <p><strong>Wealth Modifier:</strong> ${(sellingResult.wealthModifier * 100).toFixed(0)}%</p>
+                                ${sellingResult.hasTradeBonus ? '<p><strong>Trade Bonus:</strong> +30% buyer availability</p>' : ''}
+                                <p><strong>Offer Price:</strong> ${sellingResult.offerPricePerEP.toFixed(2)} GC per EP</p>
+                                <p class="total-price"><strong>Total Offer:</strong> ${sellingResult.totalPrice.toFixed(2)} GC</p>
+                                <hr>
+                                <p class="algorithm-details">
+                                    <small>
+                                        <strong>Algorithm Details:</strong><br>
+                                        Buyer Roll: ${sellingResult.buyerRoll}/${sellingResult.buyerTarget} (${sellingResult.buyerRoll <= sellingResult.buyerTarget ? 'Success' : 'Failed'})
+                                    </small>
+                                </p>
+                            </div>
+                        `;
+                        
+                        debugLog('Selling algorithm completed successfully - buyer found!');
+                        
+                    } else {
+                        // Handle different failure cases
+                        if (sellingResult.noBuyer) {
+                            // No buyer found - show results but with different message
+                            showSellingResults();
+                            showContextualSellingButtons();
+                            
+                            const sellingResults = document.getElementById('selling-results');
+                            sellingResults.innerHTML = `
+                                <h4>
+                                    <i class="fas fa-user-times warning-icon"></i>
+                                    No Buyer Found
+                                </h4>
+                                <div class="result-details">
+                                    <p><strong>Resource:</strong> ${selectedResource}</p>
+                                    <p><strong>Quantity:</strong> ${quantity} EP</p>
+                                    <p><strong>Settlement:</strong> ${settlementData.name}</p>
+                                    <p><strong>Season:</strong> ${currentSeason}</p>
+                                    <hr>
+                                    <p class="no-buyer-message">No buyers are currently interested in this cargo.</p>
+                                    <p class="algorithm-details">
+                                        <small>
+                                            <strong>Algorithm Details:</strong><br>
+                                            Buyer Roll: ${sellingResult.buyerRoll}/${sellingResult.buyerTarget} (Failed)<br>
+                                            Consider using Desperate Sale or trying a different settlement.
+                                        </small>
+                                    </p>
+                                </div>
+                            `;
+                            
+                            debugLog('Selling algorithm completed - no buyer found');
+                            
+                        } else if (sellingResult.villageLimit) {
+                            // Village limitation
+                            showSellingError(`Village can only buy ${sellingResult.villageLimit} EP (you tried to sell ${quantity} EP)`);
+                            debugLog('Selling failed due to village limitation');
+                            
+                        } else {
+                            // Other error
+                            showSellingError(sellingResult.error || 'Unknown error occurred during selling algorithm');
+                            debugLog('Selling algorithm failed:', sellingResult.error);
+                        }
+                    }
+                    
+                } catch (error) {
+                    // Re-enable button on error
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-search"></i> Look for Sellers';
+                    
+                    showSellingError('Error running selling algorithm: ' + error.message);
+                    debugLog('ERROR: Exception in selling algorithm:', error);
+                }
+                
+            }, 500); // Short delay to show loading state
         });
 
-        // Quick action buttons
-        document.getElementById('quick-sell').addEventListener('click', function() {
-            console.log('Quick sell clicked');
+        // Negotiate Sell button functionality (placeholder for future task)
+        document.getElementById('negotiate-sell').addEventListener('click', function() {
+            debugLog('=== Negotiate Button Clicked (Selling Context) ===');
+            debugLog('Opening negotiation interface for selling...');
+            alert('Negotiation interface would open here (to be implemented in future tasks)');
         });
 
-        document.getElementById('haggle').addEventListener('click', function() {
-            console.log('Haggle clicked');
-        });
-
+        // Desperate Sale button functionality with algorithm integration
         document.getElementById('desperate-sale').addEventListener('click', function() {
-            console.log('Desperate sale clicked');
+            debugLog('=== Desperate Sale Button Clicked ===');
+            
+            const quantity = parseInt(document.getElementById('sell-quantity').value);
+            const selectedSettlement = document.getElementById('settlement-select').value;
+            const currentSeason = document.getElementById('season-select').value || 'spring';
+            
+            // Basic validation
+            if (!selectedResource || !quantity || !selectedSettlement) {
+                showSellingError('Please ensure resource, quantity, and settlement are selected');
+                return;
+            }
+            
+            const settlementData = mockSettlementData[selectedSettlement];
+            if (!settlementData) {
+                showSellingError('Settlement data not found');
+                return;
+            }
+            
+            // Check if settlement has Trade (required for desperate sales)
+            if (!hasTradeBonus(settlementData)) {
+                showSellingError('Desperate sales are only available at Trade settlements');
+                debugLog('ERROR: Desperate sale attempted at non-Trade settlement');
+                return;
+            }
+            
+            debugLog('Initiating desperate sale at Trade settlement:', settlementData.name);
+            
+            // Disable button during processing
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            setTimeout(() => {
+                try {
+                    // Calculate desperate sale price (50% of base price)
+                    const basePrice = getSeasonalPrice(selectedResource, currentSeason);
+                    if (basePrice === null) {
+                        throw new Error('Could not determine base price');
+                    }
+                    
+                    const desperatePrice = basePrice * 0.5; // 50% of base price
+                    const totalPrice = desperatePrice * quantity;
+                    
+                    debugLog('=== Desperate Sale Calculation ===');
+                    debugLog('Base Price:', basePrice, 'GC per EP');
+                    debugLog('Desperate Sale Price (50%):', desperatePrice, 'GC per EP');
+                    debugLog('Total Price:', totalPrice, 'GC');
+                    
+                    // Re-enable button
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Desperate Sale';
+                    
+                    // Show results
+                    showSellingResults();
+                    
+                    const sellingResults = document.getElementById('selling-results');
+                    sellingResults.innerHTML = `
+                        <h4>
+                            <i class="fas fa-exclamation-triangle warning-icon"></i>
+                            Desperate Sale Completed
+                        </h4>
+                        <div class="result-details">
+                            <p><strong>Resource:</strong> ${selectedResource}</p>
+                            <p><strong>Quantity:</strong> ${quantity} EP</p>
+                            <p><strong>Settlement:</strong> ${settlementData.name} (Trade)</p>
+                            <p><strong>Season:</strong> ${currentSeason}</p>
+                            <hr>
+                            <p><strong>Base Price:</strong> ${basePrice.toFixed(2)} GC per EP</p>
+                            <p><strong>Desperate Sale Price:</strong> ${desperatePrice.toFixed(2)} GC per EP (50% of base)</p>
+                            <p class="total-price"><strong>Total Received:</strong> ${totalPrice.toFixed(2)} GC</p>
+                            <hr>
+                            <p class="no-buyer-message">
+                                <small>Emergency sale completed at reduced price. No buyer availability check required.</small>
+                            </p>
+                        </div>
+                    `;
+                    
+                    // Hide contextual buttons since sale is complete
+                    hideContextualSellingButtons();
+                    
+                    debugLog('Desperate sale completed successfully');
+                    
+                } catch (error) {
+                    // Re-enable button on error
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Desperate Sale';
+                    
+                    showSellingError('Error processing desperate sale: ' + error.message);
+                    debugLog('ERROR: Exception in desperate sale:', error);
+                }
+                
+            }, 500);
         });
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('=== WFRP Trading UI Initialized ===');
+            debugLog('Timestamp:', new Date().toISOString());
+            
+            initStickyTabs();
+            initDebugToggle();
+            
+            // Initialize selling tab with current settlement (if any)
+            const currentSettlement = document.getElementById('settlement-select').value;
+            if (currentSettlement && mockSettlementData[currentSettlement]) {
+                debugLog('Initializing selling tab with current settlement:', currentSettlement);
+                populateResourceButtons(mockSettlementData[currentSettlement]);
+            } else {
+                debugLog('No settlement selected on load - showing empty state');
+                populateResourceButtons(null);
+            }
+            
+            // Initialize selling interface button states
+            const lookForSellersBtn = document.getElementById('look-for-sellers');
+            lookForSellersBtn.disabled = true; // Disabled by default until resource and quantity selected
+            
+            // Ensure all selling buttons are hidden initially
+            hideSellingButtons();
+            hideSellingResults();
+            hideSellingError();
+            
+            debugLog('All initialization complete');
+        });
+
+        // Selling tab functionality (placeholder for future implementation)
+        // This will be implemented in later tasks
+
     </script>
 </body>
 </html>

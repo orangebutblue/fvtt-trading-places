@@ -1,27 +1,27 @@
 # Implementation Plan
 
-- [ ] 1. Update Tab Structure and Navigation
+- [x] 1. Update Tab Structure and Navigation
   - Rename "Market" tab to "Buying" in HTML and JavaScript
   - Replace "Inventory" tab with "Selling" tab
   - Update tab icons and labels to match new structure
   - Update tab switching JavaScript to handle new tab names
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 2. Implement Responsive Tab Positioning
+- [x] 2. Implement Responsive Tab Positioning
   - Add CSS media queries to move tabs to top on smaller screens
   - Implement sticky positioning for tabs with shadow feedback
   - Add JavaScript to detect when tabs become sticky and apply shadow class
   - Test tab positioning across different viewport sizes
   - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-- [ ] 3. Remove Quick Actions Section
+- [x] 3. Remove Quick Actions Section
   - Remove Quick Actions HTML section from sidebar
   - Remove Quick Actions CSS styles
   - Remove Quick Actions JavaScript event handlers
   - Clean up any references to quick action buttons
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 4. Create Buying Tab Interface
+- [x] 4. Create Buying Tab Interface
   - Add "Check Availability" button below settlement selector
   - Create availability results display area
   - Move settlement info display to buying tab content area
@@ -29,7 +29,7 @@
   - Add negotiate button in buying context
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 5. Implement Buying Algorithm with Logging
+- [x] 5. Implement Buying Algorithm with Logging
   - Create calculateSizeRating() function for settlement size codes with proper error handling
   - Handle unknown/invalid size codes gracefully with user-facing error messages
   - Implement Step 1: Availability Check with (Size + Wealth) × 10% formula
@@ -40,7 +40,7 @@
   - Show validation errors in UI before attempting algorithm calculations
   - _Requirements: 4.3, 4.4, 4.5, 8.6, 9.1, 9.2, 9.3, 9.4, 9.5_
 
-- [ ] 6. Create Selling Tab Resource Selection
+- [x] 6. Create Selling Tab Resource Selection
   - Create resource buttons container in selling tab
   - Implement populateResourceButtons() function to read settlement source data
   - Filter out "Trade" from sellable resources (treat as modifier only)
@@ -48,7 +48,7 @@
   - Show/hide quantity input and seller search based on resource selection
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-- [ ] 7. Implement Selling Tab Workflow
+- [x] 7. Implement Selling Tab Workflow
   - Add quantity input field for selected resources
   - Create "Look for Sellers" button with proper enabling/disabling
   - Add contextual negotiate button for selling
@@ -56,7 +56,7 @@
   - Implement proper show/hide logic for selling interface elements
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 8. Implement Selling Algorithm with Logging
+- [x] 8. Implement Selling Algorithm with Logging
   - Create lookForSellers() function following SELLING_ALGORITHM_IMPLEMENTATION.md
   - Implement Step 2: Buyer availability with (Size × 10) + Trade bonus formula
   - Implement Step 3: Offer price calculation with wealth modifiers
@@ -64,7 +64,7 @@
   - Handle special cases (villages, trade settlements)
   - _Requirements: 6.3, 6.4, 6.5, 8.1, 8.2, 8.3, 8.5, 9.1, 9.2, 9.3, 9.4, 9.5_
 
-- [ ] 9. Implement Enhanced Settlement Validation with User Feedback
+- [x] 9. Implement Enhanced Settlement Validation with User Feedback
   - Create comprehensive validateSettlement() function
   - Validate all required settlement properties exist
   - Validate size codes against known values (CS, C, T, ST, V, F, M)

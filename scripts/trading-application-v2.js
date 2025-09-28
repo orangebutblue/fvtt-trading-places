@@ -30,13 +30,13 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             icon: "fas fa-coins",
             resizable: true,
             minimizable: true,
-            maximizable: false
+            maximizable: true
         },
         position: {
-            width: 500,
-            height: 600,
-            top: 100,
-            left: 100
+            width: 1200,
+            height: 800,
+            top: 50,
+            left: 50
         },
         classes: ["wfrp-trading", "application-v2", "modern-trading"]
     };
@@ -44,7 +44,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
     /** @override */
     static PARTS = {
         content: {
-            template: "modules/trading-places/templates/trading-simple.hbs"
+            template: "modules/trading-places/templates/trading-unified.hbs"
         }
     };
 
@@ -57,8 +57,10 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
         // Initialize application state
         this.currentSeason = null;
+        this.selectedRegion = null;
         this.selectedSettlement = null;
         this.selectedCargo = null;
+        this.selectedResource = null;
         this.availableCargo = [];
         this.transactionHistory = [];
         this.playerCargo = [];
@@ -374,6 +376,106 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         }
     }
 
+    // =============================================================================
+    // ENHANCED VALIDATION AND USER FEEDBACK SYSTEM
+    // =============================================================================
+
+    /**
+     * Show validation error with detailed user feedback using FoundryVTT notifications
+     * @param {Object} validationResult - Result from validateSettlement function
+     * @param {string} context - Context where validation failed (e.g., 'buying', 'selling')
+     */
+    showValidationError(validationResult, context = 'trading') {
+        this._logDebug('Validation Feedback', 'Showing validation error', { 
+            context, 
+            errorType: validationResult.errorType,
+            errorCount: validationResult.errors?.length || 0
+        });
+        
+        if (validationResult.valid) {
+            this._logDebug('Validation Feedback', 'No validation errors to show');
+            return;
+        }
+        
+        // Create user-friendly error message with warning symbols
+        let errorText = '';
+        let notificationType = 'error';
+        
+        if (validationResult.errorType === 'missing_settlement') {
+            errorText = '⚠️ No settlement selected. Please select a settlement first.';
+            notificationType = 'warn';
+        } else if (validationResult.errorType === 'validation_failed') {
+            if (validationResult.errors.length === 1) {
+                errorText = `⚠️ Settlement data invalid: ${validationResult.errors[0]}`;
+            } else {
+                errorText = `⚠️ Settlement data has ${validationResult.errors.length} validation errors. Check data validity.`;
+            }
+        } else {
+            errorText = `⚠️ ${validationResult.error || 'Unknown validation error'}`;
+        }
+        
+        // Show FoundryVTT notification
+        if (ui.notifications) {
+            ui.notifications[notificationType](errorText, { permanent: false });
+        }
+        
+        // Log detailed errors for debugging
+        if (validationResult.errors && validationResult.errors.length > 1) {
+            this._logError('Validation Details', 'Multiple validation errors found', {
+                errors: validationResult.errors,
+                settlement: validationResult.settlement?.name || 'Unknown'
+            });
+        }
+        
+        this._logInfo('Validation Feedback', 'Validation error displayed to user', { 
+            context, 
+            message: errorText 
+        });
+    }
+
+    /**
+     * Validate settlement and show user feedback if validation fails
+     * @param {Object} settlement - Settlement data to validate
+     * @param {string} context - Context for error display (e.g., 'buying', 'selling')
+     * @returns {Object} Validation result
+     */
+    validateSettlementWithFeedback(settlement, context = 'trading') {
+        this._logDebug('Validation Feedback', 'Validating settlement with user feedback', { 
+            context,
+            settlementName: settlement?.name || 'None'
+        });
+        
+        // Run comprehensive validation using enhanced data manager function
+        const validation = this.dataManager.validateSettlement(settlement);
+        
+        // Show user feedback if validation failed
+        if (!validation.valid) {
+            this.showValidationError(validation, context);
+            this._logError('Settlement Validation', 'Settlement validation failed', {
+                context,
+                settlement: settlement?.name || 'None',
+                errors: validation.errors
+            });
+        } else {
+            this._logDebug('Settlement Validation', 'Settlement validation passed', {
+                context,
+                settlement: settlement.name
+            });
+        }
+        
+        return validation;
+    }
+
+    /**
+     * Clear any existing validation error notifications
+     * @param {string} context - Context to clear errors for
+     */
+    clearValidationErrors(context = 'trading') {
+        this._logDebug('Validation Feedback', 'Clearing validation errors', { context });
+        // FoundryVTT notifications auto-dismiss, but we can log the clear action
+        // In a future enhancement, we could track notification IDs to dismiss them manually
+    }
+
     /** @override */
     async _prepareContext(options) {
         const context = await super._prepareContext(options);
@@ -383,16 +485,65 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         // Add trading-specific data for templates
         context.currentSeason = this.getCurrentSeason();
         context.selectedSettlement = this.selectedSettlement;
+        context.selectedRegion = this.selectedRegion || '';
         context.availableCargo = this.availableCargo;
         context.transactionHistory = this.transactionHistory;
         context.playerCargo = this.playerCargo;
-        context.settlements = this.dataManager?.getAllSettlements() || [];
+        
+        // Get all settlements and filter by region if one is selected
+        const allSettlements = this.dataManager?.getAllSettlements() || [];
+        context.settlements = this.selectedRegion 
+            ? allSettlements.filter(s => s.region === this.selectedRegion)
+            : [];
+        context.allSettlements = allSettlements;
 
         // Add UI state data
         context.hasSettlement = !!this.selectedSettlement;
         context.hasCargo = this.availableCargo.length > 0;
         context.hasSeason = !!this.currentSeason;
         context.hasPlayerCargo = this.playerCargo.length > 0;
+
+        // Add helper functions for template
+        context.getSizeDescription = (sizeCode) => {
+            if (!this.dataManager) return sizeCode;
+            try {
+                return this.dataManager.getSizeDescription(sizeCode);
+            } catch (error) {
+                return sizeCode;
+            }
+        };
+
+        context.getSizeRating = (sizeCode) => {
+            if (!this.dataManager) return '?';
+            try {
+                return this.dataManager.convertSizeToNumeric(sizeCode);
+            } catch (error) {
+                return '?';
+            }
+        };
+
+        context.getWealthDescription = (wealthRating) => {
+            if (!this.dataManager) return wealthRating;
+            try {
+                return this.dataManager.getWealthDescription(wealthRating);
+            } catch (error) {
+                return wealthRating;
+            }
+        };
+
+        context.isTradeSettlement = (settlement) => {
+            if (!this.dataManager || !settlement) return false;
+            try {
+                return this.dataManager.isTradeSettlement(settlement);
+            } catch (error) {
+                return false;
+            }
+        };
+
+        context.formatNumber = (number) => {
+            if (typeof number !== 'number') return number;
+            return number.toLocaleString();
+        };
 
         // Add configuration data
         context.debugLoggingEnabled = game.settings.get("trading-places", "debugLogging");
@@ -651,6 +802,10 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
      */
     async _onSettlementSelectorSettlementChange(settlementName) {
         this._logDebug('Settlement Selector', 'Settlement changed via selector', { settlement: settlementName });
+
+        // Clear any previous validation errors when settlement changes
+        this.clearValidationErrors('buying');
+        this.clearValidationErrors('selling');
 
         if (!settlementName) {
             this.selectedSettlement = null;
@@ -1043,6 +1198,12 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             checkAvailabilityBtn.addEventListener('click', this._onCheckAvailability.bind(this));
         }
 
+        // New unified UI event listeners
+        this._attachUnifiedUIListeners(html);
+        
+        // Initialize selling tab state
+        this._updateSellingTab();
+
         // Transaction controls
         const purchaseButtons = html.querySelectorAll('.purchase-button');
         purchaseButtons.forEach(btn => {
@@ -1082,6 +1243,86 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         }
 
         this._logDebug('Event Listeners', 'Content listeners attached');
+    }
+
+    /**
+     * Attach event listeners for the new unified UI
+     * @param {HTMLElement} html - HTML element
+     * @private
+     */
+    _attachUnifiedUIListeners(html) {
+        // Tab switching functionality
+        const tabs = html.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                html.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                html.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Show corresponding content
+                const targetTab = tab.getAttribute('data-tab');
+                const targetContent = html.querySelector(`#${targetTab}-tab`);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
+                
+                this._logDebug('UI Interaction', 'Switched to tab:', targetTab);
+            });
+        });
+
+        // Region and settlement selection for unified UI
+        const regionSelect = html.querySelector('#region-select');
+        if (regionSelect) {
+            regionSelect.addEventListener('change', this._onRegionChange.bind(this));
+        }
+
+        const settlementSelect = html.querySelector('#settlement-select');
+        if (settlementSelect) {
+            settlementSelect.addEventListener('change', this._onSettlementSelect.bind(this));
+        }
+
+        // Season selection
+        const seasonSelect = html.querySelector('#season-select');
+        if (seasonSelect) {
+            seasonSelect.addEventListener('change', this._onSeasonChange.bind(this));
+        }
+
+        // Selling tab functionality
+        const sellQuantityInput = html.querySelector('#sell-quantity');
+        if (sellQuantityInput) {
+            sellQuantityInput.addEventListener('input', this._onSellQuantityChange.bind(this));
+        }
+
+        const lookForSellersBtn = html.querySelector('#look-for-sellers');
+        if (lookForSellersBtn) {
+            lookForSellersBtn.addEventListener('click', this._onLookForSellers.bind(this));
+        }
+
+        const negotiateSellBtn = html.querySelector('#negotiate-sell');
+        if (negotiateSellBtn) {
+            negotiateSellBtn.addEventListener('click', this._onNegotiateSell.bind(this));
+        }
+
+        const desperateSaleBtn = html.querySelector('#desperate-sale');
+        if (desperateSaleBtn) {
+            desperateSaleBtn.addEventListener('click', this._onDesperateSale.bind(this));
+        }
+
+        const negotiateBuyBtn = html.querySelector('#negotiate-buy');
+        if (negotiateBuyBtn) {
+            negotiateBuyBtn.addEventListener('click', this._onNegotiateBuy.bind(this));
+        }
+
+        // Debug mode toggle
+        const debugToggle = html.querySelector('#debug-mode');
+        if (debugToggle) {
+            debugToggle.addEventListener('change', this._onDebugToggle.bind(this));
+        }
+
+        this._logDebug('Event Listeners', 'Unified UI listeners attached');
     }
 
     /**
@@ -1129,6 +1370,10 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
         this._logDebug('Event Handler', 'Settlement selection requested', { settlementName });
 
+        // Clear any previous validation errors when settlement changes
+        this.clearValidationErrors('buying');
+        this.clearValidationErrors('selling');
+
         if (!settlementName) {
             this.selectedSettlement = null;
             this.availableCargo = [];
@@ -1149,6 +1394,9 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
             // Update UI
             await this.render(false);
+            
+            // Update selling tab with new settlement
+            this._updateSellingTab();
 
             this._logInfo('Settlement Selection', 'Settlement selected successfully', {
                 settlement: settlement.name,
@@ -1209,6 +1457,9 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
      * @private
      */
     async _onCheckAvailability(event) {
+        // Clear any previous validation errors
+        this.clearValidationErrors('buying');
+
         if (!this.selectedSettlement) {
             ui.notifications.warn('Please select a settlement first.');
             return;
@@ -1216,6 +1467,16 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
         if (!this.currentSeason) {
             ui.notifications.warn('Please set the current season first.');
+            return;
+        }
+
+        // Enhanced validation with user feedback before running algorithm
+        const validation = this.validateSettlementWithFeedback(this.selectedSettlement, 'buying');
+        if (!validation.valid) {
+            this._logError('Availability Check', 'Settlement validation failed - aborting availability check', {
+                settlement: this.selectedSettlement.name,
+                errors: validation.errors
+            });
             return;
         }
 
@@ -1231,7 +1492,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             button.textContent = 'Checking...';
             button.disabled = true;
 
-            // Perform availability check
+            // Perform availability check (now with validated settlement data)
             const result = await this.tradingEngine.performCompleteAvailabilityCheck(
                 this.selectedSettlement,
                 this.currentSeason
@@ -1311,6 +1572,273 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             this.debugLogger.clearLogs();
             this.render(false);
         }
+    }
+
+    // =============================================================================
+    // NEW UNIFIED UI EVENT HANDLERS
+    // =============================================================================
+
+    /**
+     * Handle region selection change
+     * @param {Event} event - Change event
+     * @private
+     */
+    _onRegionChange(event) {
+        const selectedRegion = event.target.value;
+        this._logDebug('Event Handler', 'Region changed to:', selectedRegion);
+        
+        // Clear validation errors when region changes
+        this.clearValidationErrors('buying');
+        this.clearValidationErrors('selling');
+        
+        // Update application state
+        this.selectedRegion = selectedRegion;
+        this.selectedSettlement = null;
+        this.availableCargo = [];
+        
+        // Re-render to update the settlement dropdown with filtered settlements
+        this.render(false);
+        
+        this._logDebug('Region Selection', `Region set to ${selectedRegion}, settlements will be filtered`);
+    }
+
+    /**
+     * Handle sell quantity input change
+     * @param {Event} event - Input event
+     * @private
+     */
+    _onSellQuantityChange(event) {
+        const quantity = parseInt(event.target.value);
+        this._logDebug('Event Handler', 'Sell quantity changed to:', quantity);
+        
+        // Clear any previous errors
+        this.clearValidationErrors('selling');
+        
+        // Show/hide selling buttons based on quantity
+        const lookForSellersBtn = this.element.querySelector('#look-for-sellers');
+        if (lookForSellersBtn) {
+            if (quantity && quantity > 0) {
+                lookForSellersBtn.style.display = 'flex';
+                lookForSellersBtn.disabled = false;
+            } else {
+                lookForSellersBtn.style.display = 'none';
+                lookForSellersBtn.disabled = true;
+            }
+        }
+        
+        // Hide other selling buttons until seller search is performed
+        const negotiateSellBtn = this.element.querySelector('#negotiate-sell');
+        const desperateSaleBtn = this.element.querySelector('#desperate-sale');
+        if (negotiateSellBtn) negotiateSellBtn.style.display = 'none';
+        if (desperateSaleBtn) desperateSaleBtn.style.display = 'none';
+        
+        // Hide selling results
+        const sellingResults = this.element.querySelector('#selling-results');
+        if (sellingResults) sellingResults.style.display = 'none';
+    }
+
+    /**
+     * Handle look for sellers button click
+     * @param {Event} event - Click event
+     * @private
+     */
+    async _onLookForSellers(event) {
+        this._logDebug('Event Handler', 'Look for sellers clicked');
+        
+        const quantity = parseInt(this.element.querySelector('#sell-quantity').value);
+        
+        if (!this.selectedSettlement) {
+            this.showValidationError({ 
+                valid: false, 
+                error: 'Please select a settlement first',
+                errorType: 'missing_settlement'
+            }, 'selling');
+            return;
+        }
+        
+        if (!quantity || quantity <= 0) {
+            ui.notifications.warn('Please enter a valid quantity');
+            return;
+        }
+        
+        // Validate settlement before proceeding
+        const validation = this.validateSettlementWithFeedback(this.selectedSettlement, 'selling');
+        if (!validation.valid) {
+            return;
+        }
+        
+        // Show loading state
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+        
+        try {
+            // Simulate seller search (placeholder for actual algorithm)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Show results (placeholder)
+            const sellingResults = this.element.querySelector('#selling-results');
+            if (sellingResults) {
+                sellingResults.innerHTML = `
+                    <h4><i class="fas fa-users success-icon"></i> Buyer Found!</h4>
+                    <p>Found buyer for ${quantity} EP at ${this.selectedSettlement.name}</p>
+                    <p>This is a placeholder - actual selling algorithm will be implemented in future tasks.</p>
+                `;
+                sellingResults.style.display = 'block';
+            }
+            
+            // Show additional selling buttons
+            const negotiateSellBtn = this.element.querySelector('#negotiate-sell');
+            const desperateSaleBtn = this.element.querySelector('#desperate-sale');
+            if (negotiateSellBtn) negotiateSellBtn.style.display = 'flex';
+            if (desperateSaleBtn) desperateSaleBtn.style.display = 'flex';
+            
+            ui.notifications.info('Seller search completed (placeholder functionality)');
+            
+        } catch (error) {
+            this._logError('Event Handler', 'Look for sellers failed', { error: error.message });
+            ui.notifications.error(`Seller search failed: ${error.message}`);
+        } finally {
+            // Restore button
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-search"></i> Look for Sellers';
+        }
+    }
+
+    /**
+     * Handle negotiate sell button click
+     * @param {Event} event - Click event
+     * @private
+     */
+    async _onNegotiateSell(event) {
+        this._logDebug('Event Handler', 'Negotiate sell clicked (placeholder)');
+        ui.notifications.info('Negotiate sell functionality will be implemented in future tasks.');
+    }
+
+    /**
+     * Handle desperate sale button click
+     * @param {Event} event - Click event
+     * @private
+     */
+    async _onDesperateSale(event) {
+        this._logDebug('Event Handler', 'Desperate sale clicked (placeholder)');
+        ui.notifications.info('Desperate sale functionality will be implemented in future tasks.');
+    }
+
+    /**
+     * Handle negotiate buy button click
+     * @param {Event} event - Click event
+     * @private
+     */
+    async _onNegotiateBuy(event) {
+        this._logDebug('Event Handler', 'Negotiate buy clicked (placeholder)');
+        ui.notifications.info('Negotiate buy functionality will be implemented in future tasks.');
+    }
+
+    /**
+     * Handle debug mode toggle
+     * @param {Event} event - Change event
+     * @private
+     */
+    _onDebugToggle(event) {
+        const debugMode = event.target.checked;
+        this._logDebug('Event Handler', 'Debug mode toggled:', debugMode);
+        
+        // Update debug logging setting
+        if (game.settings) {
+            game.settings.set("trading-places", "debugLogging", debugMode);
+        }
+        
+        // Update debug logger if available
+        if (this.debugLogger) {
+            this.debugLogger.setEnabled(debugMode);
+        }
+    }
+
+    /**
+     * Update the selling tab based on current settlement selection
+     * @private
+     */
+    _updateSellingTab() {
+        if (!this.element) return;
+        
+        const resourceButtons = this.element.querySelector('#resource-buttons');
+        const sellingEmptyState = this.element.querySelector('#selling-empty-state');
+        const sellingInterface = this.element.querySelector('#selling-interface');
+        
+        if (!resourceButtons || !sellingEmptyState) return;
+        
+        if (this.selectedSettlement && this.selectedSettlement.source) {
+            // Hide empty state and show resource buttons
+            sellingEmptyState.style.display = 'none';
+            
+            // Clear existing buttons
+            resourceButtons.innerHTML = '';
+            
+            // Create resource buttons based on settlement source
+            this.selectedSettlement.source.forEach(resource => {
+                const button = document.createElement('button');
+                button.className = 'resource-btn';
+                button.textContent = resource;
+                button.addEventListener('click', () => this._onResourceSelect(resource));
+                resourceButtons.appendChild(button);
+            });
+            
+            this._logDebug('Selling Tab', `Updated selling options for ${this.selectedSettlement.name}`, {
+                resources: this.selectedSettlement.source
+            });
+        } else {
+            // Show empty state and hide interface
+            sellingEmptyState.style.display = 'block';
+            resourceButtons.innerHTML = '';
+            if (sellingInterface) {
+                sellingInterface.style.display = 'none';
+            }
+            
+            this._logDebug('Selling Tab', 'No settlement selected - showing empty state');
+        }
+    }
+
+    /**
+     * Handle resource selection for selling
+     * @param {string} resource - Selected resource name
+     * @private
+     */
+    _onResourceSelect(resource) {
+        this._logDebug('Event Handler', 'Resource selected for selling:', resource);
+        
+        // Update button states
+        const resourceButtons = this.element.querySelectorAll('.resource-btn');
+        resourceButtons.forEach(btn => {
+            btn.classList.remove('selected');
+            if (btn.textContent === resource) {
+                btn.classList.add('selected');
+            }
+        });
+        
+        // Show selling interface
+        const sellingInterface = this.element.querySelector('#selling-interface');
+        if (sellingInterface) {
+            sellingInterface.style.display = 'block';
+        }
+        
+        // Clear quantity input
+        const quantityInput = this.element.querySelector('#sell-quantity');
+        if (quantityInput) {
+            quantityInput.value = '';
+        }
+        
+        // Hide selling buttons initially
+        const lookForSellersBtn = this.element.querySelector('#look-for-sellers');
+        const negotiateSellBtn = this.element.querySelector('#negotiate-sell');
+        const desperateSaleBtn = this.element.querySelector('#desperate-sale');
+        
+        if (lookForSellersBtn) lookForSellersBtn.style.display = 'none';
+        if (negotiateSellBtn) negotiateSellBtn.style.display = 'none';
+        if (desperateSaleBtn) desperateSaleBtn.style.display = 'none';
+        
+        this.selectedResource = resource;
     }
 }
 
