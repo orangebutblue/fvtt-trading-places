@@ -141,7 +141,7 @@ class TradingEngine {
         
         if (rollFunction) {
             // Use provided roll function for testing
-            roll = rollFunction();
+            roll = await rollFunction();
             rollResult = { total: roll, formula: "1d100", result: roll.toString() };
         } else {
             // Use FoundryVTT dice roller
@@ -263,7 +263,7 @@ class TradingEngine {
         
         if (rollFunction) {
             // Use provided roll function for testing
-            roll1 = rollFunction();
+            roll1 = await rollFunction();
             roll1Result = { total: roll1, formula: "1d100", result: roll1.toString() };
         } else {
             // Use FoundryVTT dice roller
@@ -277,7 +277,7 @@ class TradingEngine {
         // Trade settlement bonus: roll twice, use higher
         if (this.dataManager.isTradeSettlement(settlement)) {
             if (rollFunction) {
-                roll2 = rollFunction();
+                roll2 = await rollFunction();
                 roll2Result = { total: roll2, formula: "1d100", result: roll2.toString() };
             } else {
                 roll2Result = await this.rollCargoSize();

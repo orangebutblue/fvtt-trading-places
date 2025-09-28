@@ -549,11 +549,17 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         context.debugLoggingEnabled = game.settings.get("trading-places", "debugLogging");
         context.chatVisibility = game.settings.get("trading-places", "chatVisibility");
 
+        // Add ALL cargo types for selling (not just settlement sources)
+        context.allCargoTypes = this.dataManager?.cargoTypes || [];
+        // Filter out "Trade" as it's not a sellable resource
+        context.sellableCargoTypes = context.allCargoTypes.filter(cargo => cargo.name !== 'Trade');
+
         this._logDebug('Template Context', 'Context prepared successfully', {
             settlements: context.settlements.length,
             availableCargo: context.availableCargo.length,
             transactionHistory: context.transactionHistory.length,
-            currentSeason: context.currentSeason
+            currentSeason: context.currentSeason,
+            sellableCargoTypes: context.sellableCargoTypes.length
         });
 
         return context;
@@ -829,6 +835,9 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
             // Update UI state
             this._updateUIState();
+
+            // Update selling resources (show all cargo types)
+            this._populateSellingResources();
 
             // Show notification
             if (ui.notifications) {
@@ -1132,6 +1141,299 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
         } catch (error) {
             this._logError('Chat Integration', 'Failed to post season change to chat', { error: error.message });
+        }
+    }
+
+    // =============================================================================
+    // SELLING RESOURCE MANAGEMENT - FIX FOR PROBLEM 1
+    // =============================================================================
+
+    /**
+     * Populate selling tab with ALL available cargo types from all settlements
+     * @private
+     */
+    _populateSellingResources() {
+        console.log('🛒 POPULATING ALL SELLABLE RESOURCES');
+        
+        const resourceButtonsContainer = this.element.querySelector('#resource-buttons');
+        if (!resourceButtonsContainer) {
+            console.error('❌ Resource buttons container not found');
+            return;
+        }
+        
+        // Clear existing buttons
+        resourceButtonsContainer.innerHTML = '';
+        
+        // Get ALL unique trading goods from settlement source lists
+        const allTradingGoods = this._getAllTradingGoods();
+        console.log(`📦 Found ${allTradingGoods.length} unique trading goods:`, allTradingGoods);
+        
+        allTradingGoods.forEach(goodName => {
+            const button = document.createElement('button');
+            button.className = 'resource-btn';
+            button.textContent = goodName;
+            button.dataset.resource = goodName;
+            
+            // Add click handler for resource selection
+            button.addEventListener('click', () => {
+                this._onSellingResourceSelect(goodName);
+            });
+            
+            resourceButtonsContainer.appendChild(button);
+        });
+        
+        console.log(`✅ Added ${allTradingGoods.length} sellable resources to selling tab`);
+    }
+
+    /**
+     * Get all unique trading goods from all settlements' source lists
+     * @returns {Array} - Array of unique trading good names
+     * @private
+     */
+    _getAllTradingGoods() {
+        const allGoods = new Set();
+        
+        // Parse all settlement source lists
+        this.dataManager.settlements.forEach(settlement => {
+            if (settlement.source && Array.isArray(settlement.source)) {
+                settlement.source.forEach(good => {
+                    // Skip "Trade" as it's not a sellable good but a settlement modifier
+                    if (good !== 'Trade') {
+                        allGoods.add(good);
+                    }
+                });
+            }
+        });
+        
+        // Also add cargo types from data manager if they exist
+        if (this.dataManager.cargoTypes && Array.isArray(this.dataManager.cargoTypes)) {
+            this.dataManager.cargoTypes.forEach(cargoType => {
+                if (cargoType.name !== 'Trade') {
+                    allGoods.add(cargoType.name);
+                }
+            });
+        }
+        
+        // Convert to sorted array
+        return Array.from(allGoods).sort();
+    }
+
+    /**
+     * Handle selling resource selection
+     * @param {string} resourceName - Name of selected resource
+     * @private
+     */
+    _onSellingResourceSelect(resourceName) {
+        console.log(`🎯 SELECTED RESOURCE FOR SELLING: ${resourceName}`);
+        
+        // Remove selection from other buttons
+        this.element.querySelectorAll('.resource-btn').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        
+        // Add selection to clicked button
+        const selectedButton = this.element.querySelector(`[data-resource="${resourceName}"]`);
+        if (selectedButton) {
+            selectedButton.classList.add('selected');
+        }
+        
+        // Store selected resource
+        this.selectedResource = resourceName;
+        
+        // Show selling interface
+        const sellingInterface = this.element.querySelector('#selling-interface');
+        if (sellingInterface) {
+            sellingInterface.style.display = 'block';
+        }
+        
+        // Enable selling buttons
+        const lookForSellersBtn = this.element.querySelector('#look-for-sellers');
+        const negotiateBtn = this.element.querySelector('#negotiate-sell');
+        const desperateSaleBtn = this.element.querySelector('#desperate-sale');
+        
+        if (lookForSellersBtn) {
+            lookForSellersBtn.style.display = 'flex';
+            // Add event listener for look for sellers
+            lookForSellersBtn.onclick = (event) => this._onLookForSellers(event);
+        }
+        if (negotiateBtn) negotiateBtn.style.display = 'flex';
+        if (desperateSaleBtn) desperateSaleBtn.style.display = 'flex';
+        
+        console.log(`✅ Selling interface enabled for ${resourceName}`);
+    }
+
+    /**
+     * Handle "Look for Sellers" button click - implements WFRP Selling Algorithm Step 2
+     * @param {Event} event - Click event
+     * @private
+     */
+    async _onLookForSellers(event) {
+        event.preventDefault();
+        
+        if (!this.selectedResource) {
+            ui.notifications.warn('Please select a resource to sell first');
+            return;
+        }
+        
+        if (!this.selectedSettlement) {
+            ui.notifications.warn('Please select a settlement first');
+            return;
+        }
+        
+        console.log('🔍 === LOOKING FOR SELLERS (WFRP SELLING ALGORITHM) ===');
+        console.log(`Resource: ${this.selectedResource}`);
+        console.log(`Settlement: ${this.selectedSettlement.name}`);
+        
+        try {
+            // Show loading state
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'Looking...';
+            button.disabled = true;
+            
+            // Get quantity from input (for now, assume 10 EP)
+            const quantityInput = this.element.querySelector('#selling-quantity');
+            const quantity = quantityInput ? parseInt(quantityInput.value) || 10 : 10;
+            
+            console.log(`📊 STEP 2: Finding Buyer for ${quantity} EP of ${this.selectedResource}`);
+            
+            // Step 2: Calculate buyer chance according to algorithm
+            const sizeRating = this.dataManager.convertSizeToNumeric(this.selectedSettlement.size);
+            let buyerChance = sizeRating * 10;
+            
+            // Add +30 if settlement produces "Trade"
+            const isTradeSettlement = this.selectedSettlement.source.includes('Trade');
+            if (isTradeSettlement) {
+                buyerChance += 30;
+                console.log(`  ├─ Trade Settlement Bonus: +30`);
+            }
+            
+            console.log(`  ├─ Base Chance: Size ${sizeRating} × 10 = ${sizeRating * 10}%`);
+            console.log(`  ├─ Trade Bonus: ${isTradeSettlement ? '+30' : '0'}`);
+            console.log(`  └─ Final Chance: ${buyerChance}%`);
+            
+            // Special village restrictions (Step 2 special case)
+            if (sizeRating === 1) { // Village
+                console.log(`🏘️ VILLAGE RESTRICTIONS CHECK`);
+                if (this.selectedResource !== 'Grain') {
+                    if (this.currentSeason === 'spring') {
+                        const villageQuantity = Math.floor(Math.random() * 10) + 1; // 1d10
+                        console.log(`  ├─ Village in Spring: Can buy max ${villageQuantity} EP of non-Grain goods`);
+                        if (quantity > villageQuantity) {
+                            ui.notifications.warn(`Village only wants ${villageQuantity} EP of ${this.selectedResource} (you have ${quantity} EP)`);
+                            button.textContent = originalText;
+                            button.disabled = false;
+                            return;
+                        }
+                    } else {
+                        console.log(`  └─ Village outside Spring: No demand for non-Grain goods`);
+                        ui.notifications.info(`Villages don't buy ${this.selectedResource} in ${this.currentSeason}`);
+                        button.textContent = originalText;
+                        button.disabled = false;
+                        return;
+                    }
+                }
+            }
+            
+            // Roll for buyer using FoundryVTT dice
+            const roll = new Roll("1d100");
+            await roll.evaluate();
+            
+            // Show dice roll in chat if enabled
+            const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+            if (chatVisibility !== "disabled") {
+                await roll.toMessage({
+                    speaker: ChatMessage.getSpeaker(),
+                    flavor: `Looking for buyers of ${this.selectedResource} in ${this.selectedSettlement.name}`
+                });
+            }
+            
+            console.log(`🎲 Buyer Search Roll: ${roll.total} vs ${buyerChance}`);
+            
+            if (roll.total <= buyerChance) {
+                // SUCCESS: Buyer found
+                console.log('✅ BUYER FOUND!');
+                
+                // Step 3: Calculate offer price according to algorithm
+                console.log(`💰 STEP 3: Calculating Offer Price`);
+                
+                // Get base price for the resource in current season
+                const cargoType = this.dataManager.cargoTypes.find(c => c.name === this.selectedResource);
+                let basePrice = 50; // Default fallback
+                
+                if (cargoType && cargoType.basePrices && cargoType.basePrices[this.currentSeason]) {
+                    basePrice = cargoType.basePrices[this.currentSeason];
+                }
+                
+                console.log(`  ├─ Base Price (${this.currentSeason}): ${basePrice} GC per 10 EP`);
+                
+                // Apply wealth modifier according to algorithm
+                const wealthModifier = this.dataManager.getWealthModifier(this.selectedSettlement.wealth);
+                const offerPrice = Math.round(basePrice * wealthModifier);
+                
+                console.log(`  ├─ Wealth Rating: ${this.selectedSettlement.wealth} (${this.dataManager.getWealthDescription(this.selectedSettlement.wealth)})`);
+                console.log(`  ├─ Wealth Modifier: ${Math.round(wealthModifier * 100)}%`);
+                console.log(`  └─ Final Offer: ${basePrice} × ${wealthModifier} = ${offerPrice} GC per 10 EP`);
+                
+                const totalOffer = Math.round((offerPrice * quantity) / 10);
+                
+                console.log(`📋 FINAL RESULT: Buyer offers ${totalOffer} GC for ${quantity} EP of ${this.selectedResource}`);
+                
+                // Show success in UI
+                const resultsDiv = this.element.querySelector('#selling-results');
+                if (resultsDiv) {
+                    const buyerName = this._generateTraderName();
+                    resultsDiv.innerHTML = `
+                        <h4>
+                            <i class="fas fa-handshake success-icon"></i>
+                            Buyer Found!
+                        </h4>
+                        <div class="buyer-details">
+                            <p><strong>Buyer:</strong> ${buyerName}</p>
+                            <p><strong>Offer:</strong> ${offerPrice} GC per 10 EP</p>
+                            <p><strong>Total for ${quantity} EP:</strong> ${totalOffer} GC</p>
+                            <p><strong>Settlement Wealth:</strong> ${this.dataManager.getWealthDescription(this.selectedSettlement.wealth)} (${Math.round(wealthModifier * 100)}% of base price)</p>
+                        </div>
+                    `;
+                    resultsDiv.style.display = 'block';
+                }
+                
+                ui.notifications.info(`Buyer found! ${buyerName} offers ${totalOffer} GC for your ${this.selectedResource}`);
+                
+            } else {
+                // FAILURE: No buyer found
+                console.log('❌ NO BUYER FOUND');
+                console.log(`  └─ Rolled ${roll.total} > ${buyerChance} = FAILURE`);
+                
+                // Show failure in UI
+                const resultsDiv = this.element.querySelector('#selling-results');
+                if (resultsDiv) {
+                    resultsDiv.innerHTML = `
+                        <h4>
+                            <i class="fas fa-times-circle failure-icon"></i>
+                            No Buyer Found
+                        </h4>
+                        <p>No one is interested in ${this.selectedResource} right now (rolled ${roll.total}/${buyerChance}).</p>
+                        <p>You can try selling half the quantity and re-rolling, or try a different settlement.</p>
+                    `;
+                    resultsDiv.style.display = 'block';
+                }
+                
+                ui.notifications.info(`No buyers found for ${this.selectedResource} in ${this.selectedSettlement.name} (rolled ${roll.total}/${buyerChance})`);
+            }
+            
+            // Restore button
+            button.textContent = originalText;
+            button.disabled = false;
+            
+        } catch (error) {
+            console.error('❌ Error in seller search:', error);
+            ui.notifications.error(`Seller search failed: ${error.message}`);
+            
+            // Restore button on error
+            const button = event.target;
+            button.textContent = 'Look for Sellers';
+            button.disabled = false;
         }
     }
 
@@ -1456,80 +1758,367 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
      * @param {Event} event - Click event
      * @private
      */
+    /**
+     * Handle check availability button - FIXED VERSION
+     * @param {Event} event - Click event
+     * @private
+     */
     async _onCheckAvailability(event) {
-        // Clear any previous validation errors
-        this.clearValidationErrors('buying');
-
-        if (!this.selectedSettlement) {
-            ui.notifications.warn('Please select a settlement first.');
-            return;
-        }
-
-        if (!this.currentSeason) {
-            ui.notifications.warn('Please set the current season first.');
-            return;
-        }
-
-        // Enhanced validation with user feedback before running algorithm
-        const validation = this.validateSettlementWithFeedback(this.selectedSettlement, 'buying');
-        if (!validation.valid) {
-            this._logError('Availability Check', 'Settlement validation failed - aborting availability check', {
-                settlement: this.selectedSettlement.name,
-                errors: validation.errors
-            });
-            return;
-        }
-
+        event.preventDefault();
+        
+        this._logInfo('Availability Check', 'Check availability button clicked');
+        
         try {
+            // Validate settlement is selected and valid
+            if (!this.selectedSettlement) {
+                this.showValidationError({ 
+                    valid: false, 
+                    errorType: 'missing_settlement',
+                    error: 'No settlement selected'
+                }, 'buying');
+                return;
+            }
+            
+            // Validate settlement data
+            const validation = this.validateSettlementWithFeedback(this.selectedSettlement, 'buying');
+            if (!validation.valid) {
+                this._logError('Availability Check', 'Settlement validation failed - aborting availability check', {
+                    errors: validation.errors
+                });
+                return;
+            }
+            
+            // Validate season is set
+            if (!this.currentSeason) {
+                ui.notifications.warn('Please set the current season first');
+                return;
+            }
+            
             this._logInfo('Cargo Availability', 'Starting availability check', {
                 settlement: this.selectedSettlement.name,
                 season: this.currentSeason
             });
-
+            
+            // Hide any previous error messages
+            this.clearValidationErrors('buying');
+            
             // Show loading state
             const button = event.target;
             const originalText = button.textContent;
             button.textContent = 'Checking...';
             button.disabled = true;
-
-            // Perform availability check (now with validated settlement data)
-            const result = await this.tradingEngine.performCompleteAvailabilityCheck(
+            
+            // Perform complete availability check using trading engine
+            console.log('=== CARGO AVAILABILITY CHECK ===');
+            console.log('Settlement:', this.selectedSettlement.name);
+            console.log('Season:', this.currentSeason);
+            
+            // Use FoundryVTT dice roller instead of fallback
+            const rollFunction = async () => {
+                const roll = new Roll("1d100");
+                await roll.evaluate();
+                
+                // Show dice roll in chat if enabled
+                const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+                if (chatVisibility !== "disabled") {
+                    await roll.toMessage({
+                        speaker: ChatMessage.getSpeaker(),
+                        flavor: `Cargo Availability Check in ${this.selectedSettlement.name}`
+                    });
+                }
+                
+                console.log(`🎲 Rolled 1d100: ${roll.total}`);
+                return roll.total;
+            };
+            
+            const completeResult = await this.tradingEngine.performCompleteAvailabilityCheck(
                 this.selectedSettlement,
-                this.currentSeason
+                this.currentSeason,
+                rollFunction
             );
-
-            this._logInfo('Cargo Availability', 'Availability check completed', result);
-
-            if (result.available) {
-                // Update available cargo
-                this.availableCargo = result.cargoTypes.map(cargoName => ({
-                    name: cargoName,
-                    category: this.tradingEngine.getCargoByName(cargoName).category,
-                    currentPrice: this.tradingEngine.calculateBasePrice(cargoName, this.currentSeason),
-                    availableQuantity: result.cargoSize.totalSize
-                }));
-
-                await this.render(false);
-                ui.notifications.info(`Cargo available! Found ${result.cargoTypes.length} type(s).`);
+            
+            console.log('Complete availability result:', completeResult);
+            
+            // Update UI based on result
+            if (completeResult.available) {
+                // SUCCESS: Cargo is available
+                console.log('✅ CARGO IS AVAILABLE!');
+                console.log('📊 STEP 0: Settlement Information');
+                console.log(`  ├─ Settlement: ${this.selectedSettlement.name}`);
+                console.log(`  ├─ Size Rating: ${this.selectedSettlement.size} (numeric: ${this.dataManager.convertSizeToNumeric(this.selectedSettlement.size)})`);
+                console.log(`  ├─ Wealth Rating: ${this.selectedSettlement.wealth}`);
+                console.log(`  └─ Produces: [${this.selectedSettlement.source.join(', ')}]`);
+                
+                console.log('🎯 STEP 1: Availability Check Results');
+                console.log(`  ├─ Base Chance: (${this.dataManager.convertSizeToNumeric(this.selectedSettlement.size)} + ${this.selectedSettlement.wealth}) × 10 = ${completeResult.availabilityCheck.chance}%`);
+                console.log(`  ├─ Roll: ${completeResult.availabilityCheck.roll}`);
+                console.log(`  └─ Result: ${completeResult.availabilityCheck.roll} ≤ ${completeResult.availabilityCheck.chance} = SUCCESS`);
+                
+                console.log('📦 STEP 2A: Cargo Type Determination');
+                console.log(`  ├─ Available Types: [${completeResult.cargoTypes.join(', ')}]`);
+                console.log(`  └─ Count: ${completeResult.cargoTypes.length} type(s)`);
+                
+                console.log('⚖️ STEP 2B: Cargo Size Calculation');
+                console.log(`  ├─ Base Value: ${this.dataManager.convertSizeToNumeric(this.selectedSettlement.size)} + ${this.selectedSettlement.wealth} = ${completeResult.cargoSize.baseMultiplier}`);
+                console.log(`  ├─ Multiplier Roll: ${completeResult.cargoSize.roll1} → rounded up to ${completeResult.cargoSize.sizeMultiplier}`);
+                if (completeResult.cargoSize.tradeBonus) {
+                    console.log(`  ├─ Trade Bonus: Second roll ${completeResult.cargoSize.roll2} → ${Math.ceil(completeResult.cargoSize.roll2 / 10) * 10}`);
+                    console.log(`  ├─ Higher Multiplier Used: ${completeResult.cargoSize.sizeMultiplier}`);
+                }
+                console.log(`  └─ Total Size: ${completeResult.cargoSize.baseMultiplier} × ${completeResult.cargoSize.sizeMultiplier} = ${completeResult.cargoSize.totalSize} EP`);
+                
+                // Convert cargo types to detailed cargo objects for display
+                const availableCargo = completeResult.cargoTypes.map(cargoName => {
+                    const cargoType = this.dataManager.cargoTypes.find(c => c.name === cargoName);
+                    const basePrice = this.tradingEngine.calculateBasePrice(cargoName, this.currentSeason);
+                    const totalCargoSize = completeResult.cargoSize.totalSize;
+                    const encumbrance = cargoType?.encumbrancePerUnit || 1;
+                    const quantity = Math.floor(totalCargoSize / encumbrance);
+                    
+                    console.log(`💰 STEP 3: Price Information for ${cargoName}`);
+                    console.log(`  ├─ Base Price (${this.currentSeason}): ${basePrice} GC per 10 EP`);
+                    console.log(`  ├─ Available Quantity: ${quantity} units (${totalCargoSize} EP total)`);
+                    console.log(`  └─ Encumbrance per Unit: ${encumbrance} EP`);
+                    
+                    return {
+                        name: cargoName,
+                        category: cargoType?.category || 'Unknown',
+                        basePrice: basePrice,
+                        currentPrice: basePrice,
+                        quantity: quantity,
+                        totalEP: totalCargoSize,
+                        quality: 'Average',
+                        encumbrancePerUnit: encumbrance,
+                        trader: this._generateTraderName()
+                    };
+                });
+                
+                console.log('📋 FINAL RESULT: Cargo Available for Purchase');
+                availableCargo.forEach(cargo => {
+                    console.log(`  ├─ ${cargo.name}: ${cargo.quantity} units @ ${cargo.currentPrice} GC/10EP (Trader: ${cargo.trader})`);
+                });
+                
+                // Store available cargo
+                this.availableCargo = availableCargo;
+                
+                // Show detailed success message
+                this._showDetailedAvailabilitySuccess(completeResult, availableCargo);
+                
+                // Update cargo display
+                this._updateCargoDisplay(availableCargo);
+                
+                // Update button states
+                this._updateTransactionButtons();
+                
+                // Show success notification
+                const cargoSummary = availableCargo.map(c => `${c.name} (${c.quantity})`).join(', ');
+                ui.notifications.info(`Cargo available in ${this.selectedSettlement.name}: ${cargoSummary}`);
+                
             } else {
+                // FAILURE: No cargo available
+                console.log('❌ NO CARGO AVAILABLE');
+                console.log('Availability check details:', completeResult.availabilityCheck);
+                
+                // Clear any existing cargo
                 this.availableCargo = [];
-                await this.render(false);
-                ui.notifications.info('No cargo available at this settlement.');
+                
+                // Show failure message
+                this._showNoCargoMessage(completeResult.availabilityCheck);
+                
+                // Hide cargo display
+                this._hideCargoDisplay();
+                
+                // Update button states
+                this._updateTransactionButtons();
+                
+                // Show info notification
+                const rollDetails = completeResult.availabilityCheck;
+                ui.notifications.info(`No cargo available in ${this.selectedSettlement.name} (rolled ${rollDetails.roll}/${rollDetails.chance})`);
             }
-
+            
             // Restore button
             button.textContent = originalText;
             button.disabled = false;
-
+            
         } catch (error) {
-            this._logError('Event Handler', 'Availability check failed', { error: error.message });
+            this._logError('Availability Check', 'Availability check failed with error', { 
+                error: error.message,
+                stack: error.stack
+            });
+            
             ui.notifications.error(`Availability check failed: ${error.message}`);
-
+            
+            // Clear cargo on error
+            this.availableCargo = [];
+            this._hideCargoDisplay();
+            this._updateTransactionButtons();
+            
             // Restore button on error
             const button = event.target;
-            button.textContent = 'Check Cargo Availability';
+            button.textContent = 'Check Availability';
             button.disabled = false;
         }
+    }
+
+    // =============================================================================
+    // CARGO DISPLAY HELPER METHODS - FIX FOR PROBLEM 2
+    // =============================================================================
+
+    /**
+     * Show detailed availability success message
+     * @param {Object} completeResult - Complete availability check result
+     * @param {Array} availableCargo - Available cargo for display
+     * @private
+     */
+    _showDetailedAvailabilitySuccess(completeResult, availableCargo) {
+        const resultsDiv = this.element.querySelector('#availability-results');
+        if (resultsDiv) {
+            const rollDetails = completeResult.availabilityCheck;
+            const cargoDetails = availableCargo.map(cargo => 
+                `<li><strong>${cargo.name}</strong>: ${cargo.quantity} units @ ${cargo.currentPrice} GC/10EP (Trader: ${cargo.trader})</li>`
+            ).join('');
+            
+            resultsDiv.innerHTML = `
+                <h4>
+                    <i class="fas fa-check-circle success-icon"></i>
+                    Cargo Available!
+                </h4>
+                <p>Market check successful (rolled ${rollDetails.roll}/${rollDetails.chance})</p>
+                <div class="cargo-summary">
+                    <h5>Available Cargo:</h5>
+                    <ul>${cargoDetails}</ul>
+                    <p><strong>Total Size:</strong> ${completeResult.cargoSize.totalSize} EP</p>
+                </div>
+            `;
+            resultsDiv.style.display = 'block';
+        }
+    }
+
+    /**
+     * Generate a random trader name
+     * @returns {string} - Random trader name
+     * @private
+     */
+    _generateTraderName() {
+        const names = [
+            "Hans Müller", "Greta Schmidt", "Johann Weber", "Anna Bauer", "Friedrich Klein",
+            "Maria Wagner", "Wilhelm Fischer", "Elisabeth Schneider", "Georg Hoffman", "Katharina Richter",
+            "Heinrich Neumann", "Barbara Schwarz", "Karl Zimmermann", "Margarete Krüger", "Ludwig Hartmann"
+        ];
+        return names[Math.floor(Math.random() * names.length)];
+    }
+
+    /**
+     * Show no cargo available message
+     * @param {Object} rollDetails - Roll result details
+     * @private
+     */
+    _showNoCargoMessage(rollDetails) {
+        const resultsDiv = this.element.querySelector('#availability-results');
+        if (resultsDiv) {
+            resultsDiv.innerHTML = `
+                <h4>
+                    <i class="fas fa-times-circle failure-icon"></i>
+                    No Cargo Available
+                </h4>
+                <p>Market check failed (rolled ${rollDetails.roll}/${rollDetails.chance}). Try again later or check another settlement.</p>
+            `;
+            resultsDiv.style.display = 'block';
+        }
+    }
+
+    /**
+     * Update cargo display with available cargo
+     * @param {Array} cargoList - List of available cargo
+     * @private
+     */
+    _updateCargoDisplay(cargoList) {
+        const cargoGrid = this.element.querySelector('#buying-cargo-grid');
+        if (!cargoGrid) return;
+        
+        // Show the cargo grid
+        cargoGrid.style.display = 'block';
+        
+        // Clear existing cargo cards
+        cargoGrid.innerHTML = '';
+        
+        // Create cargo cards for each available cargo
+        cargoList.forEach(cargo => {
+            const cargoCard = this._createCargoCard(cargo);
+            cargoGrid.appendChild(cargoCard);
+        });
+        
+        this._logDebug('Cargo Display', `Updated cargo display with ${cargoList.length} items`);
+    }
+
+    /**
+     * Hide cargo display
+     * @private
+     */
+    _hideCargoDisplay() {
+        const cargoGrid = this.element.querySelector('#buying-cargo-grid');
+        if (cargoGrid) {
+            cargoGrid.style.display = 'none';
+        }
+        
+        const resultsDiv = this.element.querySelector('#availability-results');
+        if (resultsDiv) {
+            resultsDiv.style.display = 'none';
+        }
+    }
+
+    /**
+     * Create a cargo card element
+     * @param {Object} cargo - Cargo data
+     * @returns {HTMLElement} - Cargo card element
+     * @private
+     */
+    _createCargoCard(cargo) {
+        const card = document.createElement('div');
+        card.className = 'cargo-card';
+        
+        card.innerHTML = `
+            <div class="cargo-header">
+                <div class="cargo-name">${cargo.name}</div>
+                <div class="cargo-category">${cargo.category || 'Goods'}</div>
+            </div>
+            <div class="cargo-details">
+                <div class="price-info">
+                    <span class="price-label">Base Price:</span>
+                    <span class="price-value">${cargo.currentPrice || cargo.basePrice} GC</span>
+                </div>
+                <div class="price-info">
+                    <span class="price-label">Available:</span>
+                    <span class="price-value">${cargo.quantity} EP</span>
+                </div>
+                <div class="price-info">
+                    <span class="price-label">Quality:</span>
+                    <span class="price-value">${cargo.quality || 'Average'}</span>
+                </div>
+            </div>
+            <div class="cargo-actions">
+                <input type="number" class="quantity-input" placeholder="Quantity (EP)" min="1" max="${cargo.quantity}">
+                <button class="btn btn-primary" data-cargo="${cargo.name}">Buy</button>
+            </div>
+        `;
+        
+        // Add buy button event listener
+        const buyButton = card.querySelector('.btn-primary');
+        buyButton.addEventListener('click', () => {
+            this._onBuyCargo(cargo);
+        });
+        
+        return card;
+    }
+
+    /**
+     * Handle buy cargo button click
+     * @param {Object} cargo - Cargo data
+     * @private
+     */
+    _onBuyCargo(cargo) {
+        this._logDebug('Cargo Purchase', 'Buy button clicked', { cargo: cargo.name });
+        ui.notifications.info(`Purchase functionality for ${cargo.name} will be implemented in future tasks.`);
     }
 
     // Placeholder event handlers for other functionality

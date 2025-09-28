@@ -139,6 +139,9 @@ class WFRPProperSceneControls {
                         Hooks.on('renderSceneControls', (app, html, data) => {
                             console.log('Trading Places | Scene controls rendered, setting up click handlers...');
                             
+                            // Ensure html is a jQuery object
+                            const $html = html instanceof jQuery ? html : $(html);
+                            
                             // Try multiple selectors to find our button
                             const selectors = [
                                 '[data-tool="open-trading"]',
@@ -150,7 +153,7 @@ class WFRPProperSceneControls {
                             
                             let tradingButton = $();
                             selectors.forEach(selector => {
-                                const found = html.find(selector);
+                                const found = $html.find(selector);
                                 console.log(`Trading Places | Selector "${selector}" found:`, found.length);
                                 if (found.length > 0 && tradingButton.length === 0) {
                                     tradingButton = found;
@@ -158,7 +161,7 @@ class WFRPProperSceneControls {
                             });
                             
                             // Also log what buttons actually exist
-                            const allButtons = html.find('[data-tool]');
+                            const allButtons = $html.find('[data-tool]');
                             console.log('Trading Places | All tool buttons found:', allButtons.length);
                             allButtons.each((i, el) => {
                                 console.log(`Trading Places | Button ${i}:`, el.getAttribute('data-tool'), el);

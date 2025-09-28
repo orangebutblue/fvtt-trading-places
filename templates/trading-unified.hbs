@@ -113,17 +113,7 @@
             </div>
             {{/if}}
 
-            <!-- Check Availability Section -->
-            <div class="section">
-                <h2 class="section-title">
-                    <i class="fas fa-search"></i>
-                    Market Check
-                </h2>
-                <button class="btn btn-primary check-availability" id="check-availability" style="width: 100%;" {{#unless hasSettlement}}disabled{{/unless}}>
-                    <i class="fas fa-search"></i>
-                    Check Availability
-                </button>
-            </div>
+
         </div>
 
         <!-- Main Panel -->
@@ -150,6 +140,14 @@
                 <div class="error-display" id="buying-error-display">
                     <i class="fas fa-exclamation-triangle"></i>
                     <span id="buying-error-message"></span>
+                </div>
+
+                <!-- Check Availability Section -->
+                <div class="availability-check-section">
+                    <button class="btn btn-primary check-availability" id="check-availability" style="width: 100%; margin-bottom: 24px;" {{#unless hasSettlement}}disabled{{/unless}}>
+                        <i class="fas fa-search"></i>
+                        Check Cargo Availability
+                    </button>
                 </div>
 
                 <!-- Availability Results Section -->

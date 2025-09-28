@@ -1,7 +1,7 @@
 /* WFRP Trading Places - Modern Unified UI Styles */
 
-:root {
-    /* Modern color palette */
+.wfrp-trading {
+    /* Modern color palette - CSS Variables */
     --bg-primary: #1a1d23;
     --bg-secondary: #252932;
     --bg-tertiary: #2f3439;
@@ -30,7 +30,12 @@
     --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-.trading-app {
+/* Ensure variables are accessible to all child elements */
+.wfrp-trading * {
+    box-sizing: border-box;
+}
+
+.wfrp-trading .trading-app {
     font-family: var(--font-primary);
     background: var(--bg-secondary);
     color: var(--text-primary);
@@ -43,7 +48,7 @@
 }
 
 /* Header */
-.app-header {
+.wfrp-trading .app-header {
     background: linear-gradient(135deg, var(--accent-primary), #ff8f00);
     padding: 24px 32px;
     display: flex;
@@ -53,25 +58,25 @@
     gap: 16px;
 }
 
-.app-title {
+.wfrp-trading .app-title {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.app-title h1 {
+.wfrp-trading .app-title h1 {
     color: white;
     font-size: 28px;
     font-weight: 700;
     margin: 0;
 }
 
-.app-title i {
+.wfrp-trading .app-title i {
     font-size: 32px;
     color: white;
 }
 
-.season-control {
+.wfrp-trading .season-control {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -81,13 +86,13 @@
     backdrop-filter: blur(10px);
 }
 
-.season-control label {
+.wfrp-trading .season-control label {
     color: white;
     font-weight: 600;
     font-size: 14px;
 }
 
-.season-control select {
+.wfrp-trading .season-control select {
     background: rgba(255, 255, 255, 0.9);
     border: none;
     padding: 8px 12px;
@@ -98,7 +103,7 @@
 }
 
 /* Debug Toggle Styles */
-.debug-toggle {
+.wfrp-trading .debug-toggle {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -108,7 +113,7 @@
     backdrop-filter: blur(10px);
 }
 
-.debug-toggle label {
+.wfrp-trading .debug-toggle label {
     color: white;
     font-weight: 600;
     font-size: 14px;
@@ -118,14 +123,14 @@
     gap: 8px;
 }
 
-.debug-toggle input[type="checkbox"] {
+.wfrp-trading .debug-toggle input[type="checkbox"] {
     width: 16px;
     height: 16px;
     cursor: pointer;
 }
 
 /* Error Display Styles */
-.error-display {
+.wfrp-trading .error-display {
     background: var(--accent-warning);
     color: white;
     padding: 12px 16px;
@@ -136,16 +141,16 @@
     gap: 8px;
 }
 
-.error-display.show {
+.wfrp-trading .error-display.show {
     display: flex;
 }
 
-.error-display i {
+.wfrp-trading .error-display i {
     font-size: 18px;
 }
 
 /* Main Content */
-.app-content {
+.wfrp-trading .app-content {
     display: grid;
     grid-template-columns: 1fr 2fr;
     flex: 1;
@@ -153,22 +158,22 @@
 }
 
 /* Sidebar */
-.sidebar {
+.wfrp-trading .sidebar {
     background: var(--bg-tertiary);
     padding: 32px;
     border-right: 1px solid var(--border-light);
     overflow-y: auto;
 }
 
-.section {
+.wfrp-trading .section {
     margin-bottom: 32px;
 }
 
-.section:last-child {
+.wfrp-trading .section:last-child {
     margin-bottom: 0;
 }
 
-.section-title {
+.wfrp-trading .section-title {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -178,21 +183,21 @@
     margin-bottom: 16px;
 }
 
-.section-title i {
+.wfrp-trading .section-title i {
     color: var(--accent-primary);
     width: 20px;
 }
 
 /* Form Controls */
-.form-group {
+.wfrp-trading .form-group {
     margin-bottom: 20px;
 }
 
-.form-group:last-child {
+.wfrp-trading .form-group:last-child {
     margin-bottom: 0;
 }
 
-.form-label {
+.wfrp-trading .form-label {
     display: block;
     color: var(--text-secondary);
     font-weight: 500;
@@ -200,7 +205,7 @@
     font-size: 14px;
 }
 
-.form-select, .form-input {
+.wfrp-trading .form-select, .wfrp-trading .form-input {
     width: 100%;
     height: auto;
     background: var(--bg-accent);
@@ -212,19 +217,19 @@
     transition: all 0.2s ease;
 }
 
-.form-select:focus, .form-input:focus {
+.wfrp-trading .form-select:focus, .wfrp-trading .form-input:focus {
     outline: none;
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.1);
 }
 
-.form-select:disabled {
+.wfrp-trading .form-select:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
 /* Settlement Info */
-.settlement-display {
+.wfrp-trading .settlement-display {
     background: var(--bg-accent);
     padding: 20px;
     border-radius: var(--radius-md);
@@ -232,18 +237,18 @@
     margin-bottom: 24px;
 }
 
-.settlement-display h3 {
+.wfrp-trading .settlement-display h3 {
     color: var(--text-primary);
     margin-bottom: 16px;
     font-size: 20px;
 }
 
-.info-grid {
+.wfrp-trading .info-grid {
     display: grid;
     gap: 12px;
 }
 
-.info-item {
+.wfrp-trading .info-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -251,21 +256,21 @@
     border-bottom: 1px solid var(--border-light);
 }
 
-.info-item:last-child {
+.wfrp-trading .info-item:last-child {
     border-bottom: none;
 }
 
-.info-label {
+.wfrp-trading .info-label {
     color: var(--text-muted);
     font-weight: 500;
 }
 
-.info-value {
+.wfrp-trading .info-value {
     color: var(--text-primary);
     font-weight: 600;
 }
 
-.info-value.highlight {
+.wfrp-trading .info-value.highlight {
     color: var(--accent-primary);
     font-weight: 700;
     background: rgba(255, 167, 38, 0.1);
@@ -273,7 +278,7 @@
     border-radius: var(--radius-sm);
 }
 
-.trade-badge {
+.wfrp-trading .trade-badge {
     display: inline-block;
     background: var(--accent-secondary);
     color: white;
@@ -285,7 +290,7 @@
 }
 
 /* Buttons */
-.btn {
+.wfrp-trading .btn {
     background: var(--bg-accent);
     border: 2px solid var(--border-medium);
     color: var(--text-primary);
@@ -301,7 +306,7 @@
     text-decoration: none;
 }
 
-.btn:hover:not(:disabled) {
+.wfrp-trading .btn:hover:not(:disabled) {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
     color: white;
@@ -309,47 +314,47 @@
     box-shadow: var(--shadow-md);
 }
 
-.btn:disabled {
+.wfrp-trading .btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     transform: none;
 }
 
-.btn-primary {
+.wfrp-trading .btn-primary {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
     color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
+.wfrp-trading .btn-primary:hover:not(:disabled) {
     background: #ff8f00;
     border-color: #ff8f00;
 }
 
-.btn-success {
+.wfrp-trading .btn-success {
     background: var(--accent-secondary);
     border-color: var(--accent-secondary);
     color: white;
 }
 
-.btn-success:hover:not(:disabled) {
+.wfrp-trading .btn-success:hover:not(:disabled) {
     background: #4caf50;
     border-color: #4caf50;
 }
 
-.btn-warning {
+.wfrp-trading .btn-warning {
     background: var(--accent-warning);
     border-color: var(--accent-warning);
     color: white;
 }
 
-.btn-warning:hover:not(:disabled) {
+.wfrp-trading .btn-warning:hover:not(:disabled) {
     background: #d32f2f;
     border-color: #d32f2f;
 }
 
 /* Main Panel */
-.main-panel {
+.wfrp-trading .main-panel {
     padding: 32px;
     background: var(--bg-secondary);
     overflow-y: auto;
@@ -357,7 +362,7 @@
     flex-direction: column;
 }
 
-.tabs {
+.wfrp-trading .tabs {
     display: flex;
     gap: 4px;
     margin-bottom: 32px;
@@ -366,7 +371,7 @@
     border-radius: var(--radius-md);
 }
 
-.tab {
+.wfrp-trading .tab {
     flex: 1;
     padding: 12px 20px;
     background: transparent;
@@ -382,36 +387,36 @@
     gap: 8px;
 }
 
-.tab.active {
+.wfrp-trading .tab.active {
     background: var(--accent-primary);
     color: white;
 }
 
-.tab:hover:not(.active) {
+.wfrp-trading .tab:hover:not(.active) {
     background: var(--bg-accent);
     color: var(--text-primary);
 }
 
 /* Tab Content */
-.tab-content {
+.wfrp-trading .tab-content {
     display: none;
     flex: 1;
     overflow-y: auto;
 }
 
-.tab-content.active {
+.wfrp-trading .tab-content.active {
     display: flex;
     flex-direction: column;
 }
 
 /* Cargo Grid */
-.cargo-grid {
+.wfrp-trading .cargo-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 20px;
 }
 
-.cargo-card {
+.wfrp-trading .cargo-card {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -419,26 +424,26 @@
     transition: all 0.2s ease;
 }
 
-.cargo-card:hover {
+.wfrp-trading .cargo-card:hover {
     border-color: var(--accent-primary);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
-.cargo-header {
+.wfrp-trading .cargo-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
 }
 
-.cargo-name {
+.wfrp-trading .cargo-name {
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
 }
 
-.cargo-category {
+.wfrp-trading .cargo-category {
     background: var(--accent-info);
     color: white;
     padding: 4px 8px;
@@ -447,36 +452,36 @@
     font-weight: 500;
 }
 
-.cargo-details {
+.wfrp-trading .cargo-details {
     display: grid;
     gap: 12px;
     margin-bottom: 20px;
 }
 
-.price-info {
+.wfrp-trading .price-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.price-label {
+.wfrp-trading .price-label {
     color: var(--text-muted);
     font-size: 14px;
 }
 
-.price-value {
+.wfrp-trading .price-value {
     color: var(--accent-secondary);
     font-weight: 700;
     font-size: 16px;
 }
 
-.cargo-actions {
+.wfrp-trading .cargo-actions {
     display: flex;
     gap: 12px;
     align-items: center;
 }
 
-.quantity-input {
+.wfrp-trading .quantity-input {
     flex: 1;
     background: var(--bg-accent);
     border: 1px solid var(--border-light);
@@ -487,25 +492,25 @@
 }
 
 /* Selling Tab Styles */
-.resource-selection {
+.wfrp-trading .resource-selection {
     margin-bottom: 24px;
 }
 
-.resource-selection h3 {
+.wfrp-trading .resource-selection h3 {
     color: var(--text-primary);
     margin-bottom: 16px;
     font-size: 18px;
     font-weight: 600;
 }
 
-.resource-buttons {
+.wfrp-trading .resource-buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 20px;
 }
 
-.resource-btn {
+.wfrp-trading .resource-btn {
     background: var(--bg-accent);
     border: 2px solid var(--border-medium);
     color: var(--text-primary);
@@ -521,7 +526,7 @@
     justify-content: center;
 }
 
-.resource-btn:hover:not(:disabled) {
+.wfrp-trading .resource-btn:hover:not(:disabled) {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
     color: white;
@@ -529,20 +534,20 @@
     box-shadow: var(--shadow-md);
 }
 
-.resource-btn.selected {
+.wfrp-trading .resource-btn.selected {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
     color: white;
     box-shadow: var(--shadow-md);
 }
 
-.resource-btn:disabled {
+.wfrp-trading .resource-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     transform: none;
 }
 
-.selling-interface {
+.wfrp-trading .selling-interface {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -550,22 +555,22 @@
     margin-bottom: 24px;
 }
 
-.quantity-section {
+.wfrp-trading .quantity-section {
     margin-bottom: 20px;
 }
 
-.selling-actions {
+.wfrp-trading .selling-actions {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
 }
 
-.selling-actions .btn {
+.wfrp-trading .selling-actions .btn {
     flex: 1;
     min-width: 140px;
 }
 
-.selling-results {
+.wfrp-trading .selling-results {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -573,7 +578,7 @@
     margin-bottom: 24px;
 }
 
-.selling-results h4 {
+.wfrp-trading .selling-results h4 {
     color: var(--text-primary);
     margin-bottom: 12px;
     display: flex;
@@ -581,20 +586,20 @@
     gap: 8px;
 }
 
-.selling-results .success-icon {
+.wfrp-trading .selling-results .success-icon {
     color: var(--accent-secondary);
 }
 
-.selling-results .warning-icon {
+.wfrp-trading .selling-results .warning-icon {
     color: var(--accent-warning);
 }
 
 /* Availability Results */
-.availability-section {
+.wfrp-trading .availability-section {
     margin-bottom: 24px;
 }
 
-.availability-results {
+.wfrp-trading .availability-results {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -602,7 +607,7 @@
     margin-top: 16px;
 }
 
-.availability-results h4 {
+.wfrp-trading .availability-results h4 {
     color: var(--text-primary);
     margin-bottom: 12px;
     display: flex;
@@ -610,21 +615,21 @@
     gap: 8px;
 }
 
-.availability-results .success-icon {
+.wfrp-trading .availability-results .success-icon {
     color: var(--accent-secondary);
 }
 
-.availability-results .failure-icon {
+.wfrp-trading .availability-results .failure-icon {
     color: var(--accent-warning);
 }
 
 /* Transaction History */
-.transaction-list {
+.wfrp-trading .transaction-list {
     max-height: 300px;
     overflow-y: auto;
 }
 
-.transaction-item {
+.wfrp-trading .transaction-item {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -635,76 +640,76 @@
     align-items: center;
 }
 
-.transaction-info h4 {
+.wfrp-trading .transaction-info h4 {
     color: var(--text-primary);
     margin-bottom: 4px;
 }
 
-.transaction-details {
+.wfrp-trading .transaction-details {
     color: var(--text-muted);
     font-size: 14px;
 }
 
-.transaction-amount {
+.wfrp-trading .transaction-amount {
     color: var(--accent-secondary);
     font-weight: 700;
     font-size: 16px;
 }
 
 /* Empty States */
-.empty-state {
+.wfrp-trading .empty-state {
     text-align: center;
     padding: 60px 20px;
     color: var(--text-muted);
 }
 
-.empty-state i {
+.wfrp-trading .empty-state i {
     font-size: 48px;
     margin-bottom: 16px;
     opacity: 0.5;
 }
 
-.empty-state p {
+.wfrp-trading .empty-state p {
     font-size: 16px;
     margin-bottom: 8px;
 }
 
-.empty-state .sub-text {
+.wfrp-trading .empty-state .sub-text {
     font-size: 14px;
     opacity: 0.7;
 }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-    .app-content {
+    .wfrp-trading .app-content {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr;
     }
     
-    .sidebar {
+    .wfrp-trading .sidebar {
         border-right: none;
         border-bottom: 1px solid var(--border-light);
         overflow-y: visible;
     }
     
-    .cargo-grid {
+    .wfrp-trading .cargo-grid {
         grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 768px) {
-    .app-header {
+    .wfrp-trading .app-header {
         padding: 20px;
         flex-direction: column;
         gap: 16px;
     }
     
-    .app-content {
+    .wfrp-trading .app-content {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr;
     }
     
-    .sidebar {
+    .wfrp-trading .sidebar {
         order: 1;
         border-right: none;
         border-bottom: 1px solid var(--border-light);
@@ -712,12 +717,12 @@
         overflow-y: visible;
     }
     
-    .main-panel {
+    .wfrp-trading .main-panel {
         order: 2;
         padding: 20px;
     }
     
-    .tabs {
+    .wfrp-trading .tabs {
         position: sticky;
         top: 0;
         z-index: 10;
@@ -728,7 +733,7 @@
         flex-shrink: 0;
     }
     
-    .tab-content {
+    .wfrp-trading .tab-content {
         padding-top: 20px;
         flex: 1;
     }
@@ -788,48 +793,48 @@
 }
 
 /* Flexible cargo grid that adapts to container size */
-.cargo-grid {
+.wfrp-trading .cargo-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
 }
 
 /* Ensure settlement display doesn't get too wide */
-.settlement-display {
+.wfrp-trading .settlement-display {
     max-width: 100%;
 }
 
 /* Very small window handling */
 @media (max-width: 600px) {
-    .app-header {
+    .wfrp-trading .app-header {
         padding: 12px 16px;
     }
     
-    .app-header .app-title h1 {
+    .wfrp-trading .app-header .app-title h1 {
         font-size: 20px;
     }
     
-    .sidebar {
+    .wfrp-trading .sidebar {
         padding: 16px;
     }
     
-    .main-panel {
+    .wfrp-trading .main-panel {
         padding: 16px;
     }
     
-    .section-title {
+    .wfrp-trading .section-title {
         font-size: 16px;
     }
     
-    .cargo-grid {
+    .wfrp-trading .cargo-grid {
         grid-template-columns: 1fr;
     }
     
-    .selling-actions {
+    .wfrp-trading .selling-actions {
         flex-direction: column;
     }
     
-    .selling-actions .btn {
+    .wfrp-trading .selling-actions .btn {
         min-width: auto;
     }
 }
