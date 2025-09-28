@@ -10,27 +10,33 @@ class MockDataManager {
         this.cargoTypes = [
             {
                 name: "Grain",
-                category: "Agriculture",
-                basePrices: { spring: 2, summer: 3, autumn: 1, winter: 4 },
-                qualityTiers: { poor: 0.5, average: 1.0, good: 1.5, excellent: 2.0 }
+                category: "Bulk Goods",
+                basePrices: { spring: 1, summer: 0.5, autumn: 0.25, winter: 0.5 },
+                encumbrancePerUnit: 10
             },
             {
-                name: "Wine",
-                category: "Wine", 
-                basePrices: { spring: 15, summer: 12, autumn: 18, winter: 20 },
-                qualityTiers: { poor: 0.5, average: 1.0, good: 1.5, excellent: 2.0 }
+                name: "Wool",
+                category: "Textiles",
+                basePrices: { spring: 1, summer: 1.5, autumn: 2, winter: 3 },
+                encumbrancePerUnit: 10
             },
             {
-                name: "Cattle",
-                category: "Cattle",
-                basePrices: { spring: 25, summer: 30, autumn: 20, winter: 35 },
-                qualityTiers: { poor: 0.8, average: 1.0, good: 1.2, excellent: 1.5 }
+                name: "Metal",
+                category: "Raw Materials",
+                basePrices: { spring: 8, summer: 8, autumn: 8, winter: 8 },
+                encumbrancePerUnit: 10
             },
             {
-                name: "Trade Goods",
-                category: "Trade",
-                basePrices: { spring: 10, summer: 10, autumn: 10, winter: 10 },
-                qualityTiers: { poor: 0.7, average: 1.0, good: 1.3, excellent: 1.6 }
+                name: "Luxuries",
+                category: "Luxury Goods",
+                basePrices: { spring: 50, summer: 50, autumn: 50, winter: 50 },
+                encumbrancePerUnit: 10
+            },
+            {
+                name: "Armaments",
+                category: "Military",
+                basePrices: { spring: 12, summer: 10, autumn: 8, winter: 10 },
+                encumbrancePerUnit: 10
             }
         ];
     }
@@ -139,7 +145,7 @@ function runCargoAvailabilityTests() {
             ruler: "Village Elder Gunther",
             population: 150,
             wealth: 1,
-            source: ["Agriculture"],
+            source: ["Subsistence"],
             garrison: ["0a", "2b", "8c"],
             notes: "Small village"
         },
@@ -150,7 +156,7 @@ function runCargoAvailabilityTests() {
             ruler: "Lord Rickard Aschaffenberg",
             population: 6000,
             wealth: 3,
-            source: ["Trade", "Wine"],
+            source: ["Trade", "Agriculture"],
             garrison: ["20a", "40b", "120c"],
             notes: "Trading town"
         },
@@ -161,7 +167,7 @@ function runCargoAvailabilityTests() {
             ruler: "Emperor Karl Franz I",
             population: 105000,
             wealth: 5,
-            source: ["Trade", "Government", "Industry"],
+            source: ["Trade", "Government", "Metal"],
             garrison: ["200a", "400b", "800c"],
             notes: "Capital city"
         }
@@ -212,22 +218,23 @@ function runCargoAvailabilityTests() {
     console.log('Test 3: Determine Cargo Types');
     console.log('=============================');
 
-    // Village with Agriculture only
+    // Village with Subsistence only (should produce Grain)
     const villageCargoTypes = engine.determineCargoTypes(testSettlements.smallVillage, 'spring');
     console.log(`Village cargo types: [${villageCargoTypes.join(', ')}] (expected: [Grain])`);
     console.assert(villageCargoTypes.includes('Grain'), 'Village should have Grain available');
     console.assert(!villageCargoTypes.includes('Trade Goods'), 'Village should not have Trade Goods');
 
-    // Trade town with Trade and Wine
+    // Trade town with Trade and Agriculture (should produce Grain and random Trade cargo)
     const townCargoTypes = engine.determineCargoTypes(testSettlements.tradeTown, 'spring');
     console.log(`Trade town cargo types: [${townCargoTypes.join(', ')}]`);
-    console.assert(townCargoTypes.includes('Wine'), 'Trade town should have Wine available');
-    console.assert(townCargoTypes.includes('Trade Goods'), 'Trade town should have Trade Goods available');
+    console.assert(townCargoTypes.includes('Grain'), 'Trade town should have Grain available');
+    console.assert(townCargoTypes.length >= 1, 'Trade town should have at least one cargo type');
 
-    // City with multiple categories including Trade
+    // City with multiple categories including Trade (should produce Metal and random Trade cargo)
     const cityCargoTypes = engine.determineCargoTypes(testSettlements.prosperousCity, 'spring');
     console.log(`City cargo types: [${cityCargoTypes.join(', ')}]`);
-    console.assert(cityCargoTypes.includes('Trade Goods'), 'City should have Trade Goods available');
+    console.assert(cityCargoTypes.includes('Metal'), 'City should have Metal available');
+    console.assert(cityCargoTypes.length >= 1, 'City should have at least one cargo type');
 
     console.log('✓ All cargo type determinations correct\n');
 
@@ -274,15 +281,15 @@ function runPurchasePriceTests() {
     console.log('Test 1: Basic Price Calculation');
     console.log('==============================');
 
-    // Grain in spring: base price 2 GC
+    // Grain in spring: base price 1 GC
     const grainPrice = engine.calculateBasePrice('Grain', 'spring');
-    console.log(`Grain base price in spring: ${grainPrice} GC (expected: 2 GC)`);
-    console.assert(grainPrice === 2, 'Grain spring price should be 2 GC');
+    console.log(`Grain base price in spring: ${grainPrice} GC (expected: 1 GC)`);
+    console.assert(grainPrice === 1, 'Grain spring price should be 1 GC');
 
-    // Wine in winter: base price 20 GC
-    const winePrice = engine.calculateBasePrice('Wine', 'winter');
-    console.log(`Wine base price in winter: ${winePrice} GC (expected: 20 GC)`);
-    console.assert(winePrice === 20, 'Wine winter price should be 20 GC');
+    // Wool in winter: base price 3 GC
+    const woolPrice = engine.calculateBasePrice('Wool', 'winter');
+    console.log(`Wool base price in winter: ${woolPrice} GC (expected: 3 GC)`);
+    console.assert(woolPrice === 3, 'Wool winter price should be 3 GC');
 
     console.log('✓ Basic price calculations correct\n');
 
@@ -306,19 +313,19 @@ function runPurchasePriceTests() {
     console.log('Test 3: Partial Purchase Penalty');
     console.log('================================');
 
-    const partialPurchase = engine.calculatePurchasePrice('Wine', 10, { 
+    const partialPurchase = engine.calculatePurchasePrice('Wool', 10, { 
         isPartialPurchase: true,
-        season: 'spring'
+        season: 'winter'
     });
     
     console.log(`Partial purchase: ${partialPurchase.quantity} EP of ${partialPurchase.cargoName}`);
     console.log(`Base price: ${partialPurchase.basePricePerUnit} GC`);
-    console.log(`Final price per unit: ${partialPurchase.finalPricePerUnit} GC (expected: 16.5 GC)`);
-    console.log(`Total price: ${partialPurchase.totalPrice} GC (expected: 165 GC)`);
+    console.log(`Final price per unit: ${partialPurchase.finalPricePerUnit} GC (expected: 3.9 GC)`);
+    console.log(`Total price: ${partialPurchase.totalPrice} GC (expected: 39 GC)`);
     
-    console.assert(partialPurchase.basePricePerUnit === 15, 'Base price should be 15 GC');
-    console.assert(partialPurchase.finalPricePerUnit === 16.5, 'Should include 10% penalty');
-    console.assert(partialPurchase.totalPrice === 165, 'Total should be 10 × 16.5 = 165 GC');
+    console.assert(partialPurchase.basePricePerUnit === 3, 'Base price should be 3 GC');
+    console.assert(partialPurchase.finalPricePerUnit === 3.9, 'Should include 10% penalty');
+    console.assert(partialPurchase.totalPrice === 39, 'Total should be 10 × 3.9 = 39 GC');
     console.assert(partialPurchase.modifiers.length === 1, 'Should have one modifier');
     console.assert(partialPurchase.modifiers[0].type === 'partial_purchase', 'Should be partial purchase modifier');
 
@@ -344,7 +351,7 @@ function runSaleMechanicsTests() {
             ruler: "Village Elder Gunther",
             population: 150,
             wealth: 1,
-            source: ["Agriculture"],
+            source: ["Subsistence"],
             garrison: ["0a", "2b", "8c"],
             notes: "Small village"
         },
@@ -355,7 +362,7 @@ function runSaleMechanicsTests() {
             ruler: "Lord Rickard Aschaffenberg",
             population: 6000,
             wealth: 3,
-            source: ["Trade", "Wine"],
+            source: ["Trade", "Agriculture"],
             garrison: ["20a", "40b", "120c"],
             notes: "Trading town"
         },
@@ -366,7 +373,7 @@ function runSaleMechanicsTests() {
             ruler: "Emperor Karl Franz I",
             population: 105000,
             wealth: 5,
-            source: ["Trade", "Government", "Industry"],
+            source: ["Trade", "Government", "Metal"],
             garrison: ["200a", "400b", "800c"],
             notes: "Capital city"
         }
@@ -412,12 +419,12 @@ function runSaleMechanicsTests() {
     console.assert(villageChance === 10, 'Village should have 10% buyer chance');
 
     // Trade town: Size 3 × 10 + 30 (Trade bonus) = 60%
-    const townChance = engine.calculateBuyerAvailabilityChance(testSettlements.tradeTown, 'Wine');
+    const townChance = engine.calculateBuyerAvailabilityChance(testSettlements.tradeTown, 'Grain');
     console.log(`Trade town buyer chance: ${townChance}% (expected: 60%)`);
     console.assert(townChance === 60, 'Trade town should have 60% buyer chance');
 
     // City: Size 4 × 10 + 30 (Trade bonus) = 70%
-    const cityChance = engine.calculateBuyerAvailabilityChance(testSettlements.prosperousCity, 'Trade Goods');
+    const cityChance = engine.calculateBuyerAvailabilityChance(testSettlements.prosperousCity, 'Metal');
     console.log(`City buyer chance: ${cityChance}% (expected: 70%)`);
     console.assert(cityChance === 70, 'City should have 70% buyer chance');
 
@@ -432,20 +439,20 @@ function runSaleMechanicsTests() {
     console.log(`Village Grain restriction: ${villageGrainRestriction.restricted} (expected: false)`);
     console.assert(villageGrainRestriction.restricted === false, 'Villages should buy Grain without restriction');
 
-    // Village buying Wine in Spring (limited)
-    const villageWineSpring = engine.checkVillageRestrictions(testSettlements.village, 'Wine', 'spring');
-    console.log(`Village Wine in Spring restricted: ${villageWineSpring.restricted} (expected: true)`);
-    console.log(`Allowed quantity: ${villageWineSpring.allowedQuantity} EP (should be 1-10)`);
-    console.assert(villageWineSpring.restricted === true, 'Villages should restrict non-Grain goods');
-    console.assert(villageWineSpring.allowedQuantity >= 1 && villageWineSpring.allowedQuantity <= 10, 'Should allow 1-10 EP in Spring');
+    // Village buying Wool in Spring (limited)
+    const villageWoolSpring = engine.checkVillageRestrictions(testSettlements.village, 'Wool', 'spring');
+    console.log(`Village Wool in Spring restricted: ${villageWoolSpring.restricted} (expected: true)`);
+    console.log(`Allowed quantity: ${villageWoolSpring.allowedQuantity} EP (should be 1-10)`);
+    console.assert(villageWoolSpring.restricted === true, 'Villages should restrict non-Grain goods');
+    console.assert(villageWoolSpring.allowedQuantity >= 1 && villageWoolSpring.allowedQuantity <= 10, 'Should allow 1-10 EP in Spring');
 
-    // Village buying Wine in Winter (not allowed)
-    const villageWineWinter = engine.checkVillageRestrictions(testSettlements.village, 'Wine', 'winter');
-    console.log(`Village Wine in Winter allowed quantity: ${villageWineWinter.allowedQuantity} (expected: 0)`);
-    console.assert(villageWineWinter.allowedQuantity === 0, 'Villages should not buy non-Grain goods outside Spring');
+    // Village buying Wool in Winter (not allowed)
+    const villageWoolWinter = engine.checkVillageRestrictions(testSettlements.village, 'Wool', 'winter');
+    console.log(`Village Wool in Winter allowed quantity: ${villageWoolWinter.allowedQuantity} (expected: 0)`);
+    console.assert(villageWoolWinter.allowedQuantity === 0, 'Villages should not buy non-Grain goods outside Spring');
 
     // Town has no restrictions
-    const townRestriction = engine.checkVillageRestrictions(testSettlements.tradeTown, 'Wine', 'winter');
+    const townRestriction = engine.checkVillageRestrictions(testSettlements.tradeTown, 'Wool', 'winter');
     console.log(`Town restriction: ${townRestriction.restricted} (expected: false)`);
     console.assert(townRestriction.restricted === false, 'Towns should have no village restrictions');
 
@@ -519,7 +526,7 @@ function runSpecialSaleMethodsTests() {
     console.log('============================');
 
     // Successful desperate sale at Trade settlement
-    const desperateSale = engine.processDesperateSale('Wine', 20, testSettlements.tradeTown, { season: 'spring' });
+    const desperateSale = engine.processDesperateSale('Luxuries', 20, testSettlements.tradeTown, { season: 'spring' });
     console.log(`Desperate sale success: ${desperateSale.success} (expected: true)`);
     console.log(`Base price: ${desperateSale.basePricePerUnit} GC`);
     console.log(`Desperate price: ${desperateSale.desperatePricePerUnit} GC (expected: 7.5 GC)`);
@@ -544,7 +551,7 @@ function runSpecialSaleMethodsTests() {
     console.log('==================================');
 
     // Generate rumor (mock roll for guaranteed rumor)
-    const rumorCheck = engine.checkForRumors('Wine', testSettlements.tradeTown, () => 15);
+    const rumorCheck = engine.checkForRumors('Luxuries', testSettlements.tradeTown, () => 15);
     console.log(`Rumor found: ${rumorCheck.hasRumor} (expected: true)`);
     console.log(`Rumor type: ${rumorCheck.rumor.type}`);
     console.log(`Rumor multiplier: ${rumorCheck.rumor.multiplier}x`);
@@ -553,7 +560,7 @@ function runSpecialSaleMethodsTests() {
     console.assert(rumorCheck.rumor.multiplier > 1, 'Rumor should have positive multiplier');
 
     // Process rumor sale
-    const rumorSale = engine.processRumorSale('Wine', 10, testSettlements.tradeTown, rumorCheck.rumor, { season: 'spring' });
+    const rumorSale = engine.processRumorSale('Luxuries', 10, testSettlements.tradeTown, rumorCheck.rumor, { season: 'spring' });
     console.log(`Rumor sale success: ${rumorSale.success} (expected: true)`);
     console.log(`Normal price: ${rumorSale.normalPrice} GC`);
     console.log(`Rumor price: ${rumorSale.rumorPricePerUnit} GC`);
@@ -564,7 +571,7 @@ function runSpecialSaleMethodsTests() {
     console.assert(rumorSale.saleType === 'rumor', 'Should be marked as rumor sale');
 
     // No rumor found (mock roll for no rumor)
-    const noRumorCheck = engine.checkForRumors('Wine', testSettlements.tradeTown, () => 80);
+    const noRumorCheck = engine.checkForRumors('Luxuries', testSettlements.tradeTown, () => 80);
     console.log(`No rumor found: ${noRumorCheck.hasRumor} (expected: false)`);
     console.assert(noRumorCheck.hasRumor === false, 'Should not find rumor with roll 80');
 
@@ -578,7 +585,7 @@ function runSpecialSaleMethodsTests() {
 
     // Successful partial sale
     const partialSale = engine.processEnhancedPartialSale(
-        'Wine', 
+        'Luxuries', 
         100, 
         testSettlements.tradeTown, 
         purchaseData,
@@ -598,7 +605,7 @@ function runSpecialSaleMethodsTests() {
 
     // Failed partial sale (no buyer)
     const failedPartialSale = engine.processEnhancedPartialSale(
-        'Wine',
+        'Luxuries',
         100,
         testSettlements.tradeTown,
         purchaseData,
@@ -612,7 +619,7 @@ function runSpecialSaleMethodsTests() {
     console.assert(failedPartialSale.saleType === 'partial_failed', 'Should be marked as partial failed');
 
     // Partial sale with quantity too small
-    const tooSmallPartialSale = engine.processEnhancedPartialSale('Wine', 1, testSettlements.tradeTown, purchaseData);
+    const tooSmallPartialSale = engine.processEnhancedPartialSale('Luxuries', 1, testSettlements.tradeTown, purchaseData);
     console.log(`Too small partial sale: ${tooSmallPartialSale.success} (expected: false)`);
     console.assert(tooSmallPartialSale.success === false, 'Should fail when quantity too small');
 
@@ -622,7 +629,7 @@ function runSpecialSaleMethodsTests() {
     console.log('Test 4: Available Sale Options');
     console.log('==============================');
 
-    const saleOptions = engine.getAvailableSaleOptions('Wine', 50, testSettlements.tradeTown, purchaseData);
+    const saleOptions = engine.getAvailableSaleOptions('Luxuries', 50, testSettlements.tradeTown, purchaseData);
     console.log(`Normal sale available: ${saleOptions.options.normal} (expected: true)`);
     console.log(`Desperate sale available: ${saleOptions.options.desperate} (expected: true)`);
     console.log(`Partial sale available: ${saleOptions.options.partial} (expected: false)`);
@@ -641,7 +648,7 @@ function runSpecialSaleMethodsTests() {
     // Execute desperate sale
     const executedDesperateSale = engine.executeSpecialSale(
         'desperate',
-        'Wine',
+        'Luxuries',
         30,
         testSettlements.tradeTown,
         purchaseData,
@@ -655,7 +662,7 @@ function runSpecialSaleMethodsTests() {
     // Execute partial sale
     const executedPartialSale = engine.executeSpecialSale(
         'partial',
-        'Wine',
+        'Luxuries',
         80,
         testSettlements.tradeTown,
         purchaseData,
@@ -679,7 +686,7 @@ function runSpecialSaleMethodsTests() {
     };
 
     const profitAnalysis = engine.analyzeSaleProfitability(
-        'Wine',
+        'Luxuries',
         20,
         testSettlements.tradeTown,
         purchaseDataWithCost,
@@ -958,7 +965,7 @@ async function runSaleRestrictionsTests() {
     console.log('Test 1: Village Restrictions by Season and Cargo Type');
     console.log('=====================================================');
 
-    const cargoTypes = ['Grain', 'Wine', 'Cattle', 'Trade Goods'];
+    const cargoTypes = ['Grain', 'Wool', 'Metal', 'Luxuries'];
     const seasons = ['spring', 'summer', 'autumn', 'winter'];
 
     seasons.forEach(season => {

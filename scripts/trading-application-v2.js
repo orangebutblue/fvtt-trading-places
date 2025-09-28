@@ -1902,7 +1902,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 this.availableCargo = availableCargo;
                 
                 // Show detailed success message
-                this._showDetailedAvailabilitySuccess(completeResult, availableCargo);
+                this._showAvailabilityResults(completeResult, availableCargo);
                 
                 // Update cargo display
                 this._updateCargoDisplay(availableCargo);
@@ -1922,8 +1922,8 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 // Clear any existing cargo
                 this.availableCargo = [];
                 
-                // Show failure message
-                this._showNoCargoMessage(completeResult.availabilityCheck);
+                // Show failure message with detailed breakdown
+                this._showAvailabilityResults(completeResult);
                 
                 // Hide cargo display
                 this._hideCargoDisplay();
@@ -1965,32 +1965,206 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
     // =============================================================================
 
     /**
-     * Show detailed availability success message
+     * Show detailed availability check results (always shows formula breakdown)
      * @param {Object} completeResult - Complete availability check result
-     * @param {Array} availableCargo - Available cargo for display
+     * @param {Array} availableCargo - Available cargo for display (empty on failure)
      * @private
      */
-    _showDetailedAvailabilitySuccess(completeResult, availableCargo) {
-        const resultsDiv = this.element.querySelector('#availability-results');
-        if (resultsDiv) {
-            const rollDetails = completeResult.availabilityCheck;
-            const cargoDetails = availableCargo.map(cargo => 
-                `<li><strong>${cargo.name}</strong>: ${cargo.quantity} units @ ${cargo.currentPrice} GC/10EP (Trader: ${cargo.trader})</li>`
-            ).join('');
-            
-            resultsDiv.innerHTML = `
+    _showAvailabilityResults(completeResult, availableCargo = []) {
+        console.log('✅ Showing availability results:', completeResult.available ? 'SUCCESS' : 'FAILURE');
+        
+        let resultsDiv = this.element.querySelector('#availability-results');
+        if (!resultsDiv) {
+            // Create the results div if it doesn't exist (fallback)
+            const buyingTab = this.element.querySelector('#buying-tab');
+            if (buyingTab) {
+                resultsDiv = document.createElement('div');
+                resultsDiv.id = 'availability-results';
+                resultsDiv.className = 'availability-results';
+                resultsDiv.style.display = 'none';
+                buyingTab.appendChild(resultsDiv);
+            } else {
+                console.error('❌ Could not find buying tab to create results div!');
+                return;
+            }
+        }
+
+        const rollDetails = completeResult.availabilityCheck;
+        const sizeRating = this.dataManager.convertSizeToNumeric(this.selectedSettlement.size);
+        const wealthRating = this.selectedSettlement.wealth;
+        const baseChance = (sizeRating + wealthRating) * 10;
+        const finalChance = Math.min(baseChance, 100);
+
+        let statusHtml = '';
+        let cargoHtml = '';
+
+        if (completeResult.available) {
+            // SUCCESS: Show cargo types and details
+            statusHtml = `
                 <h4>
                     <i class="fas fa-check-circle success-icon"></i>
                     Cargo Available!
                 </h4>
-                <p>Market check successful (rolled ${rollDetails.roll}/${rollDetails.chance})</p>
-                <div class="cargo-summary">
-                    <h5>Available Cargo:</h5>
-                    <ul>${cargoDetails}</ul>
-                    <p><strong>Total Size:</strong> ${completeResult.cargoSize.totalSize} EP</p>
+            `;
+
+            // Show available cargo types from completeResult first
+            let cargoTypesDisplay = '';
+            if (completeResult.cargoTypes && completeResult.cargoTypes.length > 0) {
+                const cargoTypesList = completeResult.cargoTypes.map(type => `<li><strong>${type}</strong></li>`).join('');
+                cargoTypesDisplay = `
+                    <h5>Available Resource Types:</h5>
+                    <ul class="cargo-types-list">
+                        ${cargoTypesList}
+                    </ul>
+                `;
+            }
+            
+            // Create detailed cargo summary if availableCargo is provided
+            let detailedCargoSummary = '';
+            if (availableCargo && availableCargo.length > 0) {
+                const cargoSummary = availableCargo.map(cargo =>
+                    `<li><strong>${cargo.name}</strong> (${cargo.category}) - ${cargo.quantity} units available @ ${cargo.basePrice} GC</li>`
+                ).join('');
+                detailedCargoSummary = `
+                    <h5>Detailed Cargo Information:</h5>
+                    <ul class="cargo-details-list">
+                        ${cargoSummary}
+                    </ul>
+                `;
+            }
+
+            cargoHtml = `
+                ${cargoTypesDisplay}
+                ${detailedCargoSummary}
+                <p><strong>Total Cargo Value:</strong> ${completeResult.cargoSize.totalSize} Encumbrance Points</p>
+
+                <h5>Cargo Size Calculation:</h5>
+                <div class="calculation-breakdown">
+                    <p><strong>Base Multiplier:</strong> ${sizeRating} + ${wealthRating} = ${completeResult.cargoSize.baseMultiplier}</p>
+                    <p><strong>Size Roll:</strong> ${completeResult.cargoSize.roll1} (1d100) → rounded up to ${completeResult.cargoSize.sizeMultiplier}</p>
+                    ${completeResult.cargoSize.tradeBonus ? `<p><strong>Trade Bonus:</strong> Additional roll ${completeResult.cargoSize.roll2} → used higher multiplier</p>` : ''}
+                    <p><strong>Total Size:</strong> ${completeResult.cargoSize.baseMultiplier} × ${completeResult.cargoSize.sizeMultiplier} = ${completeResult.cargoSize.totalSize} EP</p>
                 </div>
             `;
-            resultsDiv.style.display = 'block';
+        } else {
+            // FAILURE: Show detailed failure information
+            statusHtml = `
+                <h4>
+                    <i class="fas fa-times-circle failure-icon"></i>
+                    No Cargo Available
+                </h4>
+            `;
+
+            cargoHtml = `
+                <div class="explanation">
+                    <p><em>This settlement has limited trade activity. Try checking availability again, or visit a larger settlement with more merchants.</em></p>
+                </div>
+            `;
+        }
+
+        // Always show the calculation breakdown
+        const calculationHtml = `
+            <h5>Market Check Results:</h5>
+            <div class="calculation-breakdown">
+                <p><strong>Settlement:</strong> ${this.selectedSettlement.name}</p>
+                <p><strong>Size Rating:</strong> ${this.selectedSettlement.size} (${sizeRating})</p>
+                <p><strong>Wealth Rating:</strong> ${this.selectedSettlement.wealth}</p>
+                <p><strong>Base Chance:</strong> (${sizeRating} + ${wealthRating}) × 10 = ${baseChance}%</p>
+                <p><strong>Final Chance:</strong> ${finalChance}% ${finalChance < baseChance ? '(capped at 100%)' : ''}</p>
+                <p><strong>Dice Roll:</strong> ${rollDetails.roll} (1d100)</p>
+                <p><strong>Result:</strong> ${rollDetails.roll} ${completeResult.available ? '≤' : '>'} ${finalChance} = <span class="${completeResult.available ? 'success-text' : 'failure-text'}">${completeResult.available ? 'SUCCESS' : 'FAILURE'}</span></p>
+            </div>
+        `;
+
+        const finalHtml = `
+            ${statusHtml}
+            <div class="availability-details">
+                ${calculationHtml}
+                ${cargoHtml}
+            </div>
+        `;
+        
+        console.log('🔍 DEBUG: Setting innerHTML to:', finalHtml.substring(0, 200) + '...');
+        resultsDiv.innerHTML = finalHtml;
+        resultsDiv.style.display = 'block';
+        
+        // Keep the original div hidden since we're using the new approach
+        resultsDiv.style.display = 'none';
+        
+        console.log('✅ Availability results displayed:', completeResult.available ? 'SUCCESS' : 'FAILURE');
+        console.log('🔍 DEBUG: Results div is now visible:', resultsDiv.style.display);
+        console.log('🔍 DEBUG: Results div computed styles:', window.getComputedStyle(resultsDiv).display);
+        
+        // Check actual dimensions
+        const rect = resultsDiv.getBoundingClientRect();
+        console.log('🔍 DEBUG: Results div dimensions:', {
+            width: rect.width,
+            height: rect.height,
+            top: rect.top,
+            left: rect.left,
+            visible: rect.width > 0 && rect.height > 0
+        });
+        
+        // Force scroll to the element
+        resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+
+        
+        // Remove any existing availability results to avoid duplicates
+        const existingResults = this.element.querySelectorAll('.availability-results-display');
+        existingResults.forEach(el => el.remove());
+        
+        // Create a properly styled results div that stays visible
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'availability-results-display';
+        
+        const successColor = '#4CAF50';
+        const failureColor = '#f44336';
+        const bgColor = completeResult.available ? '#1a2e1a' : '#2e1a1a';
+        const borderColor = completeResult.available ? successColor : failureColor;
+        
+        alertDiv.innerHTML = `
+            <div style="
+                background: ${bgColor}; 
+                color: white; 
+                padding: 20px; 
+                border: 2px solid ${borderColor}; 
+                border-radius: 8px; 
+                margin: 16px 0;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            ">
+                <h3 style="margin: 0 0 15px 0; color: ${completeResult.available ? successColor : failureColor}; font-size: 18px;">
+                    ${completeResult.available ? '✅ Cargo Available!' : '❌ No Cargo Available'}
+                </h3>
+                
+                <div style="margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 8px 0; color: #ccc; font-size: 14px;">Market Check Results:</h4>
+                    <p style="margin: 3px 0; font-size: 13px;"><strong>Settlement:</strong> ${this.selectedSettlement.name}</p>
+                    <p style="margin: 3px 0; font-size: 13px;"><strong>Size Rating:</strong> ${this.selectedSettlement.size} (${sizeRating})</p>
+                    <p style="margin: 3px 0; font-size: 13px;"><strong>Wealth Rating:</strong> ${this.selectedSettlement.wealth}</p>
+                    <p style="margin: 3px 0; font-size: 13px;"><strong>Base Chance:</strong> (${sizeRating} + ${this.selectedSettlement.wealth}) × 10 = ${finalChance}%</p>
+                    <p style="margin: 3px 0; font-size: 13px;"><strong>Dice Roll:</strong> ${rollDetails.roll} (1d100)</p>
+                    <p style="margin: 3px 0; font-size: 13px;"><strong>Result:</strong> ${rollDetails.roll} ${completeResult.available ? '≤' : '>'} ${finalChance} = <span style="color: ${completeResult.available ? successColor : failureColor}; font-weight: bold;">${completeResult.available ? 'SUCCESS' : 'FAILURE'}</span></p>
+                </div>
+                
+                ${completeResult.available ? `
+                    <div>
+                        <h4 style="margin: 0 0 8px 0; color: #ccc; font-size: 14px;">Available Resources:</h4>
+                        <p style="margin: 3px 0; font-size: 13px;"><strong>Types:</strong> ${completeResult.cargoTypes?.join(', ') || 'None'}</p>
+                        <p style="margin: 3px 0; font-size: 13px;"><strong>Total Size:</strong> ${completeResult.cargoSize?.totalSize || 0} EP</p>
+                    </div>
+                ` : `
+                    <p style="margin: 8px 0 0 0; font-style: italic; color: #bbb; font-size: 13px;">
+                        This settlement has limited trade activity. Try checking availability again, or visit a larger settlement with more merchants.
+                    </p>
+                `}
+            </div>
+        `;
+        
+        // Insert right after the check availability button
+        const checkButton = this.element.querySelector('#check-availability');
+        if (checkButton && checkButton.parentElement) {
+            checkButton.parentElement.insertAdjacentElement('afterend', alertDiv);
         }
     }
 
@@ -2008,24 +2182,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         return names[Math.floor(Math.random() * names.length)];
     }
 
-    /**
-     * Show no cargo available message
-     * @param {Object} rollDetails - Roll result details
-     * @private
-     */
-    _showNoCargoMessage(rollDetails) {
-        const resultsDiv = this.element.querySelector('#availability-results');
-        if (resultsDiv) {
-            resultsDiv.innerHTML = `
-                <h4>
-                    <i class="fas fa-times-circle failure-icon"></i>
-                    No Cargo Available
-                </h4>
-                <p>Market check failed (rolled ${rollDetails.roll}/${rollDetails.chance}). Try again later or check another settlement.</p>
-            `;
-            resultsDiv.style.display = 'block';
-        }
-    }
+
 
     /**
      * Update cargo display with available cargo
@@ -2309,6 +2466,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
      * Handle desperate sale button click
      * @param {Event} event - Click event
      * @private
+     * 
      */
     async _onDesperateSale(event) {
         this._logDebug('Event Handler', 'Desperate sale clicked (placeholder)');
@@ -2351,42 +2509,21 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
      */
     _updateSellingTab() {
         if (!this.element) return;
-        
+
         const resourceButtons = this.element.querySelector('#resource-buttons');
         const sellingEmptyState = this.element.querySelector('#selling-empty-state');
         const sellingInterface = this.element.querySelector('#selling-interface');
-        
+
         if (!resourceButtons || !sellingEmptyState) return;
-        
-        if (this.selectedSettlement && this.selectedSettlement.source) {
-            // Hide empty state and show resource buttons
-            sellingEmptyState.style.display = 'none';
-            
-            // Clear existing buttons
-            resourceButtons.innerHTML = '';
-            
-            // Create resource buttons based on settlement source
-            this.selectedSettlement.source.forEach(resource => {
-                const button = document.createElement('button');
-                button.className = 'resource-btn';
-                button.textContent = resource;
-                button.addEventListener('click', () => this._onResourceSelect(resource));
-                resourceButtons.appendChild(button);
-            });
-            
-            this._logDebug('Selling Tab', `Updated selling options for ${this.selectedSettlement.name}`, {
-                resources: this.selectedSettlement.source
-            });
-        } else {
-            // Show empty state and hide interface
-            sellingEmptyState.style.display = 'block';
-            resourceButtons.innerHTML = '';
-            if (sellingInterface) {
-                sellingInterface.style.display = 'none';
-            }
-            
-            this._logDebug('Selling Tab', 'No settlement selected - showing empty state');
-        }
+
+        // Always populate with ALL available trading resources from all settlements
+        // This allows players to sell any cargo type they have, regardless of current settlement
+        this._populateSellingResources();
+
+        // Hide empty state since we always show resources
+        sellingEmptyState.style.display = 'none';
+
+        this._logDebug('Selling Tab', 'Updated selling options with all available resources');
     }
 
     /**

@@ -198,19 +198,40 @@ class TradingEngine {
         const availableCargo = [];
         const productionCategories = settlement.source;
 
+        // Mapping from settlement production categories to cargo types
+        const productionToCargoMapping = {
+            'Agriculture': 'Grain',
+            'Subsistence': 'Grain',
+            'Cattle': 'Grain',
+            'Goats': 'Grain',
+            'Fishing': 'Grain',
+            'Sheep': 'Wool',
+            'Metal': 'Metal',
+            'Fur': 'Luxuries',
+            'Government': 'Armaments'
+        };
+
         // Handle specific goods (non-Trade categories)
         const specificGoods = productionCategories.filter(category => category !== 'Trade');
         specificGoods.forEach(category => {
-            // Find cargo types that match this production category
-            const matchingCargo = this.dataManager.cargoTypes.filter(cargo => 
-                cargo.category === category
-            );
-            
-            matchingCargo.forEach(cargo => {
-                if (!availableCargo.includes(cargo.name)) {
-                    availableCargo.push(cargo.name);
+            // Check if we have a direct mapping for this production category
+            if (productionToCargoMapping[category]) {
+                const cargoName = productionToCargoMapping[category];
+                if (!availableCargo.includes(cargoName)) {
+                    availableCargo.push(cargoName);
                 }
-            });
+            } else {
+                // Fallback: try to find cargo types that match this production category
+                const matchingCargo = this.dataManager.cargoTypes.filter(cargo => 
+                    cargo.category === category
+                );
+                
+                matchingCargo.forEach(cargo => {
+                    if (!availableCargo.includes(cargo.name)) {
+                        availableCargo.push(cargo.name);
+                    }
+                });
+            }
         });
 
         // Handle Trade settlements - they get random seasonal cargo
@@ -227,10 +248,10 @@ class TradingEngine {
     /**
      * Get random trade cargo for the current season
      * @param {string} season - Current season
-     * @returns {string} - Random cargo type name
+     * @returns {string|null} - Random cargo type name or null if no trade cargo available
      */
     getRandomTradeCargoForSeason(season) {
-        // For now, return "Trade Goods" - this can be expanded with seasonal tables
+        // For now, return null - trade cargo types need to be added to the dataset
         const tradeGoods = this.dataManager.cargoTypes.filter(cargo => 
             cargo.category === 'Trade'
         );
@@ -240,7 +261,7 @@ class TradingEngine {
             return tradeGoods[randomIndex].name;
         }
         
-        return 'Trade Goods';
+        return null;
     }
 
     /**
@@ -772,7 +793,7 @@ class TradingEngine {
         // Village restrictions for non-Grain goods
         if (properties.sizeNumeric === 1) { // Village
             const cargo = this.getCargoByName(cargoName);
-            if (cargo.category !== 'Agriculture' || cargoName !== 'Grain') {
+            if (cargo.category !== 'Bulk Goods' || cargoName !== 'Grain') {
                 // Villages only buy Grain, except in Spring (1d10 EP of other goods)
                 const currentSeason = this.getCurrentSeason();
                 if (currentSeason !== 'spring') {
@@ -954,7 +975,7 @@ class TradingEngine {
         const cargo = this.getCargoByName(cargoName);
         
         // Villages only buy Grain normally
-        if (cargo.category === 'Agriculture' && cargoName === 'Grain') {
+        if (cargo.category === 'Bulk Goods' && cargoName === 'Grain') {
             return {
                 restricted: false,
                 reason: null,
