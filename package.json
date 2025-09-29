@@ -12,6 +12,8 @@
     "harness:real": "HARNESS_EXPECT_REAL_MODULE=1 node tests/foundry-harness/run.js",
     "harness:buying": "node tests/foundry-harness/run.js tests/foundry-harness/scenarios/buying-flow.js",
     "harness:availability": "node tests/foundry-harness/run.js tests/foundry-harness/scenarios/availability-only.js",
+    "harness:phase3": "node tests/foundry-harness/run.js tests/foundry-harness/scenarios/phase3-merchant-system.js",
+    "harness:schema": "node tests/foundry-harness/run.js tests/foundry-harness/scenarios/orange-realism-schema.js",
     "migrate:settlements": "node scripts/migrate-settlements.js",
     "migrate:settlements:live": "node scripts/migrate-settlements.js --live",
     "validate:schema": "node scripts/validate-schema.js",

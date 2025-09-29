@@ -2005,6 +2005,108 @@ class DataManager {
     }
 
     /**
+     * Load source flags configuration
+     * @param {string} flagsPath - Path to source flags file
+     */
+    async loadSourceFlags(flagsPath = null) {
+        try {
+            const path = flagsPath || `${this.dataPath}/../source-flags.json`;
+            const logger = this.getLogger();
+            
+            logger.logSystem('DataManager', `Loading source flags from ${path}`);
+            
+            const flagsData = await this.loadFile(path);
+            this.sourceFlags = flagsData;
+            
+            logger.logSystem('DataManager', `Source flags loaded: ${Object.keys(flagsData).length} flags`);
+            
+            return flagsData;
+        } catch (error) {
+            const logger = this.getLogger();
+            logger.logSystem('DataManager', `Failed to load source flags: ${error.message}`);
+            throw new Error(`Failed to load source flags: ${error.message}`);
+        }
+    }
+
+    /**
+     * Initialize merchant generator and equilibrium calculator
+     */
+    initializeMerchantSystem() {
+        if (!this.config || !this.sourceFlags) {
+            throw new Error('Trading config and source flags must be loaded before initializing merchant system');
+        }
+
+        const logger = this.getLogger();
+        logger.logSystem('DataManager', 'Initializing merchant generation system');
+
+        // Initialize equilibrium calculator
+        if (typeof EquilibriumCalculator !== 'undefined') {
+            this.equilibriumCalculator = new EquilibriumCalculator(this.config, this.sourceFlags);
+            this.equilibriumCalculator.setLogger(logger);
+        }
+
+        // Initialize merchant generator
+        if (typeof MerchantGenerator !== 'undefined') {
+            this.merchantGenerator = new MerchantGenerator(this, this.config);
+            this.merchantGenerator.setLogger(logger);
+        }
+
+        logger.logSystem('DataManager', 'Merchant system initialized');
+    }
+
+    /**
+     * Generate merchants for a settlement and cargo type
+     * @param {Object} settlement - Settlement object
+     * @param {string} cargoType - Cargo type
+     * @param {string} merchantType - 'producer' or 'seeker'
+     * @param {string} season - Current season
+     * @returns {Array} - Array of generated merchants
+     */
+    generateMerchants(settlement, cargoType, merchantType, season = 'spring') {
+        if (!this.merchantGenerator || !this.equilibriumCalculator) {
+            throw new Error('Merchant system not initialized. Call initializeMerchantSystem() first.');
+        }
+
+        const logger = this.getLogger();
+        
+        // Calculate equilibrium
+        const cargoData = this.getCargoType(cargoType);
+        const equilibrium = this.equilibriumCalculator.calculateEquilibrium(settlement, cargoType, {
+            season,
+            cargoData
+        });
+
+        // Check if trade should be blocked
+        if (this.equilibriumCalculator.shouldBlockTrade(equilibrium)) {
+            logger.logDecision('Merchant Generation', 'Trade blocked by equilibrium', {
+                settlement: settlement.name,
+                cargoType,
+                equilibrium: equilibrium.state
+            });
+            return [];
+        }
+
+        // Calculate merchant slots
+        const slotInfo = this.merchantGenerator.calculateMerchantSlots(settlement);
+        const merchantCount = Math.max(1, Math.floor(slotInfo.totalSlots / 2)); // Distribute between producers/seekers
+
+        // Generate merchants
+        const merchants = [];
+        for (let i = 0; i < merchantCount; i++) {
+            const merchant = this.merchantGenerator.generateMerchant(settlement, cargoType, merchantType, equilibrium);
+            merchants.push(merchant);
+        }
+
+        logger.logSystem('DataManager', `Generated ${merchants.length} ${merchantType}s for ${settlement.name}`, {
+            cargoType,
+            equilibrium: equilibrium.state,
+            merchantCount
+        });
+
+        return merchants;
+    }
+
+    /**
      * Get supply/demand equilibrium for a settlement and cargo type
      * @param {Object} settlement - Settlement object
      * @param {string} cargoType - Cargo type name

@@ -6,34 +6,139 @@
     "4": { "min": 10001, "max": 100000, "name": "City" },
     "5": { "min": 100001, "max": 999999999, "name": "Metropolis" }
   },
-  "merchantSkillDistribution": {
-    "type": "normal",
-    "params": {
-      "base": 30,
-      "wealthModifier": 10,
-      "variance": 20
+  "merchantCount": {
+    "formula": "population-scaled",
+    "minSlotsPerSize": [1, 2, 3, 4, 6],
+    "populationMultiplier": 0.0001,
+    "sizeMultiplier": 1.5,
+    "hardCap": 15,
+    "flagMultipliers": {
+      "trade": 1.5,
+      "government": 1.2,
+      "subsistence": 0.5
     }
   },
-  "supplyDemand": {
+  "skillDistribution": {
+    "type": "piecewise",
+    "baseSkill": 25,
+    "wealthModifier": 8,
+    "variance": 20,
+    "percentileTable": {
+      "10": -15,
+      "25": -8,
+      "50": 0,
+      "75": 8,
+      "90": 15,
+      "95": 25,
+      "99": 35
+    },
+    "minSkill": 5,
+    "maxSkill": 95
+  },
+  "desperation": {
+    "rerollChance": 0.7,
+    "skillPenalty": 0.2,
+    "priceModifier": 1.15,
+    "quantityReduction": 0.25,
+    "qualityPenalty": -1,
+    "availabilityPenalty": -10
+  },
+  "equilibrium": {
     "baseline": {
       "supply": 100,
       "demand": 100
     },
     "producesShift": 0.5,
     "demandsShift": 0.35,
+    "flagShifts": {},
+    "seasonalShifts": {
+      "spring": { "agriculture": 0.2 },
+      "summer": { "agriculture": 0.1 },
+      "autumn": { "agriculture": 0.3 },
+      "winter": { "subsistence": 0.2 }
+    },
+    "wealthModifiers": {
+      "1": -0.1,
+      "2": -0.05,
+      "3": 0,
+      "4": 0.05,
+      "5": 0.1
+    },
     "clamp": {
-      "min": 10,
-      "max": 190
+      "min": 5,
+      "max": 195
+    },
+    "blockTradeThreshold": {
+      "supply": 10,
+      "demand": 10
+    },
+    "desperationThreshold": {
+      "supply": 20,
+      "demand": 20
     }
   },
-  "desperationReroll": {
-    "skillPenalty": 0.2,
-    "pricePenalty": 0.1,
-    "quantityPenalty": 0.25
+  "merchantPersonalities": {
+    "defaultProfile": {
+      "name": "Standard Merchant",
+      "haggleSkillModifier": 0,
+      "priceVariance": 0.05,
+      "quantityVariance": 0.1,
+      "specialBehaviors": []
+    },
+    "profiles": {
+      "shrewd": {
+        "name": "Shrewd Dealer",
+        "haggleSkillModifier": 10,
+        "priceVariance": 0.02,
+        "quantityVariance": 0.05,
+        "specialBehaviors": ["hard_bargainer"]
+      },
+      "generous": {
+        "name": "Generous Trader",
+        "haggleSkillModifier": -5,
+        "priceVariance": 0.08,
+        "quantityVariance": 0.15,
+        "specialBehaviors": ["bulk_discount"]
+      },
+      "suspicious": {
+        "name": "Suspicious Dealer",
+        "haggleSkillModifier": 5,
+        "priceVariance": 0.1,
+        "quantityVariance": 0.2,
+        "specialBehaviors": ["reputation_check"]
+      }
+    },
+    "distributionWeights": {
+      "defaultProfile": 70,
+      "shrewd": 15,
+      "generous": 10,
+      "suspicious": 5
+    }
   },
-  "merchantCounts": {
-    "baseFromSize": 1,
-    "populationBonus": 10000,
-    "maximum": 15
+  "specialSourceBehaviors": {
+    "smuggling": {
+      "contrabandChance": 0.4,
+      "priceDiscount": 0.15,
+      "availabilityBonus": 0.2,
+      "riskFactor": 0.3,
+      "specialGoods": ["contraband", "illegal_substances"]
+    },
+    "piracy": {
+      "seasonalActivity": {
+        "spring": 1.2,
+        "summer": 1.5,
+        "autumn": 1.0,
+        "winter": 0.6
+      },
+      "coastalOnly": true,
+      "priceVolatility": 0.25,
+      "lootedGoodsChance": 0.3
+    },
+    "government": {
+      "officialGoodsOnly": true,
+      "permitRequired": true,
+      "priceMarkup": 0.05,
+      "qualityAssurance": 1.2
+    }
   }
 }

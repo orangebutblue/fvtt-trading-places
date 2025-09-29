@@ -87,6 +87,53 @@ npm run harness scenarios/orange-realism-schema.js
 
 See [Phase 2 Summary](PHASE2_SUMMARY.md) for complete implementation details.
 
+## Phase 3: Merchant System Overhaul - COMPLETE ✅
+
+The merchant generation system has been completely rebuilt with population-based scaling, sophisticated skill distribution, and supply/demand equilibrium integration.
+
+### Key Achievements
+
+- **Population-based merchant counts** with configurable scaling formulas
+- **Piecewise skill distribution** using percentile tables and wealth modifiers
+- **Supply/demand equilibrium** driving merchant availability and pricing
+- **Merchant personality profiles** with behavioral traits and special abilities
+- **Desperation reroll mechanics** with configurable penalties
+- **Special source behaviors** for smuggling, piracy, and government trade
+
+### Merchant Generation Features
+
+```javascript
+// Population-scaled merchant counts
+Hamlet (150 pop): 2 merchants
+City (50,000 pop): 10 merchants  
+Metropolis (105,000 pop): 15 merchants (capped)
+
+// Flag-based multipliers
+Trade settlements: +50% merchants
+Government: +20% merchants  
+Subsistence: -50% merchants
+
+// Equilibrium-driven availability
+Oversupplied (3:1 ratio): Easy availability, lower prices
+Undersupplied (1:3 ratio): Scarce goods, higher prices
+Desperate (supply < 20): Auto-triggers desperation rerolls
+```
+
+### Testing & Validation
+
+```bash
+# Test new merchant system
+npm run harness:phase3
+
+# Test data schema compliance  
+npm run validate:schema
+
+# Test all systems together
+npm run harness
+```
+
+See [Phase 3 Summary](PHASE3_SUMMARY.md) for complete implementation details.
+
 ## Trading System Features
 
 - Complete implementation of the official WFRP 4E trading algorithm (pages 71-78)
