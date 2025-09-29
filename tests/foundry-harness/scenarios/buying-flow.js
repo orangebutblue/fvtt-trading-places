@@ -5,6 +5,7 @@
 
 import { createTestActor } from '../stubs/actors.js';
 import { getChatLog, clearChatLog, assertChatContains } from '../stubs/chat.js';
+import { randomInt } from '../stubs/seeded-random.js';
 
 export default async function buyingFlowScenario(harness) {
     console.log('=== Buying Flow Scenario ===');
@@ -30,10 +31,23 @@ export default async function buyingFlowScenario(harness) {
         // Test 1: Load settlement data and check availability
         console.log('\n--- Test 1: Settlement Data Loading ---');
         
+        // Check if we should expect real module integration
+        const expectRealModule = process.env.HARNESS_EXPECT_REAL_MODULE === '1';
+        const allowMockMode = process.env.HARNESS_ALLOW_MODULE_FAILURE === '1';
+        
         // We need to check if DataManager is available and can load settlement data
         const dataManager = globalThis.game.modules.get('trading-places')?.dataManager;
+        
         if (!dataManager) {
-            console.log('DataManager not found - this is expected in early harness development');
+            if (expectRealModule) {
+                throw new Error('DataManager expected but not found - real module integration required');
+            }
+            
+            if (!allowMockMode) {
+                console.warn('⚠ DataManager not found - this scenario will switch to requiring real module integration in Phase 3');
+            }
+            
+            console.log('DataManager not found - running in mock mode');
             console.log('Simulating settlement data...');
             
             // Create mock settlement data
@@ -197,16 +211,66 @@ export default async function buyingFlowScenario(harness) {
                         console.log('✓ Template rendered successfully');
                         console.log(`Template length: ${html.length} characters`);
                     } else {
+                        if (expectRealModule) {
+                            throw new Error('Template rendering expected but failed - real templates required');
+                        }
                         console.log('⚠ Template rendering skipped (file may not exist yet)');
                     }
                 } catch (error) {
+                    if (expectRealModule) {
+                        throw new Error(`Template rendering failed: ${error.message}`);
+                    }
                     console.log(`⚠ Template rendering failed: ${error.message}`);
                 }
             }
             
         } else {
             console.log('DataManager found - using real module code');
-            // TODO: Add real module integration when DataManager is available
+            
+            // Test real DataManager integration
+            try {
+                console.log('Testing real DataManager functionality...');
+                
+                // Test settlement loading
+                if (typeof dataManager.loadSettlements === 'function') {
+                    await dataManager.loadSettlements();
+                    console.log('✓ Settlement data loaded');
+                } else {
+                    throw new Error('DataManager.loadSettlements method not found');
+                }
+                
+                // Test settlement queries
+                if (typeof dataManager.getSettlements === 'function') {
+                    const settlements = dataManager.getSettlements();
+                    console.log(`✓ Found ${settlements.length} settlements`);
+                    
+                    if (settlements.length > 0) {
+                        const testSettlement = settlements[0];
+                        console.log(`✓ Test settlement: ${testSettlement.name}`);
+                        
+                        // Test new orange-realism methods
+                        if (typeof dataManager.getSettlementsByFlags === 'function') {
+                            const tradeSettlements = dataManager.getSettlementsByFlags('trade');
+                            console.log(`✓ Found ${tradeSettlements.length} trade settlements`);
+                        }
+                        
+                        if (typeof dataManager.calculateSupplyDemandEquilibrium === 'function') {
+                            const equilibrium = dataManager.calculateSupplyDemandEquilibrium(testSettlement, 'Grain');
+                            console.log(`✓ Supply/demand equilibrium: ${equilibrium.supply}/${equilibrium.demand}`);
+                        }
+                    }
+                } else {
+                    throw new Error('DataManager.getSettlements method not found');
+                }
+                
+                console.log('✓ Real module integration test passed');
+                
+            } catch (integrationError) {
+                console.error(`✗ Real module integration failed: ${integrationError.message}`);
+                if (expectRealModule) {
+                    throw integrationError;
+                }
+            }
         }
         
         console.log('\n=== Buying Flow Scenario Complete ===');

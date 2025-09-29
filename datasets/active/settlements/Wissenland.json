@@ -1,146 +1,229 @@
-
 [
   {
     "region": "Wissenland",
     "name": "WISSENBURG",
-    "size": "T",
-    "ruler": "Grand Countess Emmanuelle von Liebewitz",
     "population": 9000,
+    "size": 3,
+    "ruler": "Grand Countess Emmanuelle von Liebewitz",
     "wealth": 4,
-    "source": ["Government", "Trade", "Ore"],
-    "garrison": ["150a", "1000b"],
+    "flags": [
+      "government",
+      "trade"
+    ],
+    "produces": [],
+    "demands": [
+      "Luxuries"
+    ],
+    "garrison": {
+      "a": 150,
+      "b": 1000
+    },
     "notes": "Provincial capital"
   },
   {
     "region": "Wissenland",
     "name": "Dotternbach",
-    "size": "V",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 95,
+    "size": 1,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 3,
-    "source": ["Wool", "Livestock"],
-    "garrison": ["-/10c"],
+    "flags": [],
+    "produces": [
+      "Wool"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Wissenland",
     "name": "Dottrahof",
-    "size": "V",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 68,
+    "size": 1,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 3,
-    "source": ["Tile", "pottery"],
-    "garrison": ["-/8c"],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {
+      "c": 8
+    },
     "notes": " "
   },
   {
     "region": "Wissenland",
     "name": "Grätz",
-    "size": "V",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 32,
+    "size": 1,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 2,
-    "source": ["Goats"],
-    "garrison": ["-/5c"],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {
+      "c": 5
+    },
     "notes": " "
   },
   {
     "region": "Wissenland",
     "name": "Haigerbach",
-    "size": "V",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 48,
+    "size": 1,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["-/4c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 4
+    },
     "notes": "Nearby monastery of the Sigmarite Templar Order of Black Hammers (Grandmaster Marius von Plauten)."
   },
   {
     "region": "Wissenland",
     "name": "Höslwang",
-    "size": "V",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 24,
+    "size": 1,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": [],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Wissenland",
     "name": "Maselhof",
-    "size": "V",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 32,
+    "size": 1,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/4c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Wissenland",
     "name": "Rohrhausen",
-    "size": "V",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 90,
+    "size": 1,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 2,
-    "source": ["Agriculture", "Wine"],
-    "garrison": ["-/9c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain",
+      "Wine/Brandy"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 9
+    },
     "notes": " "
   },
   {
     "region": "Wissenland",
     "name": "Steinheim",
-    "size": "V",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 86,
+    "size": 1,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 3,
-    "source": ["Stonecutting"],
-    "garrison": ["-/12c"],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {
+      "c": 12
+    },
     "notes": "Wissenland limestone quarry"
   },
   {
     "region": "Wissenland",
     "name": "Stonecarver Town",
-    "size": "ST",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 210,
+    "size": 2,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 2,
-    "source": ["Ale", "Stonework"],
-    "garrison": ["10b/60c"],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {
+      "b": 10,
+      "c": 60
+    },
     "notes": "Dwarf settlement north of Wissenburg"
   },
   {
     "region": "Wissenland",
     "name": "Waltershofen",
-    "size": "V",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 44,
+    "size": 1,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/5c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 5
+    },
     "notes": " "
   },
   {
     "region": "Wissenland",
     "name": "Weningen",
-    "size": "V",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 43,
+    "size": 1,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["-/5c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 5
+    },
     "notes": " "
   },
   {
     "region": "Wissenland",
     "name": "Windisch",
-    "size": "V",
-    "ruler": "Grand Countess von Liebewitz",
     "population": 35,
+    "size": 1,
+    "ruler": "Grand Countess von Liebewitz",
     "wealth": 2,
-    "source": ["Goats"],
-    "garrison": ["-/5c"],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {
+      "c": 5
+    },
     "notes": " "
   }
 ]

@@ -1,113 +1,193 @@
-
 [
   {
     "region": "Sylvania",
     "name": "WALDENHOF",
-    "size": "T",
-    "ruler": "Countess Sophie von Walden",
     "population": 4200,
+    "size": 3,
+    "ruler": "Countess Sophie von Walden",
     "wealth": 2,
-    "source": ["Trade", "Government", "Agriculture"],
-    "garrison": ["50b/30c"],
+    "flags": [
+      "trade",
+      "government",
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 50,
+      "c": 30
+    },
     "notes": "Capital of the County of Sylvania. Ferries across Rivers Ils and Stir."
   },
   {
     "region": "Sylvania",
     "name": "Egling",
-    "size": "V",
-    "ruler": "Countess von Walden",
     "population": 82,
+    "size": 1,
+    "ruler": "Countess von Walden",
     "wealth": 1,
-    "source": ["Agriculture", "Peat"],
-    "garrison": ["-/6c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 6
+    },
     "notes": " "
   },
   {
     "region": "Sylvania",
     "name": "Hundham",
-    "size": "V",
-    "ruler": "Countess von Walden",
     "population": 92,
+    "size": 1,
+    "ruler": "Countess von Walden",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/10c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Sylvania",
     "name": "Mikalsdorf",
-    "size": "V",
-    "ruler": "Countess von Walden",
     "population": 88,
+    "size": 1,
+    "ruler": "Countess von Walden",
     "wealth": 1,
-    "source": ["Peat", "Agriculture"],
-    "garrison": ["-/10c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Sylvania",
     "name": "Regakhof",
-    "size": "V",
-    "ruler": "Countess von Walden",
     "population": 86,
+    "size": 1,
+    "ruler": "Countess von Walden",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/10c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Sylvania",
     "name": "Thyrnau",
-    "size": "V",
-    "ruler": "Countess von Walden",
     "population": 55,
+    "size": 1,
+    "ruler": "Countess von Walden",
     "wealth": 1,
-    "source": ["Agriculture"],
-    "garrison": ["-/5c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 5
+    },
     "notes": " "
   },
   {
     "region": "Sylvania",
     "name": "DRAKENHOF",
-    "size": "ST",
-    "ruler": "Countess von Walden",
     "population": 250,
+    "size": 2,
+    "ruler": "Countess von Walden",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["20b/100c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 20,
+      "c": 100
+    },
     "notes": "Site of the capital of von Drak and von Carstein Sylvania. Nearby castle still in ruins. Cult of Mórr performs cleansing ritual around the town walls every ten years."
   },
   {
     "region": "Sylvania",
     "name": "Apetlon",
-    "size": "V",
-    "ruler": "Countess von Walden",
     "population": 34,
+    "size": 1,
+    "ruler": "Countess von Walden",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": [],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Sylvania",
     "name": "Tadten",
-    "size": "V",
-    "ruler": "Countess von Walden",
     "population": 42,
+    "size": 1,
+    "ruler": "Countess von Walden",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": [],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Sylvania",
     "name": "EISIGFURT",
-    "size": "V",
-    "ruler": "Baron Heinrich Meitner",
     "population": 96,
+    "size": 1,
+    "ruler": "Baron Heinrich Meitner",
     "wealth": 2,
-    "source": ["Agriculture", "Fishing"],
-    "garrison": ["6b/12c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 6,
+      "c": 12
+    },
     "notes": " "
   }
 ]

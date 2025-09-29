@@ -209,12 +209,29 @@ Examples:
                     const scenario = await this.loadScenario(scenarioPath);
                     this.scenarios.push(scenario);
                 } catch (error) {
-                    console.error(`Foundry Harness | Skipping scenario ${scenarioPath}: ${error.message}`);
+                    console.error(`Foundry Harness | Failed to load scenario ${scenarioPath}: ${error.message}`);
+                    this.results.push({
+                        name: path.basename(scenarioPath, '.js'),
+                        path: scenarioPath,
+                        success: false,
+                        error: `Load failed: ${error.message}`,
+                        duration: 0,
+                        result: null
+                    });
                 }
             }
 
+            // Check if any scenarios loaded successfully
             if (this.scenarios.length === 0) {
+                console.error('Foundry Harness | No scenarios loaded successfully');
+                this.printSummary();
                 throw new Error('No valid scenarios found to run');
+            }
+
+            // Check if some scenarios failed to load
+            const loadFailures = this.results.filter(r => !r.success).length;
+            if (loadFailures > 0) {
+                console.warn(`Foundry Harness | ${loadFailures} scenario(s) failed to load`);
             }
 
             // Run scenarios

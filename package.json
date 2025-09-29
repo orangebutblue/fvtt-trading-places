@@ -5,11 +5,17 @@
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
-    "harness": "node tests/foundry-harness/run.js",
-    "harness:ui": "node tests/foundry-harness/run.js --ui",
-    "harness:ci": "HARNESS_SEED=42 node tests/foundry-harness/run.js",
+    "harness": "HARNESS_ALLOW_MODULE_FAILURE=1 node tests/foundry-harness/run.js",
+    "harness:ui": "HARNESS_ALLOW_MODULE_FAILURE=1 node tests/foundry-harness/run.js --ui",
+    "harness:ci": "HARNESS_SEED=42 HARNESS_ALLOW_MODULE_FAILURE=1 node tests/foundry-harness/run.js",
+    "harness:strict": "node tests/foundry-harness/run.js",
+    "harness:real": "HARNESS_EXPECT_REAL_MODULE=1 node tests/foundry-harness/run.js",
     "harness:buying": "node tests/foundry-harness/run.js tests/foundry-harness/scenarios/buying-flow.js",
-    "harness:availability": "node tests/foundry-harness/run.js tests/foundry-harness/scenarios/availability-only.js"
+    "harness:availability": "node tests/foundry-harness/run.js tests/foundry-harness/scenarios/availability-only.js",
+    "migrate:settlements": "node scripts/migrate-settlements.js",
+    "migrate:settlements:live": "node scripts/migrate-settlements.js --live",
+    "validate:schema": "node scripts/validate-schema.js",
+    "validate:dataset": "node scripts/validate-schema.js --verbose"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",

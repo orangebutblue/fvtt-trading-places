@@ -5,6 +5,7 @@
 
 import { createTestActor } from '../stubs/actors.js';
 import { clearChatLog } from '../stubs/chat.js';
+import { random, randomInt, randomVariance, percentRoll } from '../stubs/seeded-random.js';
 
 export default async function availabilityOnlyScenario(harness) {
     console.log('=== Availability Only Scenario ===');
@@ -38,36 +39,36 @@ export default async function availabilityOnlyScenario(harness) {
             const averageSkill = 20 + (settlement.wealth * 10); // Wealthier = better merchants
             console.log(`Average merchant skill (wealth ${settlement.wealth}): ${averageSkill}`);
             
-            // Generate mock merchants
+            // Generate mock merchants using seeded randomness
             const merchants = [];
             for (let i = 0; i < expectedMerchants; i++) {
-                const skillVariation = Math.floor((Math.random() - 0.5) * 40); // ±20 variation
-                const skill = Math.max(5, Math.min(95, averageSkill + skillVariation));
+                const skillVariation = randomVariance(0, 20); // ±20 variation
+                const skill = Math.max(5, Math.min(95, Math.round(averageSkill + skillVariation)));
                 
                 merchants.push({
                     id: `${settlement.name.toLowerCase().replace(' ', '-')}-merchant-${i}`,
                     skill,
                     cargo: ['Grain', 'Tools', 'Ale', 'Cloth', 'Metal'][i % 5],
-                    quantity: Math.max(1, settlement.size + Math.floor(Math.random() * 5)),
+                    quantity: Math.max(1, settlement.size + randomInt(0, 4)),
                     basePrice: [10, 20, 5, 15, 25][i % 5]
                 });
             }
             
             console.log(`Generated ${merchants.length} merchants:`);
             
-            // Test availability rolls
+            // Test availability rolls using seeded randomness
             let successCount = 0;
             let totalQuantity = 0;
             
             for (const merchant of merchants) {
-                const roll = Math.floor(Math.random() * 100) + 1;
-                const success = roll <= merchant.skill;
+                const rollResult = percentRoll(merchant.skill);
+                const success = rollResult.success;
                 const finalQuantity = success ? merchant.quantity : Math.max(1, Math.floor(merchant.quantity / 2));
                 
                 if (success) successCount++;
                 totalQuantity += finalQuantity;
                 
-                console.log(`  ${merchant.id}: ${merchant.cargo} x${finalQuantity} @ ${merchant.basePrice}gc (${roll}/${merchant.skill} ${success ? 'SUCCESS' : 'FAIL'})`);
+                console.log(`  ${merchant.id}: ${merchant.cargo} x${finalQuantity} @ ${merchant.basePrice}gc (${rollResult.total}/${merchant.skill} ${success ? 'SUCCESS' : 'FAIL'})`);
             }
             
             const successRate = Math.round((successCount / merchants.length) * 100);

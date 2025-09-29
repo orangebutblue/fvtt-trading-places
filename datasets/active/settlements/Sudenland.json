@@ -1,157 +1,257 @@
-
 [
   {
     "region": "Sudenland",
     "name": "PFEILDORF",
-    "size": "T",
-    "ruler": "Grand Baroness Etelka Toppenheimer",
     "population": 6800,
+    "size": 3,
+    "ruler": "Grand Baroness Etelka Toppenheimer",
     "wealth": 3,
-    "source": ["Trade", "Fishing", "Clothing"],
-    "garrison": ["75a/500b"],
+    "flags": [
+      "trade"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "a": 75,
+      "b": 500
+    },
     "notes": "Former Capital of Sölland and provincial capital of Sudenland until 2515. Received Freistadt charter in 2515. Centre for the Sudenland wool trade"
   },
   {
     "region": "Sudenland",
     "name": "Bernau",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 90,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 3,
-    "source": ["Wool", "Agriculture"],
-    "garrison": ["-/10c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Wool",
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Sudenland",
     "name": "Durbheim",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 92,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["-/10c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": "Coaching inn"
   },
   {
     "region": "Sudenland",
     "name": "Elzach",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 87,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 2,
-    "source": ["Fishing"],
-    "garrison": ["-/8c"],
+    "flags": [],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 8
+    },
     "notes": " "
   },
   {
     "region": "Sudenland",
     "name": "Fulgenstadt",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 52,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Sudenland",
     "name": "Gerechtfeld",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 76,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": "Temple to Taal and Rhya"
   },
   {
     "region": "Sudenland",
     "name": "Hausern",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 56,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/5c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 5
+    },
     "notes": " "
   },
   {
     "region": "Sudenland",
     "name": "Mecklenburg",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 94,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 2,
-    "source": ["Wool", "Agriculture"],
-    "garrison": ["-/12c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Wool",
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 12
+    },
     "notes": " "
   },
   {
     "region": "Sudenland",
     "name": "Nebelhausen",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 45,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": [],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Sudenland",
     "name": "Neukirch",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 51,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/4c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 4
+    },
     "notes": "Tollhouse on ford"
   },
   {
     "region": "Sudenland",
     "name": "Possenhof",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 47,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": [],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": "Nearby coaching inn"
   },
   {
     "region": "Sudenland",
     "name": "Rosenhausen",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 48,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["-/4c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 4
+    },
     "notes": "Tollhouse on ford"
   },
   {
     "region": "Sudenland",
     "name": "Schaffenhof",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 64,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Sudenland",
     "name": "Tannau",
-    "size": "V",
-    "ruler": "Baroness Toppenheimer",
     "population": 39,
+    "size": 1,
+    "ruler": "Baroness Toppenheimer",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": [],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   }
 ]

@@ -1,0 +1,91 @@
+
+[
+  {
+    "region": "Nordland",
+    "name": "DIETERSHAFEN",
+    "size": "ST",
+    "ruler": "Baron Ludolf Köhler",
+    "population": 212,
+    "wealth": 2,
+    "source": ["Fishing", "Agriculture"],
+    "garrison": ["20b/60c"],
+    "notes": " "
+  },
+  {
+    "region": "Nordland",
+    "name": "Burkal",
+    "size": "V",
+    "ruler": "Baron Köhler",
+    "population": 65,
+    "wealth": 1,
+    "source": ["Agriculture"],
+    "garrison": ["-/8c"],
+    "notes": " "
+  },
+  {
+    "region": "Nordland",
+    "name": "Hørup",
+    "size": "V",
+    "ruler": "Baron Köhler",
+    "population": 52,
+    "wealth": 1,
+    "source": ["Fishing"],
+    "garrison": ["-/6c"],
+    "notes": " "
+  },
+  {
+    "region": "Nordland",
+    "name": "Skovby",
+    "size": "V",
+    "ruler": "Baron Köhler",
+    "population": 38,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/4c"],
+    "notes": " "
+  },
+  {
+    "region": "Nordland",
+    "name": "FROTE",
+    "size": "T",
+    "ruler": "Grand Baron Theodoric Gausser",
+    "population": 1200,
+    "wealth": 3,
+    "source": ["Timber", "Woodcarving", "Trade"],
+    "garrison": ["10a, 50b/200c"],
+    "notes": "Located on route into the Middle Mountains from Nordland."
+  },
+  {
+    "region": "Nordland",
+    "name": "Dorfmark",
+    "size": "V",
+    "ruler": "Grand Baron Gausser",
+    "population": 84,
+    "wealth": 2,
+    "source": ["Agriculture"],
+    "garrison": ["5b/18c"],
+    "notes": " "
+  },
+  {
+    "region": "Nordland",
+    "name": "Dünsen",
+    "size": "V",
+    "ruler": "Grand Baron Gausser",
+    "population": 98,
+    "wealth": 2,
+    "source": ["Agriculture"],
+    "garrison": ["6b//20c"],
+    "notes": "New palisades are built"
+  },
+  {
+    "region": "Nordland",
+    "name": "Marklohe",
+    "size": "V",
+    "ruler": "Grand Baron Gausser",
+    "population": 78,
+    "wealth": 1,
+    "source": ["Timber"],
+    "garrison": ["6b/12c"],
+    "notes": " "
+  }
+]

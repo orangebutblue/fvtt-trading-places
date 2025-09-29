@@ -1,0 +1,102 @@
+
+[
+  {
+    "region": "Hochland",
+    "name": "HERGIG",
+    "size": "T",
+    "ruler": "Grand Baron Aldebrand Ludenhof",
+    "population": 9200,
+    "wealth": 3,
+    "source": ["Trade", "Timber", "Agriculture"],
+    "garrison": ["50a/150c"],
+    "notes": "Provincial capital. Dominated by central keep that is home to the newly appointed Elector. Successor to the Tussen-Hochen ruling family."
+  },
+  {
+    "region": "Hochland",
+    "name": "Dunstigfurt",
+    "size": "V",
+    "ruler": "Grand Baron Ludenhof",
+    "population": 82,
+    "wealth": 2,
+    "source": ["Timber"],
+    "garrison": ["-/9c"],
+    "notes": " "
+  },
+  {
+    "region": "Hochland",
+    "name": "Müden",
+    "size": "V",
+    "ruler": "Grand Baron Ludenhof",
+    "population": 65,
+    "wealth": 2,
+    "source": ["Agriculture", "Fishing"],
+    "garrison": ["-17c"],
+    "notes": " "
+  },
+  {
+    "region": "Hochland",
+    "name": "Stöckse",
+    "size": "M",
+    "ruler": "Grand Baron Ludenhof",
+    "population": 98,
+    "wealth": 2,
+    "source": ["Copper", "Lead"],
+    "garrison": ["-/10c"],
+    "notes": "Mining village"
+  },
+  {
+    "region": "Hochland",
+    "name": "Vodf",
+    "size": "V",
+    "ruler": "Grand Baron Ludenhof",
+    "population": 69,
+    "wealth": 2,
+    "source": ["Timber"],
+    "garrison": ["-17c"],
+    "notes": "Near the site of Struhelspan Bridge."
+  },
+  {
+    "region": "Hochland",
+    "name": "BERGENDORF",
+    "size": "V",
+    "ruler": "Baron Georg Helmholtz",
+    "population": 93,
+    "wealth": 2,
+    "source": ["Timber"],
+    "garrison": [],
+    "notes": " "
+  },
+  {
+    "region": "Hochland",
+    "name": "BERGSBURG",
+    "size": "T",
+    "ruler": "Grand Baron Ludenhof",
+    "population": 770,
+    "wealth": 3,
+    "source": ["Trade", "Woodcraft", "Agriculture"],
+    "garrison": ["10a&40b/350c"],
+    "notes": "Former provincial capital of Hochland. Quarantined due to outbreak of plague in late 2514. Most of the former 3,774 residents fled to Krudenwald"
+  },
+  {
+    "region": "Hochland",
+    "name": "Ahresdorf",
+    "size": "V",
+    "ruler": "Grand Baron Ludenhof",
+    "population": 97,
+    "wealth": 2,
+    "source": ["Timber"],
+    "garrison": ["-/10c"],
+    "notes": " "
+  },
+  {
+    "region": "Hochland",
+    "name": "Wahnsinnigen",
+    "size": "V",
+    "ruler": "Grand Baron Ludenhof",
+    "population": 23,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": [],
+    "notes": " "
+  }
+]

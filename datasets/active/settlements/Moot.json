@@ -1,157 +1,271 @@
-
 [
   {
     "region": "Moot",
     "name": "EICHESCHATTEN",
-    "size": "T",
-    "ruler": "Town Assembly",
     "population": 3375,
+    "size": 3,
+    "ruler": "Town Assembly",
     "wealth": 3,
-    "source": ["Agriculture", "Trade", "Beer", "Government"],
-    "garrison": ["150b/600c"],
+    "flags": [
+      "agriculture",
+      "trade",
+      "government"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 150,
+      "c": 600
+    },
     "notes": "Provincial Capital. Ferry across Aver Reach."
   },
   {
     "region": "Moot",
     "name": "Birnbaum",
-    "size": "V",
-    "ruler": "Village Assembly",
     "population": 98,
+    "size": 1,
+    "ruler": "Village Assembly",
     "wealth": 2,
-    "source": ["Agriculture", "Sausages"],
-    "garrison": ["-/35c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 35
+    },
     "notes": " "
   },
   {
     "region": "Moot",
     "name": "Brombeerebach",
-    "size": "V",
-    "ruler": "Village Assembly",
     "population": 68,
+    "size": 1,
+    "ruler": "Village Assembly",
     "wealth": 2,
-    "source": ["Agriculture", "Cheese"],
-    "garrison": ["-/18c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 18
+    },
     "notes": " "
   },
   {
     "region": "Moot",
     "name": "Dreiflussen",
-    "size": "ST",
-    "ruler": "Town Assembly",
     "population": 698,
+    "size": 2,
+    "ruler": "Town Assembly",
     "wealth": 2,
-    "source": ["Agriculture", "Fishing", "Beer"],
-    "garrison": ["70b/200c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 70,
+      "c": 200
+    },
     "notes": "Bridge over Aver Reach"
   },
   {
     "region": "Moot",
     "name": "Einsamholz",
-    "size": "ST",
-    "ruler": "Town Assembly",
     "population": 525,
+    "size": 2,
+    "ruler": "Town Assembly",
     "wealth": 2,
-    "source": ["Agriculture", "Cheese"],
-    "garrison": ["50b/175c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 50,
+      "c": 175
+    },
     "notes": " "
   },
   {
     "region": "Moot",
     "name": "Erdbeerefeld",
-    "size": "V",
-    "ruler": "Village Assembly",
     "population": 88,
+    "size": 1,
+    "ruler": "Village Assembly",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["-/25c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 25
+    },
     "notes": "Known for its singers and pastries"
   },
   {
     "region": "Moot",
     "name": "Fällenblatt",
-    "size": "ST",
-    "ruler": "Town Assembly",
     "population": 287,
+    "size": 2,
+    "ruler": "Town Assembly",
     "wealth": 2,
-    "source": ["Agriculture", "Fishing"],
-    "garrison": ["10b 30c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 10,
+      "c": 30
+    },
     "notes": " "
   },
   {
     "region": "Moot",
     "name": "Gipfel",
-    "size": "V",
-    "ruler": "Village Assembly",
     "population": 91,
+    "size": 1,
+    "ruler": "Village Assembly",
     "wealth": 2,
-    "source": ["Agriculture", "Tobacco"],
-    "garrison": ["-/35c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 35
+    },
     "notes": "Centre of tobacco farming."
   },
   {
     "region": "Moot",
     "name": "Grünhügel",
-    "size": "V",
-    "ruler": "Village Assembly",
     "population": 95,
+    "size": 1,
+    "ruler": "Village Assembly",
     "wealth": 2,
-    "source": ["Agriculture", "Livestock"],
-    "garrison": ["- /35c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 35
+    },
     "notes": " "
   },
   {
     "region": "Moot",
     "name": "Heukern",
-    "size": "V",
-    "ruler": "Village Assembly",
     "population": 84,
+    "size": 1,
+    "ruler": "Village Assembly",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["-/30c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 30
+    },
     "notes": " "
   },
   {
     "region": "Moot",
     "name": "Hopfengerste",
-    "size": "V",
-    "ruler": "Village Assembly",
     "population": 76,
+    "size": 1,
+    "ruler": "Village Assembly",
     "wealth": 2,
-    "source": ["Beer", "Pigs"],
-    "garrison": ["-/20c"],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {
+      "c": 20
+    },
     "notes": " "
   },
   {
     "region": "Moot",
     "name": "Kirschehügel",
-    "size": "V",
-    "ruler": "Village Assembly",
     "population": 72,
+    "size": 1,
+    "ruler": "Village Assembly",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["-/20c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 20
+    },
     "notes": "Largest cherries orchards in Moot"
   },
   {
     "region": "Moot",
     "name": "Roggenbrot",
-    "size": "V",
-    "ruler": "Village Assembly",
     "population": 68,
+    "size": 1,
+    "ruler": "Village Assembly",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["-/20c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 20
+    },
     "notes": " "
   },
   {
     "region": "Moot",
     "name": "Sauerapfel",
-    "size": "ST",
-    "ruler": "Town Assembly",
     "population": 484,
+    "size": 2,
+    "ruler": "Town Assembly",
     "wealth": 2,
-    "source": ["Agriculture", "Livestock"],
-    "garrison": ["50b/150c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 50,
+      "c": 150
+    },
     "notes": "Best apple pies in the Moot. Ferry across River Aver. Best known for its Pie Week festival"
   }
 ]

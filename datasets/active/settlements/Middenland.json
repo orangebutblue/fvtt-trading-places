@@ -1,135 +1,209 @@
-
 [
   {
     "region": "Middenland",
     "name": "MIDDENHEIM",
-    "size": "C",
-    "ruler": "Graf Boris Todbringer",
     "population": 95000,
+    "size": 4,
+    "ruler": "Graf Boris Todbringer",
     "wealth": 5,
-    "source": ["Trade", "Services", "Government"],
-    "garrison": ["50a &150b/1500c"],
+    "flags": [
+      "trade",
+      "government"
+    ],
+    "produces": [],
+    "demands": [
+      "Luxuries"
+    ],
+    "garrison": {
+      "a": 50,
+      "b": 150,
+      "c": 1500
+    },
     "notes": "Once city-state, now provincial capital. Centre of the Ulric cult."
   },
   {
     "region": "Middenland",
     "name": "Arenberg",
-    "size": "V",
-    "ruler": "Graf Todbringer",
     "population": 44,
+    "size": 1,
+    "ruler": "Graf Todbringer",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": [],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Middenland",
     "name": "Elsterweld",
-    "size": "ST",
-    "ruler": "Graf Todbringer",
     "population": 118,
+    "size": 2,
+    "ruler": "Graf Todbringer",
     "wealth": 3,
-    "source": ["Timber", "Foodstuffs"],
-    "garrison": ["4b/6c"],
+    "flags": [],
+    "produces": [
+      "Timber"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 4,
+      "c": 6
+    },
     "notes": " "
   },
   {
     "region": "Middenland",
     "name": "Grevenfeld",
-    "size": "V",
-    "ruler": "Graf Todbringer",
     "population": 58,
+    "size": 1,
+    "ruler": "Graf Todbringer",
     "wealth": 2,
-    "source": ["Timber", "Goats"],
-    "garrison": [],
+    "flags": [],
+    "produces": [
+      "Timber"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Middenland",
     "name": "Holzbeck",
-    "size": "V",
-    "ruler": "Graf Todbringer",
     "population": 31,
+    "size": 1,
+    "ruler": "Graf Todbringer",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": [],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": "Control disputed with Hochland."
   },
   {
     "region": "Middenland",
     "name": "Hunxe",
-    "size": "V",
-    "ruler": "Graf Todbringer",
     "population": 77,
+    "size": 1,
+    "ruler": "Graf Todbringer",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Middenland",
     "name": "Immelscheld",
-    "size": "V",
-    "ruler": "Graf Todbringer",
     "population": 90,
+    "size": 1,
+    "ruler": "Graf Todbringer",
     "wealth": 2,
-    "source": ["Timber", "Slate"],
-    "garrison": ["6b/10c"],
+    "flags": [],
+    "produces": [
+      "Timber"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 6,
+      "c": 10
+    },
     "notes": "Quarry outside village"
   },
   {
     "region": "Middenland",
     "name": "Jagerhausen",
-    "size": "V",
-    "ruler": "Graf Todbringer",
     "population": 75,
+    "size": 1,
+    "ruler": "Graf Todbringer",
     "wealth": 3,
-    "source": ["Agriculture", "Herbs"],
-    "garrison": ["-/8c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 8
+    },
     "notes": " "
   },
   {
     "region": "Middenland",
     "name": "Lindenheim",
-    "size": "M",
-    "ruler": "Graf Todbringer",
     "population": 93,
+    "size": 1,
+    "ruler": "Graf Todbringer",
     "wealth": 3,
-    "source": ["Iron Ore", "Lead"],
-    "garrison": ["10b/30c"],
+    "flags": [],
+    "produces": [
+      "Metal"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 10,
+      "c": 30
+    },
     "notes": "Mining village"
   },
   {
     "region": "Middenland",
     "name": "Norderingen",
-    "size": "ST",
-    "ruler": "Graf Todbringer",
     "population": 0,
+    "size": 2,
+    "ruler": "Graf Todbringer",
     "wealth": 1,
-    "source": ["Ruins"],
-    "garrison": [],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {},
     "notes": "Wiped out by Spotted Green Brainpox in 2511"
   },
   {
     "region": "Middenland",
     "name": "Schoninghagen",
-    "size": "ST",
-    "ruler": "Graf Todbringer",
     "population": 171,
+    "size": 2,
+    "ruler": "Graf Todbringer",
     "wealth": 3,
-    "source": ["Timber", "Trade"],
-    "garrison": ["5b/8c"],
+    "flags": [
+      "trade"
+    ],
+    "produces": [
+      "Timber"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 5,
+      "c": 8
+    },
     "notes": " "
   },
   {
     "region": "Middenland",
     "name": "Warrenburg",
-    "size": "ST",
-    "ruler": "Graf Todbringer",
     "population": 232,
+    "size": 2,
+    "ruler": "Graf Todbringer",
     "wealth": 1,
-    "source": ["Thieving & Scrounging"],
-    "garrison": [],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {},
     "notes": "Shanty town at foot of Fauschlag"
   }
 ]

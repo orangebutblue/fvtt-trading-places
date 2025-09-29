@@ -1,8 +1,15 @@
 # Trading Places Module
 
-## Phase 1: Foundry Harness - COMPLETE ✅
+## Phase 1: Foundry Harness - COMPLETE ✅ (Fixed & Improved)
 
 The Foundry Harness provides a lightweight testing environment that runs the module outside of Foundry VTT for automated testing and development.
+
+**🔧 Critical fixes applied based on review:**
+- Fixed settings storage infinite recursion bug
+- Added proper module load failure detection  
+- Implemented deterministic seeded randomness
+- Added scenario transition planning for real module integration
+- Made scenario load failures fatal (no more silent skips)
 
 ### Quick Start
 
@@ -33,6 +40,52 @@ npm run harness:ci
 - **Scenario-Based Testing**: Extensible scenario system
 
 See [Foundry Harness Documentation](tests/foundry-harness/README.md) for detailed usage.
+
+## Phase 2: Data Restructuring - COMPLETE ✅
+
+The orange-realism data migration has been successfully completed, establishing a robust foundation for advanced trading mechanics.
+
+### Key Achievements
+
+- **184 settlements migrated** to new schema with population-based sizing
+- **Automated migration scripts** with backup and validation
+- **Supply/demand equilibrium** foundation implemented
+- **Flag-based settlement mechanics** with configurable modifiers
+- **Enhanced DataManager** with new query methods
+
+### New Data Structure
+
+```json
+{
+  "region": "Reikland",
+  "name": "ALTDORF",
+  "population": 105000,
+  "size": 5,
+  "wealth": 5,
+  "flags": ["trade", "government"],
+  "produces": ["Luxuries"],
+  "demands": ["Grain", "Metal"],
+  "garrison": {"a": 2000, "b": 5000, "c": 10000}
+}
+```
+
+### Migration & Validation Tools
+
+```bash
+# Validate current data schema
+npm run validate:schema
+
+# Preview migration changes
+npm run migrate:settlements
+
+# Apply migration (with backup)
+npm run migrate:settlements:live
+
+# Test new schema functionality
+npm run harness scenarios/orange-realism-schema.js
+```
+
+See [Phase 2 Summary](PHASE2_SUMMARY.md) for complete implementation details.
 
 ## Trading System Features
 

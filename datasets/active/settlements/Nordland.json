@@ -1,91 +1,156 @@
-
 [
   {
     "region": "Nordland",
     "name": "DIETERSHAFEN",
-    "size": "ST",
-    "ruler": "Baron Ludolf Köhler",
     "population": 212,
+    "size": 2,
+    "ruler": "Baron Ludolf Köhler",
     "wealth": 2,
-    "source": ["Fishing", "Agriculture"],
-    "garrison": ["20b/60c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 20,
+      "c": 60
+    },
     "notes": " "
   },
   {
     "region": "Nordland",
     "name": "Burkal",
-    "size": "V",
-    "ruler": "Baron Köhler",
     "population": 65,
+    "size": 1,
+    "ruler": "Baron Köhler",
     "wealth": 1,
-    "source": ["Agriculture"],
-    "garrison": ["-/8c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 8
+    },
     "notes": " "
   },
   {
     "region": "Nordland",
     "name": "Hørup",
-    "size": "V",
-    "ruler": "Baron Köhler",
     "population": 52,
+    "size": 1,
+    "ruler": "Baron Köhler",
     "wealth": 1,
-    "source": ["Fishing"],
-    "garrison": ["-/6c"],
+    "flags": [],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 6
+    },
     "notes": " "
   },
   {
     "region": "Nordland",
     "name": "Skovby",
-    "size": "V",
-    "ruler": "Baron Köhler",
     "population": 38,
+    "size": 1,
+    "ruler": "Baron Köhler",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/4c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Nordland",
     "name": "FROTE",
-    "size": "T",
-    "ruler": "Grand Baron Theodoric Gausser",
     "population": 1200,
+    "size": 3,
+    "ruler": "Grand Baron Theodoric Gausser",
     "wealth": 3,
-    "source": ["Timber", "Woodcarving", "Trade"],
-    "garrison": ["10a, 50b/200c"],
+    "flags": [
+      "trade"
+    ],
+    "produces": [
+      "Timber"
+    ],
+    "demands": [],
+    "garrison": {
+      "a": 10,
+      "b": 50,
+      "c": 200
+    },
     "notes": "Located on route into the Middle Mountains from Nordland."
   },
   {
     "region": "Nordland",
     "name": "Dorfmark",
-    "size": "V",
-    "ruler": "Grand Baron Gausser",
     "population": 84,
+    "size": 1,
+    "ruler": "Grand Baron Gausser",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["5b/18c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 5,
+      "c": 18
+    },
     "notes": " "
   },
   {
     "region": "Nordland",
     "name": "Dünsen",
-    "size": "V",
-    "ruler": "Grand Baron Gausser",
     "population": 98,
+    "size": 1,
+    "ruler": "Grand Baron Gausser",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["6b//20c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 6,
+      "c": 20
+    },
     "notes": "New palisades are built"
   },
   {
     "region": "Nordland",
     "name": "Marklohe",
-    "size": "V",
-    "ruler": "Grand Baron Gausser",
     "population": 78,
+    "size": 1,
+    "ruler": "Grand Baron Gausser",
     "wealth": 1,
-    "source": ["Timber"],
-    "garrison": ["6b/12c"],
+    "flags": [],
+    "produces": [
+      "Timber"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 6,
+      "c": 12
+    },
     "notes": " "
   }
 ]

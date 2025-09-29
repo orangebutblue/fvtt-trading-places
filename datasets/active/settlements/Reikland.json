@@ -1,223 +1,340 @@
-
 [
   {
     "region": "Reikland",
     "name": "ALTDORF",
-    "size": "CS",
-    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "population": 105000,
+    "size": 5,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "wealth": 5,
-    "source": ["Trade", "Government"],
-    "garrison": ["500a/8000c"],
+    "flags": [
+      "trade",
+      "government"
+    ],
+    "produces": [],
+    "demands": [
+      "Luxuries"
+    ],
+    "garrison": {
+      "a": 500,
+      "c": 8000
+    },
     "notes": "Imperial Capital, Great Cathedral of Sigmar, University of Altdorf, Schools of Wizardry"
   },
   {
     "region": "Reikland",
     "name": "Autler",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 81,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 2,
-    "source": ["Timber", "Fishing"],
-    "garrison": ["-/10c"],
+    "flags": [],
+    "produces": [
+      "Timber",
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": "Ferry across River Reik"
   },
   {
     "region": "Reikland",
     "name": "Blutroch",
-    "size": "ST",
-    "ruler": "Emperor",
     "population": 0,
+    "size": 2,
+    "ruler": "Emperor",
     "wealth": 1,
-    "source": ["Ruins"],
-    "garrison": [],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {},
     "notes": "Wiped out by Red Pox in 2511"
   },
   {
     "region": "Reikland",
     "name": "Braunwurt",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 52,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 1,
-    "source": ["Textiles"],
-    "garrison": [],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Reikland",
     "name": "Bundesmarkt",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 77,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 1,
-    "source": ["Agriculture"],
-    "garrison": ["-/5c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 5
+    },
     "notes": " "
   },
   {
     "region": "Reikland",
     "name": "Dorchen",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 75,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Reikland",
     "name": "Frederheim",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 75,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 1,
-    "source": ["Agriculture"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": "Great Hospice of Shallya nearby treats Insanity."
   },
   {
     "region": "Reikland",
     "name": "Furtild",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 53,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": [],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": "On Altdorf-Middenheim Road"
   },
   {
     "region": "Reikland",
     "name": "Geldrecht",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 49,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 1,
-    "source": ["Timber", "Fishing"],
-    "garrison": [],
+    "flags": [],
+    "produces": [
+      "Timber",
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": "Ferry across River Reik"
   },
   {
     "region": "Reikland",
     "name": "Gluckshalt",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 72,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Reikland",
     "name": "Grossbad",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 69,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["-/10c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Reikland",
     "name": "Hartsklein",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 65,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 1,
-    "source": ["Pottery"],
-    "garrison": [],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Reikland",
     "name": "Heiligen",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 58,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Reikland",
     "name": "Hochloff",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 81,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Reikland",
     "name": "Kaldach",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 52,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/10b"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "b": 10
+    },
     "notes": "Ferry across River Reik"
   },
   {
     "region": "Reikland",
     "name": "Rechtlich",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 42,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": [],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Reikland",
     "name": "Rottefach",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 88,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 2,
-    "source": ["Agriculture", "Wine", "Fishing"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain",
+      "Wine/Brandy"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": "Ferry across River Reik"
   },
   {
     "region": "Reikland",
     "name": "Schlafebild",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 38,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 1,
-    "source": ["Agriculture", "Wine"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain",
+      "Wine/Brandy"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Reikland",
     "name": "Teufelfeuer",
-    "size": "V",
-    "ruler": "Emperor",
     "population": 0,
+    "size": 1,
+    "ruler": "Emperor",
     "wealth": 2,
-    "source": ["Wine"],
-    "garrison": [],
+    "flags": [],
+    "produces": [
+      "Wine/Brandy"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": "Burnt by Witch-Hunter in 2511."
   },
   {
     "region": "Reikland",
     "name": "Walfen",
-    "size": "ST",
-    "ruler": "Emperor",
     "population": 152,
+    "size": 2,
+    "ruler": "Emperor",
     "wealth": 2,
-    "source": ["Brick-making", "Agriculture", "Fishing"],
-    "garrison": [],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {},
     "notes": "Ferry across River Reik"
   }
 ]

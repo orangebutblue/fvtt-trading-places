@@ -89,21 +89,23 @@ class FoundryHarness {
         // Chat system
         globalThis.ChatMessage = createChatStub();
         
-        // Module-specific setup
+        // Module-specific setup with proper backing store
+        globalThis.game.settingsStorage = new Map();
+        
         globalThis.game.settings.register = (module, key, options) => {
             const settingKey = `${module}.${key}`;
-            globalThis.game.settings.set(settingKey, options.default);
+            globalThis.game.settingsStorage.set(settingKey, options.default);
             console.log(`Foundry Harness | Registered setting: ${settingKey} = ${options.default}`);
         };
         
         globalThis.game.settings.get = (module, key) => {
             const settingKey = `${module}.${key}`;
-            return globalThis.game.settings.get(settingKey) || null;
+            return globalThis.game.settingsStorage.get(settingKey) || null;
         };
         
         globalThis.game.settings.set = (module, key, value) => {
             const settingKey = `${module}.${key}`;
-            globalThis.game.settings.set(settingKey, value);
+            globalThis.game.settingsStorage.set(settingKey, value);
         };
 
         console.log('Foundry Harness | Foundry globals initialized');
@@ -126,27 +128,44 @@ class FoundryHarness {
             
             // Check if file exists first
             const fsModule = await import('fs');
-            if (!fsModule.existsSync(mainPath)) {
-                console.log('Foundry Harness | Main module file not found, skipping module load');
-                console.log('Foundry Harness | This is expected during early development');
-                return;
-            }
+            const moduleExists = fsModule.existsSync(mainPath);
+            const allowModuleFailure = process.env.HARNESS_ALLOW_MODULE_FAILURE === '1';
             
-            // Use dynamic import to load the module
-            this.modules.main = await import(`file://${mainPath}`);
+            if (!moduleExists) {
+                if (allowModuleFailure) {
+                    console.log('Foundry Harness | Main module file not found, skipping module load');
+                    console.log('Foundry Harness | This is expected during early development');
+                } else {
+                    throw new Error('Main module file not found and HARNESS_ALLOW_MODULE_FAILURE is not set');
+                }
+            } else {
+                // File exists, attempt to load it
+                try {
+                    this.modules.main = await import(`file://${mainPath}`);
+                    console.log('Foundry Harness | Module code loaded successfully');
+                } catch (importError) {
+                    if (allowModuleFailure) {
+                        console.log('Foundry Harness | Module loading failed (allowed):', importError.message);
+                        console.log('Foundry Harness | Continuing with mock-only mode...');
+                    } else {
+                        console.error('Foundry Harness | Module loading failed:', importError.message);
+                        throw new Error(`Failed to load existing module: ${importError.message}`);
+                    }
+                }
+            }
             
             // Trigger Foundry hooks to initialize the module
             await globalThis.Hooks.call('init');
             await globalThis.Hooks.call('ready');
             
-            console.log('Foundry Harness | Module code loaded and initialized');
+            if (this.modules.main) {
+                console.log('Foundry Harness | Module code loaded and initialized');
+            } else {
+                console.log('Foundry Harness | Running in mock-only mode');
+            }
         } catch (error) {
-            console.log('Foundry Harness | Module loading failed (expected during development):', error.message);
-            console.log('Foundry Harness | Continuing with mock-only mode...');
-            
-            // Still trigger hooks for scenario compatibility
-            await globalThis.Hooks.call('init');
-            await globalThis.Hooks.call('ready');
+            console.error('Foundry Harness | Critical module loading error:', error.message);
+            throw error;
         }
     }
 

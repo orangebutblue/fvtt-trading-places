@@ -2,581 +2,722 @@
   {
     "region": "Averland",
     "name": "Averheim",
-    "size": "T",
-    "ruler": "Grand Count Marius Leitdorf",
     "population": 9400,
+    "size": 3,
+    "ruler": "Grand Count Marius Leitdorf",
     "wealth": 4,
-    "source": [
-      "Trade",
-      "Government",
-      "Cattle",
-      "Agriculture"
+    "flags": [
+      "trade",
+      "government",
+      "agriculture"
     ],
-    "garrison": [
-      "35a",
-      "80b",
-      "350c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [
+      "Luxuries"
+    ],
+    "garrison": {
+      "a": 35,
+      "b": 80,
+      "c": 350
+    },
     "notes": "Provincial Capital. Known for the stockyards outside the city. Ferry across River Aver"
   },
   {
     "region": "Averland",
     "name": "Friedendorf",
-    "size": "V",
-    "ruler": "Grand Count Leitdorf",
     "population": 98,
+    "size": 1,
+    "ruler": "Grand Count Leitdorf",
     "wealth": 2,
-    "source": [
-      "Cattle",
-      "Agriculture"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "10c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": "Known for its sweetmeats"
   },
   {
     "region": "Averland",
     "name": "Hohenpölz",
-    "size": "V",
-    "ruler": "Grand Count Leitdorf",
     "population": 33,
+    "size": 1,
+    "ruler": "Grand Count Leitdorf",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Monheim",
-    "size": "V",
-    "ruler": "Grand Count Leitdorf",
     "population": 24,
+    "size": 1,
+    "ruler": "Grand Count Leitdorf",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "3c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 3
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Ruhgsdorf",
-    "size": "V",
-    "ruler": "Grand Count Leitdorf",
     "population": 94,
+    "size": 1,
+    "ruler": "Grand Count Leitdorf",
     "wealth": 2,
-    "source": [
-      "Cattle",
-      "Agriculture"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "10c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Sorghof",
-    "size": "V",
-    "ruler": "Grand Count Leitdorf",
     "population": 37,
+    "size": 1,
+    "ruler": "Grand Count Leitdorf",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "4c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Tannfeld",
-    "size": "V",
-    "ruler": "Grand Count Leitdorf",
     "population": 43,
+    "size": 1,
+    "ruler": "Grand Count Leitdorf",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "4c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "AGBEITEN",
-    "size": "ST",
-    "ruler": "Count Matthias von Grünwald",
     "population": 350,
+    "size": 2,
+    "ruler": "Count Matthias von Grünwald",
     "wealth": 2,
-    "source": [
-      "Agriculture",
-      "Sheep"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "15b",
-      "30c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "b": 15,
+      "c": 30
+    },
     "notes": "Most of the locals follow Taal. Ferry across Upper Reik."
   },
   {
     "region": "Averland",
     "name": "Ensdorf",
-    "size": "V",
-    "ruler": "Count von Grünwald",
     "population": 88,
+    "size": 1,
+    "ruler": "Count von Grünwald",
     "wealth": 2,
-    "source": [
-      "Agriculture"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "10c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Naabeck",
-    "size": "V",
-    "ruler": "Count von Grünwald",
     "population": 46,
+    "size": 1,
+    "ruler": "Count von Grünwald",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "4c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Sugenheim",
-    "size": "V",
-    "ruler": "Count von Grünwald",
     "population": 42,
+    "size": 1,
+    "ruler": "Count von Grünwald",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "4c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Velburg",
-    "size": "V",
-    "ruler": "Count von Grünwald",
     "population": 38,
+    "size": 1,
+    "ruler": "Count von Grünwald",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "4c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "BERNLOCH",
-    "size": "ST",
-    "ruler": "Baroness Elise Alder",
     "population": 250,
+    "size": 2,
+    "ruler": "Baroness Elise Alder",
     "wealth": 2,
-    "source": [
-      "Goats",
-      "Agriculture"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "12b",
-      "25c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "b": 12,
+      "c": 25
+    },
     "notes": "Known for its Bernloch Hard Cheese"
   },
   {
     "region": "Averland",
     "name": "Jehlfeld",
-    "size": "V",
-    "ruler": "Baroness Alder",
     "population": 52,
+    "size": 1,
+    "ruler": "Baroness Alder",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "5c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 5
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Theinhof",
-    "size": "V",
-    "ruler": "Baroness Alder",
     "population": 46,
+    "size": 1,
+    "ruler": "Baroness Alder",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "5c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 5
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "BIESWANG",
-    "size": "ST",
-    "ruler": "Baron Boris Ulbricht",
     "population": 320,
+    "size": 2,
+    "ruler": "Baron Boris Ulbricht",
     "wealth": 2,
-    "source": [
-      "Agriculture"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "15b",
-      "36c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "b": 15,
+      "c": 36
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Hirshhügel",
-    "size": "V",
-    "ruler": "Baron Ulbricht",
     "population": 88,
+    "size": 1,
+    "ruler": "Baron Ulbricht",
     "wealth": 2,
-    "source": [
-      "Agriculture"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "10c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Leuchau",
-    "size": "V",
-    "ruler": "Baron Ulbricht",
     "population": 38,
+    "size": 1,
+    "ruler": "Baron Ulbricht",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "4c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Walting",
-    "size": "V",
-    "ruler": "Baron Ulbricht",
     "population": 41,
+    "size": 1,
+    "ruler": "Baron Ulbricht",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "4c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "COLMFÄHRE",
-    "size": "ST",
-    "ruler": "Baron Sigmund Hindenberg",
     "population": 280,
+    "size": 2,
+    "ruler": "Baron Sigmund Hindenberg",
     "wealth": 2,
-    "source": [
-      "Agriculture",
-      "Sheep"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "12b",
-      "30c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "b": 12,
+      "c": 30
+    },
     "notes": "Ferry across Upper Reik"
   },
   {
     "region": "Averland",
     "name": "Hüttenbach",
-    "size": "V",
-    "ruler": "Baron Hindenberg",
     "population": 28,
+    "size": 1,
+    "ruler": "Baron Hindenberg",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Ippesheim",
-    "size": "V",
-    "ruler": "Baron Hindenberg",
     "population": 33,
+    "size": 1,
+    "ruler": "Baron Hindenberg",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Merkelhausen",
-    "size": "V",
-    "ruler": "Baron Hindenberg",
     "population": 78,
+    "size": 1,
+    "ruler": "Baron Hindenberg",
     "wealth": 1,
-    "source": [
-      "Agriculture",
-      "Fishing"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "5"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Volsbach",
-    "size": "V",
-    "ruler": "Baron Hindenberg",
     "population": 35,
+    "size": 1,
+    "ruler": "Baron Hindenberg",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "4c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "DUNKELHIRSCH",
-    "size": "V",
-    "ruler": "Abbot Fabisch",
     "population": 28,
+    "size": 1,
+    "ruler": "Abbot Fabisch",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "2a",
-      "6b",
-      "8c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "a": 2,
+      "b": 6,
+      "c": 8
+    },
     "notes": "Abbey of Taal close by the World's Edge Mountains, south of the Upper Blue reach"
   },
   {
     "region": "Averland",
     "name": "GRENZSTADT",
-    "size": "T",
-    "ruler": "Grand Count Marius Leitdorf",
     "population": 2520,
+    "size": 3,
+    "ruler": "Grand Count Marius Leitdorf",
     "wealth": 3,
-    "source": [
-      "Agriculture",
-      "Cattle",
-      "Fur",
-      "Metal"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "20a",
-      "60b",
-      "160c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "a": 20,
+      "b": 60,
+      "c": 160
+    },
     "notes": "Guards approaches to Black Fire Pass"
   },
   {
     "region": "Averland",
     "name": "Bad Ehrlach",
-    "size": "V",
-    "ruler": "Grand Count Leitdorf",
     "population": 29,
+    "size": 1,
+    "ruler": "Grand Count Leitdorf",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Buch",
-    "size": "V",
-    "ruler": "Grand Count Leitdorf",
     "population": 92,
+    "size": 1,
+    "ruler": "Grand Count Leitdorf",
     "wealth": 2,
-    "source": [
-      "Agriculture"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "10c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Dorfbach",
-    "size": "V",
-    "ruler": "Grand Count Leitdorf",
     "population": 45,
+    "size": 1,
+    "ruler": "Grand Count Leitdorf",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "6c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 6
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Ziegenhausen",
-    "size": "V",
-    "ruler": "Grand Count Leitdorf",
     "population": 42,
+    "size": 1,
+    "ruler": "Grand Count Leitdorf",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "4c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 4
+    },
     "notes": "Junction of Old Dwarf and Hocheleben Road, Baron's Feast Coaching Inn"
   },
   {
     "region": "Averland",
     "name": "HAMMELFELS",
-    "size": "V",
-    "ruler": "Abbot Droevig",
     "population": 33,
+    "size": 1,
+    "ruler": "Abbot Droevig",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": "Sigmarite Abbey of the Order of the Anvil."
   },
   {
     "region": "Averland",
     "name": "Kleinsdorf",
-    "size": "V",
-    "ruler": "Abbot Droevig",
     "population": 30,
+    "size": 1,
+    "ruler": "Abbot Droevig",
     "wealth": 2,
-    "source": [
-      "Agriculture"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "3c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "c": 3
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "HEIDECK",
-    "size": "ST",
-    "ruler": "Countess Magda Leitdorf",
     "population": 420,
+    "size": 2,
+    "ruler": "Countess Magda Leitdorf",
     "wealth": 2,
-    "source": [
-      "Agriculture",
-      "Cattle"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "35b",
-      "80c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "b": 35,
+      "c": 80
+    },
     "notes": "Junction of the Agbeiten and Old Dwarf Roads. Cattle market. Dwarf ruins."
   },
   {
     "region": "Averland",
     "name": "Busbach",
-    "size": "V",
-    "ruler": "Countess Leitdorf",
     "population": 27,
+    "size": 1,
+    "ruler": "Countess Leitdorf",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Michelfeld",
-    "size": "V",
-    "ruler": "Countess Leitdorf",
     "population": 58,
+    "size": 1,
+    "ruler": "Countess Leitdorf",
     "wealth": 2,
-    "source": [
-      "Agriculture"
+    "flags": [
+      "agriculture"
     ],
-    "garrison": [
-      "6c"
+    "produces": [
+      "Grain"
     ],
+    "demands": [],
+    "garrison": {
+      "c": 6
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Pressath",
-    "size": "V",
-    "ruler": "Countess Leitdorf",
     "population": 28,
+    "size": 1,
+    "ruler": "Countess Leitdorf",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Thurndorf",
-    "size": "V",
-    "ruler": "Countess Leitdorf",
     "population": 32,
+    "size": 1,
+    "ruler": "Countess Leitdorf",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "3c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 3
+    },
     "notes": " "
   },
   {
     "region": "Averland",
     "name": "Willenfeld",
-    "size": "V",
-    "ruler": "Countess Leitdorf",
     "population": 34,
+    "size": 1,
+    "ruler": "Countess Leitdorf",
     "wealth": 1,
-    "source": [
-      "Subsistence"
+    "flags": [
+      "subsistence"
     ],
-    "garrison": [
-      "4c"
+    "produces": [],
+    "demands": [
+      "Grain"
     ],
+    "garrison": {
+      "c": 4
+    },
     "notes": "On the Old Dwarf Road to Grenzstadt, Stonewall Coaching Inn"
   }
 ]

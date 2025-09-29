@@ -1,0 +1,146 @@
+
+[
+  {
+    "region": "Talabecland",
+    "name": "AHLBECK",
+    "size": "V",
+    "ruler": "Baron Anton Grillparzer",
+    "population": 98,
+    "wealth": 2,
+    "source": ["Agriculture", "Fishing"],
+    "garrison": ["5b/10c"],
+    "notes": " "
+  },
+  {
+    "region": "Talabecland",
+    "name": "Ockrilla",
+    "size": "V",
+    "ruler": "Baron Grillparzer",
+    "population": 34,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/4c"],
+    "notes": " "
+  },
+  {
+    "region": "Talabecland",
+    "name": "BRATIAN",
+    "size": "V",
+    "ruler": "Baron Bernhardt von Krieglitz",
+    "population": 94,
+    "wealth": 2,
+    "source": ["Agriculture", "Fishing"],
+    "garrison": ["5b/10c"],
+    "notes": " "
+  },
+  {
+    "region": "Talabecland",
+    "name": "Mewe",
+    "size": "V",
+    "ruler": "Baron Bernhardt von Krieglitz",
+    "population": 46,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/6c"],
+    "notes": " "
+  },
+  {
+    "region": "Talabecland",
+    "name": "BEK",
+    "size": "ST",
+    "ruler": "Count Josef von Behring",
+    "population": 750,
+    "wealth": 3,
+    "source": ["Fishing", "Agriculture"],
+    "garrison": ["20b/80c"],
+    "notes": "Ferry across River Talabec."
+  },
+  {
+    "region": "Talabecland",
+    "name": "Freital",
+    "size": "V",
+    "ruler": "Count von Behring",
+    "population": 78,
+    "wealth": 2,
+    "source": ["Timber"],
+    "garrison": ["-/10c"],
+    "notes": " "
+  },
+  {
+    "region": "Talabecland",
+    "name": "Hartha",
+    "size": "V",
+    "ruler": "Count von Liebig",
+    "population": 34,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": [],
+    "notes": " "
+  },
+  {
+    "region": "Talabecland",
+    "name": "Nischwitz",
+    "size": "V",
+    "ruler": "Count von Liebig",
+    "population": 42,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/4c"],
+    "notes": " "
+  },
+  {
+    "region": "Talabecland",
+    "name": "Viernau",
+    "size": "V",
+    "ruler": "Count von Behring",
+    "population": 92,
+    "wealth": 2,
+    "source": ["Fishing"],
+    "garrison": ["-/15c"],
+    "notes": "Ferry across River Talabec."
+  },
+  {
+    "region": "Talabecland",
+    "name": "GARNDORF",
+    "size": "V",
+    "ruler": "Count Theodor von Herder",
+    "population": 96,
+    "wealth": 2,
+    "source": ["Fishing", "Agriculture"],
+    "garrison": ["5b/8c"],
+    "notes": "Ferry across River Talabec."
+  },
+  {
+    "region": "Talabecland",
+    "name": "Börln",
+    "size": "V",
+    "ruler": "Count von Herder",
+    "population": 43,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/5c"],
+    "notes": " "
+  },
+  {
+    "region": "Talabecland",
+    "name": "Törpin",
+    "size": "V",
+    "ruler": "Count von Herder",
+    "population": 82,
+    "wealth": 2,
+    "source": ["Agriculture"],
+    "garrison": ["-/8c"],
+    "notes": " "
+  },
+  {
+    "region": "Talabecland",
+    "name": "Werder",
+    "size": "V",
+    "ruler": "Count von Herder",
+    "population": 67,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/7c"],
+    "notes": " "
+  }
+]

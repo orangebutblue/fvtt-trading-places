@@ -1,146 +1,247 @@
-
 [
   {
     "region": "Talabecland",
     "name": "AHLBECK",
-    "size": "V",
-    "ruler": "Baron Anton Grillparzer",
     "population": 98,
+    "size": 1,
+    "ruler": "Baron Anton Grillparzer",
     "wealth": 2,
-    "source": ["Agriculture", "Fishing"],
-    "garrison": ["5b/10c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 5,
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Talabecland",
     "name": "Ockrilla",
-    "size": "V",
-    "ruler": "Baron Grillparzer",
     "population": 34,
+    "size": 1,
+    "ruler": "Baron Grillparzer",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/4c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Talabecland",
     "name": "BRATIAN",
-    "size": "V",
-    "ruler": "Baron Bernhardt von Krieglitz",
     "population": 94,
+    "size": 1,
+    "ruler": "Baron Bernhardt von Krieglitz",
     "wealth": 2,
-    "source": ["Agriculture", "Fishing"],
-    "garrison": ["5b/10c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 5,
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Talabecland",
     "name": "Mewe",
-    "size": "V",
-    "ruler": "Baron Bernhardt von Krieglitz",
     "population": 46,
+    "size": 1,
+    "ruler": "Baron Bernhardt von Krieglitz",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/6c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 6
+    },
     "notes": " "
   },
   {
     "region": "Talabecland",
     "name": "BEK",
-    "size": "ST",
-    "ruler": "Count Josef von Behring",
     "population": 750,
+    "size": 2,
+    "ruler": "Count Josef von Behring",
     "wealth": 3,
-    "source": ["Fishing", "Agriculture"],
-    "garrison": ["20b/80c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 20,
+      "c": 80
+    },
     "notes": "Ferry across River Talabec."
   },
   {
     "region": "Talabecland",
     "name": "Freital",
-    "size": "V",
-    "ruler": "Count von Behring",
     "population": 78,
+    "size": 1,
+    "ruler": "Count von Behring",
     "wealth": 2,
-    "source": ["Timber"],
-    "garrison": ["-/10c"],
+    "flags": [],
+    "produces": [
+      "Timber"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Talabecland",
     "name": "Hartha",
-    "size": "V",
-    "ruler": "Count von Liebig",
     "population": 34,
+    "size": 1,
+    "ruler": "Count von Liebig",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": [],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {},
     "notes": " "
   },
   {
     "region": "Talabecland",
     "name": "Nischwitz",
-    "size": "V",
-    "ruler": "Count von Liebig",
     "population": 42,
+    "size": 1,
+    "ruler": "Count von Liebig",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/4c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Talabecland",
     "name": "Viernau",
-    "size": "V",
-    "ruler": "Count von Behring",
     "population": 92,
+    "size": 1,
+    "ruler": "Count von Behring",
     "wealth": 2,
-    "source": ["Fishing"],
-    "garrison": ["-/15c"],
+    "flags": [],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 15
+    },
     "notes": "Ferry across River Talabec."
   },
   {
     "region": "Talabecland",
     "name": "GARNDORF",
-    "size": "V",
-    "ruler": "Count Theodor von Herder",
     "population": 96,
+    "size": 1,
+    "ruler": "Count Theodor von Herder",
     "wealth": 2,
-    "source": ["Fishing", "Agriculture"],
-    "garrison": ["5b/8c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "b": 5,
+      "c": 8
+    },
     "notes": "Ferry across River Talabec."
   },
   {
     "region": "Talabecland",
     "name": "Börln",
-    "size": "V",
-    "ruler": "Count von Herder",
     "population": 43,
+    "size": 1,
+    "ruler": "Count von Herder",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/5c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 5
+    },
     "notes": " "
   },
   {
     "region": "Talabecland",
     "name": "Törpin",
-    "size": "V",
-    "ruler": "Count von Herder",
     "population": 82,
+    "size": 1,
+    "ruler": "Count von Herder",
     "wealth": 2,
-    "source": ["Agriculture"],
-    "garrison": ["-/8c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 8
+    },
     "notes": " "
   },
   {
     "region": "Talabecland",
     "name": "Werder",
-    "size": "V",
-    "ruler": "Count von Herder",
     "population": 67,
+    "size": 1,
+    "ruler": "Count von Herder",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/7c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 7
+    },
     "notes": " "
   }
 ]

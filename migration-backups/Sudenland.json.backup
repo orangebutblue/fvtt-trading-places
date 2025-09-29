@@ -1,0 +1,157 @@
+
+[
+  {
+    "region": "Sudenland",
+    "name": "PFEILDORF",
+    "size": "T",
+    "ruler": "Grand Baroness Etelka Toppenheimer",
+    "population": 6800,
+    "wealth": 3,
+    "source": ["Trade", "Fishing", "Clothing"],
+    "garrison": ["75a/500b"],
+    "notes": "Former Capital of Sölland and provincial capital of Sudenland until 2515. Received Freistadt charter in 2515. Centre for the Sudenland wool trade"
+  },
+  {
+    "region": "Sudenland",
+    "name": "Bernau",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 90,
+    "wealth": 3,
+    "source": ["Wool", "Agriculture"],
+    "garrison": ["-/10c"],
+    "notes": " "
+  },
+  {
+    "region": "Sudenland",
+    "name": "Durbheim",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 92,
+    "wealth": 2,
+    "source": ["Agriculture"],
+    "garrison": ["-/10c"],
+    "notes": "Coaching inn"
+  },
+  {
+    "region": "Sudenland",
+    "name": "Elzach",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 87,
+    "wealth": 2,
+    "source": ["Fishing"],
+    "garrison": ["-/8c"],
+    "notes": " "
+  },
+  {
+    "region": "Sudenland",
+    "name": "Fulgenstadt",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 52,
+    "wealth": 2,
+    "source": ["Agriculture"],
+    "garrison": [],
+    "notes": " "
+  },
+  {
+    "region": "Sudenland",
+    "name": "Gerechtfeld",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 76,
+    "wealth": 2,
+    "source": ["Agriculture"],
+    "garrison": [],
+    "notes": "Temple to Taal and Rhya"
+  },
+  {
+    "region": "Sudenland",
+    "name": "Hausern",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 56,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/5c"],
+    "notes": " "
+  },
+  {
+    "region": "Sudenland",
+    "name": "Mecklenburg",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 94,
+    "wealth": 2,
+    "source": ["Wool", "Agriculture"],
+    "garrison": ["-/12c"],
+    "notes": " "
+  },
+  {
+    "region": "Sudenland",
+    "name": "Nebelhausen",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 45,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": [],
+    "notes": " "
+  },
+  {
+    "region": "Sudenland",
+    "name": "Neukirch",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 51,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": ["-/4c"],
+    "notes": "Tollhouse on ford"
+  },
+  {
+    "region": "Sudenland",
+    "name": "Possenhof",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 47,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": [],
+    "notes": "Nearby coaching inn"
+  },
+  {
+    "region": "Sudenland",
+    "name": "Rosenhausen",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 48,
+    "wealth": 2,
+    "source": ["Agriculture"],
+    "garrison": ["-/4c"],
+    "notes": "Tollhouse on ford"
+  },
+  {
+    "region": "Sudenland",
+    "name": "Schaffenhof",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 64,
+    "wealth": 2,
+    "source": ["Agriculture"],
+    "garrison": [],
+    "notes": " "
+  },
+  {
+    "region": "Sudenland",
+    "name": "Tannau",
+    "size": "V",
+    "ruler": "Baroness Toppenheimer",
+    "population": 39,
+    "wealth": 1,
+    "source": ["Subsistence"],
+    "garrison": [],
+    "notes": " "
+  }
+]

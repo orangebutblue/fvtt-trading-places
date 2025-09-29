@@ -1,91 +1,146 @@
-
 [
   {
     "region": "Wasteland",
     "name": "MARIENBURG",
-    "size": "C",
-    "ruler": "Directorate",
     "population": 135000,
+    "size": 4,
+    "ruler": "Directorate",
     "wealth": 5,
-    "source": ["Trade", "government", "fishing", "smuggling", "boat-building", "textiles"],
-    "garrison": ["2,000b/5,000a (Private Militias), 20,000c (City Militia)"],
+    "flags": [
+      "trade",
+      "government",
+      "smuggling"
+    ],
+    "produces": [],
+    "demands": [
+      "Luxuries"
+    ],
+    "garrison": {
+      "b": 2000,
+      "a": 5000,
+      "c": 0
+    },
     "notes": "Largest city and port in the Old World"
   },
   {
     "region": "Wasteland",
     "name": "AARNAU",
-    "size": "T",
-    "ruler": "Baron Martinus van Buuren",
     "population": 4000,
+    "size": 3,
+    "ruler": "Baron Martinus van Buuren",
     "wealth": 3,
-    "source": ["Agriculture", "fishing"],
-    "garrison": ["150a/1,000c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "a": 150,
+      "c": 1000
+    },
     "notes": " "
   },
   {
     "region": "Wasteland",
     "name": "Diever",
-    "size": "V",
-    "ruler": "Baron van Buuren",
     "population": 88,
+    "size": 1,
+    "ruler": "Baron van Buuren",
     "wealth": 2,
-    "source": ["Timber", "cattle"],
-    "garrison": ["-/16c"],
+    "flags": [],
+    "produces": [
+      "Timber"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 16
+    },
     "notes": " "
   },
   {
     "region": "Wasteland",
     "name": "Harskamp",
-    "size": "V",
-    "ruler": "Baron van Buuren",
     "population": 34,
+    "size": 1,
+    "ruler": "Baron van Buuren",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/6c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 6
+    },
     "notes": " "
   },
   {
     "region": "Wasteland",
     "name": "Hollum",
-    "size": "V",
-    "ruler": "Baron van Buuren",
     "population": 48,
+    "size": 1,
+    "ruler": "Baron van Buuren",
     "wealth": 2,
-    "source": ["Fishing", "salvaging"],
-    "garrison": ["-/10c"],
+    "flags": [],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Wasteland",
     "name": "BROEKWATER",
-    "size": "V",
-    "ruler": "Village Elder",
     "population": 84,
+    "size": 1,
+    "ruler": "Village Elder",
     "wealth": 1,
-    "source": ["Fishing", "salvaging", "(rumoured) piracy"],
-    "garrison": ["-/20c"],
+    "flags": [],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 20
+    },
     "notes": " "
   },
   {
     "region": "Wasteland",
     "name": "ERLACH",
-    "size": "ST",
-    "ruler": "Town Council",
     "population": 818,
+    "size": 2,
+    "ruler": "Town Council",
     "wealth": 2,
-    "source": ["Ore", "sheep"],
-    "garrison": ["10b/40c"],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {
+      "b": 10,
+      "c": 40
+    },
     "notes": "Largest settlement in Kleinland (Little Country)"
   },
   {
     "region": "Wasteland",
     "name": "FORT BERGBRES",
-    "size": "F",
-    "ruler": "Directorate of Marienburg/Duc du Gisoreux",
     "population": 225,
+    "size": 2,
+    "ruler": "Directorate of Marienburg/Duc du Gisoreux",
     "wealth": 2,
-    "source": ["Bribes", "duties from transport of goods"],
-    "garrison": ["120b/-"],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {
+      "b": 120
+    },
     "notes": "Border keep jointly run by Bretonnia and Marienburg"
   }
 ]

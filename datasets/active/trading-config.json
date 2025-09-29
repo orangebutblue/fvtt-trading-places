@@ -1,0 +1,39 @@
+{
+  "populationThresholds": {
+    "1": { "min": 0, "max": 200, "name": "Hamlet" },
+    "2": { "min": 201, "max": 1500, "name": "Village" },
+    "3": { "min": 1501, "max": 10000, "name": "Town" },
+    "4": { "min": 10001, "max": 100000, "name": "City" },
+    "5": { "min": 100001, "max": 999999999, "name": "Metropolis" }
+  },
+  "merchantSkillDistribution": {
+    "type": "normal",
+    "params": {
+      "base": 30,
+      "wealthModifier": 10,
+      "variance": 20
+    }
+  },
+  "supplyDemand": {
+    "baseline": {
+      "supply": 100,
+      "demand": 100
+    },
+    "producesShift": 0.5,
+    "demandsShift": 0.35,
+    "clamp": {
+      "min": 10,
+      "max": 190
+    }
+  },
+  "desperationReroll": {
+    "skillPenalty": 0.2,
+    "pricePenalty": 0.1,
+    "quantityPenalty": 0.25
+  },
+  "merchantCounts": {
+    "baseFromSize": 1,
+    "populationBonus": 10000,
+    "maximum": 15
+  }
+}

@@ -1,124 +1,217 @@
-
 [
   {
     "region": "Stirland",
     "name": "WURTBAD",
-    "size": "T",
-    "ruler": "Graf Alberich Haupt-Anderssen",
     "population": 8800,
+    "size": 3,
+    "ruler": "Graf Alberich Haupt-Anderssen",
     "wealth": 4,
-    "source": ["Trade", "Government", "Wine", "Agriculture"],
-    "garrison": ["40a & 80b/300c"],
+    "flags": [
+      "trade",
+      "government",
+      "agriculture"
+    ],
+    "produces": [
+      "Wine/Brandy",
+      "Grain"
+    ],
+    "demands": [
+      "Luxuries"
+    ],
+    "garrison": {
+      "a": 40,
+      "b": 80,
+      "c": 300
+    },
     "notes": "Provincial Capital. Grossweg Bridge across River Stir. Terminus of the Old Dwarf Road. Very fine port. Hot spring baths."
   },
   {
     "region": "Stirland",
     "name": "Autenau",
-    "size": "V",
-    "ruler": "Graf Haupt-Anderssen",
     "population": 62,
+    "size": 1,
+    "ruler": "Graf Haupt-Anderssen",
     "wealth": 2,
-    "source": ["Wine", "Agriculture"],
-    "garrison": ["-/4c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Wine/Brandy",
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Stirland",
     "name": "Biberhof",
-    "size": "V",
-    "ruler": "Graf Haupt-Anderssen",
     "population": 85,
+    "size": 1,
+    "ruler": "Graf Haupt-Anderssen",
     "wealth": 2,
-    "source": ["Agriculture", "Timber"],
-    "garrison": ["-/10c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain",
+      "Timber"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": " "
   },
   {
     "region": "Stirland",
     "name": "Giering",
-    "size": "V",
-    "ruler": "Graf Haupt-Anderssen",
     "population": 88,
+    "size": 1,
+    "ruler": "Graf Haupt-Anderssen",
     "wealth": 2,
-    "source": ["Agriculture", "Sheep", "Wool"],
-    "garrison": ["-/9c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain",
+      "Wool"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 9
+    },
     "notes": " "
   },
   {
     "region": "Stirland",
     "name": "Josefstadt",
-    "size": "V",
-    "ruler": "Graf Haupt-Anderssen",
     "population": 78,
+    "size": 1,
+    "ruler": "Graf Haupt-Anderssen",
     "wealth": 2,
-    "source": ["Wine", "Agriculture"],
-    "garrison": ["-/8c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Wine/Brandy",
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 8
+    },
     "notes": " "
   },
   {
     "region": "Stirland",
     "name": "Julbach",
-    "size": "V",
-    "ruler": "Graf Haupt-Anderssen",
     "population": 43,
+    "size": 1,
+    "ruler": "Graf Haupt-Anderssen",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/4c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Stirland",
     "name": "Oberwil",
-    "size": "V",
-    "ruler": "Graf Haupt-Anderssen",
     "population": 89,
+    "size": 1,
+    "ruler": "Graf Haupt-Anderssen",
     "wealth": 2,
-    "source": ["Fishing", "Agriculture"],
-    "garrison": ["-/10c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 10
+    },
     "notes": "Ferry across River Stir"
   },
   {
     "region": "Stirland",
     "name": "Penzing",
-    "size": "V",
-    "ruler": "Graf Haupt-Anderssen",
     "population": 45,
+    "size": 1,
+    "ruler": "Graf Haupt-Anderssen",
     "wealth": 1,
-    "source": ["Sheep"],
-    "garrison": ["-/4c"],
+    "flags": [],
+    "produces": [],
+    "demands": [],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Stirland",
     "name": "Seyring",
-    "size": "V",
-    "ruler": "Graf Haupt-Anderssen",
     "population": 38,
+    "size": 1,
+    "ruler": "Graf Haupt-Anderssen",
     "wealth": 1,
-    "source": ["Subsistence"],
-    "garrison": ["-/4c"],
+    "flags": [
+      "subsistence"
+    ],
+    "produces": [],
+    "demands": [
+      "Grain"
+    ],
+    "garrison": {
+      "c": 4
+    },
     "notes": " "
   },
   {
     "region": "Stirland",
     "name": "Steingratdorf",
-    "size": "ST",
-    "ruler": "Graf Haupt-Anderssen",
     "population": 164,
+    "size": 2,
+    "ruler": "Graf Haupt-Anderssen",
     "wealth": 2,
-    "source": ["Metalwork", "Ore", "Gems"],
-    "garrison": ["30a/80b"],
+    "flags": [
+      "fort"
+    ],
+    "produces": [],
+    "demands": [],
+    "garrison": {
+      "a": 30,
+      "b": 80
+    },
     "notes": "Fortified Dwarf village. Dwarf Engineer Guild"
   },
   {
     "region": "Stirland",
     "name": "Tarshof",
-    "size": "V",
-    "ruler": "Graf Haupt-Anderssen",
     "population": 72,
+    "size": 1,
+    "ruler": "Graf Haupt-Anderssen",
     "wealth": 2,
-    "source": ["Agriculture", "Sheep"],
-    "garrison": ["-/8c"],
+    "flags": [
+      "agriculture"
+    ],
+    "produces": [
+      "Grain"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 8
+    },
     "notes": " "
   }
 ]

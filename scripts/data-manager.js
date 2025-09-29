@@ -62,11 +62,17 @@ class DataManager {
             return result;
         }
 
-        // Check for required fields (9 core fields as per requirements)
+        // Check for required fields (orange-realism schema)
         const requiredFields = [
             'region', 'name', 'size', 'ruler',
-            'population', 'wealth', 'source', 'garrison', 'notes'
+            'population', 'wealth', 'notes'
         ];
+        
+        // Optional fields that should be arrays if present
+        const optionalArrayFields = ['flags', 'produces', 'demands'];
+        
+        // Garrison can be object or legacy array
+        const specialFields = ['garrison'];
 
         // Check for missing fields (maintain backward compatibility)
         const missingFields = requiredFields.filter(field =>
@@ -79,9 +85,70 @@ class DataManager {
             result.errors.push(`Missing required fields: ${missingFields.join(', ')}`);
         }
 
-        // Additional enhanced validation for empty string fields (new feature)
-        // Note: We don't validate empty arrays here for backward compatibility
-        // Note: 'notes' field is optional and can be empty or whitespace-only
+        // Validate numeric fields
+        const numericFields = [
+            { field: 'size', min: 1, max: 5 },
+            { field: 'wealth', min: 1, max: 5 },
+            { field: 'population', min: 0, max: 999999999 }
+        ];
+        
+        numericFields.forEach(({ field, min, max }) => {
+            if (settlement.hasOwnProperty(field)) {
+                const value = settlement[field];
+                if (typeof value !== 'number' || isNaN(value) || value < min || value > max) {
+                    result.valid = false;
+                    result.errorType = result.errorType || 'invalid_values';
+                    result.errors.push(`${field} must be a number between ${min} and ${max}`);
+                }
+            }
+        });
+
+        // Validate array fields
+        optionalArrayFields.forEach(field => {
+            if (settlement.hasOwnProperty(field) && settlement[field] !== null && settlement[field] !== undefined) {
+                if (!Array.isArray(settlement[field])) {
+                    result.valid = false;
+                    result.errorType = result.errorType || 'invalid_types';
+                    result.errors.push(`${field} must be an array`);
+                } else {
+                    // Check array contents are strings
+                    const invalidItems = settlement[field].filter(item => typeof item !== 'string');
+                    if (invalidItems.length > 0) {
+                        result.valid = false;
+                        result.errorType = result.errorType || 'invalid_array_contents';
+                        result.errors.push(`${field} array must contain only strings`);
+                    }
+                }
+            }
+        });
+
+        // Validate garrison field (can be object or legacy array)
+        if (settlement.hasOwnProperty('garrison') && settlement.garrison !== null && settlement.garrison !== undefined) {
+            if (typeof settlement.garrison === 'object' && !Array.isArray(settlement.garrison)) {
+                // New object format - validate keys and values
+                const validKeys = ['a', 'b', 'c'];
+                const invalidKeys = Object.keys(settlement.garrison).filter(key => !validKeys.includes(key));
+                if (invalidKeys.length > 0) {
+                    result.valid = false;
+                    result.errorType = result.errorType || 'invalid_garrison';
+                    result.errors.push(`garrison contains invalid keys: ${invalidKeys.join(', ')}`);
+                }
+                
+                Object.values(settlement.garrison).forEach(value => {
+                    if (typeof value !== 'number' || value < 0) {
+                        result.valid = false;
+                        result.errorType = result.errorType || 'invalid_garrison';
+                        result.errors.push('garrison values must be non-negative numbers');
+                    }
+                });
+            } else if (!Array.isArray(settlement.garrison)) {
+                result.valid = false;
+                result.errorType = result.errorType || 'invalid_garrison';
+                result.errors.push('garrison must be an object or array');
+            }
+        }
+
+        // Additional enhanced validation for empty string fields
         const emptyStringFields = [];
         const criticalStringFields = ['region', 'name', 'ruler']; // Notes is optional
         criticalStringFields.forEach(field => {
@@ -1790,6 +1857,195 @@ class DataManager {
     async switchDataset(datasetName) {
         // This would be implemented to switch between different datasets
         throw new Error('switchDataset() not yet implemented - requires FoundryVTT integration');
+    }
+
+    /**
+     * Orange-realism schema methods
+     */
+
+    /**
+     * Get settlements by flags (orange-realism schema)
+     * @param {string|Array} flags - Flag or array of flags to filter by
+     * @returns {Array} - Settlements matching the flags
+     */
+    getSettlementsByFlags(flags) {
+        const flagArray = Array.isArray(flags) ? flags : [flags];
+        
+        return this.settlements.filter(settlement => {
+            if (!settlement.flags || !Array.isArray(settlement.flags)) {
+                return false;
+            }
+            
+            // Check if settlement has any of the specified flags
+            return flagArray.some(flag => settlement.flags.includes(flag));
+        });
+    }
+
+    /**
+     * Get settlements that produce specific cargo types
+     * @param {string|Array} cargoTypes - Cargo type or array of cargo types
+     * @returns {Array} - Settlements that produce the specified cargo
+     */
+    getSettlementsByProduces(cargoTypes) {
+        const cargoArray = Array.isArray(cargoTypes) ? cargoTypes : [cargoTypes];
+        
+        return this.settlements.filter(settlement => {
+            if (!settlement.produces || !Array.isArray(settlement.produces)) {
+                return false;
+            }
+            
+            // Check if settlement produces any of the specified cargo types
+            return cargoArray.some(cargo => settlement.produces.includes(cargo));
+        });
+    }
+
+    /**
+     * Get settlements that demand specific cargo types
+     * @param {string|Array} cargoTypes - Cargo type or array of cargo types
+     * @returns {Array} - Settlements that demand the specified cargo
+     */
+    getSettlementsByDemands(cargoTypes) {
+        const cargoArray = Array.isArray(cargoTypes) ? cargoTypes : [cargoTypes];
+        
+        return this.settlements.filter(settlement => {
+            if (!settlement.demands || !Array.isArray(settlement.demands)) {
+                return false;
+            }
+            
+            // Check if settlement demands any of the specified cargo types
+            return cargoArray.some(cargo => settlement.demands.includes(cargo));
+        });
+    }
+
+    /**
+     * Get population-derived size for a settlement
+     * @param {Object} settlement - Settlement object
+     * @returns {number} - Size category (1-5) based on population
+     */
+    getPopulationDerivedSize(settlement) {
+        if (!settlement.population || !this.config.populationThresholds) {
+            return settlement.size || 1;
+        }
+
+        const population = settlement.population;
+        const thresholds = this.config.populationThresholds;
+        
+        for (let size = 1; size <= 5; size++) {
+            const threshold = thresholds[size.toString()];
+            if (threshold && population >= threshold.min && population <= threshold.max) {
+                return size;
+            }
+        }
+        
+        return settlement.size || 1;
+    }
+
+    /**
+     * Get garrison information in normalized format
+     * @param {Object} settlement - Settlement object
+     * @returns {Object} - Normalized garrison data
+     */
+    getGarrisonData(settlement) {
+        const garrison = { a: 0, b: 0, c: 0 };
+        
+        if (!settlement.garrison) {
+            return garrison;
+        }
+        
+        // Handle new object format
+        if (typeof settlement.garrison === 'object' && !Array.isArray(settlement.garrison)) {
+            return { ...garrison, ...settlement.garrison };
+        }
+        
+        // Handle legacy array format
+        if (Array.isArray(settlement.garrison)) {
+            settlement.garrison.forEach(entry => {
+                if (!entry || entry === '') return;
+                
+                // Parse formats like "50a/150c", "10a&40b/350c", "-/9c", "-17c"
+                const cleanEntry = entry.replace(/\s+/g, '');
+                const matches = cleanEntry.match(/(\d+)([abc])/g);
+                
+                if (matches) {
+                    matches.forEach(match => {
+                        const [, count, type] = match.match(/(\d+)([abc])/);
+                        if (count && type && ['a', 'b', 'c'].includes(type)) {
+                            garrison[type] = parseInt(count);
+                        }
+                    });
+                }
+            });
+        }
+        
+        return garrison;
+    }
+
+    /**
+     * Load trading configuration
+     * @param {string} configPath - Path to trading config file
+     */
+    async loadTradingConfig(configPath = null) {
+        try {
+            const path = configPath || `${this.dataPath}/trading-config.json`;
+            const logger = this.getLogger();
+            
+            logger.logSystem('DataManager', `Loading trading configuration from ${path}`);
+            
+            const configData = await this.loadFile(path);
+            this.config = { ...this.config, ...configData };
+            
+            logger.logSystem('DataManager', `Trading configuration loaded: ${Object.keys(configData).length} sections`);
+            
+            return configData;
+        } catch (error) {
+            const logger = this.getLogger();
+            logger.logSystem('DataManager', `Failed to load trading configuration: ${error.message}`);
+            throw new Error(`Failed to load trading configuration: ${error.message}`);
+        }
+    }
+
+    /**
+     * Get supply/demand equilibrium for a settlement and cargo type
+     * @param {Object} settlement - Settlement object
+     * @param {string} cargoType - Cargo type name
+     * @returns {Object} - Supply and demand values
+     */
+    calculateSupplyDemandEquilibrium(settlement, cargoType) {
+        if (!this.config.supplyDemand) {
+            return { supply: 100, demand: 100 };
+        }
+
+        const baseline = this.config.supplyDemand.baseline;
+        let supply = baseline.supply;
+        let demand = baseline.demand;
+
+        // Apply produces effects
+        if (settlement.produces && settlement.produces.includes(cargoType)) {
+            const shift = this.config.supplyDemand.producesShift || 0.5;
+            const transfer = Math.floor(demand * shift);
+            supply += transfer;
+            demand -= transfer;
+        }
+
+        // Apply demands effects
+        if (settlement.demands && settlement.demands.includes(cargoType)) {
+            const shift = this.config.supplyDemand.demandsShift || 0.35;
+            const transfer = Math.floor(supply * shift);
+            demand += transfer;
+            supply -= transfer;
+        }
+
+        // Apply flag effects (would be implemented when flag data is loaded)
+        // TODO: Load and apply flag modifiers from source-flags.json
+
+        // Clamp values
+        const clamp = this.config.supplyDemand.clamp;
+        if (clamp) {
+            supply = Math.max(clamp.min, Math.min(clamp.max, supply));
+            demand = Math.max(clamp.min, Math.min(clamp.max, demand));
+        }
+
+        return { supply, demand };
     }
 }
 
