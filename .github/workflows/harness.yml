@@ -1,0 +1,36 @@
+name: Foundry Harness Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run Foundry Harness (Headless)
+      run: npm run harness:ci
+
+    - name: Run individual scenarios for verification
+      run: |
+        npm run harness scenarios/availability-only.js
+        npm run harness scenarios/buying-flow.js

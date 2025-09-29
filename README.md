@@ -1,7 +1,40 @@
 # Trading Places Module
 
+## Phase 1: Foundry Harness - COMPLETE ✅
 
-## Features
+The Foundry Harness provides a lightweight testing environment that runs the module outside of Foundry VTT for automated testing and development.
+
+### Quick Start
+
+```bash
+# Install dependencies
+npm install
+
+# Run default scenarios (headless)
+npm run harness
+
+# Run with visual UI
+npm run harness:ui
+
+# Run specific scenarios
+npm run harness:buying
+npm run harness:availability
+
+# Run with deterministic results (CI)
+npm run harness:ci
+```
+
+### Features
+
+- **Headless Mode**: Automated testing with mocked Foundry globals
+- **Rendered Mode**: Browser-based template inspection
+- **Deterministic Testing**: Seeded random generation for consistent results
+- **Real Module Integration**: Loads actual module code when available
+- **Scenario-Based Testing**: Extensible scenario system
+
+See [Foundry Harness Documentation](tests/foundry-harness/README.md) for detailed usage.
+
+## Trading System Features
 
 - Complete implementation of the official WFRP 4E trading algorithm (pages 71-78)
 - System-agnostic design with dataset swapping capability
