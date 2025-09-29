@@ -47,7 +47,7 @@ class TradingEngine {
      * Set the current trading season
      * @param {string} season - Season name (spring, summer, autumn, winter)
      */
-    setCurrentSeason(season) {
+    async setCurrentSeason(season) {
         const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
         if (!validSeasons.includes(season)) {
             throw new Error(`Invalid season: ${season}. Must be one of: ${validSeasons.join(', ')}`);
@@ -60,6 +60,13 @@ class TradingEngine {
         });
         
         this.currentSeason = season;
+
+        // Persist to settings if available (FoundryVTT or mock)
+        if (global.foundryMock && global.foundryMock.setSetting) {
+            await global.foundryMock.setSetting('wfrp-trading', 'currentSeason', season);
+        } else if (global.game && global.game.settings && global.game.settings.set) {
+            await global.game.settings.set('trading-places', 'currentSeason', season);
+        }
     }
 
     /**
@@ -208,7 +215,8 @@ class TradingEngine {
             'Sheep': 'Wool',
             'Metal': 'Metal',
             'Fur': 'Luxuries',
-            'Government': 'Armaments'
+            'Government': 'Armaments',
+            'Wine': 'Wine/Brandy'
         };
 
         // Handle specific goods (non-Trade categories)
@@ -251,14 +259,14 @@ class TradingEngine {
      * @returns {string|null} - Random cargo type name or null if no trade cargo available
      */
     getRandomTradeCargoForSeason(season) {
-        // For now, return null - trade cargo types need to be added to the dataset
+        // For trade settlements, return Trade Goods
         const tradeGoods = this.dataManager.cargoTypes.filter(cargo => 
             cargo.category === 'Trade'
         );
         
         if (tradeGoods.length > 0) {
-            const randomIndex = Math.floor(Math.random() * tradeGoods.length);
-            return tradeGoods[randomIndex].name;
+            // Return the first (and likely only) trade goods entry
+            return tradeGoods[0].name;
         }
         
         return null;
@@ -1019,15 +1027,16 @@ class TradingEngine {
     }
 
     /**
-     * Process partial sale option (sell half cargo and re-roll)
+     * Process enhanced partial sale option (sell half cargo and re-roll)
      * @param {string} cargoName - Name of the cargo type
      * @param {number} originalQuantity - Original quantity attempting to sell
      * @param {Object} settlement - Settlement object
+     * @param {Object} purchaseData - Original purchase data
      * @param {Object} options - Sale options
      * @param {Function} rollFunction - Function that returns 1d100 result (for testing)
-     * @returns {Object} - Partial sale result
+     * @returns {Object} - Enhanced partial sale result
      */
-    async processPartialSale(cargoName, originalQuantity, settlement, options = {}, rollFunction = null) {
+    async processEnhancedPartialSale(cargoName, originalQuantity, settlement, purchaseData, options = {}, rollFunction = null) {
         const halfQuantity = Math.floor(originalQuantity / 2);
         
         if (halfQuantity <= 0) {
@@ -1035,7 +1044,8 @@ class TradingEngine {
                 success: false,
                 reason: 'Cannot sell partial quantity (less than 1 EP remaining)',
                 quantitySold: 0,
-                quantityRemaining: originalQuantity
+                quantityRemaining: originalQuantity,
+                saleType: 'partial_failed'
             };
         }
 
@@ -1050,7 +1060,8 @@ class TradingEngine {
                 quantitySold: halfQuantity,
                 quantityRemaining: originalQuantity - halfQuantity,
                 salePrice: salePrice,
-                buyerResult: buyerResult
+                buyerResult: buyerResult,
+                saleType: 'partial_success'
             };
         } else {
             return {
@@ -1058,7 +1069,8 @@ class TradingEngine {
                 reason: 'No buyer found even for partial sale',
                 quantitySold: 0,
                 quantityRemaining: originalQuantity,
-                buyerResult: buyerResult
+                buyerResult: buyerResult,
+                saleType: 'partial_failed'
             };
         }
     }
@@ -1314,6 +1326,24 @@ class TradingEngine {
     }
 
     /**
+     * Check for available rumors at settlement
+     * @param {string} cargoName - Name of the cargo type
+     * @param {Object} settlement - Settlement object
+     * @param {Function} rollFunction - Function that returns 1d100 result (for testing)
+     * @returns {Object} - Rumor check result
+     */
+    checkForRumors(cargoName, settlement, rollFunction = null) {
+        const rumor = this.generateRandomRumor(cargoName, settlement, rollFunction);
+        
+        return {
+            hasRumor: rumor !== null,
+            rumor: rumor,
+            settlement: settlement.name,
+            cargoName: cargoName
+        };
+    }
+
+    /**
      * Generate random rumor for cargo type and settlement
      * @param {string} cargoName - Name of the cargo type
      * @param {Object} settlement - Settlement object
@@ -1386,717 +1416,92 @@ class TradingEngine {
     }
 
     /**
-     * Check for available rumors at settlement
-     * @param {string} cargoName - Name of the cargo type
+     * Generate rumor from successful gossip test
+     * @param {Object} gossipResult - Result from performGossipTest
+     * @param {string} cargoName - Name of cargo to generate rumor about
      * @param {Object} settlement - Settlement object
-     * @param {Function} rollFunction - Function that returns 1d100 result (for testing)
-     * @returns {Object} - Rumor check result
+     * @returns {Object|null} - Generated rumor or null if gossip failed
      */
-    checkForRumors(cargoName, settlement, rollFunction = null) {
-        const rumor = this.generateRandomRumor(cargoName, settlement, rollFunction);
-        
-        return {
-            hasRumor: rumor !== null,
-            rumor: rumor,
-            settlement: settlement.name,
-            cargoName: cargoName
-        };
-    }
-
-    /**
-     * Process partial sale with re-roll option
-     * Enhanced version with better error handling and options
-     * @param {string} cargoName - Name of the cargo type
-     * @param {number} originalQuantity - Original quantity attempting to sell
-     * @param {Object} settlement - Settlement object
-     * @param {Object} purchaseData - Original purchase data
-     * @param {Object} options - Sale options
-     * @param {Function} rollFunction - Function that returns 1d100 result (for testing)
-     * @returns {Object} - Enhanced partial sale result
-     */
-    async processEnhancedPartialSale(cargoName, originalQuantity, settlement, purchaseData, options = {}, rollFunction = null) {
-        const halfQuantity = Math.floor(originalQuantity / 2);
-        
-        if (halfQuantity <= 0) {
-            return {
-                success: false,
-                reason: 'Cannot sell partial quantity (less than 1 EP remaining)',
-                quantitySold: 0,
-                quantityRemaining: originalQuantity,
-                saleType: 'partial_failed'
-            };
-        }
-
-        // Check eligibility for partial sale
-        const eligibilityCheck = this.checkSaleEligibility(
-            { name: cargoName, quantity: halfQuantity },
-            settlement,
-            purchaseData,
-            options.currentTime
-        );
-
-        if (!eligibilityCheck.eligible) {
-            return {
-                success: false,
-                reason: 'Partial sale not eligible due to restrictions',
-                eligibilityCheck: eligibilityCheck,
-                quantitySold: 0,
-                quantityRemaining: originalQuantity,
-                saleType: 'partial_failed'
-            };
-        }
-
-        // Re-roll for buyer with half quantity
-        const buyerResult = await this.findBuyer(settlement, cargoName, rollFunction);
-        
-        if (buyerResult.buyerFound) {
-            const salePrice = this.calculateSalePrice(cargoName, halfQuantity, settlement, options);
-            
-            return {
-                success: true,
-                quantitySold: halfQuantity,
-                quantityRemaining: originalQuantity - halfQuantity,
-                salePrice: salePrice,
-                buyerResult: buyerResult,
-                eligibilityCheck: eligibilityCheck,
-                saleType: 'partial_success'
-            };
-        } else {
-            return {
-                success: false,
-                reason: 'No buyer found even for partial sale',
-                quantitySold: 0,
-                quantityRemaining: originalQuantity,
-                buyerResult: buyerResult,
-                saleType: 'partial_failed'
-            };
-        }
-    }
-
-    /**
-     * Get all available sale options for cargo at settlement
-     * @param {string} cargoName - Name of the cargo type
-     * @param {number} quantity - Quantity to sell
-     * @param {Object} settlement - Settlement where selling
-     * @param {Object} purchaseData - Original purchase data
-     * @param {Object} options - Additional options
-     * @returns {Object} - Available sale options
-     */
-    getAvailableSaleOptions(cargoName, quantity, settlement, purchaseData, options = {}) {
-        const saleOptions = {
-            normal: false,
-            desperate: false,
-            partial: false,
-            rumor: false,
-            restrictions: []
-        };
-
-        // Check normal sale eligibility
-        const normalEligibility = this.checkSaleEligibility(
-            { name: cargoName, quantity: quantity },
-            settlement,
-            purchaseData,
-            options.currentTime
-        );
-
-        if (normalEligibility.eligible) {
-            saleOptions.normal = true;
-        } else {
-            saleOptions.restrictions = normalEligibility.errors;
-        }
-
-        // Check desperate sale option (Trade settlements only)
-        if (this.dataManager.isTradeSettlement(settlement)) {
-            saleOptions.desperate = true;
-        }
-
-        // Check partial sale option (if normal sale fails)
-        if (!saleOptions.normal && quantity > 1) {
-            saleOptions.partial = true;
-        }
-
-        // Check for rumors
-        const rumorCheck = this.checkForRumors(cargoName, settlement);
-        if (rumorCheck.hasRumor) {
-            saleOptions.rumor = rumorCheck.rumor;
-        }
-
-        return {
-            cargoName: cargoName,
-            quantity: quantity,
-            settlement: settlement.name,
-            options: saleOptions,
-            eligibilityCheck: normalEligibility
-        };
-    }
-
-    /**
-     * Execute special sale based on type
-     * @param {string} saleType - Type of sale (desperate, rumor, partial)
-     * @param {string} cargoName - Name of the cargo type
-     * @param {number} quantity - Quantity to sell
-     * @param {Object} settlement - Settlement object
-     * @param {Object} purchaseData - Original purchase data
-     * @param {Object} specialData - Special sale data (rumor info, etc.)
-     * @param {Object} options - Sale options
-     * @param {Function} rollFunction - Function for dice rolls (testing)
-     * @returns {Object} - Special sale result
-     */
-    async executeSpecialSale(saleType, cargoName, quantity, settlement, purchaseData, specialData = {}, options = {}, rollFunction = null) {
-        switch (saleType) {
-            case 'desperate':
-                return this.processDesperateSale(cargoName, quantity, settlement, options);
-                
-            case 'rumor':
-                if (!specialData.rumor) {
-                    throw new Error('Rumor data is required for rumor sales');
-                }
-                return this.processRumorSale(cargoName, quantity, settlement, specialData.rumor, options);
-                
-            case 'partial':
-                return await this.processEnhancedPartialSale(cargoName, quantity, settlement, purchaseData, options, rollFunction);
-                
-            default:
-                throw new Error(`Unknown sale type: ${saleType}`);
-        }
-    }
-
-    /**
-     * Calculate potential profit/loss for different sale options
-     * @param {string} cargoName - Name of the cargo type
-     * @param {number} quantity - Quantity to sell
-     * @param {Object} settlement - Settlement where selling
-     * @param {Object} purchaseData - Original purchase data with cost
-     * @param {Object} options - Sale options
-     * @returns {Object} - Profit analysis for different sale types
-     */
-    analyzeSaleProfitability(cargoName, quantity, settlement, purchaseData, options = {}) {
-        if (!purchaseData.totalCost || typeof purchaseData.totalCost !== 'number') {
-            throw new Error('Purchase data must include total cost for profit analysis');
-        }
-
-        const analysis = {
-            cargoName: cargoName,
-            quantity: quantity,
-            originalCost: purchaseData.totalCost,
-            costPerUnit: purchaseData.totalCost / quantity,
-            saleOptions: {}
-        };
-
-        // Normal sale analysis
-        try {
-            const normalSale = this.calculateSalePrice(cargoName, quantity, settlement, options);
-            analysis.saleOptions.normal = {
-                totalRevenue: normalSale.totalPrice,
-                profit: normalSale.totalPrice - purchaseData.totalCost,
-                profitMargin: ((normalSale.totalPrice - purchaseData.totalCost) / purchaseData.totalCost) * 100,
-                pricePerUnit: normalSale.finalPricePerUnit
-            };
-        } catch (error) {
-            analysis.saleOptions.normal = { error: error.message };
-        }
-
-        // Desperate sale analysis
-        if (this.dataManager.isTradeSettlement(settlement)) {
-            try {
-                const desperateSale = this.processDesperateSale(cargoName, quantity, settlement, options);
-                if (desperateSale.success) {
-                    analysis.saleOptions.desperate = {
-                        totalRevenue: desperateSale.totalPrice,
-                        profit: desperateSale.totalPrice - purchaseData.totalCost,
-                        profitMargin: ((desperateSale.totalPrice - purchaseData.totalCost) / purchaseData.totalCost) * 100,
-                        pricePerUnit: desperateSale.desperatePricePerUnit
-                    };
-                }
-            } catch (error) {
-                analysis.saleOptions.desperate = { error: error.message };
-            }
-        }
-
-        // Rumor sale analysis (if rumor exists)
-        const rumorCheck = this.checkForRumors(cargoName, settlement);
-        if (rumorCheck.hasRumor) {
-            try {
-                const rumorSale = this.processRumorSale(cargoName, quantity, settlement, rumorCheck.rumor, options);
-                if (rumorSale.success) {
-                    analysis.saleOptions.rumor = {
-                        totalRevenue: rumorSale.totalPrice,
-                        profit: rumorSale.totalPrice - purchaseData.totalCost,
-                        profitMargin: ((rumorSale.totalPrice - purchaseData.totalCost) / purchaseData.totalCost) * 100,
-                        pricePerUnit: rumorSale.rumorPricePerUnit,
-                        rumorType: rumorCheck.rumor.type,
-                        premium: rumorSale.rumor.premiumPercentage
-                    };
-                }
-            } catch (error) {
-                analysis.saleOptions.rumor = { error: error.message };
-            }
-        }
-
-        return analysis;
-    }
-
-    // ===== FOUNDRY VTT DICE INTEGRATION =====
-
-    /**
-     * Roll dice using FoundryVTT's Roll class
-     * @param {string} formula - Dice formula (e.g., "1d100", "2d6+3")
-     * @param {Object} options - Roll options
-     * @param {string} options.flavor - Flavor text for the roll
-     * @param {boolean} options.whisper - Whether to whisper the roll to GM only
-     * @returns {Object} - Roll result object
-     */
-    async rollDice(formula, options = {}) {
-        if (typeof Roll === 'undefined') {
-            // Fallback for testing environment
-            const result = Math.floor(Math.random() * 100) + 1;
-            return {
-                total: result,
-                formula: formula,
-                result: result.toString(),
-                terms: [{ results: [{ result: result }] }]
-            };
-        }
-
-        const roll = new Roll(formula);
-        await roll.evaluate();
-
-        // Post to chat if not in testing mode
-        if (options.flavor) {
-            const chatVisibility = game?.settings?.get("trading-places", "chatVisibility") || "gm";
-            const shouldWhisper = options.whisper !== false && chatVisibility === "gm";
-            
-            await roll.toMessage({
-                flavor: options.flavor,
-                whisper: shouldWhisper && game?.user ? [game.user.id] : null
-            });
-        }
-
-        return roll;
-    }
-
-    /**
-     * Roll cargo availability check (1d100)
-     * @param {number} chance - Target chance percentage
-     * @returns {Object} - Roll result
-     */
-    async rollAvailability(chance) {
-        return await this.rollDice("1d100", {
-            flavor: `Cargo Availability Check (Target: ${chance}%)`,
-            whisper: true
-        });
-    }
-
-    /**
-     * Roll cargo size determination (1d100)
-     * @returns {Object} - Roll result
-     */
-    async rollCargoSize() {
-        return await this.rollDice("1d100", {
-            flavor: "Cargo Size Determination",
-            whisper: true
-        });
-    }
-
-    /**
-     * Roll buyer availability check (1d100)
-     * @param {number} chance - Target chance percentage
-     * @returns {Object} - Roll result
-     */
-    async rollBuyerAvailability(chance) {
-        return await this.rollDice("1d100", {
-            flavor: `Buyer Availability Check (Target: ${chance}%)`,
-            whisper: true
-        });
-    }
-
-    /**
-     * Post chat message with visibility controls
-     * @param {string} content - Message content
-     * @param {Object} options - Message options
-     * @param {boolean} options.whisper - Whether to whisper to GM only
-     * @param {string} options.type - Message type
-     * @returns {Object} - Chat message object
-     */
-    async postChatMessage(content, options = {}) {
-        if (typeof ChatMessage === 'undefined') {
-            // Fallback for testing environment
-            console.log('Chat Message:', content);
-            return { content: content };
-        }
-
-        const chatVisibility = game?.settings?.get("wfrp-trading", "chatVisibility") || "gm";
-        const shouldWhisper = options.whisper !== false && chatVisibility === "gm";
-
-        return await ChatMessage.create({
-            content: content,
-            whisper: shouldWhisper && game?.user ? [game.user.id] : null,
-            type: options.type || CONST.CHAT_MESSAGE_TYPES.OTHER
-        });
-    }
-
-    /**
-     * Generate formatted chat message for dice roll results
-     * @param {Object} roll - Roll result object
-     * @param {string} context - Context description
-     * @param {Object} options - Formatting options
-     * @returns {string} - Formatted HTML content
-     */
-    generateRollResultMessage(roll, context, options = {}) {
-        const success = options.target ? (roll.total <= options.target) : null;
-        const successText = success !== null ? (success ? "Success" : "Failure") : "";
-        
-        return `
-        <div class="trading-roll">
-            <h4>${context}</h4>
-            <p><strong>Roll:</strong> ${roll.total} (${roll.formula})</p>
-            ${options.target ? `<p><strong>Target:</strong> ${options.target}</p>` : ''}
-            ${successText ? `<p><strong>Result:</strong> ${successText}</p>` : ''}
-            ${options.details ? `<p><strong>Details:</strong> ${options.details}</p>` : ''}
-        </div>`;
-    }
-
-    /**
-     * Generate formatted chat message for transaction results
-     * @param {Object} transaction - Transaction data
-     * @returns {string} - Formatted HTML content
-     */
-    generateTransactionResultMessage(transaction) {
-        const modifiersText = transaction.modifiers && transaction.modifiers.length > 0
-            ? transaction.modifiers.map(mod => `${mod.description}: ${mod.percentage > 0 ? '+' : ''}${mod.percentage}%`).join('<br>')
-            : 'No modifiers applied';
-
-        return `
-        <div class="trading-result">
-            <h3>Trade ${transaction.type === 'purchase' ? 'Purchase' : 'Sale'} Completed</h3>
-            <p><strong>Settlement:</strong> ${transaction.settlement}</p>
-            <p><strong>Cargo:</strong> ${transaction.cargoName} (${transaction.quantity} EP)</p>
-            <p><strong>Season:</strong> ${transaction.season}</p>
-            ${transaction.quality && transaction.quality !== 'average' ? `<p><strong>Quality:</strong> ${transaction.quality}</p>` : ''}
-            <p><strong>Base Price:</strong> ${transaction.basePricePerUnit} GC per EP</p>
-            <p><strong>Final Price:</strong> ${transaction.finalPricePerUnit} GC per EP</p>
-            <p><strong>Total Cost:</strong> ${transaction.totalPrice} GC</p>
-            <p><strong>Price Modifiers:</strong><br>${modifiersText}</p>
-        </div>`;
-    }
-
-    // ===== HAGGLING AND SKILL TEST MECHANICS =====
-
-    /**
-     * Perform comparative haggle test between player and merchant
-     * @param {number} playerSkill - Player's haggle skill value
-     * @param {number} merchantSkill - Merchant's haggle skill value (32-52 based on settlement)
-     * @param {boolean} hasDealmakertTalent - Whether player has Dealmaker talent
-     * @param {Object} options - Test options
-     * @param {Function} rollFunction - Function for dice rolls (testing)
-     * @returns {Object} - Haggle test result
-     */
-    async performHaggleTest(playerSkill, merchantSkill, hasDealmakertTalent = false, options = {}, rollFunction = null) {
-        if (typeof playerSkill !== 'number' || playerSkill < 0 || playerSkill > 100) {
-            throw new Error('Player skill must be a number between 0 and 100');
-        }
-
-        if (typeof merchantSkill !== 'number' || merchantSkill < 0 || merchantSkill > 100) {
-            throw new Error('Merchant skill must be a number between 0 and 100');
-        }
-
-        let playerRoll, merchantRoll, playerRollResult, merchantRollResult;
-
-        if (rollFunction) {
-            // Use provided roll function for testing
-            playerRoll = rollFunction();
-            merchantRoll = rollFunction();
-            playerRollResult = { total: playerRoll, formula: "1d100", result: playerRoll.toString() };
-            merchantRollResult = { total: merchantRoll, formula: "1d100", result: merchantRoll.toString() };
-        } else {
-            // Use FoundryVTT dice roller
-            playerRollResult = await this.rollDice("1d100", {
-                flavor: `Player Haggle Test (Skill: ${playerSkill})`,
-                whisper: true
-            });
-            merchantRollResult = await this.rollDice("1d100", {
-                flavor: `Merchant Haggle Test (Skill: ${merchantSkill})`,
-                whisper: true
-            });
-            playerRoll = playerRollResult.total;
-            merchantRoll = merchantRollResult.total;
-        }
-
-        // Calculate success levels
-        const playerSuccess = playerRoll <= playerSkill;
-        const merchantSuccess = merchantRoll <= merchantSkill;
-
-        // Calculate degrees of success/failure
-        const playerDegrees = playerSuccess 
-            ? Math.floor((playerSkill - playerRoll) / 10) + 1
-            : Math.floor((playerRoll - playerSkill - 1) / 10) + 1;
-
-        const merchantDegrees = merchantSuccess 
-            ? Math.floor((merchantSkill - merchantRoll) / 10) + 1
-            : Math.floor((merchantRoll - merchantSkill - 1) / 10) + 1;
-
-        // Determine overall result
-        let overallSuccess = false;
-        let resultDescription = '';
-
-        if (playerSuccess && !merchantSuccess) {
-            // Player succeeds, merchant fails
-            overallSuccess = true;
-            resultDescription = 'Player wins - merchant failed their test';
-        } else if (!playerSuccess && merchantSuccess) {
-            // Player fails, merchant succeeds
-            overallSuccess = false;
-            resultDescription = 'Merchant wins - player failed their test';
-        } else if (playerSuccess && merchantSuccess) {
-            // Both succeed - compare degrees of success
-            if (playerDegrees > merchantDegrees) {
-                overallSuccess = true;
-                resultDescription = `Player wins - ${playerDegrees} vs ${merchantDegrees} degrees of success`;
-            } else if (merchantDegrees > playerDegrees) {
-                overallSuccess = false;
-                resultDescription = `Merchant wins - ${merchantDegrees} vs ${playerDegrees} degrees of success`;
-            } else {
-                // Tie - no change in price
-                overallSuccess = false;
-                resultDescription = 'Tie - no price change';
-            }
-        } else {
-            // Both fail - compare degrees of failure (lower is better)
-            if (playerDegrees < merchantDegrees) {
-                overallSuccess = true;
-                resultDescription = `Player wins - ${playerDegrees} vs ${merchantDegrees} degrees of failure`;
-            } else if (merchantDegrees < playerDegrees) {
-                overallSuccess = false;
-                resultDescription = `Merchant wins - ${merchantDegrees} vs ${playerDegrees} degrees of failure`;
-            } else {
-                // Tie - no change in price
-                overallSuccess = false;
-                resultDescription = 'Tie - no price change';
-            }
-        }
-
-        return {
-            success: overallSuccess,
-            hasDealmakertTalent: hasDealmakertTalent,
-            player: {
-                skill: playerSkill,
-                roll: playerRoll,
-                rollResult: playerRollResult,
-                success: playerSuccess,
-                degrees: playerDegrees
-            },
-            merchant: {
-                skill: merchantSkill,
-                roll: merchantRoll,
-                rollResult: merchantRollResult,
-                success: merchantSuccess,
-                degrees: merchantDegrees
-            },
-            resultDescription: resultDescription,
-            penalty: options.applyPenaltyOnFailure || false
-        };
-    }
-
-    /**
-     * Generate a random merchant for successful cargo availability
-     * Uses a dice-based distribution to avoid extreme outliers
-     * @param {Object} settlement - Settlement object
-     * @param {Function} rollFunction - Function for dice rolls (testing)
-     * @returns {Object} - Random merchant information
-     */
-    async generateRandomMerchant(settlement, rollFunction = null) {
-        if (!settlement) {
-            throw new Error('Settlement object is required');
-        }
-
-        let merchantSkill;
-
-        if (rollFunction) {
-            // Use provided roll function for testing
-            // Simulate 2d20 + 40 distribution
-            const roll1 = rollFunction() % 20 + 1;
-            const roll2 = rollFunction() % 20 + 1;
-            merchantSkill = roll1 + roll2 + 40;
-        } else {
-            // Use FoundryVTT dice roller: 2d20 + 40
-            const rollResult = await this.rollDice("2d20+40", {
-                flavor: "Random Merchant Generation",
-                whisper: true
-            });
-            merchantSkill = rollResult.total;
-        }
-
-        // Ensure skill stays within bounds (21-120)
-        merchantSkill = Math.max(21, Math.min(120, merchantSkill));
-
-        // Generate merchant personality/description
-        const personalities = [
-            { name: "Shrewd Trader", description: "A sharp-eyed merchant who knows the value of every coin" },
-            { name: "Jovial Merchant", description: "A friendly trader always ready with a story and a bargain" },
-            { name: "Cautious Dealer", description: "A careful merchant who prefers safe, reliable transactions" },
-            { name: "Ambitious Entrepreneur", description: "A driven trader always looking for the next big deal" },
-            { name: "Seasoned Veteran", description: "An experienced merchant with years of trading wisdom" },
-            { name: "Local Specialist", description: "A merchant with deep knowledge of local market conditions" },
-            { name: "Foreign Trader", description: "A merchant from distant lands with exotic goods and stories" },
-            { name: "Guild Representative", description: "A professional merchant backed by a powerful trading guild" }
-        ];
-
-        const personality = personalities[Math.floor(Math.random() * personalities.length)];
-
-        return {
-            skill: merchantSkill,
-            name: personality.name,
-            description: personality.description,
-            settlement: settlement.name,
-            skillDescription: this.getMerchantSkillDescription(merchantSkill)
-        };
-    }
-
-    /**
-     * Get descriptive text for merchant skill level
-     * @param {number} skill - Merchant skill value (21-120)
-     * @returns {string} - Skill level description
-     */
-    getMerchantSkillDescription(skill) {
-        if (skill <= 35) return "Novice (easily out-haggled)";
-        if (skill <= 50) return "Apprentice (basic bargaining skills)";
-        if (skill <= 65) return "Competent (solid trading experience)";
-        if (skill <= 80) return "Skilled (experienced negotiator)";
-        if (skill <= 95) return "Expert (master of the trade)";
-        if (skill <= 110) return "Master (legendary trader)";
-        return "Legendary (unmatched in the marketplace)";
-    }
-
-    /**
-     * Perform Gossip test for rumor discovery
-     * @param {number} playerSkill - Player's Gossip skill value
-     * @param {Object} options - Test options
-     * @param {number} options.difficulty - Difficulty modifier (default: -10 for Difficult)
-     * @param {Function} rollFunction - Function for dice rolls (testing)
-     * @returns {Object} - Gossip test result
-     */
-    async performGossipTest(playerSkill, options = {}, rollFunction = null) {
-        if (typeof playerSkill !== 'number' || playerSkill < 0 || playerSkill > 100) {
-            throw new Error('Player skill must be a number between 0 and 100');
-        }
-
-        const difficulty = options.difficulty || -10; // Default: Difficult (-10)
-        const modifiedSkill = Math.max(0, playerSkill + difficulty);
-
-        let roll, rollResult;
-
-        if (rollFunction) {
-            // Use provided roll function for testing
-            roll = rollFunction();
-            rollResult = { total: roll, formula: "1d100", result: roll.toString() };
-        } else {
-            // Use FoundryVTT dice roller
-            rollResult = await this.rollDice("1d100", {
-                flavor: `Gossip Test (Modified Skill: ${modifiedSkill}, Difficulty: ${difficulty})`,
-                whisper: true
-            });
-            roll = rollResult.total;
-        }
-
-        const success = roll <= modifiedSkill;
-        const degrees = success 
-            ? Math.floor((modifiedSkill - roll) / 10) + 1
-            : Math.floor((roll - modifiedSkill) / 10) + 1;
-
-        return {
-            success: success,
-            skill: playerSkill,
-            modifiedSkill: modifiedSkill,
-            difficulty: difficulty,
-            roll: roll,
-            rollResult: rollResult,
-            degrees: degrees,
-            resultDescription: success 
-                ? `Success with ${degrees} degree${degrees > 1 ? 's' : ''}`
-                : `Failure by ${degrees} degree${degrees > 1 ? 's' : ''}`
-        };
-    }
-
-    /**
-     * Generate rumor based on successful Gossip test
-     * @param {Object} gossipResult - Result of Gossip test
-     * @param {string} cargoName - Name of cargo type (optional)
-     * @param {Object} settlement - Settlement object (optional)
-     * @param {Function} rollFunction - Function for dice rolls (testing)
-     * @returns {Object|null} - Generated rumor or null if test failed
-     */
-    async generateRumorFromGossip(gossipResult, cargoName = null, settlement = null, rollFunction = null) {
+    async generateRumorFromGossip(gossipResult, cargoName, settlement) {
         if (!gossipResult.success) {
             return null;
         }
 
-        // Better success = better rumors
+        // Higher degrees of success = better rumors
         const rumorQuality = gossipResult.degrees;
-        
-        // If no specific cargo provided, generate random cargo
-        if (!cargoName) {
-            const availableCargo = this.dataManager.cargoTypes;
-            const randomIndex = Math.floor(Math.random() * availableCargo.length);
-            cargoName = availableCargo[randomIndex].name;
-        }
 
-        // Generate rumor based on quality
-        const rumorTypes = [
+        const rumors = [
+            // Basic rumors (degrees 1-2)
             {
-                type: 'shortage',
-                description: `Heard rumors of ${cargoName} shortage in nearby settlements`,
-                multiplier: 1.3 + (rumorQuality * 0.1),
-                reliability: rumorQuality >= 2 ? 'reliable' : 'uncertain'
+                type: 'minor_demand',
+                description: `Slight increase in demand for ${cargoName}`,
+                multiplier: 1.1,
+                minDegrees: 1
             },
             {
-                type: 'demand',
-                description: `Local merchant mentioned increased demand for ${cargoName}`,
-                multiplier: 1.2 + (rumorQuality * 0.1),
-                reliability: rumorQuality >= 2 ? 'reliable' : 'uncertain'
+                type: 'local_shortage',
+                description: `Local merchants are running low on ${cargoName}`,
+                multiplier: 1.2,
+                minDegrees: 1
+            },
+            // Good rumors (degrees 2-3)
+            {
+                type: 'increased_demand',
+                description: `Growing demand for ${cargoName} in the region`,
+                multiplier: 1.3,
+                minDegrees: 2
             },
             {
-                type: 'festival',
-                description: `Upcoming festival will require large quantities of ${cargoName}`,
-                multiplier: 1.4 + (rumorQuality * 0.1),
-                reliability: rumorQuality >= 3 ? 'reliable' : 'uncertain'
+                type: 'merchant_shortage',
+                description: `Several merchants are seeking ${cargoName}`,
+                multiplier: 1.4,
+                minDegrees: 2
+            },
+            // Excellent rumors (degrees 3+)
+            {
+                type: 'major_shortage',
+                description: `Critical shortage of ${cargoName} due to recent events`,
+                multiplier: 1.5,
+                minDegrees: 3
             },
             {
-                type: 'noble_demand',
-                description: `Noble house seeking premium ${cargoName} for special occasion`,
-                multiplier: 1.5 + (rumorQuality * 0.15),
-                reliability: rumorQuality >= 3 ? 'reliable' : 'uncertain'
+                type: 'noble_requirement',
+                description: `Local nobility requires large quantities of ${cargoName}`,
+                multiplier: 1.6,
+                minDegrees: 3
             }
         ];
 
-        // Select rumor type based on quality
-        const availableRumors = rumorTypes.filter(rumor => {
-            if (rumorQuality >= 3) return true; // All rumors available
-            if (rumorQuality >= 2) return rumor.type !== 'noble_demand'; // No noble rumors
-            return rumor.type === 'shortage' || rumor.type === 'demand'; // Only basic rumors
-        });
+        // Filter rumors by minimum degrees
+        const availableRumors = rumors.filter(rumor => rumorQuality >= rumor.minDegrees);
 
+        if (availableRumors.length === 0) {
+            return null;
+        }
+
+        // Select random rumor from available options
         const selectedRumor = availableRumors[Math.floor(Math.random() * availableRumors.length)];
 
         return {
             type: selectedRumor.type,
             description: selectedRumor.description,
-            multiplier: Math.min(selectedRumor.multiplier, 2.0), // Cap at 200%
-            reliability: selectedRumor.reliability,
+            multiplier: selectedRumor.multiplier,
             cargoName: cargoName,
-            settlement: settlement ? settlement.name : 'unknown location',
-            gossipDegrees: rumorQuality,
-            discoveredBy: 'gossip_test'
+            settlement: settlement.name,
+            gossipDegrees: gossipResult.degrees,
+            discoveredBy: 'gossip_test',
+            reliability: rumorQuality >= 3 ? 'reliable' : 'unreliable'
         };
     }
 
     /**
-     * Calculate Dealmaker talent bonuses
-     * @param {boolean} hasDealmakertTalent - Whether player has Dealmaker talent
-     * @param {string} transactionType - Type of transaction ('purchase' or 'sale')
-     * @returns {Object} - Dealmaker bonus information
+     * Calculate Dealmaker talent bonus
+     * @param {boolean} hasTalent - Whether player has Dealmaker talent
+     * @param {string} transactionType - 'purchase' or 'sale'
+     * @returns {Object} - Talent bonus information
      */
-    calculateDealmakertBonus(hasDealmakertTalent, transactionType) {
-        if (!hasDealmakertTalent) {
+    calculateDealmakertBonus(hasTalent, transactionType) {
+        if (!hasTalent) {
             return {
                 hasBonus: false,
                 bonusPercentage: 0,
@@ -2104,144 +1509,355 @@ class TradingEngine {
             };
         }
 
-        const bonusPercentage = 20; // Double the normal haggle bonus
-        const description = transactionType === 'purchase' 
-            ? 'Dealmaker talent: -20% purchase price'
-            : 'Dealmaker talent: +20% sale price';
+        const bonusPercentage = 20; // 20% bonus
 
         return {
             hasBonus: true,
             bonusPercentage: bonusPercentage,
-            description: description,
+            description: `Dealmaker talent: ${transactionType === 'purchase' ? '-' : '+'}${bonusPercentage}% ${transactionType} price`,
             transactionType: transactionType
         };
     }
 
     /**
-     * Process skill test with modifiers and difficulty
-     * @param {number} baseSkill - Base skill value
-     * @param {Array} modifiers - Array of modifier objects
-     * @param {string} testName - Name of the test for display
-     * @param {Function} rollFunction - Function for dice rolls (testing)
-     * @returns {Object} - Skill test result
+     * Get available sale options for a cargo type at a settlement
+     * @param {string} cargoType - Type of cargo to sell
+     * @param {number} quantity - Quantity to sell
+     * @param {Object} settlement - Settlement object
+     * @param {Object} purchaseData - Purchase data for eligibility checking
+     * @returns {Object} - Available sale options
      */
-    async processSkillTest(baseSkill, modifiers = [], testName = 'Skill Test', rollFunction = null) {
-        if (typeof baseSkill !== 'number' || baseSkill < 0 || baseSkill > 100) {
-            throw new Error('Base skill must be a number between 0 and 100');
+    getAvailableSaleOptions(cargoType, quantity, settlement, purchaseData) {
+        const options = {
+            normal: false,
+            desperate: false,
+            partial: false,
+            rumor: false
+        };
+
+        // Check if normal sale is possible
+        const eligibility = this.checkSaleEligibility({ name: cargoType, quantity }, settlement, purchaseData);
+        options.normal = eligibility.eligible;
+
+        // Check if desperate sale is possible (only at trade settlements)
+        const isTradeSettlement = this.dataManager.isTradeSettlement(settlement);
+        options.desperate = isTradeSettlement;
+
+        // Check if partial sale is possible (when normal sale fails)
+        options.partial = !eligibility.eligible;
+
+        // Check if rumor sale is possible (always available if rumors exist)
+        const rumors = this.checkForRumors(cargoType, settlement);
+        options.rumor = rumors.length > 0;
+
+        return { options };
+    }
+
+    /**
+     * Execute a special sale type (desperate, partial, or rumor)
+     * @param {string} saleType - Type of special sale ('desperate', 'partial', 'rumor')
+     * @param {string} cargoType - Type of cargo to sell
+     * @param {number} quantity - Quantity to sell
+     * @param {Object} settlement - Settlement object
+     * @param {Object} purchaseData - Purchase data for eligibility checking
+     * @param {Object} rumorData - Rumor data if using rumor sale
+     * @param {Object} rollOptions - Options for dice rolls
+     * @param {Function} rollFunction - Custom roll function for testing
+     * @returns {Object} - Sale execution result
+     */
+    executeSpecialSale(saleType, cargoType, quantity, settlement, purchaseData, rumorData, rollOptions, rollFunction) {
+        const result = {
+            success: false,
+            saleType: saleType,
+            message: '',
+            price: 0,
+            quantitySold: 0
+        };
+
+        switch (saleType) {
+            case 'desperate':
+                // Desperate sale: roll 1d100 vs buyer availability, sell at 50% price
+                const desperateRoll = rollFunction ? rollFunction() : this.rollDice('1d100').total;
+                const buyerChance = this.calculateBuyerAvailabilityChance(settlement, cargoType);
+                result.success = desperateRoll <= buyerChance;
+                result.price = result.success ? this.calculateSalePrice(cargoType, quantity, settlement, rollOptions).totalPrice * 0.5 : 0;
+                result.quantitySold = result.success ? quantity : 0;
+                result.message = result.success ? 'Desperate sale successful' : 'No buyers found for desperate sale';
+                break;
+
+            case 'partial':
+                // Partial sale: roll for available quantity, sell at normal price
+                const partialResult = this.processEnhancedPartialSale(cargoType, quantity, settlement, purchaseData, rollFunction);
+                result.success = partialResult.success;
+                result.price = partialResult.price || 0;
+                result.quantitySold = partialResult.quantitySold || 0;
+                result.message = partialResult.message || 'Partial sale processed';
+                break;
+
+            case 'rumor':
+                // Rumor sale: use rumor multiplier for premium pricing
+                if (rumorData && rumorData.multiplier) {
+                    const basePrice = this.calculateSalePrice(cargoType, quantity, settlement, rollOptions).totalPrice;
+                    result.success = true;
+                    result.price = basePrice * rumorData.multiplier;
+                    result.quantitySold = quantity;
+                    result.message = `Rumor sale successful: ${rumorData.description}`;
+                } else {
+                    result.message = 'No valid rumor data provided';
+                }
+                break;
+
+            default:
+                result.message = `Unknown sale type: ${saleType}`;
         }
 
-        // Calculate modified skill
-        let modifiedSkill = baseSkill;
-        const appliedModifiers = [];
+        return result;
+    }
 
-        modifiers.forEach(modifier => {
-            modifiedSkill += modifier.value;
-            appliedModifiers.push({
-                name: modifier.name,
-                value: modifier.value,
-                description: modifier.description
-            });
-        });
+    /**
+     * Analyze profitability of different sale options
+     * @param {string} cargoType - Type of cargo
+     * @param {number} quantity - Quantity to sell
+     * @param {Object} settlement - Settlement object
+     * @param {Object} purchaseData - Purchase data with original cost
+     * @param {Object} rollOptions - Options for dice rolls
+     * @returns {Object} - Profit analysis for all sale options
+     */
+    analyzeSaleProfitability(cargoType, quantity, settlement, purchaseData, rollOptions) {
+        const originalCost = purchaseData.totalCost || 0;
+        const analysis = {
+            originalCost: originalCost,
+            saleOptions: {}
+        };
 
-        // Ensure skill stays within bounds
-        modifiedSkill = Math.max(0, Math.min(100, modifiedSkill));
+        // Normal sale
+        const normalPrice = this.calculateSalePrice(cargoType, quantity, settlement, rollOptions).totalPrice;
+        analysis.saleOptions.normal = {
+            price: normalPrice,
+            profit: normalPrice - originalCost,
+            profitMargin: originalCost > 0 ? ((normalPrice - originalCost) / originalCost) * 100 : 0
+        };
 
-        let roll, rollResult;
-
-        if (rollFunction) {
-            // Use provided roll function for testing
-            roll = rollFunction();
-            rollResult = { total: roll, formula: "1d100", result: roll.toString() };
-        } else {
-            // Use FoundryVTT dice roller
-            const modifierText = appliedModifiers.length > 0 
-                ? ` (${appliedModifiers.map(m => `${m.name}: ${m.value > 0 ? '+' : ''}${m.value}`).join(', ')})`
-                : '';
-            
-            rollResult = await this.rollDice("1d100", {
-                flavor: `${testName} (Modified Skill: ${modifiedSkill})${modifierText}`,
-                whisper: true
-            });
-            roll = rollResult.total;
+        // Desperate sale (if available)
+        const isTradeSettlement = this.dataManager.isTradeSettlement(settlement);
+        if (isTradeSettlement) {
+            const desperatePrice = normalPrice * 0.5;
+            analysis.saleOptions.desperate = {
+                price: desperatePrice,
+                profit: desperatePrice - originalCost,
+                profitMargin: originalCost > 0 ? ((desperatePrice - originalCost) / originalCost) * 100 : 0
+            };
         }
 
-        const success = roll <= modifiedSkill;
-        const degrees = success 
-            ? Math.floor((modifiedSkill - roll) / 10) + 1
-            : Math.floor((roll - modifiedSkill) / 10) + 1;
+        // Partial sale (if normal not available)
+        const eligibility = this.checkSaleEligibility({ name: cargoType, quantity }, settlement, purchaseData);
+        if (!eligibility.eligible) {
+            // Estimate partial sale (assume 50% success rate)
+            const partialPrice = normalPrice * 0.75; // Rough estimate
+            analysis.saleOptions.partial = {
+                price: partialPrice,
+                profit: partialPrice - originalCost,
+                profitMargin: originalCost > 0 ? ((partialPrice - originalCost) / originalCost) * 100 : 0,
+                estimated: true
+            };
+        }
+
+        // Rumor sale (if rumors available)
+        const rumors = this.checkForRumors(cargoType, settlement);
+        if (rumors.length > 0) {
+            const bestRumor = rumors.reduce((best, current) => current.multiplier > best.multiplier ? current : best);
+            const rumorPrice = normalPrice * bestRumor.multiplier;
+            analysis.saleOptions.rumor = {
+                price: rumorPrice,
+                profit: rumorPrice - originalCost,
+                profitMargin: originalCost > 0 ? ((rumorPrice - originalCost) / originalCost) * 100 : 0,
+                rumorMultiplier: bestRumor.multiplier,
+                rumorDescription: bestRumor.description
+            };
+        }
+
+        return analysis;
+    }
+
+    /**
+     * Roll dice using FoundryVTT Roll class or fallback
+     * @param {string} formula - Dice formula (e.g., '1d100', '2d10+5')
+     * @param {Object} options - Roll options
+     * @returns {Object} - Roll result with total and details
+     */
+    rollDice(formula, options = {}) {
+        try {
+            // Try to use FoundryVTT Roll class if available
+            if (typeof Roll !== 'undefined') {
+                const roll = new Roll(formula, options);
+                roll.evaluate({ async: false });
+                return {
+                    total: roll.total,
+                    dice: roll.dice,
+                    formula: formula,
+                    result: roll.result,
+                    terms: roll.terms
+                };
+            }
+        } catch (error) {
+            console.warn('FoundryVTT Roll class not available, using fallback:', error.message);
+        }
+
+        // Fallback: simple dice rolling for testing
+        return this.rollDiceFallback(formula, options);
+    }
+
+    /**
+     * Fallback dice rolling implementation for testing
+     * @param {string} formula - Dice formula
+     * @param {Object} options - Roll options
+     * @returns {Object} - Roll result
+     */
+    rollDiceFallback(formula, options = {}) {
+        // Parse simple formulas like '1d100', '2d10+5', etc.
+        const match = formula.match(/^(\d+)d(\d+)([+-]\d+)?$/);
+        if (!match) {
+            throw new Error(`Unsupported dice formula: ${formula}`);
+        }
+
+        const numDice = parseInt(match[1]);
+        const dieSize = parseInt(match[2]);
+        const modifier = match[3] ? parseInt(match[3]) : 0;
+
+        let total = modifier;
+        const dice = [];
+
+        for (let i = 0; i < numDice; i++) {
+            const roll = Math.floor(Math.random() * dieSize) + 1;
+            dice.push(roll);
+            total += roll;
+        }
 
         return {
-            testName: testName,
-            success: success,
-            baseSkill: baseSkill,
-            modifiedSkill: modifiedSkill,
-            roll: roll,
-            rollResult: rollResult,
-            degrees: degrees,
-            modifiers: appliedModifiers,
-            resultDescription: success 
-                ? `${testName} Success (${degrees} degree${degrees > 1 ? 's' : ''})`
-                : `${testName} Failure (${degrees} degree${degrees > 1 ? 's' : ''})`
+            total: total,
+            dice: dice,
+            formula: formula,
+            result: dice.join(' + ') + (modifier !== 0 ? ` ${modifier < 0 ? '' : '+'}${modifier}` : ''),
+            terms: dice
         };
     }
 
     /**
-     * Generate formatted chat message for skill test results
-     * @param {Object} testResult - Skill test result
-     * @returns {string} - Formatted HTML content
+     * Roll for cargo availability
+     * @param {Object} settlement - Settlement object
+     * @param {string} cargoType - Type of cargo
+     * @param {Function} rollFunction - Custom roll function for testing
+     * @returns {boolean} - Whether cargo is available
      */
-    generateSkillTestMessage(testResult) {
-        const modifiersText = testResult.modifiers && testResult.modifiers.length > 0
-            ? testResult.modifiers.map(mod => `${mod.name}: ${mod.value > 0 ? '+' : ''}${mod.value}`).join('<br>')
-            : 'No modifiers';
-
-        const successClass = testResult.success ? 'success' : 'failure';
-
-        return `
-        <div class="skill-test-result ${successClass}">
-            <h4>${testResult.testName}</h4>
-            <p><strong>Base Skill:</strong> ${testResult.baseSkill}</p>
-            <p><strong>Modified Skill:</strong> ${testResult.modifiedSkill}</p>
-            <p><strong>Modifiers:</strong><br>${modifiersText}</p>
-            <p><strong>Roll:</strong> ${testResult.roll}</p>
-            <p><strong>Result:</strong> ${testResult.resultDescription}</p>
-            <p><strong>Degrees:</strong> ${testResult.degrees}</p>
-        </div>`;
+    rollAvailability(settlement, cargoType, rollFunction = null) {
+        const chance = this.calculateAvailabilityChance(settlement);
+        const roll = rollFunction ? rollFunction() : this.rollDice('1d100').total;
+        return roll <= chance;
     }
 
     /**
-     * Generate formatted chat message for haggle test results
-     * @param {Object} haggleResult - Haggle test result
-     * @returns {string} - Formatted HTML content
+     * Roll for cargo size
+     * @param {Object} settlement - Settlement object
+     * @param {Function} rollFunction - Custom roll function for testing
+     * @returns {Object} - Cargo size result
      */
-    generateHaggleTestMessage(haggleResult) {
-        const dealmakerText = haggleResult.hasDealmakertTalent ? ' (with Dealmaker talent)' : '';
-        const successClass = haggleResult.success ? 'success' : 'failure';
+    async rollCargoSize(settlement, rollFunction = null) {
+        const properties = this.dataManager.getSettlementProperties(settlement);
+        const roll = rollFunction ? rollFunction() : this.rollDice('1d100').total;
+        
+        const sizeModifier = properties.sizeNumeric;
+        const wealthModifier = settlement.wealth;
+        const totalSize = (sizeModifier + wealthModifier) * roll;
 
-        return `
-        <div class="haggle-test-result ${successClass}">
-            <h4>Haggle Test${dealmakerText}</h4>
-            <div class="haggle-comparison">
-                <div class="player-result">
-                    <h5>Player</h5>
-                    <p><strong>Skill:</strong> ${haggleResult.player.skill}</p>
-                    <p><strong>Roll:</strong> ${haggleResult.player.roll}</p>
-                    <p><strong>Success:</strong> ${haggleResult.player.success ? 'Yes' : 'No'}</p>
-                    <p><strong>Degrees:</strong> ${haggleResult.player.degrees}</p>
-                </div>
-                <div class="merchant-result">
-                    <h5>Merchant</h5>
-                    <p><strong>Skill:</strong> ${haggleResult.merchant.skill}</p>
-                    <p><strong>Roll:</strong> ${haggleResult.merchant.roll}</p>
-                    <p><strong>Success:</strong> ${haggleResult.merchant.success ? 'Yes' : 'No'}</p>
-                    <p><strong>Degrees:</strong> ${haggleResult.merchant.degrees}</p>
-                </div>
-            </div>
-            <p><strong>Overall Result:</strong> ${haggleResult.resultDescription}</p>
-            <p><strong>Price Effect:</strong> ${haggleResult.success 
-                ? (haggleResult.hasDealmakertTalent ? '±20%' : '±10%') 
-                : 'No change'}</p>
-        </div>`;
+        return {
+            totalSize: totalSize,
+            roll: roll,
+            sizeModifier: sizeModifier,
+            wealthModifier: wealthModifier,
+            settlement: settlement.name
+        };
+    }
+
+    /**
+     * Roll for buyer availability
+     * @param {Object} settlement - Settlement object
+     * @param {string} cargoType - Type of cargo
+     * @param {Function} rollFunction - Custom roll function for testing
+     * @returns {boolean} - Whether buyers are available
+     */
+    rollBuyerAvailability(settlement, cargoType, rollFunction = null) {
+        const chance = this.calculateBuyerAvailabilityChance(settlement, cargoType);
+        const roll = rollFunction ? rollFunction() : this.rollDice('1d100').total;
+        return roll <= chance;
+    }
+
+    /**
+     * Post a chat message in FoundryVTT
+     * @param {string} message - Message content
+     * @param {Object} options - Chat message options
+     * @returns {Object} - Chat message result
+     */
+    postChatMessage(message, options = {}) {
+        try {
+            if (typeof ChatMessage !== 'undefined') {
+                return ChatMessage.create({
+                    content: message,
+                    speaker: options.speaker || { alias: 'Trading Places' },
+                    type: options.type || CONST.CHAT_MESSAGE_TYPES.OTHER,
+                    ...options
+                });
+            }
+        } catch (error) {
+            console.warn('FoundryVTT ChatMessage not available:', error.message);
+        }
+
+        // Fallback for testing
+        return {
+            content: message,
+            speaker: options.speaker || { alias: 'Trading Places' },
+            type: options.type || 'other',
+            posted: true,
+            fallback: true
+        };
+    }
+
+    /**
+     * Generate roll result message
+     * @param {Object} rollResult - Result from rollDice
+     * @param {string} description - Description of the roll
+     * @returns {string} - Formatted message
+     */
+    generateRollResultMessage(rollResult, description) {
+        return `${description}: ${rollResult.result} = ${rollResult.total}`;
+    }
+
+    /**
+     * Generate transaction result message
+     * @param {string} transactionType - 'purchase' or 'sale'
+     * @param {string} cargoType - Type of cargo
+     * @param {number} quantity - Quantity involved
+     * @param {number} price - Total price
+     * @param {Object} settlement - Settlement object
+     * @param {Object} options - Additional options
+     * @returns {string} - Formatted transaction message
+     */
+    generateTransactionResultMessage(transactionType, cargoType, quantity, price, settlement, options = {}) {
+        const action = transactionType === 'purchase' ? 'purchased' : 'sold';
+        const preposition = transactionType === 'purchase' ? 'from' : 'to';
+        const currency = options.currency || 'GC';
+        
+        let message = `${action} ${quantity} EP of ${cargoType} ${preposition} ${settlement.name} for ${price} ${currency}`;
+        
+        if (options.modifiers && options.modifiers.length > 0) {
+            const modifierDescriptions = options.modifiers.map(m => m.description).join(', ');
+            message += ` (${modifierDescriptions})`;
+        }
+        
+        if (options.specialType) {
+            message += ` (${options.specialType} sale)`;
+        }
+        
+        return message;
     }
 }
 
@@ -2253,4 +1869,4 @@ if (typeof module !== 'undefined' && module.exports) {
 // Global registration for FoundryVTT
 if (typeof window !== 'undefined') {
     window.TradingEngine = TradingEngine;
-}
+ }

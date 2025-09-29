@@ -22,6 +22,7 @@ describe('WFRPDebugLogger', () => {
     beforeEach(() => {
         logger = new WFRPDebugLogger();
         logger.setEnabled(true);
+        logger.clearHistory(); // Clear the initialization log entry for clean test state
     });
 
     afterEach(() => {
@@ -318,6 +319,7 @@ describe('WFRPLoggingUtils', () => {
     beforeEach(() => {
         logger = new WFRPDebugLogger();
         logger.setEnabled(true);
+        logger.clearHistory(); // Clear the initialization log entry for clean test state
     });
 
     test('should log WFRP rolls with automatic success determination', () => {

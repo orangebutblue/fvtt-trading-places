@@ -371,7 +371,8 @@ class EquilibriumCalculator {
 
 // Export for use in other modules
 if (typeof window !== 'undefined') {
-    window.WFRPTradingEquilibriumCalculator = EquilibriumCalculator;
+    window.EquilibriumCalculator = EquilibriumCalculator;
+    window.WFRPTradingEquilibriumCalculator = EquilibriumCalculator; // Keep legacy name for compatibility
 }
 
 if (typeof module !== 'undefined' && module.exports) {

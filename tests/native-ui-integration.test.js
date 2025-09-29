@@ -17,6 +17,10 @@ describe('WFRPNativeUIIntegration', () => {
             WFRPNativeUIIntegration: undefined
         };
 
+        // Clear any existing trading applications
+        global.WFRPTradingApplication = undefined;
+        global.WFRPSimpleTradingApplication = undefined;
+
         global.console = {
             log: jest.fn()
         };

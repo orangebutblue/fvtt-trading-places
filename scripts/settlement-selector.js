@@ -512,6 +512,8 @@ class SettlementSelector {
 }
 
 // Export for ES6 modules
+export { SettlementSelector };
+
 // Export for global access
 window.SettlementSelector = SettlementSelector;
 console.log('Trading Places | SettlementSelector class registered globally');

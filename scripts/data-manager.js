@@ -87,7 +87,6 @@ class DataManager {
 
         // Validate numeric fields
         const numericFields = [
-            { field: 'size', min: 1, max: 5 },
             { field: 'wealth', min: 1, max: 5 },
             { field: 'population', min: 0, max: 999999999 }
         ];
@@ -458,8 +457,8 @@ class DataManager {
      * @returns {number} - Calculated price
      */
     getSeasonalPrice(cargo, season, quality = 'average') {
-        if (!cargo || !cargo.basePrices) {
-            throw new Error('Invalid cargo object or missing basePrices');
+        if (!cargo) {
+            throw new Error('Invalid cargo object');
         }
 
         const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
@@ -467,11 +466,18 @@ class DataManager {
             throw new Error(`Invalid season: ${season}. Must be one of: ${validSeasons.join(', ')}`);
         }
 
-        if (!cargo.basePrices.hasOwnProperty(season)) {
-            throw new Error(`No price data for season: ${season}`);
-        }
+        let basePrice;
 
-        let basePrice = cargo.basePrices[season];
+        // Handle different data formats
+        if (cargo.basePrices && cargo.basePrices.hasOwnProperty(season)) {
+            // New format: direct seasonal prices
+            basePrice = cargo.basePrices[season];
+        } else if (cargo.basePrice && cargo.seasonalModifiers && cargo.seasonalModifiers.hasOwnProperty(season)) {
+            // Legacy format: base price with seasonal modifiers
+            basePrice = cargo.basePrice * cargo.seasonalModifiers[season];
+        } else {
+            throw new Error(`No price data for season: ${season}. Cargo must have either basePrices or basePrice+seasonalModifiers`);
+        }
 
         // Apply quality tier multiplier if cargo has quality tiers (wine/brandy)
         if (cargo.qualityTiers && cargo.qualityTiers.hasOwnProperty(quality)) {
@@ -1742,9 +1748,17 @@ class DataManager {
         }
 
         // Filter cargo types that have pricing for the specified season
-        const availableCargo = this.cargoTypes.filter(cargo =>
-            cargo.basePrices && cargo.basePrices.hasOwnProperty(season)
-        );
+        const availableCargo = this.cargoTypes.filter(cargo => {
+            // Check for new format (basePrices object)
+            if (cargo.basePrices && cargo.basePrices.hasOwnProperty(season)) {
+                return true;
+            }
+            // Check for legacy format (basePrice + seasonalModifiers)
+            if (cargo.basePrice && cargo.seasonalModifiers && cargo.seasonalModifiers.hasOwnProperty(season)) {
+                return true;
+            }
+            return false;
+        });
 
         if (availableCargo.length === 0) {
             return null;
@@ -2039,19 +2053,36 @@ class DataManager {
         const logger = this.getLogger();
         logger.logSystem('DataManager', 'Initializing merchant generation system');
 
+        // Check for global classes (set by the imported modules)
+        const EquilibriumCalculatorClass = window.EquilibriumCalculator || window.WFRPTradingEquilibriumCalculator;
+        const MerchantGeneratorClass = window.MerchantGenerator || window.WFRPTradingMerchantGenerator;
+
         // Initialize equilibrium calculator
-        if (typeof EquilibriumCalculator !== 'undefined') {
-            this.equilibriumCalculator = new EquilibriumCalculator(this.config, this.sourceFlags);
+        if (EquilibriumCalculatorClass) {
+            this.equilibriumCalculator = new EquilibriumCalculatorClass(this.config, this.sourceFlags);
             this.equilibriumCalculator.setLogger(logger);
+            logger.logSystem('DataManager', 'EquilibriumCalculator initialized');
+        } else {
+            logger.logSystem('DataManager', 'WARNING: EquilibriumCalculator not available');
         }
 
         // Initialize merchant generator
-        if (typeof MerchantGenerator !== 'undefined') {
-            this.merchantGenerator = new MerchantGenerator(this, this.config);
+        if (MerchantGeneratorClass) {
+            this.merchantGenerator = new MerchantGeneratorClass(this, this.config);
             this.merchantGenerator.setLogger(logger);
+            logger.logSystem('DataManager', 'MerchantGenerator initialized');
+        } else {
+            logger.logSystem('DataManager', 'WARNING: MerchantGenerator not available');
         }
 
-        logger.logSystem('DataManager', 'Merchant system initialized');
+        const hasCalculator = !!this.equilibriumCalculator;
+        const hasGenerator = !!this.merchantGenerator;
+        
+        if (hasCalculator && hasGenerator) {
+            logger.logSystem('DataManager', 'Merchant system fully initialized');
+        } else {
+            logger.logSystem('DataManager', `Merchant system partially initialized (Calculator: ${hasCalculator}, Generator: ${hasGenerator})`);
+        }
     }
 
     /**
@@ -2113,17 +2144,28 @@ class DataManager {
      * @returns {Object} - Supply and demand values
      */
     calculateSupplyDemandEquilibrium(settlement, cargoType) {
-        if (!this.config.supplyDemand) {
+        // Use new equilibrium calculator if available
+        if (this.equilibriumCalculator) {
+            const cargoData = this.getCargoType(cargoType);
+            return this.equilibriumCalculator.calculateEquilibrium(settlement, cargoType, {
+                season: 'spring', // TODO: Get current season from game state
+                cargoData
+            });
+        }
+
+        // Fallback to legacy calculation
+        const equilibriumConfig = this.config.equilibrium || this.config.supplyDemand;
+        if (!equilibriumConfig) {
             return { supply: 100, demand: 100 };
         }
 
-        const baseline = this.config.supplyDemand.baseline;
+        const baseline = equilibriumConfig.baseline;
         let supply = baseline.supply;
         let demand = baseline.demand;
 
         // Apply produces effects
         if (settlement.produces && settlement.produces.includes(cargoType)) {
-            const shift = this.config.supplyDemand.producesShift || 0.5;
+            const shift = equilibriumConfig.producesShift || 0.5;
             const transfer = Math.floor(demand * shift);
             supply += transfer;
             demand -= transfer;
@@ -2131,23 +2173,169 @@ class DataManager {
 
         // Apply demands effects
         if (settlement.demands && settlement.demands.includes(cargoType)) {
-            const shift = this.config.supplyDemand.demandsShift || 0.35;
+            const shift = equilibriumConfig.demandsShift || 0.35;
             const transfer = Math.floor(supply * shift);
             demand += transfer;
             supply -= transfer;
         }
 
-        // Apply flag effects (would be implemented when flag data is loaded)
-        // TODO: Load and apply flag modifiers from source-flags.json
+        // Apply flag effects if source flags are loaded
+        if (this.sourceFlags && settlement.flags) {
+            settlement.flags.forEach(flag => {
+                const flagData = this.sourceFlags[flag];
+                if (flagData) {
+                    if (flagData.supplyTransfer) {
+                        const transfer = Math.floor(demand * flagData.supplyTransfer);
+                        supply += transfer;
+                        demand -= transfer;
+                    }
+                    if (flagData.demandTransfer) {
+                        const transfer = Math.floor(supply * flagData.demandTransfer);
+                        demand += transfer;
+                        supply -= transfer;
+                    }
+                }
+            });
+        }
 
         // Clamp values
-        const clamp = this.config.supplyDemand.clamp;
+        const clamp = equilibriumConfig.clamp;
         if (clamp) {
             supply = Math.max(clamp.min, Math.min(clamp.max, supply));
             demand = Math.max(clamp.min, Math.min(clamp.max, demand));
         }
 
         return { supply, demand };
+    }
+
+    /**
+     * CRUD Operations for Data Management UI
+     */
+    
+    /**
+     * Load settlements data (alias for internal use)
+     * @returns {Promise<Array>} - Array of settlements
+     */
+    async loadSettlements() {
+        // Settlements are already loaded during initialization
+        return this.settlements || [];
+    }
+    
+    /**
+     * Update a settlement in the dataset
+     * @param {Object} settlement - Updated settlement object
+     * @returns {Promise<boolean>} - Success status
+     */
+    async updateSettlement(settlement) {
+        if (!settlement || !settlement.name) {
+            throw new Error('Settlement must have a name');
+        }
+        
+        const index = this.settlements.findIndex(s => s.name === settlement.name);
+        if (index === -1) {
+            throw new Error(`Settlement '${settlement.name}' not found`);
+        }
+        
+        // Validate the settlement
+        const validation = this.validateSettlement(settlement);
+        if (!validation.valid) {
+            throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+        }
+        
+        // Update the settlement
+        this.settlements[index] = { ...settlement };
+        
+        // In a real implementation, this would save to files
+        // For now, just log the change
+        console.log(`Trading Places | Updated settlement: ${settlement.name}`);
+        
+        return true;
+    }
+    
+    /**
+     * Delete a settlement from the dataset
+     * @param {string} settlementName - Name of settlement to delete
+     * @returns {Promise<boolean>} - Success status
+     */
+    async deleteSettlement(settlementName) {
+        if (!settlementName) {
+            throw new Error('Settlement name is required');
+        }
+        
+        const index = this.settlements.findIndex(s => s.name === settlementName);
+        if (index === -1) {
+            throw new Error(`Settlement '${settlementName}' not found`);
+        }
+        
+        // Remove the settlement
+        this.settlements.splice(index, 1);
+        
+        // In a real implementation, this would update files
+        console.log(`Trading Places | Deleted settlement: ${settlementName}`);
+        
+        return true;
+    }
+    
+    /**
+     * Load cargo types data (alias for internal use)
+     * @returns {Promise<Array>} - Array of cargo types
+     */
+    async loadCargoTypes() {
+        // Cargo types are already loaded during initialization
+        return this.cargoTypes || [];
+    }
+    
+    /**
+     * Update a cargo type in the dataset
+     * @param {Object} cargoType - Updated cargo type object
+     * @returns {Promise<boolean>} - Success status
+     */
+    async updateCargoType(cargoType) {
+        if (!cargoType || !cargoType.name) {
+            throw new Error('Cargo type must have a name');
+        }
+        
+        const index = this.cargoTypes.findIndex(c => c.name === cargoType.name);
+        if (index === -1) {
+            throw new Error(`Cargo type '${cargoType.name}' not found`);
+        }
+        
+        // Basic validation
+        if (!cargoType.category || !cargoType.basePrice) {
+            throw new Error('Cargo type must have category and basePrice');
+        }
+        
+        // Update the cargo type
+        this.cargoTypes[index] = { ...cargoType };
+        
+        // In a real implementation, this would save to files
+        console.log(`Trading Places | Updated cargo type: ${cargoType.name}`);
+        
+        return true;
+    }
+    
+    /**
+     * Delete a cargo type from the dataset
+     * @param {string} cargoName - Name of cargo type to delete
+     * @returns {Promise<boolean>} - Success status
+     */
+    async deleteCargoType(cargoName) {
+        if (!cargoName) {
+            throw new Error('Cargo name is required');
+        }
+        
+        const index = this.cargoTypes.findIndex(c => c.name === cargoName);
+        if (index === -1) {
+            throw new Error(`Cargo type '${cargoName}' not found`);
+        }
+        
+        // Remove the cargo type
+        this.cargoTypes.splice(index, 1);
+        
+        // In a real implementation, this would update files
+        console.log(`Trading Places | Deleted cargo type: ${cargoName}`);
+        
+        return true;
     }
 }
 

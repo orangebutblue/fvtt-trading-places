@@ -440,7 +440,8 @@ class MerchantGenerator {
 
 // Export for use in other modules
 if (typeof window !== 'undefined') {
-    window.WFRPTradingMerchantGenerator = MerchantGenerator;
+    window.MerchantGenerator = MerchantGenerator;
+    window.WFRPTradingMerchantGenerator = MerchantGenerator; // Keep legacy name for compatibility
 }
 
 if (typeof module !== 'undefined' && module.exports) {

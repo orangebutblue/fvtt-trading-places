@@ -19,6 +19,8 @@
     "scripts/debug-ui.js",
     "scripts/error-handler.js",
     "scripts/config-validator.js",
+    "scripts/equilibrium-calculator.js",
+    "scripts/merchant-generator.js",
     "scripts/data-manager.js",
     "scripts/system-adapter.js",
     "scripts/trading-engine.js",
@@ -30,11 +32,15 @@
     "scripts/fallback-dialogs-v2.js",
     "scripts/simple-trading-v2.js",
     "scripts/trading-application-v2.js",
+    "scripts/data-management-ui.js",
+    "scripts/trading-dialog-enhanced.js",
     "scripts/proper-scene-controls.js",
     "scripts/main.js"
   ],
   "styles": [
-    "styles/trading.css"
+    "styles/trading.css",
+    "styles/data-management.css",
+    "styles/trading-dialog-enhanced.css"
   ],
   "languages": [
     {
@@ -69,7 +75,6 @@
     "flags": {}
   },
   "socket": false,
-  "manifest": "https://github.com/foundry-modules/trading-places/releases/latest/download/module.json",
   "protected": false,
   "coreTranslation": false
 }

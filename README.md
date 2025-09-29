@@ -119,11 +119,14 @@ Undersupplied (1:3 ratio): Scarce goods, higher prices
 Desperate (supply < 20): Auto-triggers desperation rerolls
 ```
 
-### Testing & Validation
+**Testing & Validation**
 
 ```bash
-# Test new merchant system
+# Test new merchant system (mock mode)
 npm run harness:phase3
+
+# Test with real module integration
+HARNESS_EXPECT_REAL_MODULE=1 npm run harness:phase3
 
 # Test data schema compliance  
 npm run validate:schema
@@ -132,7 +135,53 @@ npm run validate:schema
 npm run harness
 ```
 
+**⚠️ Integration Notes**: Phase 3 has been fully integrated with the main module. The merchant generation system loads during module startup and enhances existing trading functionality. See [Phase 3 Integration Fixes](PHASE3_INTEGRATION_FIXES.md) for technical details.
+
 See [Phase 3 Summary](PHASE3_SUMMARY.md) for complete implementation details.
+
+## Phase 4: Data Authoring & UI Tooling - COMPLETE ✅
+
+The UI system has been completely rebuilt with professional data management interfaces and an enhanced trading dialog featuring equilibrium visualization and merchant personality systems.
+
+### Key Achievements
+
+- **Data Management UI** with real-time validation and change tracking
+- **Enhanced Trading Dialog** with supply/demand visualization
+- **Merchant personality display** with behavioral traits and special abilities
+- **Transaction management** with undo functionality and chat export
+- **Equilibrium visualization** with color-coded state indicators
+- **Responsive design** supporting desktop and mobile interfaces
+
+### User Interface Features
+
+```bash
+# Test data management interface
+npm run harness:phase4:ui
+
+# Test trading dialog functionality  
+npm run harness:phase4
+
+# Test all UI components
+npm run harness:ui
+```
+
+### Data Management Capabilities
+
+- **Settlement Editor**: Population-based size calculation, flag management, garrison calculator
+- **Cargo Type Manager**: Seasonal modifiers, category organization, price management
+- **Real-time Validation**: Immediate feedback with inline error display
+- **Change Tracking**: Visual indicators with batch save and preview functionality
+- **Export/Import**: Data backup and restoration capabilities
+
+### Enhanced Trading Experience
+
+- **Settlement Profile**: Economic overview with produces/demands display
+- **Equilibrium Bars**: Visual supply/demand ratios with state detection
+- **Merchant Cards**: Personality-driven display with skill and behavior indicators
+- **Desperation System**: Clear penalty explanation with confirmation dialogs
+- **Transaction Log**: Complete history with undo and chat export functionality
+
+See [Phase 4 Summary](PHASE4_SUMMARY.md) for complete implementation details.
 
 ## Trading System Features
 

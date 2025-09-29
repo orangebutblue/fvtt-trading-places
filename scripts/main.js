@@ -167,6 +167,25 @@ Hooks.once('ready', async () => {
 
         // Load active dataset (validation already passed)
         await loadActiveDataset();
+
+        // Load trading configuration and source flags for Phase 3 features
+        try {
+            console.log('Trading Places | Loading trading configuration...');
+            await dataManager.loadTradingConfig();
+            console.log('Trading Places | Trading configuration loaded');
+            
+            console.log('Trading Places | Loading source flags...');
+            await dataManager.loadSourceFlags();
+            console.log('Trading Places | Source flags loaded');
+            
+            console.log('Trading Places | Initializing merchant system...');
+            dataManager.initializeMerchantSystem();
+            console.log('Trading Places | Merchant system initialized');
+            
+        } catch (error) {
+            console.warn('Trading Places | Phase 3 initialization failed (continuing with basic functionality):', error);
+            // Don't fail completely - allow basic functionality to work
+        }
         
         // Initialize logger integration with core components
         if (typeof WFRPLoggerIntegration !== 'undefined') {
@@ -882,3 +901,14 @@ window.WFRPRiverTrading = {
     // Simple utility function
     openTradingDialog: () => openTradingInterface()
 };
+
+// Also assign to the module object for direct access
+if (typeof game !== 'undefined' && game.modules) {
+    const module = game.modules.get('trading-places');
+    if (module) {
+        module.dataManager = dataManager;
+        module.tradingEngine = tradingEngine;
+        module.systemAdapter = systemAdapter;
+        module.debugLogger = debugLogger;
+    }
+}

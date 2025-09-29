@@ -731,30 +731,29 @@ function runErrorConditionTests() {
 
     engine.setCurrentSeason('spring');
 
-    try {
+    // Test invalid season with Jest expect
+    console.log('Testing invalid season...');
+    expect(() => {
         engine.setCurrentSeason('invalid');
-        console.assert(false, 'Should throw error for invalid season');
-    } catch (error) {
-        console.log(`✓ Correctly threw error for invalid season: ${error.message}`);
-    }
+    }).toThrow('Invalid season: invalid. Must be one of: spring, summer, autumn, winter');
+
+    console.log('✓ Correctly threw error for invalid season');
 
     // Test 2: Settlement validation
     console.log('\nTest 2: Settlement Validation');
     console.log('=============================');
 
-    try {
+    expect(() => {
         engine.calculateAvailabilityChance(null);
-        console.assert(false, 'Should throw error for null settlement');
-    } catch (error) {
-        console.log(`✓ Correctly threw error for null settlement: ${error.message}`);
-    }
+    }).toThrow('Settlement object is required');
 
-    try {
+    console.log('✓ Correctly threw error for null settlement');
+
+    expect(() => {
         engine.determineCargoTypes({ source: null }, 'spring');
-        console.assert(false, 'Should throw error for invalid source');
-    } catch (error) {
-        console.log(`✓ Correctly threw error for invalid source: ${error.message}`);
-    }
+    }).toThrow('Invalid source array');
+
+    console.log('✓ Correctly threw error for invalid source');
 
     console.log('\n🎉 All Error Condition Tests Passed!\n');
 }

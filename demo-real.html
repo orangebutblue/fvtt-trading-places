@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Places - Live Demo</title>
+    <link rel="stylesheet" href="styles/data-management.css">
+    <link rel="stylesheet" href="styles/trading-dialog-enhanced.css">
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0;
+            padding: 20px;
+            background: #2b2b2b;
+            color: #fff;
+        }
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .demo-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .demo-tab {
+            padding: 10px 20px;
+            background: #444;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .demo-tab.active {
+            background: #666;
+        }
+        .demo-content {
+            background: #333;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 600px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>Trading Places - Orange Realism Demo</h1>
+        
+        <div class="demo-tabs">
+            <button class="demo-tab active" onclick="showTab('data-management')">
+                📊 Data Management
+            </button>
+            <button class="demo-tab" onclick="showTab('trading-dialog')">
+                🏪 Enhanced Trading
+            </button>
+            <button class="demo-tab" onclick="showTab('merchant-generation')">
+                👥 Merchant Generation Test
+            </button>
+        </div>
+
+        <div class="demo-content">
+            <div id="data-management-demo" class="demo-panel">
+                <h2>Data Management Interface</h2>
+                <p>Loading settlement data...</p>
+                <div id="data-management-container"></div>
+            </div>
+
+            <div id="trading-dialog-demo" class="demo-panel hidden">
+                <h2>Enhanced Trading Dialog</h2>
+                <p>Loading trading interface...</p>
+                <div id="trading-dialog-container"></div>
+            </div>
+
+            <div id="merchant-generation-demo" class="demo-panel hidden">
+                <h2>Merchant Generation Test</h2>
+                <div>
+                    <label>Settlement:</label>
+                    <select id="settlement-select">
+                        <option value="ALTDORF">ALTDORF (Size 5, Pop 105k)</option>
+                        <option value="Friedendorf">Friedendorf (Size 1, Pop 150)</option>
+                    </select>
+                    <label>Cargo Type:</label>
+                    <select id="cargo-select">
+                        <option value="Grain">Grain</option>
+                        <option value="Metal">Metal</option>
+                        <option value="Luxuries">Luxuries</option>
+                    </select>
+                    <button onclick="generateMerchants()">Generate Merchants</button>
+                </div>
+                <div id="merchant-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the actual modules
+        import('./scripts/data-manager.js').then(module => {
+            window.DataManager = module.default || module.DataManager;
+        });
+        import('./scripts/merchant-generator.js').then(module => {
+            window.MerchantGenerator = module.default || module.MerchantGenerator;
+        });
+        import('./scripts/equilibrium-calculator.js').then(module => {
+            window.EquilibriumCalculator = module.default || module.EquilibriumCalculator;
+        });
+
+        // Mock Foundry globals
+        window.game = {
+            modules: new Map([['trading-places', { active: true }]]),
+            settings: new Map(),
+            actors: new Map(),
+            user: { isGM: true }
+        };
+
+        // Sample data
+        const sampleSettlements = [
+            {
+                region: 'Reikland',
+                name: 'ALTDORF',
+                population: 105000,
+                size: 5,
+                ruler: 'Emperor Karl Franz I',
+                wealth: 5,
+                flags: ['trade', 'government'],
+                produces: ['Luxuries'],
+                demands: ['Grain', 'Metal'],
+                garrison: { a: 2000, b: 5000, c: 10000 },
+                notes: 'Imperial capital'
+            },
+            {
+                region: 'Averland',
+                name: 'Friedendorf',
+                population: 150,
+                size: 1,
+                ruler: 'Local Burgomeister',
+                wealth: 2,
+                flags: ['agriculture'],
+                produces: ['Grain'],
+                demands: [],
+                garrison: { c: 15 },
+                notes: 'Small farming village'
+            }
+        ];
+
+        const sampleCargoTypes = [
+            { name: 'Grain', basePrice: 1, category: 'Bulk Goods' },
+            { name: 'Metal', basePrice: 8, category: 'Raw Materials' },
+            { name: 'Luxuries', basePrice: 50, category: 'Luxury Goods' }
+        ];
+
+        // Initialize demo when modules load
+        setTimeout(() => {
+            initializeDemo();
+        }, 1000);
+
+        function initializeDemo() {
+            console.log('Initializing demo...');
+            
+            // Load data management demo
+            loadDataManagementDemo();
+            
+            // Load trading dialog demo
+            loadTradingDialogDemo();
+        }
+
+        function loadDataManagementDemo() {
+            const container = document.getElementById('data-management-container');
+            
+            // Create a simplified data management interface
+            container.innerHTML = `
+                <div class="data-management-dialog">
+                    <div class="settlement-list">
+                        <h3>Settlements</h3>
+                        ${sampleSettlements.map(settlement => `
+                            <div class="settlement-item" onclick="selectSettlement('${settlement.name}')">
+                                <div class="item-header">
+                                    <span class="item-name">${settlement.name}</span>
+                                    <span class="item-region">${settlement.region}</span>
+                                </div>
+                                <div class="item-details">
+                                    <span>Size ${settlement.size}</span>
+                                    <span>${settlement.population} pop</span>
+                                    <span>Wealth ${settlement.wealth}</span>
+                                </div>
+                                <div class="item-flags">
+                                    ${settlement.flags.map(flag => `<span class="flag-badge">${flag}</span>`).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="settlement-details" id="settlement-details">
+                        <p>Select a settlement to view details</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadTradingDialogDemo() {
+            const container = document.getElementById('trading-dialog-container');
+            
+            container.innerHTML = `
+                <div class="wfrp-trading-dialog enhanced">
+                    <div class="settlement-header-panel">
+                        <div class="settlement-basic-info">
+                            <h2>ALTDORF</h2>
+                            <div class="settlement-meta">
+                                <span>Reikland</span>
+                                <span>Size 5 (Metropolis)</span>
+                                <span>Prosperous</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="equilibrium-summary">
+                        <h3>Supply & Demand Overview</h3>
+                        <div class="equilibrium-bars">
+                            <div class="equilibrium-item">
+                                <div class="cargo-name">Grain</div>
+                                <div class="equilibrium-bar">
+                                    <div class="supply-bar" style="width: 40%">80</div>
+                                    <div class="demand-bar" style="width: 60%">120</div>
+                                </div>
+                                <div class="equilibrium-state undersupplied">Undersupplied</div>
+                            </div>
+                            <div class="equilibrium-item">
+                                <div class="cargo-name">Luxuries</div>
+                                <div class="equilibrium-bar">
+                                    <div class="supply-bar" style="width: 70%">140</div>
+                                    <div class="demand-bar" style="width: 30%">60</div>
+                                </div>
+                                <div class="equilibrium-state oversupplied">Oversupplied</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="merchant-section">
+                        <div class="merchant-header">
+                            <h3>Available Merchants</h3>
+                        </div>
+                        <div class="merchant-list">
+                            <div class="merchant-card producer">
+                                <div class="merchant-header">
+                                    <div class="merchant-basic">
+                                        <h4>Luxuries</h4>
+                                        <span class="merchant-type">Producer</span>
+                                    </div>
+                                    <div class="merchant-personality">
+                                        <span class="personality-name">Shrewd Dealer</span>
+                                    </div>
+                                </div>
+                                <div class="merchant-details">
+                                    <div>
+                                        <label>Quantity:</label>
+                                        <span class="quantity-value">8 EP</span>
+                                    </div>
+                                    <div>
+                                        <label>Price:</label>
+                                        <span class="final-price">42 GC</span>
+                                    </div>
+                                    <div>
+                                        <label>Skill:</label>
+                                        <span class="skill-value">67</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.showTab = function(tabName) {
+            // Hide all panels
+            document.querySelectorAll('.demo-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.demo-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected panel
+            document.getElementById(tabName + '-demo').classList.remove('hidden');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        };
+
+        window.selectSettlement = function(settlementName) {
+            const settlement = sampleSettlements.find(s => s.name === settlementName);
+            const detailsDiv = document.getElementById('settlement-details');
+            
+            if (settlement) {
+                detailsDiv.innerHTML = `
+                    <h3>${settlement.name}</h3>
+                    <p><strong>Region:</strong> ${settlement.region}</p>
+                    <p><strong>Population:</strong> ${settlement.population.toLocaleString()}</p>
+                    <p><strong>Size:</strong> ${settlement.size}</p>
+                    <p><strong>Wealth:</strong> ${settlement.wealth}</p>
+                    <p><strong>Ruler:</strong> ${settlement.ruler}</p>
+                    <p><strong>Flags:</strong> ${settlement.flags.join(', ')}</p>
+                    <p><strong>Produces:</strong> ${settlement.produces.join(', ') || 'None'}</p>
+                    <p><strong>Demands:</strong> ${settlement.demands.join(', ') || 'None'}</p>
+                    <p><strong>Notes:</strong> ${settlement.notes}</p>
+                `;
+            }
+        };
+
+        window.generateMerchants = function() {
+            const settlementName = document.getElementById('settlement-select').value;
+            const cargoType = document.getElementById('cargo-select').value;
+            const resultsDiv = document.getElementById('merchant-results');
+            
+            const settlement = sampleSettlements.find(s => s.name === settlementName);
+            
+            // Simulate merchant generation
+            const merchantCount = Math.max(1, settlement.size + Math.floor(Math.random() * 3));
+            const merchants = [];
+            
+            for (let i = 0; i < merchantCount; i++) {
+                const skill = 25 + (settlement.wealth * 8) + Math.floor(Math.random() * 30);
+                const quantity = settlement.size + Math.floor(Math.random() * settlement.size);
+                const basePrice = sampleCargoTypes.find(c => c.name === cargoType)?.basePrice || 5;
+                const finalPrice = basePrice * (0.8 + Math.random() * 0.4);
+                
+                merchants.push({
+                    type: i % 2 === 0 ? 'producer' : 'seeker',
+                    skill,
+                    quantity,
+                    finalPrice: Math.round(finalPrice * 100) / 100,
+                    personality: ['Standard Merchant', 'Shrewd Dealer', 'Generous Trader'][Math.floor(Math.random() * 3)]
+                });
+            }
+            
+            resultsDiv.innerHTML = `
+                <h3>Generated Merchants for ${settlementName} - ${cargoType}</h3>
+                <div class="merchant-grid">
+                    ${merchants.map((merchant, i) => `
+                        <div class="merchant-result">
+                            <h4>Merchant ${i + 1} (${merchant.type})</h4>
+                            <p><strong>Skill:</strong> ${merchant.skill}</p>
+                            <p><strong>Quantity:</strong> ${merchant.quantity}</p>
+                            <p><strong>Price:</strong> ${merchant.finalPrice} GC</p>
+                            <p><strong>Personality:</strong> ${merchant.personality}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        };
+    </script>
+</body>
+</html>

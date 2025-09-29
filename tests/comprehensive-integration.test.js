@@ -194,42 +194,72 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
     let dataManager;
     let systemAdapter;
     
-    beforeEach(() => {
-        global.foundryMock.reset();
-        
-        // Register settings
-        global.foundryMock.registerSetting('wfrp-trading', 'currentSeason', {
-            name: 'Current Season',
-            scope: 'world',
-            config: true,
-            type: String,
-            default: 'spring'
-        });
-        
-        global.foundryMock.registerSetting('wfrp-trading', 'chatVisibility', {
-            name: 'Chat Visibility',
-            scope: 'world',
-            config: true,
-            type: String,
-            default: 'gm'
-        });
-        
-        global.foundryMock.registerSetting('wfrp-trading', 'activeDataset', {
-            name: 'Active Dataset',
-            scope: 'world',
-            config: true,
-            type: String,
-            default: 'wfrp4e-default'
-        });
-        
-        // Initialize components
-        dataManager = new DataManager();
-        systemAdapter = new SystemAdapter();
-        tradingEngine = new TradingEngine(dataManager);
-        tradingDialog = new TradingDialog();
-    });
+        beforeEach(async () => {
+            global.foundryMock.reset();
+            
+            // Register settings
+            global.foundryMock.registerSetting('wfrp-trading', 'currentSeason', {
+                name: 'Current Season',
+                scope: 'world',
+                config: true,
+                type: String,
+                default: 'spring'
+            });
+            
+            global.foundryMock.registerSetting('wfrp-trading', 'chatVisibility', {
+                name: 'Chat Visibility',
+                scope: 'world',
+                config: true,
+                type: String,
+                default: 'gm'
+            });
+            
+            global.foundryMock.registerSetting('wfrp-trading', 'activeDataset', {
+                name: 'Active Dataset',
+                scope: 'world',
+                config: true,
+                type: String,
+                default: 'wfrp4e-default'
+            });
+            
+            // Initialize components
+            dataManager = new DataManager();
+            systemAdapter = new SystemAdapter();
+            tradingEngine = new TradingEngine(dataManager);
+            tradingDialog = new TradingDialog();
 
-    describe('Dialog Rendering and User Interaction Workflows', () => {
+            // Load test data
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                
+                // Load settlements
+                const settlementsDir = path.join(__dirname, '../datasets/active/settlements');
+                const regionFiles = fs.readdirSync(settlementsDir).filter(f => f.endsWith('.json'));
+                const settlementsData = { settlements: [] };
+                
+                regionFiles.forEach(file => {
+                    const filePath = path.join(settlementsDir, file);
+                    const regionSettlements = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                    settlementsData.settlements.push(...regionSettlements);
+                });
+                
+                // Load cargo types
+                const cargoData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/active/cargo-types.json'), 'utf8'));
+                
+                // Load config
+                const configData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/active/config.json'), 'utf8'));
+                
+                dataManager.settlements = settlementsData.settlements || [];
+                dataManager.cargoTypes = cargoData.cargoTypes || [];
+                dataManager.config = configData;
+            } catch (error) {
+                console.warn('Could not load test data:', error.message);
+            }
+
+            // Set default season for tests
+            await tradingEngine.setCurrentSeason('spring');
+        });    describe('Dialog Rendering and User Interaction Workflows', () => {
         test('should render trading dialog with proper FoundryVTT integration', async () => {
             // Requirements: 6.1, 6.10
             
@@ -242,8 +272,24 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             
             const dialogData = {
                 settlements: [
-                    { name: 'Ubersreik', size: 'T', wealth: 3, source: ['Trade', 'Wine'] },
-                    { name: 'Averheim', size: 'T', wealth: 4, source: ['Trade', 'Cattle'] }
+                    { 
+                        name: 'Ubersreik', 
+                        size: 'T', 
+                        wealth: 3, 
+                        source: ['Trade', 'Wine'],
+                        ruler: 'Lord Aschaffenberg',
+                        population: 6000,
+                        notes: 'Trading town'
+                    },
+                    { 
+                        name: 'Averheim', 
+                        size: 'T', 
+                        wealth: 4, 
+                        source: ['Trade', 'Cattle'],
+                        ruler: 'Elector Count Marius Leitdorf',
+                        population: 8000,
+                        notes: 'Fortified city'
+                    }
                 ],
                 currentSeason: 'spring',
                 availableCargo: ['Wine', 'Grain', 'Cattle']
@@ -541,8 +587,9 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 
                 async update(data) {
                     this.updateHistory.push(data);
-                    if (data['system.money.gc']) {
-                        this.system.money.gc = data['system.money.gc'];
+                    // Handle nested property updates
+                    if (data.system && data.system.money && data.system.money.gc !== undefined) {
+                        this.system.money.gc = data.system.money.gc;
                     }
                     return this;
                 },
@@ -580,7 +627,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             // Step 2: Determine available cargo types
             const cargoTypes = tradingEngine.determineCargoTypes(settlement, 'spring');
             
-            expect(cargoTypes).toContain('Wine');
+            expect(cargoTypes).toContain('Wine/Brandy');
             expect(cargoTypes).toContain('Trade Goods');
             
             // Step 3: Calculate cargo size
@@ -590,12 +637,12 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             expect(cargoSize.tradeBonus).toBe(true);
             
             // Step 4: Calculate purchase price
-            const purchasePrice = tradingEngine.calculatePurchasePrice('Wine', 20, {
+            const purchasePrice = tradingEngine.calculatePurchasePrice('Wine/Brandy', 20, {
                 season: 'spring',
                 quality: 'good'
             });
             
-            expect(purchasePrice.cargoName).toBe('Wine');
+            expect(purchasePrice.cargoName).toBe('Wine/Brandy');
             expect(purchasePrice.quantity).toBe(20);
             expect(purchasePrice.totalPrice).toBeGreaterThan(0);
             
@@ -675,8 +722,9 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 
                 async update(data) {
                     this.updateHistory.push(data);
-                    if (data['system.money.gc']) {
-                        this.system.money.gc = data['system.money.gc'];
+                    // Handle nested property updates
+                    if (data.system && data.system.money && data.system.money.gc !== undefined) {
+                        this.system.money.gc = data.system.money.gc;
                     }
                     return this;
                 },
@@ -697,10 +745,12 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 }
             };
             
-            const saleSettlement = {
+            const settlement = {
                 region: 'Empire',
                 name: 'Ubersreik',
                 size: 'T',
+                ruler: 'Lord Aschaffenberg',
+                population: 6000,
                 wealth: 3,
                 source: ['Trade', 'Wine'],
                 garrison: ['20a', '40b', '120c'],
@@ -714,8 +764,8 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             
             // Step 1: Check sale eligibility
             const saleEligibility = tradingEngine.checkSaleEligibility(
-                { name: 'Wine', quantity: 20 },
-                saleSettlement,
+                { name: 'Wine/Brandy', quantity: 20 },
+                settlement,
                 purchaseData,
                 Date.now()
             );
@@ -723,18 +773,18 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             expect(saleEligibility.eligible).toBe(true);
             
             // Step 2: Find buyer
-            const buyerResult = await tradingEngine.findBuyer(saleSettlement, 'Wine', () => 40);
+            const buyerResult = await tradingEngine.findBuyer(settlement, 'Wine/Brandy', () => 40);
             
             expect(buyerResult.buyerFound).toBe(true);
             expect(buyerResult.chance).toBe(60); // Size 3 × 10 + 30 (Trade bonus)
             
             // Step 3: Calculate sale price
-            const salePrice = tradingEngine.calculateSalePrice('Wine', 20, saleSettlement, {
+            const salePrice = tradingEngine.calculateSalePrice('Wine/Brandy', 20, settlement, {
                 season: 'spring',
                 quality: 'good'
             });
             
-            expect(salePrice.cargoName).toBe('Wine');
+            expect(salePrice.cargoName).toBe('Wine/Brandy');
             expect(salePrice.quantity).toBe(20);
             expect(salePrice.wealthModifier).toBe(1.0); // Average wealth
             
@@ -762,7 +812,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 content: `
                     <div class="trading-result sale">
                         <h3>Sale Completed</h3>
-                        <p><strong>Settlement:</strong> ${saleSettlement.name}</p>
+                        <p><strong>Settlement:</strong> ${settlement.name}</p>
                         <p><strong>Cargo:</strong> ${salePrice.cargoName} (${salePrice.quantity} EP)</p>
                         <p><strong>Price per Unit:</strong> ${salePrice.finalPricePerUnit} GC</p>
                         <p><strong>Total Revenue:</strong> ${salePrice.totalPrice} GC</p>
@@ -793,7 +843,10 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 name: 'Ubersreik',
                 size: 'T',
                 wealth: 3,
-                source: ['Trade', 'Wine']
+                source: ['Trade', 'Wine'],
+                ruler: 'Lord Aschaffenberg',
+                population: 6000,
+                notes: 'Trading town'
             };
             
             // Step 1: Perform haggle test
@@ -810,8 +863,8 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             expect(haggleResult.player.success).toBe(true);
             
             // Step 2: Apply haggle result to purchase price
-            const basePrice = tradingEngine.calculatePurchasePrice('Wine', 15);
-            const hagglePrice = tradingEngine.calculatePurchasePrice('Wine', 15, {
+            const basePrice = tradingEngine.calculatePurchasePrice('Wine/Brandy', 15);
+            const hagglePrice = tradingEngine.calculatePurchasePrice('Wine/Brandy', 15, {
                 haggleResult: haggleResult
             });
             
@@ -825,10 +878,10 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             expect(gossipResult.modifiedSkill).toBe(25); // 35 - 10 (Difficult modifier)
             
             // Step 4: Generate rumor from successful gossip
-            const rumor = await tradingEngine.generateRumorFromGossip(gossipResult, 'Wine', settlement);
+            const rumor = await tradingEngine.generateRumorFromGossip(gossipResult, 'Wine/Brandy', settlement);
             
             expect(rumor).toBeDefined();
-            expect(rumor.cargoName).toBe('Wine');
+            expect(rumor.cargoName).toBe('Wine/Brandy');
             expect(rumor.multiplier).toBeGreaterThan(1);
             
             // Step 5: Generate haggle test chat message

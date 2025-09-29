@@ -287,7 +287,6 @@ class WFRPDebugLogger {
      */
     clearHistory() {
         this.logHistory = [];
-        this.log('SYSTEM', 'Logger', 'Log history cleared');
     }
 
     /**

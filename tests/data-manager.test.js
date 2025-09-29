@@ -8,12 +8,38 @@ global.window = global.window || {};
 // Import the DataManager
 require('../scripts/data-manager.js');
 const DataManager = window.WFRPTradingDataManager;
+const fs = require('fs');
+const path = require('path');
 
 describe('DataManager Settlement Validation', () => {
     let dataManager;
 
     beforeEach(() => {
         dataManager = new DataManager();
+        
+        // Load test data similar to season-management.test.js
+        try {
+            const settlementsDir = path.join(__dirname, '../datasets/active/settlements');
+            const regionFiles = fs.readdirSync(settlementsDir).filter(f => f.endsWith('.json'));
+            const settlementsData = { settlements: [] };
+            
+            // Load all regional settlement files
+            regionFiles.forEach(file => {
+                const filePath = path.join(settlementsDir, file);
+                const regionSettlements = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                settlementsData.settlements.push(...regionSettlements);
+            });
+            
+            const cargoData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/active/cargo-types.json'), 'utf8'));
+            const configData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/active/config.json'), 'utf8'));
+
+            dataManager.settlements = settlementsData.settlements || [];
+            dataManager.cargoTypes = cargoData.cargoTypes || [];
+            dataManager.config = configData;
+        } catch (error) {
+            console.warn('Could not load test data:', error.message);
+            // Continue with empty data for basic validation tests
+        }
     });
 
     describe('validateSettlement', () => {

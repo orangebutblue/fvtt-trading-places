@@ -120,7 +120,8 @@ class FoundryHarness {
         try {
             // Resolve module root path correctly
             const currentDir = path.dirname(__filename);
-            const moduleRoot = path.resolve(currentDir, '../../..');
+            // Go up from harness directory to project root
+            const moduleRoot = path.resolve(currentDir, '../..');
             
             // Import main module file
             const mainPath = path.resolve(moduleRoot, 'scripts/main.js');
@@ -186,7 +187,7 @@ class FoundryHarness {
         server.use('/styles', express.static(path.join(moduleRoot, 'styles')));
         server.use('/lang', express.static(path.join(moduleRoot, 'lang')));
         
-        // Handlebars helper for rendering templates
+        // Serve templates with proper Foundry CSS
         server.get('/render/:template', async (req, res) => {
             try {
                 const { renderTemplate } = await this._getTemplateRenderer();
@@ -194,7 +195,56 @@ class FoundryHarness {
                 const data = req.query.data ? JSON.parse(req.query.data) : {};
                 
                 const html = await renderTemplate(templatePath, data);
-                res.send(html);
+                
+                // Wrap in proper HTML with Foundry CSS variables
+                const fullHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Trading Places - ${req.params.template}</title>
+    <style>
+        :root {
+            --color-bg: #f8f9fa;
+            --color-bg-alt: #e9ecef;
+            --color-bg-option: #dee2e6;
+            --color-border: #ced4da;
+            --color-border-dark: #adb5bd;
+            --color-border-highlight: #007bff;
+            --color-text-dark-primary: #212529;
+            --color-text-dark-secondary: #6c757d;
+            --color-green: #28a745;
+            --color-green-dark: #1e7e34;
+            --color-green-light: #d4edda;
+            --color-red: #dc3545;
+            --color-red-dark: #c82333;
+            --color-red-light: #f8d7da;
+            --color-blue: #007bff;
+            --color-blue-dark: #0056b3;
+            --color-blue-light: #cce7ff;
+            --color-yellow: #ffc107;
+            --color-yellow-dark: #d39e00;
+            --color-yellow-light: #fff3cd;
+            --color-gray: #6c757d;
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: "Signika", sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text-dark-primary);
+        }
+    </style>
+    <link rel="stylesheet" href="/styles/data-management.css">
+    <link rel="stylesheet" href="/styles/trading-dialog-enhanced.css">
+    <link rel="stylesheet" href="/styles/trading.css">
+</head>
+<body>
+${html}
+</body>
+</html>`;
+                
+                res.send(fullHtml);
             } catch (error) {
                 res.status(500).send(`Template render error: ${error.message}`);
             }
@@ -229,7 +279,17 @@ class FoundryHarness {
         
         return {
             renderTemplate: async (templatePath, data) => {
-                const fullPath = path.resolve(__dirname, '../../..', templatePath.replace('modules/trading-places/', ''));
+                // Handle both full paths and relative paths
+                let fullPath;
+                if (templatePath.startsWith('modules/trading-places/')) {
+                    fullPath = path.resolve(__dirname, '../../..', templatePath.replace('modules/trading-places/', ''));
+                } else if (templatePath.startsWith('templates/')) {
+                    fullPath = path.resolve(__dirname, '../../..', templatePath);
+                } else {
+                    fullPath = path.resolve(__dirname, '../../..', 'templates', templatePath);
+                }
+                
+                console.log(`Foundry Harness | Rendering template: ${fullPath}`);
                 const templateSource = await readFile(fullPath, 'utf8');
                 const template = handlebars.compile(templateSource);
                 return template(data);
