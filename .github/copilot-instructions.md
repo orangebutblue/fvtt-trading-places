@@ -1,4 +1,7 @@
 # Trading Places - AI Coding Instructions
+- When you are asked a question, ANSWER IMMEDIATELY
+- Do NOT make any code changes when asked a question!
+- DO NOT change any files without my direct approval
 
 ## Project Overview
 This is a FoundryVTT module for the Warhammer Fantasy Roleplay 4th Edition (WFRP4e) system, implementing comprehensive trading mechanics including buying, selling, price calculation, settlement selection, and player cargo management.

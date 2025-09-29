@@ -51,7 +51,7 @@
   - 99.7% of merchants: 26-116 skill (novice to legendary)
 
 ### 5. Wealth Effects
-**User's Point:** Wealth affects buyer/seller prices
+**User's Point:** Wealth affects Seeker/Producer prices
 
 **AGREED - Current system:**
 - Squalid (1): 50% base price
@@ -69,11 +69,11 @@
 - Trade hubs get +10% availability bonus (as per official rules)
 
 ### 7. Gossip Tests
-**User's Point:** Successful gossip can reveal good buyers/sellers
+**User's Point:** Successful gossip can reveal good Producers/Seekers
 
 **AGREED - This fits WFRP mechanics perfectly:**
 - Difficult (-10) Gossip test
-- Success reveals premium buyers (+100% price) or desperate sellers (-50% price)
+- Success reveals premium Producers (+100% price) or desperate Seekers (-50% price)
 - Fits existing rumor system
 
 ### 8. Merchant Desperation System
@@ -82,8 +82,8 @@
 **EXCELLENT IDEA - This adds great roleplaying depth:**
 - **Desperation Scale**: 0-100 (0 = indifferent, 100 = desperate)
 - **Price Effects**:
-  - Buying: Desperate merchants pay +10% to +50% above normal
-  - Selling: Desperate merchants sell for -10% to -50% below normal
+  - Buying: Desperate Seekers pay +10% to +50% above normal
+  - Selling: Desperate Producers sell for -10% to -50% below normal
 - **Generation**: Random roll per merchant, influenced by:
   - Settlement wealth (poor settlements = more desperate)
   - Cargo availability (scarce goods = higher desperation)
@@ -181,8 +181,8 @@
 - **Settlement Size**: Determines number of competing merchants (1-5 merchants based on settlement size)
 
 ## Competition System
-- **Buying Tab**: Roll settlement_size times, each success creates a merchant offering random cargo for sale
-- **Selling Tab**: Roll settlement_size times, each success creates a buyer with different (hidden) skill levels
+- **Buyer Tab**: Roll settlement_size times, each success creates a Producer offering random cargo for sale
+- **Seller Tab**: Roll settlement_size times, each success creates a Seeker with different skill levels
 - **Merchant Variety**: Multiple merchants per settlement with different haggling abilities
 
 ## Availability Mechanics
@@ -203,55 +203,10 @@
 - **Trade Route Disruptions**: Complex node system
 - **Merchant Caravans**: Dynamic merchant movement
 
-## Implementation Plan
+## Terminology
+To avoid confusion between player and merchant roles, we use distinct terms:
 
-### Phase 1: Data Restructuring (Foundation)
-1. Create master resource registry with specific goods
-2. Update settlement data structure (size letters → numbers, isTradeHub flags)
-3. Implement complementary goods mappings
-4. Add merchant desperation values to settlements
-5. Create non-trading source flag system
-
-### Phase 2: Merchant System Overhaul
-1. Implement population-based merchant counts
-2. Replace random skills with exponential distribution
-3. Add merchant desperation price modifiers
-4. Create merchant personality profiles
-5. Implement special source behaviors (smuggling, piracy, etc.)
-
-### Phase 3: Advanced Trading Features
-1. Implement rumor mode cross-settlement trading
-2. Add complementary goods demand system
-3. Create government/ruins special behaviors
-4. Implement desperation-based merchant matching
-5. Add premium pricing for rumor trades
-6. Add quality system for goods
-7. Implement random/custom settlement creation
-8. Add desperate sell mode
-9. Add mission mode with contract generation
-10. Implement fractional trade penalties
-
-### Phase 4: Testing & Balance
-1. Validate all settlement types work correctly
-2. Balance price modifiers and desperation effects
-3. Test rumor system merchant matching
-4. Performance testing with 183 settlements
-5. UI updates for new features## Implementation Priority
-1. **High Priority**: Settlement wealth/size affecting merchant counts and quality
-2. **Medium Priority**: Competition system with multiple merchants per settlement
-3. **Low Priority**: Complex dynamic events (wars, festivals, etc.)
-
-## Data Structure Needs
-- **Settlement Data**: Wealth, size, trade status, population, complementary goods
-- **Resource Matrix**: Seasons × Resources × Availability modifiers
-- **Merchant Generation**: Rules for creating multiple merchants per settlement
-- **Amount Scaling**: How roll results affect trade volumes
-- **NEW: Merchant Profiles**: Desperation levels, personality traits, special flags
-- **NEW: Complementary Goods**: Settlement type → demanded goods mappings
-- **NEW: Rumor System**: Cross-settlement merchant matching by desperation
-- **NEW: Source Flags**: Smuggling, piracy, government, ruins behavior modifiers
-- **NEW: Quality System**: Quality levels and price multipliers for goods
-- **NEW: Custom Settlements**: Dynamic settlement creation and storage
-- **NEW: Emergency Selling**: Forced buyer mechanics with discount calculations
-- **NEW: Mission Contracts**: Contract generation, payment terms, fail conditions
-- **NEW: Trade Completion**: Fractional trade penalty calculations
+- **Player when buying from merchant**: "Buyer"
+- **Player when selling to merchant**: "Seller"
+- **Merchant when selling to player**: "Producer"
+- **Merchant when buying from player**: "Seeker"
