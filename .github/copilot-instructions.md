@@ -1,115 +1,41 @@
-# Trading Places - AI Coding Instructions
-- When you are asked a question, ANSWER IMMEDIATELY
-- Do NOT make any code changes when asked a question!
-- DO NOT change any files without my direct approval
+# Trading Places – AI Coding Instructions
+- When asked a question, answer immediately.
+- Do not modify files while only answering a question.
+- Always get explicit approval before changing any file.
 
-## Project Overview
-This is a FoundryVTT module for the Warhammer Fantasy Roleplay 4th Edition (WFRP4e) system, implementing comprehensive trading mechanics including buying, selling, price calculation, settlement selection, and player cargo management.
+## Repo essentials
+- FoundryVTT module implementing full WFRP4e Trading Places rules; entry point is `scripts/main.js`.
+- Core trading logic is platform-agnostic (`scripts/trading-engine.js` plus helpers); Foundry-specific glue lives in `scripts/system-adapter.js` and `scripts/main.js`.
 
-## Architecture & Patterns
+## Architecture map
+- `scripts/trading-engine.js`: pure algorithms (buy/sell, haggling, settlement filters); keep it free of UI or Foundry globals.
+- `scripts/data-manager.js`: loads `datasets/active/**`, validates schema, caches seasonal pricing; use its APIs instead of touching JSON directly.
+- `scripts/system-adapter.js`: only path to currency, inventory, and actor operations; relies on Foundry's `game` object, so mock it in tests using fixtures under `tests/`.
+- UI stack = `scripts/trading-application-v2.js` + Handlebars in `templates/` + `styles/trading.css`; logic flows from UI → managers → engine (never the reverse).
+- Diagnostic layer combines `debug-logger.js`, `debug-ui.js`, and `fallback-dialogs-v2.js` for safe failure modes.
 
-### Module Structure
-- **Entry Point**: `scripts/main.js` - Module initialization, settings registration, component loading
-- **Core Engine**: `scripts/trading-engine.js` - Pure business logic for trading algorithms (2179 lines)
-- **Data Layer**: `scripts/data-manager.js` - Settlement/cargo data management with validation (1803 lines)
-- **System Integration**: `scripts/system-adapter.js` - Configuration-driven FoundryVTT integration (726 lines)
-- **UI Components**: `scripts/trading-application-v2.js` - ApplicationV2-based dialogs
-- **Algorithms**: Separate buying/selling/price calculation modules in `scripts/`
+## Data & configuration
+- Active dataset resides in `datasets/active/`; swap entire directories when testing alternates.
+- Run `node validate-dataset.js` after changing cargo tables or settlement JSON to enforce schema rules and seasonal pricing ranges.
+- When adding algorithms or managers, register the script in `module.json` `esmodules` and import it through `scripts/main.js`.
 
-### Key Design Patterns
-- **Modular Architecture**: Each major feature has its own module with clear separation of concerns
-- **Configuration-Driven**: SystemAdapter uses config objects for FoundryVTT integration
-- **Error Handling**: Comprehensive error handling with custom ErrorHandler class
-- **Testing**: Extensive Jest test suite (480 tests) with mocks and integration tests
-- **ES6 Modules**: Modern JavaScript with Babel transpilation for Node compatibility
+## Coding conventions
+- Favor async/await; wrap every Foundry call through `SystemAdapter` and surface errors via `scripts/error-handler.js`.
+- Inject configuration objects (see `config-validator.js`) instead of reaching for globals.
+- Extend trading logic by composing pure helpers inside `trading-engine.js`, `buying-algorithm.js`, `selling-algorithm.js`, or `price-calculator.js`; never push UI state into those files.
 
-### Development Workflow
+## Testing & verification
+- `npm test` runs the full Jest suite (jsdom environment, 20+ files covering engine, adapter, UI workflows).
+- `npm run test:watch` supports iterative work; for a single suite use `npx jest tests/<file>.test.js`.
+- Dataset edits or new UI flows require updating the relevant fixtures/mocks in `tests/` to keep deterministic rolls and chat output coverage.
 
-#### Testing
-```bash
-npm test              # Run all tests
-npm run test:watch    # Watch mode for development
-```
+## Common workflows
+- Module hooks, settings, and hot-module wiring live in `scripts/main.js`; follow its structure when introducing new Foundry hooks.
+- Scene-control entry points mirror `scripts/proper-scene-controls.js`; reuse that pattern for additional UI launchers.
+- Player inventory flows are centralized in `scripts/player-cargo-manager.js`; coordinate with `system-adapter.js` for currency and item mutations.
 
-#### File Organization
-- `scripts/` - Core business logic and FoundryVTT integration
-- `templates/` - Handlebars templates for UI dialogs
-- `styles/` - CSS styling
-- `datasets/` - JSON data files for settlements and cargo
-- `tests/` - Jest test files with comprehensive coverage
-- `lang/` - Localization files
-
-#### Code Style & Conventions
-- **Async/Await**: Preferred over Promises for asynchronous operations
-- **Error Handling**: Use try/catch with custom error types from ErrorHandler
-- **Configuration**: Pass config objects to constructors for flexibility
-- **Validation**: Validate inputs using dedicated validator modules
-- **Logging**: Use DebugLogger for consistent logging across the module
-
-### Common Tasks & Patterns
-
-#### Adding New Trading Features
-1. Create new algorithm module in `scripts/` (e.g., `new-feature.js`)
-2. Add to `module.json` esmodules array
-3. Import and initialize in `main.js`
-4. Create comprehensive tests in `tests/`
-5. Update UI templates if needed
-
-#### Data Management
-- Use DataManager for all data access
-- Validate data with config-validator.js
-- Handle seasonal pricing through data structures
-- Cache frequently accessed data
-
-#### UI Development
-- Use ApplicationV2 for dialogs
-- Handlebars templates in `templates/`
-- CSS in `styles/trading.css`
-- Hot reload enabled for CSS and HBS files
-
-#### System Integration
-- Use SystemAdapter for FoundryVTT interactions
-- Configure through config objects
-- Handle currency, inventory, and chat integration
-- Support multiple WFRP systems if needed
-
-### Testing Patterns
-- **Unit Tests**: Test individual functions/classes
-- **Integration Tests**: Test component interactions
-- **Mock Usage**: Mock FoundryVTT globals and system functions
-- **Test Data**: Use datasets for realistic test scenarios
-- **Coverage**: Aim for high coverage on business logic
-
-### Error Handling
-- Use ErrorHandler class for consistent error management
-- Custom error types for different failure modes
-- Graceful degradation with fallback dialogs
-- Comprehensive logging for debugging
-
-### Performance Considerations
-- Cache settlement and cargo data
-- Lazy load UI components
-- Optimize algorithm calculations
-- Use efficient data structures for lookups
-
-### Deployment
-- Module distributed via GitHub releases
-- Manifest and download URLs in module.json
-- Compatibility specified for FoundryVTT v13
-- Hot reload for development
-
-### Key Dependencies
-- **Jest**: Testing framework with jsdom environment
-- **Babel**: ES6 transpilation for compatibility
-- **FoundryVTT**: Target platform with WFRP4e system
-- **Handlebars**: Template engine for UI
-
-### Gotchas & Best Practices
-- Always use absolute paths in module.json
-- Test in jsdom environment (not Node)
-- Handle async operations properly in FoundryVTT hooks
-- Validate all user inputs
-- Use configuration objects for flexibility
-- Keep business logic separate from UI code
-- Comprehensive error handling prevents crashes
-- Mock all external dependencies in tests
+## Gotchas
+- Target platform is Foundry v13+; avoid deprecated API paths and always access actors/items through adapter helpers.
+- Keep manifests correct: list new assets in `module.json` with absolute URLs.
+- DataManager caches datasets—use its invalidation helpers if you change load order or need fresh reads in tests.
+- Maintain separation of concerns: engine/managers stay pure, UI files call downward, and no template reaches back into Foundry APIs directly.

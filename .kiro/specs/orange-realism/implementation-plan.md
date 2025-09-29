@@ -2,15 +2,17 @@
 
 ## Phase 1: Data Restructuring (Foundation)
 1. Create master resource registry with specific goods
-2. Update settlement data structure (size letters → numbers, isTradeHub flags)
-3. Implement complementary goods mappings
-4. Add merchant desperation values to settlements
-5. Create non-trading source flag system
+2. Update settlement data structure (convert legacy size letters to population-derived numeric categories)
+3. Implement settlement `produces` / `demands` fields and migrate existing data
+4. Implement complementary goods mappings
+5. Add desperation reroll handling to availability checks (configurable penalties)
+6. Create non-trading source flag system
+7. Introduce supply/demand equilibrium logic (200-point base, multiplicative transfers configurable in trading config)
 
 ## Phase 2: Merchant System Overhaul
 1. Implement population-based merchant counts
-2. Replace random skills with exponential distribution
-3. Add merchant desperation price modifiers
+2. Wire merchant skill distribution to config-defined parameters
+3. Add desperation price/quantity penalties after failed availability rerolls (config-driven)
 4. Create merchant personality profiles
 5. Implement special source behaviors (smuggling, piracy, etc.)
 
