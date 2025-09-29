@@ -20,7 +20,7 @@ Each settlement object will have the following keys:
 - `flags`: Array of strings, list of flags (e.g., ["trade", "mine", "government"])
 - `produces`: Array of cargo keys the settlement reliably exports (e.g., ["Gold", "Tools"]). Optional; when omitted, the system falls back to flag/category pools.
 - `demands`: Array of cargo keys the settlement consistently seeks to import (e.g., ["Tools", "Food"]). Optional; defaults are derived from flags and wealth if absent.
-- `garrison`: Array or string, military presence
+- `garrison`: Object capturing troop counts by class, e.g., {"a": 1400, "b": 3000, "c": 1000}. Any key may be omitted to indicate zero for that type.
 - `notes`: String, additional information
 
 ## Migration from Old Format

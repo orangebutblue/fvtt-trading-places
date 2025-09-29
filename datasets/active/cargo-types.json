@@ -4,102 +4,85 @@
       "name": "Grain",
       "category": "Bulk Goods",
       "description": "A collective term for all kinds of agricultural products (fish, barley, wheat, legumes, root vegetables, dried meat). The price is lowest at harvest time.",
-      "basePrices": {
+      "basePrice": 1,
+      "seasonalModifiers": {
         "spring": 1,
         "summer": 0.5,
         "autumn": 0.25,
         "winter": 0.5
-      },
-      "encumbrancePerUnit": 10,
-      "encumbranceNote": "Prices are per 10 Encumbrance Points (EP).",
-      "deteriorationNote": "General rules for spoilage apply (e.g., if a boat is holed)."
+      }
     },
     {
       "name": "Armaments",
       "category": "Military",
       "description": "Finished weapons and armor for militias or standing armies (typically hand weapons, leather armor, bolts).",
-      "basePrices": {
-        "spring": 12,
-        "summer": 10,
-        "autumn": 8,
-        "winter": 10
-      },
-      "encumbrancePerUnit": 10,
-      "encumbranceNote": "Prices are per 10 Encumbrance Points (EP).",
-      "deteriorationNote": "General rules for spoilage apply."
+      "basePrice": 12,
+      "seasonalModifiers": {
+        "spring": 1,
+        "summer": 0.83,
+        "autumn": 0.67,
+        "winter": 0.83
+      }
     },
     {
       "name": "Luxuries",
       "category": "Luxury Goods",
       "description": "A collective term for locally produced (textiles, pottery, glass, bricks) or imported luxury goods (spices, silks).",
-      "basePrices": {
-        "spring": 50,
-        "summer": 50,
-        "autumn": 50,
-        "winter": 50
-      },
-      "encumbrancePerUnit": 10,
-      "encumbranceNote": "Prices are per 10 Encumbrance Points (EP).",
-      "deteriorationNote": "General rules for spoilage apply."
+      "basePrice": 50,
+      "seasonalModifiers": {
+        "spring": 1,
+        "summer": 1,
+        "autumn": 1,
+        "winter": 1
+      }
     },
     {
       "name": "Metal",
       "category": "Raw Materials",
       "description": "Valuable ore or processed bars (copper, iron, steel). The price is generally stable throughout the year.",
-      "basePrices": {
-        "spring": 8,
-        "summer": 8,
-        "autumn": 8,
-        "winter": 8
-      },
-      "encumbrancePerUnit": 10,
-      "encumbranceNote": "Prices are per 10 Encumbrance Points (EP).",
-      "deteriorationNote": "General rules for spoilage apply."
+      "basePrice": 8,
+      "seasonalModifiers": {
+        "spring": 1,
+        "summer": 1,
+        "autumn": 1,
+        "winter": 1
+      }
     },
     {
       "name": "Timber",
       "category": "Raw Materials",
       "description": "Building materials from the great forests of the Empire.",
-      "basePrices": {
-        "spring": 3,
-        "summer": 1.5,
-        "autumn": 2,
-        "winter": 3.5
-      },
-      "encumbrancePerUnit": 10,
-      "encumbranceNote": "Prices are per 10 Encumbrance Points (EP).",
-      "deteriorationNote": "General rules for spoilage apply."
+      "basePrice": 3,
+      "seasonalModifiers": {
+        "spring": 1,
+        "summer": 0.5,
+        "autumn": 0.67,
+        "winter": 1.17
+      }
     },
     {
       "name": "Wine/Brandy",
       "category": "Luxury Goods",
       "description": "Products with widely varying quality and reputation. The price is determined by separate quality tiers.",
-      "basePrices": {},
-      "qualityTiers": [
-        { "roll": 1, "tierName": "Swill", "price": 0.5 },
-        { "roll": [2, 3], "tierName": "Passable", "price": 1 },
-        { "roll": [4, 5], "tierName": "Average", "price": 1.5 },
-        { "roll": [6, 7], "tierName": "Good", "price": 3 },
-        { "roll": [8, 9], "tierName": "Excellent", "price": 6 },
-        { "roll": 10, "tierName": "Top Shelf", "price": 12 }
-      ],
-      "encumbrancePerUnit": 1,
-      "encumbranceNote": "Prices are per 1 unit of cargo, not per 10 EP.",
-      "deteriorationNote": "General rules for spoilage apply."
+      "basePrice": 3,
+      "seasonalModifiers": {
+        "spring": 1,
+        "summer": 1,
+        "autumn": 1,
+        "winter": 1
+      }
     },
     {
       "name": "Wool",
       "category": "Textiles",
       "description": "Main component of clothing in the Empire. The price drops in the spring when the sheep are shorn.",
-      "basePrices": {
+      "basePrice": 1,
+      "seasonalModifiers": {
         "spring": 1,
         "summer": 1.5,
         "autumn": 2,
         "winter": 3
-      },
-      "encumbrancePerUnit": 10,
-      "encumbranceNote": "Prices are per 10 Encumbrance Points (EP). 1 sack of wool is 3 EP.",
-      "deteriorationNote": "General rules for spoilage apply."
+      }
     }
   ]
 }

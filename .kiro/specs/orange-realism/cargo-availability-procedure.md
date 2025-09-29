@@ -28,6 +28,7 @@ This document outlines the step-by-step procedure executed when a GM clicks "Che
 5. **Generate Cargo Types**:
    - Start from the settlement's `produces` list (if present); otherwise use flag/category pools.
    - Filter or weight cargo types using the final supply/demand balance (higher supply bias = more producer candidates, higher demand bias = more seeker candidates).
+   - Reference `garrison` counts when category logic cares about military demand (future integration once garrison data is populated).
 
 6. **Generate Available Amounts**:
    - Determine cargo amounts using roll results, the population-derived size, supply-side balance (higher supply = larger lots), flags (e.g., Mine increases bulk), and season (e.g., lower in off-season).

@@ -88,16 +88,7 @@
 **User's New Idea:** Different quality levels for goods affect pricing, with wealthier settlements having access to higher quality items
 
 **EXCELLENT FOR IMMERSION:**
-- **Quality Levels**: Poor, Standard, Good, Excellent, Masterwork
-- **Price Multipliers**: 
-  - Poor: 0.5x base price
-  - Standard: 1.0x base price  
-  - Good: 1.5x base price
-  - Excellent: 2.0x base price
-  - Masterwork: 3.0x base price
-- **Settlement Wealth Influence**: Higher wealth settlements have higher chance of better quality goods
-- **Merchant Skill Influence**: Better merchants more likely to have/appreciate quality differences
-- **Display**: "Fine Dwarven Ale" vs "Swill" with quality indicators
+- **Quality Banding (deferred)**: Quality tier pricing is shelved until the post-orange-realism release; base price plus seasonal modifiers cover initial balancing.
 
 ### 15. Random/Custom Settlement Mode
 **User's New Idea:** Support for settlements not in the database with dynamic creation
