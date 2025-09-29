@@ -1868,17 +1868,21 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 console.log(`  └─ Total Size: ${completeResult.cargoSize.baseMultiplier} × ${completeResult.cargoSize.sizeMultiplier} = ${completeResult.cargoSize.totalSize} EP`);
                 
                 // Convert cargo types to detailed cargo objects for display
-                const availableCargo = completeResult.cargoTypes.map(cargoName => {
+                const availableCargo = await Promise.all(completeResult.cargoTypes.map(async (cargoName) => {
                     const cargoType = this.dataManager.cargoTypes.find(c => c.name === cargoName);
                     const basePrice = this.tradingEngine.calculateBasePrice(cargoName, this.currentSeason);
                     const totalCargoSize = completeResult.cargoSize.totalSize;
                     const encumbrance = cargoType?.encumbrancePerUnit || 1;
                     const quantity = Math.floor(totalCargoSize / encumbrance);
                     
+                    // Generate a merchant for this cargo type
+                    const merchant = await this.tradingEngine.generateRandomMerchant(this.selectedSettlement, rollFunction);
+                    
                     console.log(`💰 STEP 3: Price Information for ${cargoName}`);
                     console.log(`  ├─ Base Price (${this.currentSeason}): ${basePrice} GC per 10 EP`);
                     console.log(`  ├─ Available Quantity: ${quantity} units (${totalCargoSize} EP total)`);
-                    console.log(`  └─ Encumbrance per Unit: ${encumbrance} EP`);
+                    console.log(`  ├─ Encumbrance per Unit: ${encumbrance} EP`);
+                    console.log(`  ├─ Merchant: ${merchant.name} (${merchant.skillDescription})`);
                     
                     return {
                         name: cargoName,
@@ -1889,13 +1893,13 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                         totalEP: totalCargoSize,
                         quality: 'Average',
                         encumbrancePerUnit: encumbrance,
-                        trader: this._generateTraderName()
+                        merchant: merchant
                     };
-                });
+                }));
                 
                 console.log('📋 FINAL RESULT: Cargo Available for Purchase');
                 availableCargo.forEach(cargo => {
-                    console.log(`  ├─ ${cargo.name}: ${cargo.quantity} units @ ${cargo.currentPrice} GC/10EP (Trader: ${cargo.trader})`);
+                    console.log(`  ├─ ${cargo.name}: ${cargo.quantity} units @ ${cargo.currentPrice} GC/10EP (Merchant: ${cargo.merchant.name} - ${cargo.merchant.skillDescription})`);
                 });
                 
                 // Store available cargo
@@ -2252,6 +2256,12 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                     <span class="price-label">Quality:</span>
                     <span class="price-value">${cargo.quality || 'Average'}</span>
                 </div>
+                <div class="merchant-info">
+                    <span class="merchant-label">Merchant:</span>
+                    <span class="merchant-value">${cargo.merchant.name}</span>
+                    <div class="merchant-description">${cargo.merchant.description}</div>
+                    <div class="merchant-skill">Skill: ${cargo.merchant.skillDescription} (${cargo.merchant.skill})</div>
+                </div>
             </div>
             <div class="cargo-actions">
                 <input type="number" class="quantity-input" placeholder="Quantity (EP)" min="1" max="${cargo.quantity}">
@@ -2420,27 +2430,54 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
         
         try {
-            // Simulate seller search (placeholder for actual algorithm)
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Use FoundryVTT dice roller for buyer search
+            const rollFunction = async () => {
+                const roll = new Roll("1d100");
+                await roll.evaluate();
+                
+                // Show dice roll in chat if enabled
+                const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+                if (chatVisibility !== "disabled") {
+                    await roll.toMessage({
+                        speaker: ChatMessage.getSpeaker(),
+                        flavor: `Buyer Search for ${this.selectedResource} in ${this.selectedSettlement.name}`
+                    });
+                }
+                
+                console.log(`🎲 Buyer Search Roll: ${roll.total}`);
+                return roll.total;
+            };
             
-            // Show results (placeholder)
-            const sellingResults = this.element.querySelector('#selling-results');
-            if (sellingResults) {
-                sellingResults.innerHTML = `
-                    <h4><i class="fas fa-users success-icon"></i> Buyer Found!</h4>
-                    <p>Found buyer for ${quantity} EP at ${this.selectedSettlement.name}</p>
-                    <p>This is a placeholder - actual selling algorithm will be implemented in future tasks.</p>
-                `;
-                sellingResults.style.display = 'block';
+            // Create mock purchase data (since we don't have actual purchase tracking yet)
+            const purchaseData = {
+                settlementName: 'Unknown', // Would be set from actual purchase
+                purchaseTime: Date.now() - (24 * 60 * 60 * 1000), // Assume purchased 1 day ago
+                totalCost: 0 // Would be set from actual purchase
+            };
+            
+            // Perform complete sale check using trading engine
+            const saleResult = await this.tradingEngine.performCompleteSaleCheck(
+                this.selectedResource,
+                quantity,
+                this.selectedSettlement,
+                purchaseData,
+                {
+                    season: this.currentSeason,
+                    currentTime: Date.now()
+                },
+                rollFunction
+            );
+            
+            // Display results based on sale check outcome
+            this._showSaleResults(saleResult, quantity);
+            
+            // Show additional selling buttons if buyer was found
+            if (saleResult.success) {
+                const negotiateSellBtn = this.element.querySelector('#negotiate-sell');
+                const desperateSaleBtn = this.element.querySelector('#desperate-sale');
+                if (negotiateSellBtn) negotiateSellBtn.style.display = 'flex';
+                if (desperateSaleBtn) desperateSaleBtn.style.display = 'flex';
             }
-            
-            // Show additional selling buttons
-            const negotiateSellBtn = this.element.querySelector('#negotiate-sell');
-            const desperateSaleBtn = this.element.querySelector('#desperate-sale');
-            if (negotiateSellBtn) negotiateSellBtn.style.display = 'flex';
-            if (desperateSaleBtn) desperateSaleBtn.style.display = 'flex';
-            
-            ui.notifications.info('Seller search completed (placeholder functionality)');
             
         } catch (error) {
             this._logError('Event Handler', 'Look for sellers failed', { error: error.message });
@@ -2450,6 +2487,90 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             button.disabled = false;
             button.innerHTML = '<i class="fas fa-search"></i> Look for Sellers';
         }
+    }
+
+    /**
+     * Show sale results in the UI
+     * @param {Object} saleResult - Result from performCompleteSaleCheck
+     * @param {number} requestedQuantity - Original quantity requested for sale
+     * @private
+     */
+    _showSaleResults(saleResult, requestedQuantity) {
+        const sellingResults = this.element.querySelector('#selling-results');
+        if (!sellingResults) return;
+        
+        let resultHtml = '';
+        
+        if (saleResult.success) {
+            // SUCCESS: Buyer found
+            const merchant = saleResult.buyerResult.merchant;
+            const price = saleResult.salePrice;
+            
+            resultHtml = `
+                <h4><i class="fas fa-handshake success-icon"></i> Buyer Found!</h4>
+                <div class="buyer-details">
+                    <div class="merchant-info">
+                        <h5>Merchant Details</h5>
+                        <p><strong>Name:</strong> ${merchant.name}</p>
+                        <p><strong>Description:</strong> ${merchant.description}</p>
+                        <p><strong>Skill Level:</strong> ${merchant.skillDescription} (${merchant.skill})</p>
+                    </div>
+                    <div class="sale-offer">
+                        <h5>Sale Offer</h5>
+                        <p><strong>Resource:</strong> ${saleResult.salePrice.cargoName}</p>
+                        <p><strong>Quantity:</strong> ${saleResult.quantitySold} EP</p>
+                        <p><strong>Base Price:</strong> ${price.basePricePerUnit} GC per 10 EP</p>
+                        <p><strong>Final Price:</strong> ${price.finalPricePerUnit} GC per 10 EP</p>
+                        <p><strong>Total Offer:</strong> ${price.totalPrice} GC</p>
+                        ${price.modifiers && price.modifiers.length > 0 ? `
+                            <div class="price-modifiers">
+                                <strong>Price Modifiers:</strong>
+                                <ul>
+                                    ${price.modifiers.map(mod => `<li>${mod.description}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            ui.notifications.info(`Buyer found! ${merchant.name} offers ${price.totalPrice} GC for your ${saleResult.salePrice.cargoName}`);
+            
+        } else {
+            // FAILURE: No buyer found or other issues
+            let failureReason = '';
+            
+            if (saleResult.step === 'eligibility') {
+                failureReason = 'Sale not eligible: ' + saleResult.eligibilityCheck.errors.join(', ');
+            } else if (saleResult.step === 'village_restrictions') {
+                failureReason = saleResult.villageRestrictions.reason;
+            } else if (saleResult.step === 'buyer_availability') {
+                const buyerResult = saleResult.buyerResult;
+                failureReason = buyerResult.reason || `No buyers available (rolled ${buyerResult.roll}/${buyerResult.chance})`;
+                
+                if (buyerResult.partialSaleOption) {
+                    failureReason += '. You can try selling half the quantity and re-rolling.';
+                }
+            }
+            
+            resultHtml = `
+                <h4><i class="fas fa-times-circle failure-icon"></i> No Buyer Found</h4>
+                <p>${failureReason}</p>
+                <p>You can try a different settlement, different quantity, or use special sale options.</p>
+            `;
+            
+            ui.notifications.info(`No buyers found for ${this.selectedResource} in ${this.selectedSettlement.name}`);
+        }
+        
+        sellingResults.innerHTML = resultHtml;
+        sellingResults.style.display = 'block';
+        
+        this._logInfo('Sale Results', 'Displayed sale results', {
+            success: saleResult.success,
+            step: saleResult.step,
+            quantityRequested: requestedQuantity,
+            quantitySold: saleResult.quantitySold || 0
+        });
     }
 
     /**
@@ -2527,44 +2648,87 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
     }
 
     /**
-     * Handle resource selection for selling
-     * @param {string} resource - Selected resource name
+     * Show sale results in the UI
+     * @param {Object} saleResult - Result from performCompleteSaleCheck
+     * @param {number} requestedQuantity - Original quantity requested for sale
      * @private
      */
-    _onResourceSelect(resource) {
-        this._logDebug('Event Handler', 'Resource selected for selling:', resource);
+    _showSaleResults(saleResult, requestedQuantity) {
+        const sellingResults = this.element.querySelector('#selling-results');
+        if (!sellingResults) return;
         
-        // Update button states
-        const resourceButtons = this.element.querySelectorAll('.resource-btn');
-        resourceButtons.forEach(btn => {
-            btn.classList.remove('selected');
-            if (btn.textContent === resource) {
-                btn.classList.add('selected');
+        let resultHtml = '';
+        
+        if (saleResult.success) {
+            // SUCCESS: Buyer found
+            const merchant = saleResult.buyerResult.merchant;
+            const price = saleResult.salePrice;
+            
+            resultHtml = `
+                <h4><i class="fas fa-handshake success-icon"></i> Buyer Found!</h4>
+                <div class="buyer-details">
+                    <div class="merchant-info">
+                        <h5>Merchant Details</h5>
+                        <p><strong>Name:</strong> ${merchant.name}</p>
+                        <p><strong>Description:</strong> ${merchant.description}</p>
+                        <p><strong>Skill Level:</strong> ${merchant.skillDescription} (${merchant.skill})</p>
+                    </div>
+                    <div class="sale-offer">
+                        <h5>Sale Offer</h5>
+                        <p><strong>Resource:</strong> ${saleResult.salePrice.cargoName}</p>
+                        <p><strong>Quantity:</strong> ${saleResult.quantitySold} EP</p>
+                        <p><strong>Base Price:</strong> ${price.basePricePerUnit} GC per 10 EP</p>
+                        <p><strong>Final Price:</strong> ${price.finalPricePerUnit} GC per 10 EP</p>
+                        <p><strong>Total Offer:</strong> ${price.totalPrice} GC</p>
+                        ${price.modifiers && price.modifiers.length > 0 ? `
+                            <div class="price-modifiers">
+                                <strong>Price Modifiers:</strong>
+                                <ul>
+                                    ${price.modifiers.map(mod => `<li>${mod.description}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            ui.notifications.info(`Buyer found! ${merchant.name} offers ${price.totalPrice} GC for your ${saleResult.salePrice.cargoName}`);
+            
+        } else {
+            // FAILURE: No buyer found or other issues
+            let failureReason = '';
+            
+            if (saleResult.step === 'eligibility') {
+                failureReason = 'Sale not eligible: ' + saleResult.eligibilityCheck.errors.join(', ');
+            } else if (saleResult.step === 'village_restrictions') {
+                failureReason = saleResult.villageRestrictions.reason;
+            } else if (saleResult.step === 'buyer_availability') {
+                const buyerResult = saleResult.buyerResult;
+                failureReason = buyerResult.reason || `No buyers available (rolled ${buyerResult.roll}/${buyerResult.chance})`;
+                
+                if (buyerResult.partialSaleOption) {
+                    failureReason += '. You can try selling half the quantity and re-rolling.';
+                }
             }
+            
+            resultHtml = `
+                <h4><i class="fas fa-times-circle failure-icon"></i> No Buyer Found</h4>
+                <p>${failureReason}</p>
+                <p>You can try a different settlement, different quantity, or use special sale options.</p>
+            `;
+            
+            ui.notifications.info(`No buyers found for ${this.selectedResource} in ${this.selectedSettlement.name}`);
+        }
+        
+        sellingResults.innerHTML = resultHtml;
+        sellingResults.style.display = 'block';
+        
+        this._logInfo('Sale Results', 'Displayed sale results', {
+            success: saleResult.success,
+            step: saleResult.step,
+            quantityRequested: requestedQuantity,
+            quantitySold: saleResult.quantitySold || 0
         });
-        
-        // Show selling interface
-        const sellingInterface = this.element.querySelector('#selling-interface');
-        if (sellingInterface) {
-            sellingInterface.style.display = 'block';
-        }
-        
-        // Clear quantity input
-        const quantityInput = this.element.querySelector('#sell-quantity');
-        if (quantityInput) {
-            quantityInput.value = '';
-        }
-        
-        // Hide selling buttons initially
-        const lookForSellersBtn = this.element.querySelector('#look-for-sellers');
-        const negotiateSellBtn = this.element.querySelector('#negotiate-sell');
-        const desperateSaleBtn = this.element.querySelector('#desperate-sale');
-        
-        if (lookForSellersBtn) lookForSellersBtn.style.display = 'none';
-        if (negotiateSellBtn) negotiateSellBtn.style.display = 'none';
-        if (desperateSaleBtn) desperateSaleBtn.style.display = 'none';
-        
-        this.selectedResource = resource;
     }
 }
 

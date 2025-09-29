@@ -10,6 +10,7 @@ class DataManager {
     constructor() {
         this.settlements = [];
         this.cargoTypes = [];
+        this.masterResources = {};
         this.config = {};
         this.currentSeason = null;
         this.logger = null; // Will be set by integration

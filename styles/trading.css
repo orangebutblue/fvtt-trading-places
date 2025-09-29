@@ -458,6 +458,43 @@
     margin-bottom: 20px;
 }
 
+.wfrp-trading .merchant-info {
+    background: var(--bg-accent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-top: 12px;
+}
+
+.wfrp-trading .merchant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.wfrp-trading .merchant-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.wfrp-trading .merchant-skill {
+    background: var(--accent-primary);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.wfrp-trading .merchant-description {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
 .wfrp-trading .price-info {
     display: flex;
     justify-content: space-between;
@@ -592,6 +629,43 @@
 
 .wfrp-trading .selling-results .warning-icon {
     color: var(--accent-warning);
+}
+
+.wfrp-trading .sale-merchant-info {
+    background: var(--bg-accent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-top: 12px;
+}
+
+.wfrp-trading .sale-merchant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.wfrp-trading .sale-merchant-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.wfrp-trading .sale-merchant-skill {
+    background: var(--accent-primary);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.wfrp-trading .sale-merchant-description {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.4;
 }
 
 /* Availability Results */

@@ -842,14 +842,30 @@ class TradingEngine {
         
         const buyerFound = roll <= chance;
 
-        return {
-            buyerFound: buyerFound,
-            chance: chance,
-            roll: roll,
-            rollResult: rollResult,
-            settlement: settlement.name,
-            partialSaleOption: !buyerFound // Can try to sell half and re-roll
-        };
+        if (buyerFound) {
+            // Generate a random merchant for successful buyer encounters
+            const merchant = await this.generateRandomMerchant(settlement, rollFunction);
+            
+            return {
+                buyerFound: true,
+                chance: chance,
+                roll: roll,
+                rollResult: rollResult,
+                settlement: settlement.name,
+                partialSaleOption: false, // Normal sale succeeded
+                merchant: merchant
+            };
+        } else {
+            return {
+                buyerFound: false,
+                chance: chance,
+                roll: roll,
+                rollResult: rollResult,
+                settlement: settlement.name,
+                partialSaleOption: true, // Can try to sell half and re-roll
+                merchant: null
+            };
+        }
     }
 
     /**
@@ -1882,33 +1898,73 @@ class TradingEngine {
     }
 
     /**
-     * Get merchant skill level based on settlement characteristics
+     * Generate a random merchant for successful cargo availability
+     * Uses a dice-based distribution to avoid extreme outliers
      * @param {Object} settlement - Settlement object
-     * @returns {number} - Merchant skill level (32-52)
+     * @param {Function} rollFunction - Function for dice rolls (testing)
+     * @returns {Object} - Random merchant information
      */
-    getMerchantSkillLevel(settlement) {
+    async generateRandomMerchant(settlement, rollFunction = null) {
         if (!settlement) {
             throw new Error('Settlement object is required');
         }
 
-        const properties = this.dataManager.getSettlementProperties(settlement);
-        
-        // Base skill starts at 32
-        let merchantSkill = 32;
-        
-        // Add wealth bonus (0-4 points for wealth 1-5)
-        merchantSkill += (properties.wealthRating - 1);
-        
-        // Add size bonus (0-3 points for size 1-4)
-        merchantSkill += (properties.sizeNumeric - 1);
-        
-        // Trade settlement bonus (+10)
-        if (this.dataManager.isTradeSettlement(settlement)) {
-            merchantSkill += 10;
+        let merchantSkill;
+
+        if (rollFunction) {
+            // Use provided roll function for testing
+            // Simulate 2d20 + 40 distribution
+            const roll1 = rollFunction() % 20 + 1;
+            const roll2 = rollFunction() % 20 + 1;
+            merchantSkill = roll1 + roll2 + 40;
+        } else {
+            // Use FoundryVTT dice roller: 2d20 + 40
+            const rollResult = await this.rollDice("2d20+40", {
+                flavor: "Random Merchant Generation",
+                whisper: true
+            });
+            merchantSkill = rollResult.total;
         }
-        
-        // Cap at 52 maximum
-        return Math.min(merchantSkill, 52);
+
+        // Ensure skill stays within bounds (21-120)
+        merchantSkill = Math.max(21, Math.min(120, merchantSkill));
+
+        // Generate merchant personality/description
+        const personalities = [
+            { name: "Shrewd Trader", description: "A sharp-eyed merchant who knows the value of every coin" },
+            { name: "Jovial Merchant", description: "A friendly trader always ready with a story and a bargain" },
+            { name: "Cautious Dealer", description: "A careful merchant who prefers safe, reliable transactions" },
+            { name: "Ambitious Entrepreneur", description: "A driven trader always looking for the next big deal" },
+            { name: "Seasoned Veteran", description: "An experienced merchant with years of trading wisdom" },
+            { name: "Local Specialist", description: "A merchant with deep knowledge of local market conditions" },
+            { name: "Foreign Trader", description: "A merchant from distant lands with exotic goods and stories" },
+            { name: "Guild Representative", description: "A professional merchant backed by a powerful trading guild" }
+        ];
+
+        const personality = personalities[Math.floor(Math.random() * personalities.length)];
+
+        return {
+            skill: merchantSkill,
+            name: personality.name,
+            description: personality.description,
+            settlement: settlement.name,
+            skillDescription: this.getMerchantSkillDescription(merchantSkill)
+        };
+    }
+
+    /**
+     * Get descriptive text for merchant skill level
+     * @param {number} skill - Merchant skill value (21-120)
+     * @returns {string} - Skill level description
+     */
+    getMerchantSkillDescription(skill) {
+        if (skill <= 35) return "Novice (easily out-haggled)";
+        if (skill <= 50) return "Apprentice (basic bargaining skills)";
+        if (skill <= 65) return "Competent (solid trading experience)";
+        if (skill <= 80) return "Skilled (experienced negotiator)";
+        if (skill <= 95) return "Expert (master of the trade)";
+        if (skill <= 110) return "Master (legendary trader)";
+        return "Legendary (unmatched in the marketplace)";
     }
 
     /**
