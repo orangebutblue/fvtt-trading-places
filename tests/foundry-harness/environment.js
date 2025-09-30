@@ -277,16 +277,94 @@ ${html}
         const utilModule = await import('util');
         const readFile = utilModule.promisify(fsModule.readFile);
         
+        // Register Handlebars helpers used by templates
+        handlebars.registerHelper('eq', function(a, b) {
+            return a === b;
+        });
+        
+        handlebars.registerHelper('and', function() {
+            const args = Array.prototype.slice.call(arguments, 0, -1);
+            return args.every(Boolean);
+        });
+        
+        handlebars.registerHelper('or', function() {
+            const args = Array.prototype.slice.call(arguments, 0, -1);
+            return args.some(Boolean);
+        });
+        
+        handlebars.registerHelper('formatNumber', function(number) {
+            if (typeof number !== 'number') return number;
+            return number.toLocaleString();
+        });
+        
+        handlebars.registerHelper('capitalize', function(str) {
+            if (typeof str !== 'string') return str;
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        });
+        
+        // Template-specific helpers
+        handlebars.registerHelper('getSizeName', function(size) {
+            const sizeNames = { 1: 'Hamlet', 2: 'Village', 3: 'Town', 4: 'City', 5: 'Metropolis' };
+            return sizeNames[size] || 'Unknown';
+        });
+        
+        handlebars.registerHelper('getWealthName', function(wealth) {
+            const wealthNames = { 1: 'Squalid', 2: 'Poor', 3: 'Average', 4: 'Bustling', 5: 'Prosperous' };
+            return wealthNames[wealth] || 'Unknown';
+        });
+        
+        handlebars.registerHelper('getFlagDescription', function(flag) {
+            const flagDescriptions = {
+                'trade': 'Major trading hub with increased merchant activity',
+                'government': 'Government presence affects pricing and availability',
+                'agriculture': 'Agricultural focus increases food production and availability',
+                'smuggling': 'Underground trade networks available',
+                'piracy': 'Risk of piracy affects coastal trade routes',
+                'guild': 'Merchant guild presence regulates trade practices'
+            };
+            return flagDescriptions[flag] || `${flag} - Special settlement characteristic`;
+        });
+        
+        handlebars.registerHelper('join', function(array, separator) {
+            if (!Array.isArray(array)) return '';
+            return array.join(separator || ', ');
+        });
+        
+        handlebars.registerHelper('ne', function(a, b) {
+            return a !== b;
+        });
+        
+        handlebars.registerHelper('gte', function(a, b) {
+            return a >= b;
+        });
+        
+        handlebars.registerHelper('getEquilibriumStateLabel', function(state) {
+            const stateLabels = { 
+                balanced: 'Balanced Market', 
+                oversupplied: 'Oversupplied', 
+                undersupplied: 'Undersupplied',
+                desperate: 'Desperate Trading',
+                blocked: 'No Trade'
+            };
+            return stateLabels[state] || 'Unknown State';
+        });
+        
+        handlebars.registerHelper('formatTime', function(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString();
+        });
+        
         return {
             renderTemplate: async (templatePath, data) => {
                 // Handle both full paths and relative paths
                 let fullPath;
                 if (templatePath.startsWith('modules/trading-places/')) {
-                    fullPath = path.resolve(__dirname, '../../..', templatePath.replace('modules/trading-places/', ''));
+                    fullPath = path.resolve(__dirname, '../..', templatePath.replace('modules/trading-places/', ''));
                 } else if (templatePath.startsWith('templates/')) {
-                    fullPath = path.resolve(__dirname, '../../..', templatePath);
+                    fullPath = path.resolve(__dirname, '../..', templatePath);
                 } else {
-                    fullPath = path.resolve(__dirname, '../../..', 'templates', templatePath);
+                    fullPath = path.resolve(__dirname, '../..', 'templates', templatePath);
                 }
                 
                 console.log(`Foundry Harness | Rendering template: ${fullPath}`);

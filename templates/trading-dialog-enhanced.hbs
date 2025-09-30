@@ -1,5 +1,49 @@
 {{!-- Enhanced Trading Dialog Template with Orange Realism Features --}}
 <div class="wfrp-trading-dialog enhanced">
+    {{#if showSettlementSelector}}
+    {{!-- Settlement Selection Panel --}}
+    <div class="settlement-selector-panel">
+        <div class="selector-header">
+            <h2>Select a Settlement</h2>
+            <p>Choose a settlement to begin trading. Different settlements offer different goods and prices.</p>
+        </div>
+        
+        <div class="settlement-filters">
+            <select class="region-filter">
+                <option value="">All Regions</option>
+                <option value="Reikland">Reikland</option>
+                <option value="Middenland">Middenland</option>
+                <option value="Nordland">Nordland</option>
+                <option value="Ostland">Ostland</option>
+                <option value="Ostermark">Ostermark</option>
+                <option value="Stirland">Stirland</option>
+                <option value="Averland">Averland</option>
+                <option value="Wissenland">Wissenland</option>
+            </select>
+        </div>
+        
+        <div class="settlement-grid">
+            {{#each availableSettlements}}
+            <div class="settlement-card" data-settlement="{{name}}">
+                <div class="settlement-card-header">
+                    <h3>{{name}}</h3>
+                    <span class="settlement-region">{{region}}</span>
+                </div>
+                <div class="settlement-card-details">
+                    <span class="settlement-size">Size {{size}} ({{getSizeName size}})</span>
+                    <span class="settlement-wealth">{{getWealthName wealth}}</span>
+                    {{#if population}}
+                    <span class="settlement-population">{{formatNumber population}} population</span>
+                    {{/if}}
+                </div>
+                <button class="select-settlement-btn" data-settlement="{{name}}">
+                    <i class="fas fa-map-marker-alt"></i> Trade Here
+                </button>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+    {{else}}
     {{!-- Settlement Header Panel --}}
     <div class="settlement-header-panel">
         <div class="settlement-basic-info">
@@ -232,7 +276,7 @@
             {{/if}}
         </div>
     </div>
-</div>
+{{/if}}
 
 {{!-- Desperation Confirmation Modal --}}
 <div class="desperation-modal" style="display: none;">

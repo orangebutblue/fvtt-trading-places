@@ -3,8 +3,12 @@
  * Validates the complete dataset structure against task 10 requirements
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class DatasetValidator {
     constructor(datasetPath) {
@@ -83,7 +87,7 @@ class DatasetValidator {
     }
 
     validateSettlement(settlement, context) {
-        const requiredFields = ['region', 'name', 'size', 'ruler', 'population', 'wealth', 'source', 'garrison', 'notes'];
+        const requiredFields = ['region', 'name', 'size', 'ruler', 'population', 'wealth', 'flags', 'garrison', 'notes'];
         
         // Check required fields
         requiredFields.forEach(field => {
@@ -103,18 +107,24 @@ class DatasetValidator {
             }
         }
 
-        if (settlement.source !== undefined && !Array.isArray(settlement.source)) {
-            this.errors.push(`${context}: Source must be an array`);
+        if (settlement.flags !== undefined && !Array.isArray(settlement.flags)) {
+            this.errors.push(`${context}: Flags must be an array`);
         }
 
-        if (settlement.garrison !== undefined && !Array.isArray(settlement.garrison)) {
-            this.errors.push(`${context}: Garrison must be an array`);
+        // Validate garrison (can be array or object)
+        if (settlement.garrison !== undefined && !Array.isArray(settlement.garrison) && typeof settlement.garrison !== 'object') {
+            this.errors.push(`${context}: Garrison must be an array or object`);
         }
 
-        // Validate size enumeration
+        // Validate size (can be string enum or number)
         const validSizes = ['CS', 'C', 'T', 'ST', 'V', 'F', 'M'];
-        if (settlement.size && !validSizes.includes(settlement.size)) {
-            this.errors.push(`${context}: Invalid size '${settlement.size}'. Must be one of: ${validSizes.join(', ')}`);
+        const validNumericSizes = [1, 2, 3, 4, 5];
+        if (settlement.size !== undefined) {
+            const isValidString = typeof settlement.size === 'string' && validSizes.includes(settlement.size);
+            const isValidNumber = typeof settlement.size === 'number' && validNumericSizes.includes(settlement.size);
+            if (!isValidString && !isValidNumber) {
+                this.errors.push(`${context}: Invalid size '${settlement.size}'. Must be one of: ${validSizes.join(', ')} or a number 1-5`);
+            }
         }
     }
 
@@ -130,8 +140,8 @@ class DatasetValidator {
         }
 
         // Production categories
-        if (settlement.source && Array.isArray(settlement.source)) {
-            settlement.source.forEach(category => {
+        if (settlement.flags && Array.isArray(settlement.flags)) {
+            settlement.flags.forEach(category => {
                 this.stats.productionCategories.add(category);
             });
         }
@@ -155,7 +165,7 @@ class DatasetValidator {
                 return;
             }
 
-            const requiredCargos = ['Grain', 'Armaments', 'Luxuries', 'Metal', 'Timber', 'Wine/Brandy', 'Wool'];
+            const requiredCargos = ['Grain', 'Armaments', 'Luxuries', 'Metal', 'Timber', 'Wine/Brandy', 'Trade Goods'];
             const foundCargos = cargoData.cargoTypes.map(c => c.name);
             
             requiredCargos.forEach(cargo => {
@@ -176,7 +186,7 @@ class DatasetValidator {
     }
 
     validateCargoType(cargo, context) {
-        const requiredFields = ['name', 'category', 'description', 'encumbrancePerUnit'];
+        const requiredFields = ['name', 'category', 'description', 'basePrice', 'seasonalModifiers'];
         
         requiredFields.forEach(field => {
             if (!cargo.hasOwnProperty(field)) {
@@ -184,23 +194,16 @@ class DatasetValidator {
             }
         });
 
-        // Special validation for Wine/Brandy quality tiers
-        if (cargo.name === 'Wine/Brandy') {
-            if (!cargo.qualityTiers || !Array.isArray(cargo.qualityTiers)) {
-                this.errors.push(`${context}: Wine/Brandy must have qualityTiers array`);
-            }
+        // All cargo types must have seasonal modifiers
+        if (!cargo.seasonalModifiers || typeof cargo.seasonalModifiers !== 'object') {
+            this.errors.push(`${context}: Must have seasonalModifiers object`);
         } else {
-            // Regular cargo must have seasonal pricing
-            if (!cargo.basePrices || typeof cargo.basePrices !== 'object') {
-                this.errors.push(`${context}: Must have basePrices object`);
-            } else {
-                const seasons = ['spring', 'summer', 'autumn', 'winter'];
-                seasons.forEach(season => {
-                    if (cargo.basePrices[season] === undefined) {
-                        this.errors.push(`${context}: Missing price for season '${season}'`);
-                    }
-                });
-            }
+            const seasons = ['spring', 'summer', 'autumn', 'winter'];
+            seasons.forEach(season => {
+                if (cargo.seasonalModifiers[season] === undefined) {
+                    this.errors.push(`${context}: Missing seasonal modifier for season '${season}'`);
+                }
+            });
         }
     }
 

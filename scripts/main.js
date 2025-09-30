@@ -63,17 +63,38 @@ Hooks.once('init', () => {
                 onClick: () => {
                     console.log('Trading Places | Scene controls button clicked!');
                     
-                    // Try to open the trading interface
+                    // Try to open the enhanced trading interface
                     try {
-                        if (window.WFRPTradingApplication) {
+                        // Check if EnhancedTradingDialog is available
+                        if (window.WFRPTradingEnhancedDialog) {
+                            // Get the current controlled actor
+                            const controlledTokens = canvas.tokens.controlled;
+                            let selectedActor = null;
+                            
+                            if (controlledTokens.length > 0) {
+                                // Use the first controlled token's actor
+                                selectedActor = controlledTokens[0].actor;
+                            } else if (game.user.character) {
+                                // Fallback to user's character
+                                selectedActor = game.user.character;
+                            }
+                            
+                            if (selectedActor) {
+                                // Open enhanced trading dialog for the selected actor
+                                const dialog = new window.WFRPTradingEnhancedDialog(selectedActor, null);
+                                dialog.render(true);
+                                console.log('Trading Places | Opened EnhancedTradingDialog');
+                            } else {
+                                ui.notifications.warn('Please select a token or assign a character to use the trading interface.');
+                                console.log('Trading Places | No actor selected for trading');
+                            }
+                        } else if (window.WFRPTradingApplication) {
+                            // Fallback to old application
                             const app = new window.WFRPTradingApplication();
                             app.render(true);
-                            console.log('Trading Places | Opened WFRPTradingApplication');
-                        } else if (window.WFRPSimpleTradingV2) {
-                            window.WFRPSimpleTradingV2.openDialog();
-                            console.log('Trading Places | Opened WFRPSimpleTradingV2');
+                            console.log('Trading Places | Opened WFRPTradingApplication (fallback)');
                         } else {
-                            ui.notifications.info('Trading button clicked! Applications will be available after module fully loads.');
+                            ui.notifications.info('Trading interface not yet available. Please wait for the module to finish loading.');
                             console.log('Trading Places | Trading applications not yet available');
                         }
                     } catch (error) {
@@ -239,6 +260,18 @@ function registerHandlebarsHelpers() {
         return a === b;
     });
 
+    // Inequality helper
+    Handlebars.registerHelper('ne', function(a, b) {
+        return a !== b;
+    });
+
+    // Greater-than-or-equal helper
+    Handlebars.registerHelper('gte', function(a, b) {
+        if (typeof a === 'string') a = Number(a);
+        if (typeof b === 'string') b = Number(b);
+        return a >= b;
+    });
+
     // Logical AND helper
     Handlebars.registerHelper('and', function() {
         const args = Array.prototype.slice.call(arguments, 0, -1);
@@ -261,6 +294,69 @@ function registerHandlebarsHelpers() {
     Handlebars.registerHelper('capitalize', function(str) {
         if (typeof str !== 'string') return str;
         return str.charAt(0).toUpperCase() + str.slice(1);
+    });
+
+    // Join array helper
+    Handlebars.registerHelper('join', function(array, separator) {
+        if (!Array.isArray(array)) return '';
+        return array.join(separator || ', ');
+    });
+
+    // Get size name helper
+    Handlebars.registerHelper('getSizeName', function(size) {
+        const sizeNames = {
+            1: 'Hamlet',
+            2: 'Village', 
+            3: 'Town',
+            4: 'City',
+            5: 'Metropolis'
+        };
+        return sizeNames[size] || `Size ${size}`;
+    });
+
+    // Get wealth name helper
+    Handlebars.registerHelper('getWealthName', function(wealth) {
+        const wealthNames = {
+            1: 'Squalid',
+            2: 'Poor',
+            3: 'Average',
+            4: 'Prosperous',
+            5: 'Wealthy'
+        };
+        return wealthNames[wealth] || `Wealth ${wealth}`;
+    });
+
+    // Get flag description helper
+    Handlebars.registerHelper('getFlagDescription', function(flag) {
+        const flagDescriptions = {
+            'agriculture': 'Agricultural settlement with farming focus',
+            'trade': 'Major trading hub with increased merchant activity',
+            'government': 'Government center with official trade policies',
+            'subsistence': 'Subsistence farming with limited trade',
+            'smuggling': 'Smuggling operations with contraband goods',
+            'fort': 'Fortified settlement with military presence',
+            'boatbuilding': 'Shipbuilding and maritime trade focus'
+        };
+        return flagDescriptions[flag] || `${flag} settlement`;
+    });
+
+    // Get equilibrium state label helper
+    Handlebars.registerHelper('getEquilibriumStateLabel', function(state) {
+        const stateLabels = {
+            'balanced': 'Balanced',
+            'oversupplied': 'Oversupplied',
+            'undersupplied': 'Undersupplied',
+            'desperate': 'Desperate',
+            'blocked': 'Blocked'
+        };
+        return stateLabels[state] || state;
+    });
+
+    // Format time helper
+    Handlebars.registerHelper('formatTime', function(date) {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.toLocaleTimeString();
     });
 
     console.log('Trading Places | Handlebars helpers registered');
@@ -636,6 +732,7 @@ async function initializeCoreComponents() {
         // Initialize DataManager
         if (typeof DataManager !== 'undefined') {
             dataManager = new DataManager();
+            dataManager.setModuleId(MODULE_ID);
             console.log('Trading Places | DataManager initialized');
         } else {
             throw new Error('DataManager class not available');
@@ -842,11 +939,32 @@ async function initializeBasicSceneControls() {
                         
                         // Try to open the trading interface
                         try {
-                            if (window.WFRPTradingApplication) {
+                            if (window.WFRPTradingEnhancedDialog) {
+                                // Get the current controlled actor
+                                const controlledTokens = canvas.tokens.controlled;
+                                let selectedActor = null;
+                                
+                                if (controlledTokens.length > 0) {
+                                    selectedActor = controlledTokens[0].actor;
+                                } else if (game.user.character) {
+                                    selectedActor = game.user.character;
+                                }
+                                
+                                if (selectedActor) {
+                                    const dialog = new window.WFRPTradingEnhancedDialog(selectedActor, null);
+                                    dialog.render(true);
+                                    console.log('Trading Places | Opened EnhancedTradingDialog');
+                                } else {
+                                    ui.notifications.warn('Please select a token or assign a character to use the trading interface.');
+                                    console.log('Trading Places | No actor selected for trading');
+                                }
+                            } else if (window.WFRPTradingApplication) {
                                 const app = new window.WFRPTradingApplication();
                                 app.render(true);
+                                console.log('Trading Places | Opened WFRPTradingApplication (fallback)');
                             } else if (window.WFRPSimpleTradingV2) {
                                 window.WFRPSimpleTradingV2.openDialog();
+                                console.log('Trading Places | Opened WFRPSimpleTradingV2');
                             } else {
                                 ui.notifications.info('Trading interface clicked! (Interface classes not yet available)');
                             }
@@ -875,7 +993,24 @@ async function initializeBasicSceneControls() {
  */
 function openTradingInterface() {
     try {
-        if (typeof WFRPTradingApplication !== 'undefined') {
+        if (typeof window.WFRPTradingEnhancedDialog !== 'undefined') {
+            // Get the current controlled actor
+            const controlledTokens = canvas.tokens.controlled;
+            let selectedActor = null;
+            
+            if (controlledTokens.length > 0) {
+                selectedActor = controlledTokens[0].actor;
+            } else if (game.user.character) {
+                selectedActor = game.user.character;
+            }
+            
+            if (selectedActor) {
+                const dialog = new window.WFRPTradingEnhancedDialog(selectedActor, null);
+                dialog.render(true);
+            } else {
+                ui.notifications.warn('Please select a token or assign a character to use the trading interface.');
+            }
+        } else if (typeof WFRPTradingApplication !== 'undefined') {
             const app = new WFRPTradingApplication();
             app.render(true);
         } else if (typeof WFRPSimpleTradingApplication !== 'undefined') {

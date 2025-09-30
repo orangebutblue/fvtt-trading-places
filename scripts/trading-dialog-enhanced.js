@@ -5,6 +5,13 @@
 
 console.log('Trading Places | Loading trading-dialog-enhanced.js');
 
+const DESPERATION_DEFAULTS = {
+    priceModifier: 1.15,
+    quantityReduction: 0.25,
+    skillPenalty: 0.2,
+    priceIncrease: 15
+};
+
 /**
  * Enhanced Trading Dialog Application
  */
@@ -41,6 +48,21 @@ class EnhancedTradingDialog extends Application {
         // Initialize managers if not already done
         await this._initializeManagers();
         
+        // If no settlement is selected, prepare settlement selection data
+        if (!this.settlement) {
+            return {
+                ...data,
+                actor: this.actor,
+                showSettlementSelector: true,
+                availableSettlements: this._getAvailableSettlements(),
+                merchants: [],
+                cargoEquilibrium: {},
+                availableCargoTypes: [],
+                transactionLog: [],
+                desperationConfig: {}
+            };
+        }
+        
         // Calculate equilibrium for all cargo types
         await this._calculateEquilibrium();
         
@@ -63,61 +85,126 @@ class EnhancedTradingDialog extends Application {
     }
 
     get title() {
-        return `Trading - ${this.settlement.name}`;
+        return this.settlement ? `Trading - ${this.settlement.name}` : 'Trading - Select Settlement';
     }
 
     async _initializeManagers() {
-        // Get DataManager instance
-        if (game.modules.get('trading-places')?.dataManager) {
-            this.dataManager = game.modules.get('trading-places').dataManager;
-            
-            // Load required data
-            await this.dataManager.loadTradingConfig();
-            await this.dataManager.loadSourceFlags();
-            await this.dataManager.loadCargoTypes();
-            
-            // Initialize merchant system
-            if (!this.dataManager.merchantGenerator) {
+        if (this.dataManager) {
+            return;
+        }
+
+        try {
+            const moduleApi = window.WFRPRiverTrading;
+            const moduleRegistry = (typeof game !== 'undefined' && game.modules)
+                ? game.modules.get('trading-places')
+                : null;
+            const managerFromApi = moduleApi?.getDataManager?.();
+            const managerFromModule = moduleRegistry?.dataManager;
+
+            this.dataManager = managerFromApi || managerFromModule || null;
+
+            if (!this.dataManager) {
+                throw new Error('DataManager not available');
+            }
+
+            if (!Array.isArray(this.dataManager.settlements) || this.dataManager.settlements.length === 0) {
+                await this.dataManager.loadActiveDataset();
+            }
+
+            if (!Array.isArray(this.dataManager.cargoTypes) || this.dataManager.cargoTypes.length === 0) {
+                await this.dataManager.loadCargoTypes();
+            }
+
+            if (!this.dataManager.config || Object.keys(this.dataManager.config).length === 0) {
+                await this.dataManager.loadTradingConfig();
+            }
+
+            if (!this.dataManager.sourceFlags || Object.keys(this.dataManager.sourceFlags).length === 0) {
+                try {
+                    await this.dataManager.loadSourceFlags();
+                } catch (error) {
+                    console.warn('Trading Places | Source flags unavailable:', error);
+                }
+            }
+
+            if (!this.dataManager.merchantGenerator || !this.dataManager.equilibriumCalculator) {
                 this.dataManager.initializeMerchantSystem();
             }
-            
-            this.merchantGenerator = this.dataManager.merchantGenerator;
-            this.equilibriumCalculator = this.dataManager.equilibriumCalculator;
-            
-            // Load configuration
-            this.desperationConfig = this.dataManager.config?.desperation || {};
-            this.availableCargoTypes = this.dataManager.getCargoTypes().map(c => c.name);
-        } else {
-            // Fallback for development/testing
+
+            this.merchantGenerator = this.dataManager.merchantGenerator || null;
+            this.equilibriumCalculator = this.dataManager.equilibriumCalculator || null;
+
+            const cargoTypes = this.dataManager.getCargoTypes();
+            this.availableCargoTypes = Array.from(
+                new Set(
+                    cargoTypes
+                        .filter(cargo => cargo && cargo.name)
+                        .map(cargo => cargo.name)
+                )
+            ).sort();
+
+            const configuredDesperation = this.dataManager.config?.desperation || {};
+            this.desperationConfig = { ...DESPERATION_DEFAULTS, ...configuredDesperation };
+
+            if (!this.availableCargoTypes.length) {
+                this.availableCargoTypes = ['Grain', 'Metal', 'Timber', 'Luxuries', 'Wool', 'Wine/Brandy', 'Armaments'];
+            }
+
+            if (!this.desperationConfig || Object.keys(this.desperationConfig).length === 0) {
+                this.desperationConfig = { ...DESPERATION_DEFAULTS };
+            }
+        } catch (error) {
+            console.warn('Trading Places | Failed to initialize enhanced trading managers:', error);
             this._initializeFallbackData();
         }
     }
 
     _initializeFallbackData() {
         this.availableCargoTypes = ['Grain', 'Metal', 'Timber', 'Luxuries', 'Wool', 'Wine/Brandy', 'Armaments'];
-        this.desperationConfig = {
-            priceModifier: 1.15,
-            quantityReduction: 0.25,
-            skillPenalty: 0.2,
-            priceIncrease: 15
-        };
+        this.desperationConfig = { ...DESPERATION_DEFAULTS };
+    }
+
+    _getAvailableSettlements() {
+        if (this.dataManager && this.dataManager.settlements) {
+            return this.dataManager.settlements.map(settlement => ({
+                name: settlement.name,
+                region: settlement.region,
+                size: settlement.size,
+                wealth: settlement.wealth,
+                population: settlement.population
+            }));
+        }
+        return [];
     }
 
     async _calculateEquilibrium() {
         this.cargoEquilibrium = {};
         
         for (const cargoType of this.availableCargoTypes) {
+            if (!cargoType) {
+                continue;
+            }
+
             if (this.equilibriumCalculator) {
                 const equilibrium = this.equilibriumCalculator.calculateEquilibrium(
                     this.settlement, 
                     cargoType,
                     { season: 'spring' }
                 );
-                
+
+                const supply = equilibrium?.supply ?? 0;
+                const demand = equilibrium?.demand ?? 0;
+                const total = supply + demand;
+                const supplyPercent = total > 0 ? (supply / total) * 100 : 50;
+                const demandPercent = total > 0 ? (demand / total) * 100 : 50;
+
                 this.cargoEquilibrium[cargoType] = {
                     ...equilibrium,
-                    supplyPercent: (equilibrium.supply / (equilibrium.supply + equilibrium.demand)) * 100,
-                    demandPercent: (equilibrium.demand / (equilibrium.supply + equilibrium.demand)) * 100
+                    supply,
+                    demand,
+                    supplyPercent,
+                    demandPercent,
+                    state: equilibrium?.state || 'balanced'
                 };
             } else {
                 // Fallback calculation
@@ -151,13 +238,17 @@ class EnhancedTradingDialog extends Application {
         else if (ratio > 2.0) state = 'oversupplied';
         else if (ratio < 0.5) state = 'undersupplied';
         
+        const total = supply + demand;
+        const supplyPercent = total > 0 ? (supply / total) * 100 : 50;
+        const demandPercent = total > 0 ? (demand / total) * 100 : 50;
+
         return {
             supply,
             demand,
             ratio,
             state,
-            supplyPercent: (supply / (supply + demand)) * 100,
-            demandPercent: (demand / (supply + demand)) * 100
+            supplyPercent,
+            demandPercent
         };
     }
 
@@ -276,33 +367,40 @@ class EnhancedTradingDialog extends Application {
     activateListeners(html) {
         super.activateListeners(html);
 
-        // Settlement actions
-        html.find('.data-editor-btn').click(this._onOpenDataEditor.bind(this));
-        html.find('.generate-availability-btn').click(this._onGenerateAvailability.bind(this));
+        // Settlement selection (when no settlement is initially selected)
+        html.find('.region-filter').change(this._onRegionFilter.bind(this));
+        html.find('.select-settlement-btn').click(this._onSettlementSelect.bind(this));
 
-        // Equilibrium interactions
-        html.find('.equilibrium-item').click(this._onEquilibriumClick.bind(this));
+        // Only add trading listeners if we have a settlement
+        if (this.settlement) {
+            // Settlement actions
+            html.find('.data-editor-btn').click(this._onOpenDataEditor.bind(this));
+            html.find('.generate-availability-btn').click(this._onGenerateAvailability.bind(this));
 
-        // Merchant filters
-        html.find('.cargo-filter, .merchant-type-filter').change(this._onFilterMerchants.bind(this));
+            // Equilibrium interactions
+            html.find('.equilibrium-item').click(this._onEquilibriumClick.bind(this));
 
-        // Merchant actions
-        html.find('.buy-partial-btn').click(this._onBuyPartial.bind(this));
-        html.find('.buy-all-btn').click(this._onBuyAll.bind(this));
-        html.find('.sell-partial-btn').click(this._onSellPartial.bind(this));
-        html.find('.sell-all-btn').click(this._onSellAll.bind(this));
+            // Merchant filters
+            html.find('.cargo-filter, .merchant-type-filter').change(this._onFilterMerchants.bind(this));
 
-        // Desperation reroll
-        html.find('.desperation-reroll-btn').click(this._onDesperationReroll.bind(this));
+            // Merchant actions
+            html.find('.buy-partial-btn').click(this._onBuyPartial.bind(this));
+            html.find('.buy-all-btn').click(this._onBuyAll.bind(this));
+            html.find('.sell-partial-btn').click(this._onSellPartial.bind(this));
+            html.find('.sell-all-btn').click(this._onSellAll.bind(this));
 
-        // Transaction log
-        html.find('.clear-log-btn').click(this._onClearLog.bind(this));
-        html.find('.export-log-btn').click(this._onExportLog.bind(this));
-        html.find('.undo-btn').click(this._onUndoTransaction.bind(this));
+            // Desperation reroll
+            html.find('.desperation-reroll-btn').click(this._onDesperationReroll.bind(this));
 
-        // Modal controls
-        html.find('.modal-close, .cancel-btn').click(this._onCloseModal.bind(this));
-        html.find('.confirm-reroll-btn').click(this._onConfirmReroll.bind(this));
+            // Transaction log
+            html.find('.clear-log-btn').click(this._onClearLog.bind(this));
+            html.find('.export-log-btn').click(this._onExportLog.bind(this));
+            html.find('.undo-btn').click(this._onUndoTransaction.bind(this));
+
+            // Modal controls
+            html.find('.modal-close, .cancel-btn').click(this._onCloseModal.bind(this));
+            html.find('.confirm-reroll-btn').click(this._onConfirmReroll.bind(this));
+        }
     }
 
     _onOpenDataEditor(event) {
@@ -550,6 +648,39 @@ class EnhancedTradingDialog extends Application {
             content: `<h3>Trading Log - ${this.settlement.name}</h3><pre>${logText}</pre>`,
             speaker: ChatMessage.getSpeaker({ actor: this.actor })
         });
+    }
+
+    _onRegionFilter(event) {
+        const region = event.target.value;
+        const settlementCards = this.element.find('.settlement-card');
+        
+        if (!region) {
+            settlementCards.show();
+        } else {
+            settlementCards.each((i, card) => {
+                const cardRegion = $(card).find('.settlement-region').text();
+                $(card).toggle(cardRegion === region);
+            });
+        }
+    }
+
+    async _onSettlementSelect(event) {
+        const settlementName = $(event.currentTarget).data('settlement');
+        
+        if (!settlementName) return;
+        
+        // Get settlement data
+        if (this.dataManager) {
+            this.settlement = this.dataManager.getSettlement(settlementName);
+        }
+        
+        if (this.settlement) {
+            // Re-render with the selected settlement
+            await this.render();
+            ui.notifications.info(`Selected ${this.settlement.name} for trading`);
+        } else {
+            ui.notifications.error(`Settlement '${settlementName}' not found`);
+        }
     }
 }
 

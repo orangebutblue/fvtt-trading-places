@@ -550,9 +550,10 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         context.chatVisibility = game.settings.get("trading-places", "chatVisibility");
 
         // Add ALL cargo types for selling (not just settlement sources)
-        context.allCargoTypes = this.dataManager?.cargoTypes || [];
-        // Filter out "Trade" as it's not a sellable resource
-        context.sellableCargoTypes = context.allCargoTypes.filter(cargo => cargo.name !== 'Trade');
+    const allCargoTypes = this.dataManager ? this.dataManager.getCargoTypes() : [];
+    context.allCargoTypes = allCargoTypes;
+    // Filter out "Trade" as it's not a sellable resource
+    context.sellableCargoTypes = allCargoTypes.filter(cargo => cargo.name !== 'Trade');
 
         this._logDebug('Template Context', 'Context prepared successfully', {
             settlements: context.settlements.length,
@@ -1195,8 +1196,9 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         
         // Parse all settlement source lists
         this.dataManager.settlements.forEach(settlement => {
-            if (settlement.source && Array.isArray(settlement.source)) {
-                settlement.source.forEach(good => {
+            const productionCategories = settlement.flags || settlement.source || [];
+            if (productionCategories && Array.isArray(productionCategories)) {
+                productionCategories.forEach(good => {
                     // Skip "Trade" as it's not a sellable good but a settlement modifier
                     if (good !== 'Trade') {
                         allGoods.add(good);
@@ -1206,8 +1208,9 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         });
         
         // Also add cargo types from data manager if they exist
-        if (this.dataManager.cargoTypes && Array.isArray(this.dataManager.cargoTypes)) {
-            this.dataManager.cargoTypes.forEach(cargoType => {
+        const cargoTypes = this.dataManager ? this.dataManager.getCargoTypes() : [];
+        if (Array.isArray(cargoTypes)) {
+            cargoTypes.forEach(cargoType => {
                 if (cargoType.name !== 'Trade') {
                     allGoods.add(cargoType.name);
                 }
@@ -1302,7 +1305,8 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             let buyerChance = sizeRating * 10;
             
             // Add +30 if settlement produces "Trade"
-            const isTradeSettlement = this.selectedSettlement.source.includes('Trade');
+            const productionCategories = this.selectedSettlement.flags || this.selectedSettlement.source || [];
+            const isTradeSettlement = productionCategories.includes('Trade');
             if (isTradeSettlement) {
                 buyerChance += 30;
                 console.log(`  ├─ Trade Settlement Bonus: +30`);
@@ -1358,7 +1362,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 console.log(`💰 STEP 3: Calculating Offer Price`);
                 
                 // Get base price for the resource in current season
-                const cargoType = this.dataManager.cargoTypes.find(c => c.name === this.selectedResource);
+                const cargoType = this.dataManager.getCargoType(this.selectedResource);
                 let basePrice = 50; // Default fallback
                 
                 if (cargoType && cargoType.basePrices && cargoType.basePrices[this.currentSeason]) {
@@ -1847,7 +1851,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 console.log(`  ├─ Settlement: ${this.selectedSettlement.name}`);
                 console.log(`  ├─ Size Rating: ${this.selectedSettlement.size} (numeric: ${this.dataManager.convertSizeToNumeric(this.selectedSettlement.size)})`);
                 console.log(`  ├─ Wealth Rating: ${this.selectedSettlement.wealth}`);
-                console.log(`  └─ Produces: [${this.selectedSettlement.source.join(', ')}]`);
+                console.log(`  └─ Produces: [${(this.selectedSettlement.flags || this.selectedSettlement.source || []).join(', ')}]`);
                 
                 console.log('🎯 STEP 1: Availability Check Results');
                 console.log(`  ├─ Base Chance: (${this.dataManager.convertSizeToNumeric(this.selectedSettlement.size)} + ${this.selectedSettlement.wealth}) × 10 = ${completeResult.availabilityCheck.chance}%`);
@@ -1869,7 +1873,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 
                 // Convert cargo types to detailed cargo objects for display
                 const availableCargo = await Promise.all(completeResult.cargoTypes.map(async (cargoName) => {
-                    const cargoType = this.dataManager.cargoTypes.find(c => c.name === cargoName);
+                    const cargoType = this.dataManager.getCargoType(cargoName);
                     const basePrice = this.tradingEngine.calculateBasePrice(cargoName, this.currentSeason);
                     const totalCargoSize = completeResult.cargoSize.totalSize;
                     const encumbrance = cargoType?.encumbrancePerUnit || 1;

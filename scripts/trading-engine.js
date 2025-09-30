@@ -62,10 +62,10 @@ class TradingEngine {
         this.currentSeason = season;
 
         // Persist to settings if available (FoundryVTT or mock)
-        if (global.foundryMock && global.foundryMock.setSetting) {
+        if (typeof global !== 'undefined' && global.foundryMock && global.foundryMock.setSetting) {
             await global.foundryMock.setSetting('wfrp-trading', 'currentSeason', season);
-        } else if (global.game && global.game.settings && global.game.settings.set) {
-            await global.game.settings.set('trading-places', 'currentSeason', season);
+        } else if (typeof game !== 'undefined' && game.settings && game.settings.set) {
+            await game.settings.set('trading-places', 'currentSeason', season);
         }
     }
 
@@ -196,14 +196,14 @@ class TradingEngine {
      * @returns {Array} - Array of available cargo type names
      */
     determineCargoTypes(settlement, season) {
-        if (!settlement || !settlement.source || !Array.isArray(settlement.source)) {
+        if (!settlement || !settlement.flags || !Array.isArray(settlement.flags)) {
             throw new Error('Settlement must have a valid source array');
         }
 
         this.validateSeasonSet();
         
         const availableCargo = [];
-        const productionCategories = settlement.source;
+        const productionCategories = settlement.flags;
 
         // Mapping from settlement production categories to cargo types
         const productionToCargoMapping = {
@@ -434,7 +434,7 @@ class TradingEngine {
         // Additional trading-specific validation
         const errors = [];
         
-        if (!settlement.source || settlement.source.length === 0) {
+        if (!settlement.flags || settlement.flags.length === 0) {
             errors.push('Settlement must have at least one production category');
         }
 

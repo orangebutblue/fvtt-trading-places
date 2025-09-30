@@ -14,6 +14,19 @@ class DataManager {
         this.config = {};
         this.currentSeason = null;
         this.logger = null; // Will be set by integration
+        this.moduleId = 'trading-places';
+        this.activeDatasetName = 'active';
+        this.dataPath = `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
+        this.sourceFlags = {};
+    }
+
+    setModuleId(moduleId) {
+        if (!moduleId) {
+            return;
+        }
+
+        this.moduleId = moduleId;
+        this.dataPath = `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
     }
 
     /**
@@ -200,12 +213,17 @@ class DataManager {
             }
         }
 
-        // Enhanced size enumeration validation (maintain backward compatibility)
+        // Enhanced size validation (accept both string enum and numeric values)
         if (settlement.hasOwnProperty('size')) {
             const validSizes = ['CS', 'C', 'T', 'ST', 'V', 'F', 'M'];
-            if (!validSizes.includes(settlement.size)) {
+            const validNumericSizes = [1, 2, 3, 4, 5];
+
+            if (typeof settlement.size === 'string' && !validSizes.includes(settlement.size)) {
                 result.valid = false;
-                result.errors.push(`Size must be one of: ${validSizes.join(', ')}`);
+                result.errors.push(`Size must be one of: ${validSizes.join(', ')} or a number 1-5`);
+            } else if (typeof settlement.size === 'number' && !validNumericSizes.includes(settlement.size)) {
+                result.valid = false;
+                result.errors.push(`Size must be one of: ${validSizes.join(', ')} or a number 1-5`);
             }
         }
 
@@ -229,11 +247,11 @@ class DataManager {
             }
         }
 
-        // Enhanced garrison validation (maintain backward compatibility)
+        // Enhanced garrison validation (accept both array and object formats)
         if (settlement.hasOwnProperty('garrison')) {
-            if (!Array.isArray(settlement.garrison)) {
+            if (!Array.isArray(settlement.garrison) && typeof settlement.garrison !== 'object') {
                 result.valid = false;
-                result.errors.push('Garrison must be an array');
+                result.errors.push('Garrison must be an array or object');
             }
         }
 
@@ -576,10 +594,16 @@ class DataManager {
 
     /**
      * Convert settlement size enumeration to numeric value
-     * @param {string} sizeEnum - Size enumeration (CS/C/T/ST/V/F/M)
-     * @returns {number} - Numeric size value (1-4)
+     * @param {string|number} sizeEnum - Size enumeration (CS/C/T/ST/V/F/M) or numeric value (1-5)
+     * @returns {number} - Numeric size value (1-5)
      */
     convertSizeToNumeric(sizeEnum) {
+        // If it's already a number, return it (handles numeric size format)
+        if (typeof sizeEnum === 'number' && sizeEnum >= 1 && sizeEnum <= 5) {
+            return sizeEnum;
+        }
+
+        // Handle string enumeration format
         const sizeMapping = {
             'CS': 4, // City State (any size)
             'C': 4,  // City (10,000+)
@@ -590,11 +614,11 @@ class DataManager {
             'M': 2   // Mine (any size)
         };
 
-        if (!sizeMapping.hasOwnProperty(sizeEnum)) {
-            throw new Error(`Invalid size enumeration: ${sizeEnum}. Valid values: ${Object.keys(sizeMapping).join(', ')}`);
+        if (typeof sizeEnum === 'string' && sizeMapping.hasOwnProperty(sizeEnum)) {
+            return sizeMapping[sizeEnum];
         }
 
-        return sizeMapping[sizeEnum];
+        throw new Error(`Invalid size enumeration: ${sizeEnum}. Valid values: ${Object.keys(sizeMapping).join(', ')} or numbers 1-5`);
     }
 
     /**
@@ -640,12 +664,28 @@ class DataManager {
     }
 
     /**
-     * Get size description from enumeration
-     * @param {string} sizeEnum - Size enumeration
+     * Get size description from enumeration or numeric value
+     * @param {string|number} sizeEnum - Size enumeration (CS/C/T/ST/V/F/M) or numeric value (1-5)
      * @returns {string} - Size description
      */
     getSizeDescription(sizeEnum) {
-        const sizeDescriptions = {
+        // Handle numeric sizes (1-5)
+        if (typeof sizeEnum === 'number') {
+            const numericDescriptions = {
+                1: 'Village',
+                2: 'Small Town',
+                3: 'Town',
+                4: 'City',
+                5: 'City State'
+            };
+
+            if (numericDescriptions.hasOwnProperty(sizeEnum)) {
+                return numericDescriptions[sizeEnum];
+            }
+        }
+
+        // Handle string enumerations (legacy support)
+        const stringDescriptions = {
             'CS': 'City State',
             'C': 'City',
             'T': 'Town',
@@ -655,11 +695,11 @@ class DataManager {
             'M': 'Mine'
         };
 
-        if (!sizeDescriptions.hasOwnProperty(sizeEnum)) {
-            throw new Error(`Invalid size enumeration: ${sizeEnum}`);
+        if (stringDescriptions.hasOwnProperty(sizeEnum)) {
+            return stringDescriptions[sizeEnum];
         }
 
-        return sizeDescriptions[sizeEnum];
+        throw new Error(`Invalid size enumeration: ${sizeEnum}. Valid values: 1-5 or CS, C, T, ST, V, F, M`);
     }
 
     /**
@@ -687,7 +727,7 @@ class DataManager {
             wealthModifier: this.getWealthModifier(settlement.wealth),
             wealthDescription: this.getWealthDescription(settlement.wealth),
             population: settlement.population,
-            productionCategories: settlement.source,
+            productionCategories: settlement.flags || settlement.source || [],
             garrison: settlement.garrison,
             ruler: settlement.ruler,
             notes: settlement.notes
@@ -720,7 +760,8 @@ class DataManager {
      * @returns {boolean} - True if settlement produces Trade goods
      */
     isTradeSettlement(settlement) {
-        return !!(settlement && settlement.source && Array.isArray(settlement.source) && settlement.source.includes('Trade'));
+        const productionCategories = settlement.flags || settlement.source || [];
+        return !!(settlement && productionCategories && Array.isArray(productionCategories) && productionCategories.includes('Trade'));
     }
 
     /**
@@ -745,63 +786,61 @@ class DataManager {
      */
     async loadActiveDataset() {
         try {
-            // In FoundryVTT environment, use fetch to load JSON files
-            if (typeof fetch !== 'undefined') {
-                // Load config and cargo types
-                const [cargoResponse, configResponse] = await Promise.all([
-                    fetch('modules/trading-places/datasets/active/cargo-types.json'),
-                    fetch('modules/trading-places/datasets/active/config.json')
-                ]);
-
-                const cargoData = await cargoResponse.json();
-                const configData = await configResponse.json();
-
-                // Load individual settlement files
-                const settlementFiles = [
-                    'Averland.json', 'Hochland.json', 'Middenland.json', 'Moot.json',
-                    'Nordland.json', 'Ostermark.json', 'Ostland.json', 'Reikland.json',
-                    'Stirland.json', 'Sudenland.json', 'Sylvania.json', 'Talabecland.json',
-                    'Wasteland.json', 'Wissenland.json'
-                ];
-
-                const settlementPromises = settlementFiles.map(file =>
-                    fetch(`modules/trading-places/datasets/active/settlements/${file}`)
-                        .then(response => response.json())
-                        .catch(error => {
-                            console.warn(`Failed to load settlement file ${file}:`, error);
-                            return { settlements: [] };
-                        })
-                );
-
-                const settlementDataArray = await Promise.all(settlementPromises);
-
-                // Combine all settlements into a single array
-                this.settlements = [];
-                settlementDataArray.forEach(data => {
-                    if (Array.isArray(data)) {
-                        this.settlements.push(...data);
-                    }
-                });
-
-                this.cargoTypes = cargoData.cargoTypes || [];
-                this.config = configData;
-
-                // Validate loaded dataset
-                const dataset = {
-                    settlements: this.settlements,
-                    config: this.config
-                };
-
-                const validation = this.validateDatasetCompleteness(dataset);
-                if (!validation.valid) {
-                    throw new Error(`Dataset validation failed: ${validation.errors.join(', ')}`);
-                }
-
-                console.log(`Loaded ${this.settlements.length} settlements and ${this.cargoTypes.length} cargo types`);
-                return dataset;
-            } else {
+            if (typeof fetch === 'undefined') {
                 throw new Error('loadActiveDataset requires FoundryVTT environment');
             }
+
+            this.activeDatasetName = 'active';
+            this.dataPath = `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
+
+            const [cargoResponse, configResponse] = await Promise.all([
+                fetch(`${this.dataPath}/cargo-types.json`),
+                fetch(`${this.dataPath}/config.json`)
+            ]);
+
+            const cargoData = await cargoResponse.json();
+            const configData = await configResponse.json();
+
+            const settlementFiles = [
+                'Averland.json', 'Hochland.json', 'Middenland.json', 'Moot.json',
+                'Nordland.json', 'Ostermark.json', 'Ostland.json', 'Reikland.json',
+                'Stirland.json', 'Sudenland.json', 'Sylvania.json', 'Talabecland.json',
+                'Wasteland.json', 'Wissenland.json'
+            ];
+
+            const settlementPromises = settlementFiles.map(file =>
+                fetch(`${this.dataPath}/settlements/${file}`)
+                    .then(response => response.json())
+                    .catch(error => {
+                        console.warn(`Failed to load settlement file ${file}:`, error);
+                        return [];
+                    })
+            );
+
+            const settlementDataArray = await Promise.all(settlementPromises);
+
+            this.settlements = [];
+            settlementDataArray.forEach(data => {
+                if (Array.isArray(data)) {
+                    this.settlements.push(...data);
+                }
+            });
+
+            this.cargoTypes = cargoData.cargoTypes || [];
+            this.config = configData;
+
+            const dataset = {
+                settlements: this.settlements,
+                config: this.config
+            };
+
+            const validation = this.validateDatasetCompleteness(dataset);
+            if (!validation.valid) {
+                throw new Error(`Dataset validation failed: ${validation.errors.join(', ')}`);
+            }
+
+            console.log(`Loaded ${this.settlements.length} settlements and ${this.cargoTypes.length} cargo types`);
+            return dataset;
         } catch (error) {
             console.error('Failed to load active dataset:', error);
             throw error;
@@ -815,71 +854,86 @@ class DataManager {
      */
     async switchDataset(datasetName) {
         try {
-            if (typeof fetch !== 'undefined') {
-                // Load config and cargo types
-                const [cargoResponse, configResponse] = await Promise.all([
-                    fetch(`modules/trading-places/datasets/${datasetName}/cargo-types.json`),
-                    fetch(`modules/trading-places/datasets/${datasetName}/config.json`)
-                ]);
-
-                const cargoData = await cargoResponse.json();
-                const configData = await configResponse.json();
-
-                // Load individual settlement files
-                const settlementFiles = [
-                    'Averland.json', 'Hochland.json', 'Middenland.json', 'Moot.json',
-                    'Nordland.json', 'Ostermark.json', 'Ostland.json', 'Reikland.json',
-                    'Stirland.json', 'Sudenland.json', 'Sylvania.json', 'Talabecland.json',
-                    'Wasteland.json', 'Wissenland.json'
-                ];
-
-                const settlementPromises = settlementFiles.map(file =>
-                    fetch(`modules/trading-places/datasets/${datasetName}/settlements/${file}`)
-                        .then(response => response.json())
-                        .catch(error => {
-                            console.warn(`Failed to load settlement file ${file}:`, error);
-                            return [];
-                        })
-                );
-
-                const settlementDataArray = await Promise.all(settlementPromises);
-
-                // Combine all settlements into a single array
-                this.settlements = [];
-                settlementDataArray.forEach(data => {
-                    if (Array.isArray(data)) {
-                        this.settlements.push(...data);
-                    }
-                });
-
-                this.cargoTypes = cargoData.cargoTypes || [];
-                this.config = configData;
-
-                // Validate loaded dataset
-                const dataset = {
-                    settlements: this.settlements,
-                    config: this.config
-                };
-
-                const validation = this.validateDatasetCompleteness(dataset);
-                if (!validation.valid) {
-                    throw new Error(`Dataset validation failed: ${validation.errors.join(', ')}`);
-                }
-
-                // Update active dataset setting if in FoundryVTT
-                if (typeof game !== 'undefined' && game.settings) {
-                    await game.settings.set("trading-places", "activeDataset", datasetName);
-                }
-
-                console.log(`Switched to dataset '${datasetName}': ${this.settlements.length} settlements and ${this.cargoTypes.length} cargo types`);
-                return dataset;
-            } else {
+            if (typeof fetch === 'undefined') {
                 throw new Error('switchDataset requires FoundryVTT environment');
             }
+
+            this.activeDatasetName = datasetName;
+            this.dataPath = `modules/${this.moduleId}/datasets/${datasetName}`;
+
+            const [cargoResponse, configResponse] = await Promise.all([
+                fetch(`${this.dataPath}/cargo-types.json`),
+                fetch(`${this.dataPath}/config.json`)
+            ]);
+
+            const cargoData = await cargoResponse.json();
+            const configData = await configResponse.json();
+
+            const settlementFiles = [
+                'Averland.json', 'Hochland.json', 'Middenland.json', 'Moot.json',
+                'Nordland.json', 'Ostermark.json', 'Ostland.json', 'Reikland.json',
+                'Stirland.json', 'Sudenland.json', 'Sylvania.json', 'Talabecland.json',
+                'Wasteland.json', 'Wissenland.json'
+            ];
+
+            const settlementPromises = settlementFiles.map(file =>
+                fetch(`${this.dataPath}/settlements/${file}`)
+                    .then(response => response.json())
+                    .catch(error => {
+                        console.warn(`Failed to load settlement file ${file}:`, error);
+                        return [];
+                    })
+            );
+
+            const settlementDataArray = await Promise.all(settlementPromises);
+
+            this.settlements = [];
+            settlementDataArray.forEach(data => {
+                if (Array.isArray(data)) {
+                    this.settlements.push(...data);
+                }
+            });
+
+            this.cargoTypes = cargoData.cargoTypes || [];
+            this.config = configData;
+
+            const dataset = {
+                settlements: this.settlements,
+                config: this.config
+            };
+
+            const validation = this.validateDatasetCompleteness(dataset);
+            if (!validation.valid) {
+                throw new Error(`Dataset validation failed: ${validation.errors.join(', ')}`);
+            }
+
+            if (typeof game !== 'undefined' && game.settings) {
+                await game.settings.set(this.moduleId, "activeDataset", datasetName);
+            }
+
+            console.log(`Switched to dataset '${datasetName}': ${this.settlements.length} settlements and ${this.cargoTypes.length} cargo types`);
+            return dataset;
         } catch (error) {
             console.error(`Failed to switch to dataset '${datasetName}':`, error);
             throw error;
         }
+    }
+
+    async loadFile(path) {
+        if (typeof fetch === 'undefined') {
+            throw new Error('loadFile requires a browser environment with fetch support');
+        }
+
+        const response = await fetch(path, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error(`Failed to load file: ${path} (${response.status} ${response.statusText})`);
+        }
+
+        return await response.json();
+    }
+
+    getCargoTypes() {
+        return Array.isArray(this.cargoTypes) ? [...this.cargoTypes] : [];
     }
 
     /**
@@ -1868,11 +1922,6 @@ class DataManager {
      * Dataset loading methods (for FoundryVTT integration)
      */
 
-    async switchDataset(datasetName) {
-        // This would be implemented to switch between different datasets
-        throw new Error('switchDataset() not yet implemented - requires FoundryVTT integration');
-    }
-
     /**
      * Orange-realism schema methods
      */
@@ -2281,8 +2330,19 @@ class DataManager {
      * @returns {Promise<Array>} - Array of cargo types
      */
     async loadCargoTypes() {
-        // Cargo types are already loaded during initialization
-        return this.cargoTypes || [];
+        if (Array.isArray(this.cargoTypes) && this.cargoTypes.length > 0) {
+            return this.cargoTypes;
+        }
+
+        try {
+            const path = `${this.dataPath}/cargo-types.json`;
+            const cargoData = await this.loadFile(path);
+            this.cargoTypes = cargoData.cargoTypes || [];
+            return this.cargoTypes;
+        } catch (error) {
+            console.error('Trading Places | Failed to load cargo types:', error);
+            throw error;
+        }
     }
     
     /**
