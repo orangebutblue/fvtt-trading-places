@@ -35,6 +35,7 @@
     "scripts/mixins/validation-mixin.js",
     "scripts/mixins/season-management-mixin.js",
     "scripts/mixins/settlement-selector-mixin.js",
+    "scripts/mixins/ui-state-mixin.js",
     "scripts/availability-results-renderer.js",
     "scripts/fallback-dialogs-v2.js",
     "scripts/simple-trading-v2.js",
