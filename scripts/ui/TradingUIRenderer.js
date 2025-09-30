@@ -1,4 +1,3 @@
-
 console.log('Trading Places | Loading TradingUIRenderer.js');
 
 export class TradingUIRenderer {
@@ -582,6 +581,17 @@ export class TradingUIRenderer {
         const cargoGrid = this.app.element.querySelector('#buying-cargo-grid');
         if (!cargoGrid) return;
         
+        // Debug: Log what cargo we're displaying
+        console.log('🎨 UI RENDERER RECEIVING CARGO:', cargoList.map(c => ({
+            name: c.name,
+            merchant: {
+                name: c.merchant?.name,
+                hagglingSkill: c.merchant?.hagglingSkill,
+                baseSkill: c.merchant?.baseSkill,
+                personalityModifier: c.merchant?.personalityModifier
+            }
+        })));
+        
         // Show the cargo grid
         cargoGrid.style.display = 'block';
         
@@ -646,6 +656,7 @@ export class TradingUIRenderer {
                     <div class="merchant-header">
                         <span class="merchant-name">${cargo.merchant?.name || 'Unknown'}</span>
                         <div class="merchant-skill">${cargo.merchant?.skillDescription || 'Unknown'}</div>
+                        <div class="merchant-personality">${cargo.merchant?.personality || ''}</div>
                     </div>
                     <div class="merchant-description">${cargo.merchant?.description || ''}</div>
                 </div>
@@ -666,27 +677,38 @@ export class TradingUIRenderer {
                             <h7>${this.ICONS.cargo} Cargo Selection</h7>
                             <p><strong>Type:</strong> ${cargo.name} (${cargo.category})</p>
                             <p><strong>Market Balance:</strong> ${slot.balance?.state || 'unknown'} (${slot.balance?.supply || 0}/${slot.balance?.demand || 0})</p>
+                            <p class="explanation">Market balance represents supply (${slot.balance?.supply || 0}) vs demand (${slot.balance?.demand || 0}) levels that affect cargo quantity and pricing. ${slot.balance?.state === 'desperate' ? 'Low supply creates desperate conditions affecting merchant behavior and pricing.' : slot.balance?.state === 'glut' ? 'Excess supply makes goods plentiful and potentially cheaper.' : slot.balance?.state === 'scarce' ? 'High demand with low supply increases prices and reduces availability.' : slot.balance?.state === 'balanced' ? 'Supply and demand are roughly equal, creating stable market conditions.' : 'Market conditions affect pricing and availability.'} Balance is calculated from settlement production, consumption, seasonal effects, and wealth factors.</p>
                         </div>
 
                         <div class="pipeline-section">
                             <h7>${this.ICONS.quantity} Quantity & Quality</h7>
                             <p><strong>Amount:</strong> ${cargo.totalEP} EP</p>
                             <p><strong>Quality:</strong> ${cargo.quality}</p>
+                            <p class="explanation">Amount calculated from percentile roll (${slot.amount?.roll || 'ERROR: Missing roll data'}) adjusted by settlement size (${(slot.amount?.wealthModifier || 0).toFixed(2)}× wealth) and supply/demand ratio (${(slot.amount?.supplyModifier || 0).toFixed(2)}×). Quality determined by settlement wealth rating (${slot.quality?.score || 'ERROR: Missing quality data'} total score) plus production flags and market pressure.</p>
                             ${slot.contraband ? `<p><strong>⚠️ Contraband:</strong> Yes</p>` : ''}
                         </div>
 
                         <div class="pipeline-section">
                             <h7>${this.ICONS.value} Pricing</h7>
-                            <p><strong>Base Price:</strong> ${cargo.basePrice?.toFixed(2)} GC/EP</p>
-                            <p><strong>Final Price:</strong> ${cargo.currentPrice?.toFixed(2)} GC/EP</p>
-                            <p><strong>Total Value:</strong> ${(cargo.currentPrice * cargo.totalEP)?.toFixed(2)} GC</p>
+                            <p><strong>Base Price:</strong> ${(slot.pricing?.basePricePerEP || 0).toFixed(2)} GC/EP</p>
+                            <p><strong>Final Price:</strong> ${(slot.pricing?.finalPricePerEP || 0).toFixed(2)} GC/EP</p>
+                            <p><strong>Total Value:</strong> ${(slot.pricing?.totalValue || 0).toFixed(2)} GC</p>
+                            ${slot.pricing?.steps ? `<div class="pricing-breakdown">
+                                <p><strong>Pricing Breakdown:</strong></p>
+                                <ul>
+                                    ${slot.pricing.steps.map(step => `<li>${step.label}: ${(step.value || 0).toFixed(2)} GC/EP</li>`).join('')}
+                                </ul>
+                            </div>` : '<p class="error">ERROR: Missing pricing calculation data</p>'}
                         </div>
 
                         <div class="pipeline-section">
                             <h7>${this.ICONS.merchant} Merchant Details</h7>
                             <p><strong>Name:</strong> ${cargo.merchant?.name || 'Unknown'}</p>
+                            <p><strong>Personality:</strong> ${cargo.merchant?.personality || 'Unknown'}</p>
                             <p><strong>Skill:</strong> ${cargo.merchant?.skillDescription || 'Unknown'}</p>
-                            ${cargo.merchant?.description ? `<p><strong>Description:</strong> ${cargo.merchant.description}</p>` : ''}
+                            <p><strong>Haggling Skill:</strong> ${cargo.merchant?.hagglingSkill || 'N/A'} (${cargo.merchant?.baseSkill || 'N/A'} base + ${cargo.merchant?.personalityModifier || 0} personality)</p>
+                            <p class="explanation">Merchant generated using percentile-based skill system from config. Base skill (${cargo.merchant?.baseSkill || 'N/A'}) calculated from settlement wealth rating and percentile roll, then modified by personality (${cargo.merchant?.personalityModifier || 0}). Higher skills make haggling harder for players. Every cargo slot gets a unique merchant.</p>
+                            ${cargo.merchant?.specialBehaviors?.length > 0 ? `<p><strong>Special Behaviors:</strong> ${cargo.merchant.specialBehaviors.join(', ')}</p>` : ''}
                         </div>
                     </div>
                 </div>

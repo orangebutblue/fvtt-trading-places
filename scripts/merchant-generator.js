@@ -232,6 +232,14 @@ class MerchantGenerator {
         const skill = this.generateMerchantSkill(settlement);
         const personality = this.assignPersonalityProfile();
         
+        // Calculate final haggling skill (base skill + personality modifier)
+        const baseSkill = skill;
+        const personalityModifier = personality.haggleSkillModifier || 0;
+        const hagglingSkill = Math.max(5, Math.min(95, baseSkill + personalityModifier));
+        
+        // Generate skill description
+        const skillDescription = this.getMerchantSkillDescription(hagglingSkill);
+        
         // Calculate quantities and prices based on equilibrium
         const quantity = this.calculateMerchantQuantity(settlement, cargoType, merchantType, equilibrium);
         const basePrice = this.calculateBasePrice(cargoType, settlement);
@@ -248,11 +256,16 @@ class MerchantGenerator {
                 wealth: settlement.wealth
             },
             cargoType,
-            skill,
+            skill: hagglingSkill, // Keep legacy skill property for compatibility
+            hagglingSkill: hagglingSkill,
+            baseSkill: baseSkill,
+            personalityModifier: personalityModifier,
+            skillDescription: skillDescription,
             quantity,
             basePrice,
             finalPrice: price,
-            personality,
+            personality: personality.profileName, // Use profileName for display
+            personalityProfile: personality, // Keep full profile for internal use
             equilibrium: {
                 supply: equilibrium.supply,
                 demand: equilibrium.demand,
@@ -275,7 +288,9 @@ class MerchantGenerator {
 
         logger.logAlgorithmStep('Merchant Generation', 'Merchant generated', {
             merchantId,
-            skill,
+            baseSkill,
+            personalityModifier,
+            hagglingSkill,
             quantity,
             price,
             personality: personality.profileName
@@ -462,5 +477,8 @@ if (typeof window !== 'undefined') {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = MerchantGenerator;
 }
+
+// ES module export
+export { MerchantGenerator };
 
 console.log('Trading Places | MerchantGenerator class loaded');

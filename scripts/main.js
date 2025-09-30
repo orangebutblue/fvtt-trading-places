@@ -3,6 +3,11 @@
  * Main module initialization and hook registration
  */
 
+// ES Module imports
+import { TradingEngine } from './trading-engine.js';
+import { DataManager } from './data-manager.js';
+import { SystemAdapter } from './system-adapter.js';
+
 // Module constants
 const MODULE_ID = "trading-places";
 const MODULE_VERSION = "1.0.0";
@@ -750,41 +755,33 @@ async function initializeCoreComponents() {
 
     try {
         // Initialize DataManager
-        if (typeof DataManager !== 'undefined') {
-            dataManager = new DataManager();
-            dataManager.setModuleId(MODULE_ID);
-            console.log('Trading Places | DataManager initialized');
-        } else {
-            throw new Error('DataManager class not available');
-        }
+        dataManager = new DataManager();
+        dataManager.setModuleId(MODULE_ID);
+        console.log('Trading Places | DataManager initialized');
 
         // Initialize SystemAdapter
-        if (typeof SystemAdapter !== 'undefined') {
-            systemAdapter = new SystemAdapter();
+        systemAdapter = new SystemAdapter();
 
-            // Connect error handler
-            if (errorHandler) {
-                systemAdapter.setErrorHandler(errorHandler);
-            }
-
-            // Validate system compatibility
-            const systemValidation = systemAdapter.validateSystemCompatibility();
-            if (!systemValidation.compatible) {
-                const errorMessage = `System compatibility issues: ${systemValidation.errors.join(', ')}`;
-                if (errorHandler) {
-                    errorHandler.handleTradingEngineError(new Error(errorMessage), 'SystemAdapter initialization');
-                }
-                // Continue with warnings but don't fail completely
-                console.warn('Trading Places | System compatibility warnings:', systemValidation.warnings);
-            }
-
-            console.log('Trading Places | SystemAdapter initialized');
-        } else {
-            throw new Error('SystemAdapter class not available');
+        // Connect error handler
+        if (errorHandler) {
+            systemAdapter.setErrorHandler(errorHandler);
         }
 
+        // Validate system compatibility
+        const systemValidation = systemAdapter.validateSystemCompatibility();
+        if (!systemValidation.compatible) {
+            const errorMessage = `System compatibility issues: ${systemValidation.errors.join(', ')}`;
+            if (errorHandler) {
+                errorHandler.handleTradingEngineError(new Error(errorMessage), 'SystemAdapter initialization');
+            }
+            // Continue with warnings but don't fail completely
+            console.warn('Trading Places | System compatibility warnings:', systemValidation.warnings);
+        }
+
+        console.log('Trading Places | SystemAdapter initialized');
+
         // Initialize TradingEngine
-        if (typeof TradingEngine !== 'undefined' && dataManager) {
+        if (dataManager) {
             tradingEngine = new TradingEngine(dataManager);
 
             // Set current season with error handling
@@ -807,10 +804,8 @@ async function initializeCoreComponents() {
             }
 
             console.log('Trading Places | TradingEngine initialized');
-        } else if (!dataManager) {
-            throw new Error('DataManager required for TradingEngine initialization');
         } else {
-            throw new Error('TradingEngine class not available');
+            throw new Error('DataManager required for TradingEngine initialization');
         }
 
         console.log('Trading Places | Core components initialized successfully');

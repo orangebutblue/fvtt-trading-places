@@ -2439,6 +2439,5 @@ if (typeof window !== 'undefined') {
     window.DataManager = DataManager;
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = DataManager;
-}
+// ES module export
+export { DataManager };

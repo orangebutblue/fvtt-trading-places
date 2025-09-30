@@ -1,4 +1,3 @@
-
 console.log('Trading Places | Loading BuyingFlow.js');
 
 export class BuyingFlow {
@@ -143,7 +142,38 @@ export class BuyingFlow {
                 // Convert all pipeline slots to cargo objects for display
                 availableCargo = await Promise.all(pipelineResult.slots.map(async (slot) => {
                     const cargoType = this.dataManager.getCargoType(slot.cargo.name);
-                    const merchant = await this.tradingEngine.generateRandomMerchant(this.app.selectedSettlement, rollFunction);
+                    let merchant;
+                    try {
+                        // Debug: Check if config is loaded
+                        const systemConfig = this.tradingEngine.dataManager.getSystemConfig();
+                        console.log('🔍 SYSTEM CONFIG DEBUG:', {
+                            hasConfig: !!systemConfig,
+                            configKeys: Object.keys(systemConfig),
+                            hasSkillDistribution: !!systemConfig.skillDistribution,
+                            hasMerchantPersonalities: !!systemConfig.merchantPersonalities
+                        });
+                        
+                        merchant = await this.tradingEngine.generateRandomMerchant(this.app.selectedSettlement, rollFunction);
+                        console.log('🔍 MERCHANT OBJECT DEBUG:', {
+                            name: merchant.name,
+                            skillDescription: merchant.skillDescription,
+                            hagglingSkill: merchant.hagglingSkill,
+                            baseSkill: merchant.baseSkill,
+                            personalityModifier: merchant.personalityModifier,
+                            personality: merchant.personality,
+                            allKeys: Object.keys(merchant)
+                        });
+                    } catch (error) {
+                        console.error('❌ MERCHANT GENERATION FAILED:', error);
+                        merchant = {
+                            name: 'Unknown Merchant',
+                            skillDescription: 'Unknown',
+                            hagglingSkill: 'N/A',
+                            baseSkill: 'N/A',
+                            personalityModifier: 0,
+                            personality: 'Unknown'
+                        };
+                    }
                     
                     return {
                         name: slot.cargo.name,
@@ -158,7 +188,11 @@ export class BuyingFlow {
                         slotInfo: {
                             slotNumber: slot.slotNumber,
                             balance: slot.balance,
+                            amount: slot.amount,
+                            quality: slot.quality,
+                            pricing: slot.pricing,
                             contraband: slot.contraband.contraband,
+                            merchant: slot.merchant,
                             desperationUsed: false // No desperation since merchants always available
                         }
                     };
@@ -251,6 +285,17 @@ export class BuyingFlow {
                 
                 // Store available cargo
                 this.app.availableCargo = availableCargo;
+                
+                // Debug: Log what we're storing
+                console.log('📦 STORING AVAILABLE CARGO:', availableCargo.map(c => ({
+                    name: c.name,
+                    merchant: {
+                        name: c.merchant?.name,
+                        hagglingSkill: c.merchant?.hagglingSkill,
+                        baseSkill: c.merchant?.baseSkill,
+                        personalityModifier: c.merchant?.personalityModifier
+                    }
+                })));
                 
                 // Show detailed success message
                 this.app.renderer._showAvailabilityResults({

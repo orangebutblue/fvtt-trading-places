@@ -2020,16 +2020,11 @@ class TradingEngine {
     }
 }
 
-// ES module export
-export { TradingEngine };
+// Export for use in other modules
+console.log('DEBUG: About to export TradingEngine, type:', typeof TradingEngine);
+module.exports = TradingEngine;
 
 // Global registration for FoundryVTT
 if (typeof window !== 'undefined') {
     window.TradingEngine = TradingEngine;
-    console.log('Trading Places | TradingEngine assigned to window.TradingEngine, type:', typeof window.TradingEngine);
-} else if (typeof globalThis !== 'undefined') {
-    globalThis.TradingEngine = TradingEngine;
-    console.log('Trading Places | TradingEngine assigned to globalThis.TradingEngine, type:', typeof globalThis.TradingEngine);
-} else {
-    console.log('Trading Places | No global scope available for TradingEngine');
-}
+ }

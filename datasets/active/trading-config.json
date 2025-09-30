@@ -8,15 +8,18 @@
   },
   "merchantCount": {
     "formula": "population-scaled",
-    "minSlotsPerSize": [1, 2, 3, 4, 6],
+    "minSlotsPerSize": [1, 2, 3, 4, 5],
     "populationMultiplier": 0.0001,
     "sizeMultiplier": 1.5,
-    "hardCap": 15,
     "flagMultipliers": {
-      "trade": 1.5,
-      "government": 1.2,
-      "subsistence": 0.5
-    }
+      "trade": 1.5
+    },
+    "hardCap": 10
+  },
+  "cargoSelection": {
+    "producesWeight": 8,
+    "demandsWeight": 5,
+    "flagTransferMultiplier": 10
   },
   "skillDistribution": {
     "type": "piecewise",
@@ -36,9 +39,8 @@
     "maxSkill": 95
   },
   "desperation": {
-    "rerollChance": 0.7,
     "skillPenalty": 0.2,
-    "priceModifier": 1.15,
+    "priceModifier": 0.85,
     "quantityReduction": 0.25,
     "qualityPenalty": -1,
     "availabilityPenalty": -10
@@ -50,7 +52,6 @@
     },
     "producesShift": 0.5,
     "demandsShift": 0.35,
-    "flagShifts": {},
     "seasonalShifts": {
       "spring": { "agriculture": 0.2 },
       "summer": { "agriculture": 0.1 },
@@ -77,68 +78,58 @@
       "demand": 20
     }
   },
-  "merchantPersonalities": {
-    "defaultProfile": {
-      "name": "Standard Merchant",
-      "haggleSkillModifier": 0,
-      "priceVariance": 0.05,
-      "quantityVariance": 0.1,
-      "specialBehaviors": []
+  "cargoAmount": {
+    "baseFormula": "ceil(roll/10) * 10 * settlementSize",
+    "supplyModifier": "max(0.5, supply/demand)"
+  },
+  "qualityEvaluation": {
+    "baseScore": "settlementWealthRating",
+    "flagBonuses": {},
+    "marketPressureModifiers": {
+      "glut": 1,
+      "scarce": -1,
+      "desperate": -2
     },
-    "profiles": {
-      "shrewd": {
-        "name": "Shrewd Dealer",
-        "haggleSkillModifier": 10,
-        "priceVariance": 0.02,
-        "quantityVariance": 0.05,
-        "specialBehaviors": ["hard_bargainer"]
-      },
-      "generous": {
-        "name": "Generous Trader",
-        "haggleSkillModifier": -5,
-        "priceVariance": 0.08,
-        "quantityVariance": 0.15,
-        "specialBehaviors": ["bulk_discount"]
-      },
-      "suspicious": {
-        "name": "Suspicious Dealer",
-        "haggleSkillModifier": 5,
-        "priceVariance": 0.1,
-        "quantityVariance": 0.2,
-        "specialBehaviors": ["reputation_check"]
-      }
-    },
-    "distributionWeights": {
-      "defaultProfile": 70,
-      "shrewd": 15,
-      "generous": 10,
-      "suspicious": 5
+    "tierMapping": {
+      "1-2": "Poor",
+      "3-4": "Common",
+      "5-6": "Average",
+      "7-8": "High",
+      "9-10": "Exceptional"
     }
   },
-  "specialSourceBehaviors": {
-    "smuggling": {
-      "contrabandChance": 0.4,
-      "priceDiscount": 0.15,
-      "availabilityBonus": 0.2,
-      "riskFactor": 0.3,
-      "specialGoods": ["contraband", "illegal_substances"]
+  "contraband": {
+    "baseChance": 0.05,
+    "flagBonuses": {},
+    "sizeBonuses": {
+      "1": 0,
+      "2": 0.01,
+      "3": 0.02,
+      "4": 0.03,
+      "5": 0.05
+    }
+  },
+  "pricing": {
+    "cargoSizeFormula": "(settlementSizeRating + settlementWealthRating) * ceil(d100/10) * 10",
+    "contrabandDiscount": 0.85,
+    "desperationPenalties": {
+      "scarce": 1.1,
+      "desperate": 1.2
     },
-    "piracy": {
-      "seasonalActivity": {
-        "spring": 1.2,
-        "summer": 1.5,
-        "autumn": 1.0,
-        "winter": 0.6
+    "buyingModifiers": {
+      "metalworkingBonus": 0.1,
+      "partialPurchaseSurcharge": 0.1
+    },
+    "sellingModifiers": {
+      "wealthMultipliers": {
+        "1": 0.5,
+        "2": 0.8,
+        "3": 1.0,
+        "4": 1.05,
+        "5": 1.1
       },
-      "coastalOnly": true,
-      "priceVolatility": 0.25,
-      "lootedGoodsChance": 0.3
-    },
-    "government": {
-      "officialGoodsOnly": true,
-      "permitRequired": true,
-      "priceMarkup": 0.05,
-      "qualityAssurance": 1.2
+      "tradeRumorsMultiplier": 2.0,
+      "quickSaleMultiplier": 0.5
     }
   }
 }
