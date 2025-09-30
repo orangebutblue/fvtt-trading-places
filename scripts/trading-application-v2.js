@@ -71,6 +71,16 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         this.systemAdapter = window.WFRPRiverTrading?.getSystemAdapter();
         this.debugLogger = window.wfrpLogger;
 
+        this.cargoAvailabilityPipeline = null;
+        if (this.dataManager && typeof this.dataManager.getCargoAvailabilityPipeline === 'function') {
+            try {
+                this.cargoAvailabilityPipeline = this.dataManager.getCargoAvailabilityPipeline();
+                this._logDebug('Pipeline', 'Cargo availability pipeline ready');
+            } catch (error) {
+                this._logError('Pipeline', 'Failed to initialize cargo availability pipeline', { error: error.message });
+            }
+        }
+
         // Validate components are available
         if (!this.dataManager || !this.tradingEngine) {
             const error = 'Trading components not initialized. Please ensure the module is properly loaded.';
@@ -1835,6 +1845,20 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 return roll.total;
             };
             
+            let pipelineResult = null;
+            if (this.cargoAvailabilityPipeline) {
+                try {
+                    pipelineResult = await this.cargoAvailabilityPipeline.run({
+                        settlement: this.selectedSettlement,
+                        season: this.currentSeason,
+                        maxCandidates: 8
+                    });
+                    console.log('Orange realism pipeline output:', pipelineResult);
+                } catch (pipelineError) {
+                    this._logError('Availability Pipeline', 'Pipeline execution failed', { error: pipelineError.message });
+                }
+            }
+
             const completeResult = await this.tradingEngine.performCompleteAvailabilityCheck(
                 this.selectedSettlement,
                 this.currentSeason,
@@ -1910,7 +1934,11 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 this.availableCargo = availableCargo;
                 
                 // Show detailed success message
-                this._showAvailabilityResults(completeResult, availableCargo);
+                this._showAvailabilityResults({
+                    availabilityResult: completeResult,
+                    availableCargo,
+                    pipelineResult
+                });
                 
                 // Update cargo display
                 this._updateCargoDisplay(availableCargo);
@@ -1931,7 +1959,10 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 this.availableCargo = [];
                 
                 // Show failure message with detailed breakdown
-                this._showAvailabilityResults(completeResult);
+                this._showAvailabilityResults({
+                    availabilityResult: completeResult,
+                    pipelineResult
+                });
                 
                 // Hide cargo display
                 this._hideCargoDisplay();
@@ -1978,202 +2009,150 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
      * @param {Array} availableCargo - Available cargo for display (empty on failure)
      * @private
      */
-    _showAvailabilityResults(completeResult, availableCargo = []) {
-        console.log('✅ Showing availability results:', completeResult.available ? 'SUCCESS' : 'FAILURE');
-        
-        let resultsDiv = this.element.querySelector('#availability-results');
-        if (!resultsDiv) {
-            // Create the results div if it doesn't exist (fallback)
-            const buyingTab = this.element.querySelector('#buying-tab');
-            if (buyingTab) {
-                resultsDiv = document.createElement('div');
-                resultsDiv.id = 'availability-results';
-                resultsDiv.className = 'availability-results';
-                resultsDiv.style.display = 'none';
-                buyingTab.appendChild(resultsDiv);
-            } else {
-                console.error('❌ Could not find buying tab to create results div!');
-                return;
-            }
+    _showAvailabilityResults({ availabilityResult, availableCargo = [], pipelineResult = null } = {}) {
+        if (!availabilityResult) {
+            this._logError('Availability Display', 'No availability result provided');
+            return;
         }
 
-        const rollDetails = completeResult.availabilityCheck;
+        const completeResult = availabilityResult;
+        const isSuccess = !!completeResult.available;
+
+        let resultsDiv = this.element.querySelector('#availability-results');
+        if (!resultsDiv) {
+            const buyingTab = this.element.querySelector('#buying-tab');
+            if (!buyingTab) {
+                this._logError('Availability Display', 'Buying tab not found for results injection');
+                return;
+            }
+            resultsDiv = document.createElement('div');
+            resultsDiv.id = 'availability-results';
+            resultsDiv.className = 'availability-results';
+            buyingTab.appendChild(resultsDiv);
+        }
+
+        const rollDetails = completeResult.availabilityCheck || { roll: '-', chance: '-' };
         const sizeRating = this.dataManager.convertSizeToNumeric(this.selectedSettlement.size);
         const wealthRating = this.selectedSettlement.wealth;
         const baseChance = (sizeRating + wealthRating) * 10;
         const finalChance = Math.min(baseChance, 100);
 
-        let statusHtml = '';
-        let cargoHtml = '';
+        const statusTitle = isSuccess ? 'Cargo Available!' : 'No Cargo Available';
+        const statusIcon = isSuccess ? 'fas fa-check-circle' : 'fas fa-times-circle';
+        const statusClass = isSuccess ? 'success-text' : 'failure-text';
 
-        if (completeResult.available) {
-            // SUCCESS: Show cargo types and details
-            statusHtml = `
-                <h4>
-                    <i class="fas fa-check-circle success-icon"></i>
-                    Cargo Available!
-                </h4>
-            `;
+        const cargoTypesList = Array.isArray(completeResult.cargoTypes)
+            ? completeResult.cargoTypes.map(type => `<li><strong>${type}</strong></li>`).join('')
+            : '';
 
-            // Show available cargo types from completeResult first
-            let cargoTypesDisplay = '';
-            if (completeResult.cargoTypes && completeResult.cargoTypes.length > 0) {
-                const cargoTypesList = completeResult.cargoTypes.map(type => `<li><strong>${type}</strong></li>`).join('');
-                cargoTypesDisplay = `
-                    <h5>Available Resource Types:</h5>
-                    <ul class="cargo-types-list">
-                        ${cargoTypesList}
-                    </ul>
-                `;
-            }
-            
-            // Create detailed cargo summary if availableCargo is provided
-            let detailedCargoSummary = '';
-            if (availableCargo && availableCargo.length > 0) {
-                const cargoSummary = availableCargo.map(cargo =>
-                    `<li><strong>${cargo.name}</strong> (${cargo.category}) - ${cargo.quantity} units available @ ${cargo.basePrice} GC</li>`
-                ).join('');
-                detailedCargoSummary = `
-                    <h5>Detailed Cargo Information:</h5>
-                    <ul class="cargo-details-list">
-                        ${cargoSummary}
-                    </ul>
-                `;
-            }
+        const detailedCargoSummary = isSuccess && Array.isArray(availableCargo) && availableCargo.length > 0
+            ? availableCargo.map(cargo => `<li><strong>${cargo.name}</strong> (${cargo.category}) - ${cargo.quantity} units @ ${cargo.basePrice} GC</li>`).join('')
+            : '';
 
-            cargoHtml = `
-                ${cargoTypesDisplay}
-                ${detailedCargoSummary}
-                <p><strong>Total Cargo Value:</strong> ${completeResult.cargoSize.totalSize} Encumbrance Points</p>
+        const cargoHtml = isSuccess ? `
+            <h5>Available Resource Types</h5>
+            <ul class="cargo-types-list">${cargoTypesList}</ul>
+            ${detailedCargoSummary ? `<h5>Detailed Cargo Information</h5><ul class="cargo-details-list">${detailedCargoSummary}</ul>` : ''}
+            <div class="calculation-breakdown">
+                <p><strong>Total Size:</strong> ${completeResult.cargoSize?.totalSize || 0} EP</p>
+                <p><strong>Base Multiplier:</strong> ${sizeRating} + ${wealthRating} = ${completeResult.cargoSize?.baseMultiplier || 0}</p>
+                <p><strong>Size Roll:</strong> ${completeResult.cargoSize?.roll1 || '-'} → ${completeResult.cargoSize?.sizeMultiplier || '-'}</p>
+                ${completeResult.cargoSize?.tradeBonus ? `<p><strong>Trade Bonus:</strong> Second roll ${completeResult.cargoSize.roll2} applied</p>` : ''}
+            </div>
+        ` : `
+            <div class="explanation">
+                <p><em>This settlement has limited trade activity. Try again or travel to a busier market.</em></p>
+            </div>
+        `;
 
-                <h5>Cargo Size Calculation:</h5>
-                <div class="calculation-breakdown">
-                    <p><strong>Base Multiplier:</strong> ${sizeRating} + ${wealthRating} = ${completeResult.cargoSize.baseMultiplier}</p>
-                    <p><strong>Size Roll:</strong> ${completeResult.cargoSize.roll1} (1d100) → rounded up to ${completeResult.cargoSize.sizeMultiplier}</p>
-                    ${completeResult.cargoSize.tradeBonus ? `<p><strong>Trade Bonus:</strong> Additional roll ${completeResult.cargoSize.roll2} → used higher multiplier</p>` : ''}
-                    <p><strong>Total Size:</strong> ${completeResult.cargoSize.baseMultiplier} × ${completeResult.cargoSize.sizeMultiplier} = ${completeResult.cargoSize.totalSize} EP</p>
-                </div>
-            `;
-        } else {
-            // FAILURE: Show detailed failure information
-            statusHtml = `
-                <h4>
-                    <i class="fas fa-times-circle failure-icon"></i>
-                    No Cargo Available
-                </h4>
-            `;
-
-            cargoHtml = `
-                <div class="explanation">
-                    <p><em>This settlement has limited trade activity. Try checking availability again, or visit a larger settlement with more merchants.</em></p>
-                </div>
-            `;
-        }
-
-        // Always show the calculation breakdown
         const calculationHtml = `
-            <h5>Market Check Results:</h5>
+            <h5>Market Check</h5>
             <div class="calculation-breakdown">
                 <p><strong>Settlement:</strong> ${this.selectedSettlement.name}</p>
                 <p><strong>Size Rating:</strong> ${this.selectedSettlement.size} (${sizeRating})</p>
-                <p><strong>Wealth Rating:</strong> ${this.selectedSettlement.wealth}</p>
-                <p><strong>Base Chance:</strong> (${sizeRating} + ${wealthRating}) × 10 = ${baseChance}%</p>
-                <p><strong>Final Chance:</strong> ${finalChance}% ${finalChance < baseChance ? '(capped at 100%)' : ''}</p>
-                <p><strong>Dice Roll:</strong> ${rollDetails.roll} (1d100)</p>
-                <p><strong>Result:</strong> ${rollDetails.roll} ${completeResult.available ? '≤' : '>'} ${finalChance} = <span class="${completeResult.available ? 'success-text' : 'failure-text'}">${completeResult.available ? 'SUCCESS' : 'FAILURE'}</span></p>
+                <p><strong>Wealth Rating:</strong> ${wealthRating}</p>
+                <p><strong>Chance:</strong> (${sizeRating} + ${wealthRating}) × 10 = ${finalChance}%</p>
+                <p><strong>Roll:</strong> ${rollDetails.roll}</p>
+                <p><strong>Result:</strong> ${rollDetails.roll} ${isSuccess ? '≤' : '>'} ${finalChance} = <span class="${statusClass}">${isSuccess ? 'SUCCESS' : 'FAILURE'}</span></p>
             </div>
         `;
 
-        const finalHtml = `
-            ${statusHtml}
-            <div class="availability-details">
+        const pipelineHtml = this._renderPipelineDiagnostics(pipelineResult);
+
+        resultsDiv.innerHTML = `
+            <div class="availability-summary">
+                <h4 class="${statusClass}"><i class="${statusIcon}"></i> ${statusTitle}</h4>
                 ${calculationHtml}
                 ${cargoHtml}
+                ${pipelineHtml}
             </div>
         `;
-        
-        console.log('🔍 DEBUG: Setting innerHTML to:', finalHtml.substring(0, 200) + '...');
-        resultsDiv.innerHTML = finalHtml;
         resultsDiv.style.display = 'block';
-        
-        // Keep the original div hidden since we're using the new approach
-        resultsDiv.style.display = 'none';
-        
-        console.log('✅ Availability results displayed:', completeResult.available ? 'SUCCESS' : 'FAILURE');
-        console.log('🔍 DEBUG: Results div is now visible:', resultsDiv.style.display);
-        console.log('🔍 DEBUG: Results div computed styles:', window.getComputedStyle(resultsDiv).display);
-        
-        // Check actual dimensions
-        const rect = resultsDiv.getBoundingClientRect();
-        console.log('🔍 DEBUG: Results div dimensions:', {
-            width: rect.width,
-            height: rect.height,
-            top: rect.top,
-            left: rect.left,
-            visible: rect.width > 0 && rect.height > 0
-        });
-        
-        // Force scroll to the element
-        resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
 
-        
-        // Remove any existing availability results to avoid duplicates
         const existingResults = this.element.querySelectorAll('.availability-results-display');
         existingResults.forEach(el => el.remove());
-        
-        // Create a properly styled results div that stays visible
+
         const alertDiv = document.createElement('div');
         alertDiv.className = 'availability-results-display';
-        
         const successColor = '#4CAF50';
         const failureColor = '#f44336';
-        const bgColor = completeResult.available ? '#1a2e1a' : '#2e1a1a';
-        const borderColor = completeResult.available ? successColor : failureColor;
-        
+        const borderColor = isSuccess ? successColor : failureColor;
+        const bgColor = isSuccess ? '#1a2e1a' : '#2e1a1a';
+
         alertDiv.innerHTML = `
-            <div style="
-                background: ${bgColor}; 
-                color: white; 
-                padding: 20px; 
-                border: 2px solid ${borderColor}; 
-                border-radius: 8px; 
-                margin: 16px 0;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            ">
-                <h3 style="margin: 0 0 15px 0; color: ${completeResult.available ? successColor : failureColor}; font-size: 18px;">
-                    ${completeResult.available ? '✅ Cargo Available!' : '❌ No Cargo Available'}
-                </h3>
-                
-                <div style="margin-bottom: 15px;">
-                    <h4 style="margin: 0 0 8px 0; color: #ccc; font-size: 14px;">Market Check Results:</h4>
-                    <p style="margin: 3px 0; font-size: 13px;"><strong>Settlement:</strong> ${this.selectedSettlement.name}</p>
-                    <p style="margin: 3px 0; font-size: 13px;"><strong>Size Rating:</strong> ${this.selectedSettlement.size} (${sizeRating})</p>
-                    <p style="margin: 3px 0; font-size: 13px;"><strong>Wealth Rating:</strong> ${this.selectedSettlement.wealth}</p>
-                    <p style="margin: 3px 0; font-size: 13px;"><strong>Base Chance:</strong> (${sizeRating} + ${this.selectedSettlement.wealth}) × 10 = ${finalChance}%</p>
-                    <p style="margin: 3px 0; font-size: 13px;"><strong>Dice Roll:</strong> ${rollDetails.roll} (1d100)</p>
-                    <p style="margin: 3px 0; font-size: 13px;"><strong>Result:</strong> ${rollDetails.roll} ${completeResult.available ? '≤' : '>'} ${finalChance} = <span style="color: ${completeResult.available ? successColor : failureColor}; font-weight: bold;">${completeResult.available ? 'SUCCESS' : 'FAILURE'}</span></p>
-                </div>
-                
-                ${completeResult.available ? `
-                    <div>
-                        <h4 style="margin: 0 0 8px 0; color: #ccc; font-size: 14px;">Available Resources:</h4>
-                        <p style="margin: 3px 0; font-size: 13px;"><strong>Types:</strong> ${completeResult.cargoTypes?.join(', ') || 'None'}</p>
-                        <p style="margin: 3px 0; font-size: 13px;"><strong>Total Size:</strong> ${completeResult.cargoSize?.totalSize || 0} EP</p>
-                    </div>
-                ` : `
-                    <p style="margin: 8px 0 0 0; font-style: italic; color: #bbb; font-size: 13px;">
-                        This settlement has limited trade activity. Try checking availability again, or visit a larger settlement with more merchants.
-                    </p>
-                `}
+            <div style="background:${bgColor};color:#fff;padding:20px;border:2px solid ${borderColor};border-radius:8px;margin:16px 0;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+                <h3 style="margin:0 0 12px 0;color:${borderColor};font-size:18px;">${isSuccess ? '✅ Cargo Available' : '❌ No Cargo Available'}</h3>
+                <p style="margin:4px 0;font-size:13px;"><strong>Settlement:</strong> ${this.selectedSettlement.name}</p>
+                <p style="margin:4px 0;font-size:13px;"><strong>Size:</strong> ${this.selectedSettlement.size} (${sizeRating})</p>
+                <p style="margin:4px 0;font-size:13px;"><strong>Wealth:</strong> ${wealthRating}</p>
+                <p style="margin:4px 0;font-size:13px;"><strong>Roll:</strong> ${rollDetails.roll} vs ${finalChance}%</p>
+                ${isSuccess ? `<p style="margin:8px 0 0 0;font-size:13px;"><strong>Types:</strong> ${completeResult.cargoTypes?.join(', ') || 'Unknown'}</p>` : '<p style="margin:8px 0 0 0;font-size:13px;">Consider desperation rerolls or seeking rumors.</p>'}
+                ${pipelineHtml}
             </div>
         `;
-        
-        // Insert right after the check availability button
+
         const checkButton = this.element.querySelector('#check-availability');
-        if (checkButton && checkButton.parentElement) {
+        if (checkButton?.parentElement) {
             checkButton.parentElement.insertAdjacentElement('afterend', alertDiv);
         }
+    }
+
+    _renderPipelineDiagnostics(pipelineResult) {
+        if (!pipelineResult) {
+            return '';
+        }
+
+        const step0 = pipelineResult.step0;
+        const step1 = pipelineResult.step1;
+        const step4 = pipelineResult.step4;
+        const step5 = pipelineResult.step5;
+
+        const modifierList = (step1.modifiers || []).map(mod => {
+            const multiplier = typeof mod.value === 'number' ? mod.value.toFixed(2) : '—';
+            return `<li>${mod.source} → x${multiplier}</li>`;
+        }).join('');
+
+        const balanceHistory = (step4.history || []).map(entry => `
+            <li><strong>${entry.source}</strong>: ${entry.description} (${entry.before.supply}/${entry.before.demand} → ${entry.after.supply}/${entry.after.demand})</li>
+        `).join('');
+
+        const candidateList = (step5.candidates || []).map(candidate => {
+            const reasons = Array.isArray(candidate.reasons) && candidate.reasons.length > 0
+                ? `<ul>${candidate.reasons.map(reason => `<li>${reason}</li>`).join('')}</ul>`
+                : '';
+            return `<li><strong>${candidate.name}</strong> (${candidate.category}) — weight ${candidate.weight}${reasons}</li>`;
+        }).join('');
+
+        return `
+            <div class="pipeline-diagnostics">
+                <h5>Orange Realism Pipeline</h5>
+                <p><strong>Slots:</strong> ${step1.totalSlots} total (${step1.producerSlots} producers / ${step1.seekerSlots} seekers)</p>
+                ${modifierList ? `<ul class="pipeline-modifiers">${modifierList}</ul>` : ''}
+                <p><strong>Supply/Demand:</strong> ${step4.finalBalance.supply}/${step4.finalBalance.demand} (${step4.finalBalance.state})</p>
+                ${balanceHistory ? `<ol class="pipeline-history">${balanceHistory}</ol>` : ''}
+                ${candidateList ? `<h6>Suggested Cargo</h6><ul class="pipeline-candidates">${candidateList}</ul>` : ''}
+            </div>
+        `;
     }
 
     /**

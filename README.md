@@ -1,45 +1,8 @@
 # Trading Places Module
 
-## Phase 1: Foundry Harness - COMPLETE ✅ (Fixed & Improved)
+## Overview
 
-The Foundry Harness provides a lightweight testing environment that runs the module outside of Foundry VTT for automated testing and development.
-
-**🔧 Critical fixes applied based on review:**
-- Fixed settings storage infinite recursion bug
-- Added proper module load failure detection  
-- Implemented deterministic seeded randomness
-- Added scenario transition planning for real module integration
-- Made scenario load failures fatal (no more silent skips)
-
-### Quick Start
-
-```bash
-# Install dependencies
-npm install
-
-# Run default scenarios (headless)
-npm run harness
-
-# Run with visual UI
-npm run harness:ui
-
-# Run specific scenarios
-npm run harness:buying
-npm run harness:availability
-
-# Run with deterministic results (CI)
-npm run harness:ci
-```
-
-### Features
-
-- **Headless Mode**: Automated testing with mocked Foundry globals
-- **Rendered Mode**: Browser-based template inspection
-- **Deterministic Testing**: Seeded random generation for consistent results
-- **Real Module Integration**: Loads actual module code when available
-- **Scenario-Based Testing**: Extensible scenario system
-
-See [Foundry Harness Documentation](tests/foundry-harness/README.md) for detailed usage.
+Trading Places implements the full WFRP4e trading rules with the orange-realism overhaul. The focus is now on real FoundryVTT integration, enriched datasets, and a modern UI built for Game Masters and players.
 
 ## Phase 2: Data Restructuring - COMPLETE ✅
 
@@ -80,9 +43,6 @@ npm run migrate:settlements
 
 # Apply migration (with backup)
 npm run migrate:settlements:live
-
-# Test new schema functionality
-npm run harness scenarios/orange-realism-schema.js
 ```
 
 See [Phase 2 Summary](PHASE2_SUMMARY.md) for complete implementation details.
@@ -122,17 +82,11 @@ Desperate (supply < 20): Auto-triggers desperation rerolls
 **Testing & Validation**
 
 ```bash
-# Test new merchant system (mock mode)
-npm run harness:phase3
+# Run automated test suite
+npm test
 
-# Test with real module integration
-HARNESS_EXPECT_REAL_MODULE=1 npm run harness:phase3
-
-# Test data schema compliance  
+# Validate data schema
 npm run validate:schema
-
-# Test all systems together
-npm run harness
 ```
 
 **⚠️ Integration Notes**: Phase 3 has been fully integrated with the main module. The merchant generation system loads during module startup and enhances existing trading functionality. See [Phase 3 Integration Fixes](PHASE3_INTEGRATION_FIXES.md) for technical details.
@@ -155,14 +109,11 @@ The UI system has been completely rebuilt with professional data management inte
 ### User Interface Features
 
 ```bash
-# Test data management interface
-npm run harness:phase4:ui
+# Run automated test suite
+npm test
 
-# Test trading dialog functionality  
-npm run harness:phase4
-
-# Test all UI components
-npm run harness:ui
+# Validate data schema after content changes
+npm run validate:schema
 ```
 
 ### Data Management Capabilities

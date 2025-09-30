@@ -21,6 +21,7 @@
     "scripts/config-validator.js",
     "scripts/equilibrium-calculator.js",
     "scripts/merchant-generator.js",
+  "scripts/cargo-availability-pipeline.js",
     "scripts/data-manager.js",
     "scripts/system-adapter.js",
     "scripts/trading-engine.js",

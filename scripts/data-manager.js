@@ -728,6 +728,8 @@ class DataManager {
             wealthDescription: this.getWealthDescription(settlement.wealth),
             population: settlement.population,
             productionCategories: settlement.flags || settlement.source || [],
+            produces: Array.isArray(settlement.produces) ? [...settlement.produces] : [],
+            demands: Array.isArray(settlement.demands) ? [...settlement.demands] : [],
             garrison: settlement.garrison,
             ruler: settlement.ruler,
             notes: settlement.notes
@@ -1220,6 +1222,38 @@ class DataManager {
      */
     getInventoryConfig() {
         return this.config?.inventory || {};
+    }
+
+    /**
+     * Get cargo availability pipeline (lazy instantiate)
+     * @param {Object} options - Optional pipeline options
+     * @returns {Object} - CargoAvailabilityPipeline instance
+     */
+    getCargoAvailabilityPipeline(options = {}) {
+        if (this.cargoAvailabilityPipeline) {
+            return this.cargoAvailabilityPipeline;
+        }
+
+        let PipelineClass = null;
+
+        if (typeof require !== 'undefined') {
+            try {
+                PipelineClass = require('./cargo-availability-pipeline');
+            } catch (error) {
+                // Ignore require failures; will try window fallback
+            }
+        }
+
+        if (!PipelineClass && typeof window !== 'undefined') {
+            PipelineClass = window.CargoAvailabilityPipeline;
+        }
+
+        if (!PipelineClass) {
+            throw new Error('CargoAvailabilityPipeline module is not available');
+        }
+
+        this.cargoAvailabilityPipeline = new PipelineClass(this, options);
+        return this.cargoAvailabilityPipeline;
     }
 
     /**
