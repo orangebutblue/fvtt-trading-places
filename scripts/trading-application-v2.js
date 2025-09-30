@@ -1850,8 +1850,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 try {
                     pipelineResult = await this.cargoAvailabilityPipeline.run({
                         settlement: this.selectedSettlement,
-                        season: this.currentSeason,
-                        maxCandidates: 8
+                        season: this.currentSeason
                     });
                     console.log('Orange realism pipeline output:', pipelineResult);
                 } catch (pipelineError) {
@@ -2016,19 +2015,19 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         }
 
         const completeResult = availabilityResult;
-        const isSuccess = !!completeResult.available;
+        const isSuccess = Boolean(completeResult.available);
 
-        let resultsDiv = this.element.querySelector('#availability-results');
-        if (!resultsDiv) {
+        let resultsContainer = this.element.querySelector('#availability-results');
+        if (!resultsContainer) {
             const buyingTab = this.element.querySelector('#buying-tab');
             if (!buyingTab) {
                 this._logError('Availability Display', 'Buying tab not found for results injection');
                 return;
             }
-            resultsDiv = document.createElement('div');
-            resultsDiv.id = 'availability-results';
-            resultsDiv.className = 'availability-results';
-            buyingTab.appendChild(resultsDiv);
+            resultsContainer = document.createElement('div');
+            resultsContainer.id = 'availability-results';
+            resultsContainer.className = 'availability-results';
+            buyingTab.appendChild(resultsContainer);
         }
 
         const rollDetails = completeResult.availabilityCheck || { roll: '-', chance: '-' };
@@ -2037,36 +2036,18 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         const baseChance = (sizeRating + wealthRating) * 10;
         const finalChance = Math.min(baseChance, 100);
 
-        const statusTitle = isSuccess ? 'Cargo Available!' : 'No Cargo Available';
+        const statusTitle = isSuccess ? 'Cargo Available' : 'No Cargo Available';
         const statusIcon = isSuccess ? 'fas fa-check-circle' : 'fas fa-times-circle';
         const statusClass = isSuccess ? 'success-text' : 'failure-text';
 
-        const cargoTypesList = Array.isArray(completeResult.cargoTypes)
-            ? completeResult.cargoTypes.map(type => `<li><strong>${type}</strong></li>`).join('')
-            : '';
+        const cargoSummaryHtml = isSuccess && Array.isArray(availableCargo) && availableCargo.length > 0
+            ? `<ul class="cargo-details-list">${availableCargo.map(cargo => {
+                const totalEp = cargo.totalEP ?? cargo.quantity ?? 0;
+                return `<li><strong>${cargo.name}</strong> (${cargo.category}) — ${totalEp} EP available @ ${cargo.basePrice} GC / 10 EP</li>`;
+            }).join('')}</ul>`
+            : '<p><em>No cargo allocations succeeded.</em></p>';
 
-        const detailedCargoSummary = isSuccess && Array.isArray(availableCargo) && availableCargo.length > 0
-            ? availableCargo.map(cargo => `<li><strong>${cargo.name}</strong> (${cargo.category}) - ${cargo.quantity} units @ ${cargo.basePrice} GC</li>`).join('')
-            : '';
-
-        const cargoHtml = isSuccess ? `
-            <h5>Available Resource Types</h5>
-            <ul class="cargo-types-list">${cargoTypesList}</ul>
-            ${detailedCargoSummary ? `<h5>Detailed Cargo Information</h5><ul class="cargo-details-list">${detailedCargoSummary}</ul>` : ''}
-            <div class="calculation-breakdown">
-                <p><strong>Total Size:</strong> ${completeResult.cargoSize?.totalSize || 0} EP</p>
-                <p><strong>Base Multiplier:</strong> ${sizeRating} + ${wealthRating} = ${completeResult.cargoSize?.baseMultiplier || 0}</p>
-                <p><strong>Size Roll:</strong> ${completeResult.cargoSize?.roll1 || '-'} → ${completeResult.cargoSize?.sizeMultiplier || '-'}</p>
-                ${completeResult.cargoSize?.tradeBonus ? `<p><strong>Trade Bonus:</strong> Second roll ${completeResult.cargoSize.roll2} applied</p>` : ''}
-            </div>
-        ` : `
-            <div class="explanation">
-                <p><em>This settlement has limited trade activity. Try again or travel to a busier market.</em></p>
-            </div>
-        `;
-
-        const calculationHtml = `
-            <h5>Market Check</h5>
+        const marketHtml = `
             <div class="calculation-breakdown">
                 <p><strong>Settlement:</strong> ${this.selectedSettlement.name}</p>
                 <p><strong>Size Rating:</strong> ${this.selectedSettlement.size} (${sizeRating})</p>
@@ -2077,44 +2058,39 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             </div>
         `;
 
+        const cargoTotals = isSuccess ? `
+            <div class="calculation-breakdown">
+                <p><strong>Total EP:</strong> ${completeResult.cargoSize?.totalSize || 0}</p>
+                <p><strong>Base Multiplier:</strong> ${sizeRating} + ${wealthRating} = ${completeResult.cargoSize?.baseMultiplier || 0}</p>
+                <p><strong>Size Roll:</strong> ${completeResult.cargoSize?.roll1 || '-'} → ${completeResult.cargoSize?.sizeMultiplier || '-'}</p>
+                ${completeResult.cargoSize?.tradeBonus ? `<p><strong>Trade Bonus:</strong> Second roll ${completeResult.cargoSize.roll2} applied</p>` : ''}
+            </div>
+        ` : '';
+
         const pipelineHtml = this._renderPipelineDiagnostics(pipelineResult);
 
-        resultsDiv.innerHTML = `
-            <div class="availability-summary">
-                <h4 class="${statusClass}"><i class="${statusIcon}"></i> ${statusTitle}</h4>
-                ${calculationHtml}
-                ${cargoHtml}
+        resultsContainer.innerHTML = `
+            <section class="availability-results-card ${isSuccess ? 'success' : 'failure'}">
+                <header class="availability-header">
+                    <h4 class="${statusClass}"><i class="${statusIcon}"></i> ${statusTitle}</h4>
+                    <p>${isSuccess ? 'Merchants are offering cargo this visit.' : 'No producers opened stalls this visit.'}</p>
+                </header>
+                <div class="availability-sections">
+                    <section>
+                        <h5>Market Check</h5>
+                        ${marketHtml}
+                    </section>
+                    <section>
+                        <h5>${isSuccess ? 'Allocated Cargo' : 'Availability Notes'}</h5>
+                        ${isSuccess ? cargoSummaryHtml : '<p><em>This settlement is trading cautiously. Try again later or seek rumors.</em></p>'}
+                        ${cargoTotals}
+                    </section>
+                </div>
                 ${pipelineHtml}
-            </div>
-        `;
-        resultsDiv.style.display = 'block';
-
-        const existingResults = this.element.querySelectorAll('.availability-results-display');
-        existingResults.forEach(el => el.remove());
-
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'availability-results-display';
-        const successColor = '#4CAF50';
-        const failureColor = '#f44336';
-        const borderColor = isSuccess ? successColor : failureColor;
-        const bgColor = isSuccess ? '#1a2e1a' : '#2e1a1a';
-
-        alertDiv.innerHTML = `
-            <div style="background:${bgColor};color:#fff;padding:20px;border:2px solid ${borderColor};border-radius:8px;margin:16px 0;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
-                <h3 style="margin:0 0 12px 0;color:${borderColor};font-size:18px;">${isSuccess ? '✅ Cargo Available' : '❌ No Cargo Available'}</h3>
-                <p style="margin:4px 0;font-size:13px;"><strong>Settlement:</strong> ${this.selectedSettlement.name}</p>
-                <p style="margin:4px 0;font-size:13px;"><strong>Size:</strong> ${this.selectedSettlement.size} (${sizeRating})</p>
-                <p style="margin:4px 0;font-size:13px;"><strong>Wealth:</strong> ${wealthRating}</p>
-                <p style="margin:4px 0;font-size:13px;"><strong>Roll:</strong> ${rollDetails.roll} vs ${finalChance}%</p>
-                ${isSuccess ? `<p style="margin:8px 0 0 0;font-size:13px;"><strong>Types:</strong> ${completeResult.cargoTypes?.join(', ') || 'Unknown'}</p>` : '<p style="margin:8px 0 0 0;font-size:13px;">Consider desperation rerolls or seeking rumors.</p>'}
-                ${pipelineHtml}
-            </div>
+            </section>
         `;
 
-        const checkButton = this.element.querySelector('#check-availability');
-        if (checkButton?.parentElement) {
-            checkButton.parentElement.insertAdjacentElement('afterend', alertDiv);
-        }
+        resultsContainer.style.display = 'block';
     }
 
     _renderPipelineDiagnostics(pipelineResult) {
@@ -2122,36 +2098,91 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             return '';
         }
 
-        const step0 = pipelineResult.step0;
-        const step1 = pipelineResult.step1;
-        const step4 = pipelineResult.step4;
-        const step5 = pipelineResult.step5;
+        const settlement = pipelineResult.settlement || {};
+        const slotPlan = pipelineResult.slotPlan || {};
+        const candidateTable = pipelineResult.candidateTable || {};
+        const slots = Array.isArray(pipelineResult.slots) ? pipelineResult.slots : [];
 
-        const modifierList = (step1.modifiers || []).map(mod => {
-            const multiplier = typeof mod.value === 'number' ? mod.value.toFixed(2) : '—';
-            return `<li>${mod.source} → x${multiplier}</li>`;
-        }).join('');
-
-        const balanceHistory = (step4.history || []).map(entry => `
-            <li><strong>${entry.source}</strong>: ${entry.description} (${entry.before.supply}/${entry.before.demand} → ${entry.after.supply}/${entry.after.demand})</li>
+        const multiplierList = (slotPlan.formula?.multipliers || []).map(item => `
+            <li>${item.label}${item.detail ? ` — ${item.detail}` : ''}</li>
         `).join('');
 
-        const candidateList = (step5.candidates || []).map(candidate => {
-            const reasons = Array.isArray(candidate.reasons) && candidate.reasons.length > 0
-                ? `<ul>${candidate.reasons.map(reason => `<li>${reason}</li>`).join('')}</ul>`
+        const candidateList = (candidateTable.entries || []).slice(0, 8).map(entry => {
+            const reasons = Array.isArray(entry.reasons) && entry.reasons.length
+                ? `<ul>${entry.reasons.map(reason => `<li>${reason}</li>`).join('')}</ul>`
                 : '';
-            return `<li><strong>${candidate.name}</strong> (${candidate.category}) — weight ${candidate.weight}${reasons}</li>`;
+            return `<li><strong>${entry.name}</strong> (${entry.category}) — ${(entry.probability || 0).toFixed(1)}%${reasons}</li>`;
+        }).join('');
+
+        const slotCards = slots.map(slot => {
+            const balance = slot.balance || {};
+            const amount = slot.amount || {};
+            const quality = slot.quality || {};
+            const contraband = slot.contraband || {};
+            const merchant = slot.merchant || {};
+            const desperation = slot.desperation || {};
+            const pricing = slot.pricing || {};
+
+            const balanceHistory = (balance.history || []).map(entry => `
+                <li>${entry.label}: ${entry.before?.supply ?? '-'}→${entry.after?.supply ?? '-'} supply / ${entry.before?.demand ?? '-'}→${entry.after?.demand ?? '-'} demand</li>
+            `).join('');
+
+            const amountNotes = Array.isArray(amount.notes) ? amount.notes.map(note => `<li>${note}</li>`).join('') : '';
+            const qualityNotes = Array.isArray(quality.notes) ? quality.notes.map(note => `<li>${note}</li>`).join('') : '';
+            const contrabandNotes = Array.isArray(contraband.notes) ? contraband.notes.map(note => `<li>${note}</li>`).join('') : '';
+            const desperationNotes = Array.isArray(desperation.notes) ? desperation.notes.map(note => `<li>${note}</li>`).join('') : '';
+            const pricingSteps = Array.isArray(pricing.steps) ? pricing.steps.map(step => `<li>${step.label}: ${step.value?.toFixed ? step.value.toFixed(2) : step.value}</li>`).join('') : '';
+
+            const qualityScore = typeof quality.score === 'number' ? quality.score.toFixed(2) : '—';
+            const amountRoll = amount.roll ?? '—';
+            const amountEp = amount.totalEP ?? 0;
+            const contrabandChance = typeof contraband.chance === 'number' ? contraband.chance.toFixed(0) : '—';
+            const merchantStatus = merchant.available ? 'Merchant present' : 'No merchant';
+            const pricePerEp = typeof pricing.finalPricePerEP === 'number' ? pricing.finalPricePerEP.toFixed(2) : '—';
+            const totalValue = typeof pricing.totalValue === 'number' ? pricing.totalValue.toFixed(2) : '—';
+            const quantityEp = typeof pricing.quantity === 'number' ? pricing.quantity : amountEp;
+
+            return `
+                <article class="pipeline-slot-card">
+                    <h6>Slot ${slot.slotNumber}${slot.cargo?.name ? ` — ${slot.cargo.name}` : ''}</h6>
+                    <ul class="pipeline-slot-summary">
+                        <li><strong>Balance:</strong> ${balance.state || 'unknown'} (${balance.supply || 0}/${balance.demand || 0})</li>
+                        <li><strong>Amount:</strong> ${amountEp} EP (roll ${amountRoll})</li>
+                        <li><strong>Quality:</strong> ${quality.tier || 'Average'} (score ${qualityScore})</li>
+                        <li><strong>Contraband:</strong> ${contraband.contraband ? 'Yes' : 'No'} (${contrabandChance}% chance)</li>
+                        <li><strong>Merchant:</strong> ${merchantStatus} (${merchant.roll ?? '—'}/${merchant.target ?? '—'})</li>
+                        ${desperation.attempted ? `<li><strong>Desperation:</strong> ${desperation.success ? 'Success' : 'Failed'} (roll ${desperation.roll?.toFixed?.(2) ?? desperation.roll ?? '—'})</li>` : ''}
+                        <li><strong>Pricing:</strong> ${pricePerEp} gc per EP → ${quantityEp} EP (${totalValue} gc)</li>
+                    </ul>
+                    ${balanceHistory ? `<details><summary>Balance Adjustments</summary><ul>${balanceHistory}</ul></details>` : ''}
+                    ${amountNotes ? `<details><summary>Amount Notes</summary><ul>${amountNotes}</ul></details>` : ''}
+                    ${qualityNotes ? `<details><summary>Quality Notes</summary><ul>${qualityNotes}</ul></details>` : ''}
+                    ${contrabandNotes ? `<details><summary>Contraband Notes</summary><ul>${contrabandNotes}</ul></details>` : ''}
+                    ${desperationNotes ? `<details><summary>Desperation Notes</summary><ul>${desperationNotes}</ul></details>` : ''}
+                    ${pricingSteps ? `<details><summary>Pricing Steps</summary><ul>${pricingSteps}</ul></details>` : ''}
+                </article>
+            `;
         }).join('');
 
         return `
-            <div class="pipeline-diagnostics">
+            <section class="pipeline-diagnostics">
                 <h5>Orange Realism Pipeline</h5>
-                <p><strong>Slots:</strong> ${step1.totalSlots} total (${step1.producerSlots} producers / ${step1.seekerSlots} seekers)</p>
-                ${modifierList ? `<ul class="pipeline-modifiers">${modifierList}</ul>` : ''}
-                <p><strong>Supply/Demand:</strong> ${step4.finalBalance.supply}/${step4.finalBalance.demand} (${step4.finalBalance.state})</p>
-                ${balanceHistory ? `<ol class="pipeline-history">${balanceHistory}</ol>` : ''}
-                ${candidateList ? `<h6>Suggested Cargo</h6><ul class="pipeline-candidates">${candidateList}</ul>` : ''}
-            </div>
+                <p><strong>Season:</strong> ${slotPlan.season || settlement.season || '–'}</p>
+                <p><strong>Producer Slots:</strong> ${slotPlan.producerSlots || slotPlan.totalSlots || 0}</p>
+                ${slotPlan.formula ? `
+                    <details class="pipeline-formula">
+                        <summary>Slot Formula</summary>
+                        <ul>
+                            <li>Base slots: ${slotPlan.formula.baseSlots ?? '—'}</li>
+                            <li>Population contribution: ${slotPlan.formula.populationContribution ?? 0}</li>
+                            <li>Size contribution: ${slotPlan.formula.sizeContribution ?? 0}</li>
+                            ${multiplierList ? `<li>Multipliers<ul>${multiplierList}</ul></li>` : ''}
+                        </ul>
+                    </details>
+                ` : ''}
+                ${candidateList ? `<details class="pipeline-candidates"><summary>Top Cargo Candidates</summary><ul>${candidateList}</ul></details>` : ''}
+                ${slotCards ? `<div class="pipeline-slots">${slotCards}</div>` : '<p>No producer slots resolved.</p>'}
+            </section>
         `;
     }
 
@@ -2233,7 +2264,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 </div>
                 <div class="price-info">
                     <span class="price-label">Available:</span>
-                    <span class="price-value">${cargo.quantity} EP</span>
+                    <span class="price-value">${cargo.totalEP ?? cargo.quantity} EP${typeof cargo.quantity === 'number' ? ` (${cargo.quantity} units)` : ''}</span>
                 </div>
                 <div class="price-info">
                     <span class="price-label">Quality:</span>
@@ -2247,7 +2278,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 </div>
             </div>
             <div class="cargo-actions">
-                <input type="number" class="quantity-input" placeholder="Quantity (EP)" min="1" max="${cargo.quantity}">
+                <input type="number" class="quantity-input" placeholder="Quantity (EP)" min="1" max="${cargo.totalEP ?? cargo.quantity}">
                 <button class="btn btn-primary" data-cargo="${cargo.name}">Buy</button>
             </div>
         `;
