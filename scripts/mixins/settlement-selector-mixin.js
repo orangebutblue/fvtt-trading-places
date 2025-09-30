@@ -131,7 +131,7 @@ const SettlementSelectorMixin = {
             this._updateUIState();
 
             // Update selling resources (show all cargo types)
-            this._populateSellingResources();
+            this.renderer._populateSellingResources();
 
             // Show notification
             if (ui.notifications) {

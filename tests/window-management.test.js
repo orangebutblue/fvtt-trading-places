@@ -24,6 +24,7 @@ describe('Window Management', () => {
         global.foundry = {
             applications: {
                 api: {
+                    HandlebarsApplicationMixin: (app) => app,
                     ApplicationV2: class MockApplicationV2 {
                         constructor(options = {}) {
                             this.options = {

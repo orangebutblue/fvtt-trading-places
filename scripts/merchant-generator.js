@@ -402,6 +402,21 @@ class MerchantGenerator {
     }
 
     /**
+     * Get a description for a given merchant skill level.
+     * @param {number} skill - The merchant's skill level.
+     * @returns {string} - A description of the skill level.
+     */
+    getMerchantSkillDescription(skill) {
+        if (skill <= 35) return 'Novice (easily out-haggled)';
+        if (skill <= 50) return 'Apprentice (basic bargaining skills)';
+        if (skill <= 65) return 'Competent (solid trading experience)';
+        if (skill <= 80) return 'Skilled (experienced negotiator)';
+        if (skill <= 95) return 'Expert (master of the trade)';
+        if (skill <= 110) return 'Master (legendary trader)';
+        return 'Legendary (unmatched in the marketplace)';
+    }
+
+    /**
      * Apply desperation penalties to a merchant
      * @param {Object} merchant - Merchant object to modify
      * @returns {Object} - Modified merchant with desperation penalties
