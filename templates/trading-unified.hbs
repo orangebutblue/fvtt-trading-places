@@ -85,19 +85,11 @@
                         </div>
                         <div class="info-item">
                             <div class="info-label">Size</div>
-                            <div class="info-value">{{getSizeDescription selectedSettlement.size}} ({{selectedSettlement.size}})</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Size Rating</div>
-                            <div class="info-value highlight">{{getSizeRating selectedSettlement.size}}</div>
+                            <div class="info-value">{{getSizeDescription selectedSettlement.size}} ({{getSizeRating selectedSettlement.size}})</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Wealth</div>
-                            <div class="info-value">{{getWealthDescription selectedSettlement.wealth}}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Wealth Rating</div>
-                            <div class="info-value highlight">{{selectedSettlement.wealth}}</div>
+                            <div class="info-value">{{getWealthDescription selectedSettlement.wealth}} ({{selectedSettlement.wealth}})</div>
                         </div>
                         {{#if selectedSettlement.population}}
                         <div class="info-item">

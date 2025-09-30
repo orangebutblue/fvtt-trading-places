@@ -5,6 +5,20 @@ export class TradingUIRenderer {
     constructor(app) {
         this.app = app;
         this.dataManager = app.dataManager;
+        
+        // Icon map for consistent emoji usage
+        this.ICONS = {
+            roll: '🎲',
+            value: '💰',
+            calculation: '🧮',
+            risk: '⚠️',
+            success: '✅',
+            failure: '❌',
+            cargo: '📦',
+            merchant: '🧑‍💼',
+            quality: '⭐',
+            quantity: '📊'
+        };
     }
 
     _logDebug(category, message, data) {
@@ -125,6 +139,19 @@ export class TradingUIRenderer {
     }
 
     /**
+     * Create a tooltip-enabled element
+     * @param {string} text - The display text
+     * @param {string} tooltip - The tooltip text
+     * @param {string} tag - The HTML tag to use (default: 'span')
+     * @param {string} className - Additional CSS classes
+     * @returns {string} - HTML string for the tooltip element
+     */
+    createTooltipElement(text, tooltip, tag = 'span', className = '') {
+        const classes = `tooltip ${className}`.trim();
+        return `<${tag} class="${classes}" data-tooltip="${tooltip}">${text}</${tag}>`;
+    }
+
+    /**
      * Show detailed availability check results (always shows formula breakdown)
      * @param {Object} completeResult - Complete availability check result
      * @param {Array} availableCargo - Available cargo for display (empty on failure)
@@ -163,53 +190,70 @@ export class TradingUIRenderer {
         const statusClass = isSuccess ? 'success-text' : 'failure-text';
 
         const cargoSummaryHtml = isSuccess && Array.isArray(availableCargo) && availableCargo.length > 0
-            ? `<ul class="cargo-details-list">${availableCargo.map(cargo => {
-                const totalEp = cargo.totalEP ?? cargo.quantity ?? 0;
-                return `<li><strong>${cargo.name}</strong> (${cargo.category}) — ${totalEp} EP available @ ${cargo.basePrice} GC / 10 EP</li>`;
-            }).join('')}</ul>`
-            : '<p><em>No cargo allocations succeeded.</em></p>';
+            ? `<div class="cargo-summary">
+                ${availableCargo.map(cargo => {
+                    const totalEp = cargo.totalEP ?? cargo.quantity ?? 0;
+                    const merchantName = cargo.merchant?.name || 'Unknown Merchant';
+                    const merchantSkill = cargo.merchant?.skillDescription || 'Unknown';
+                    return `
+                        <div class="cargo-item">
+                            <div class="cargo-name">${cargo.name} (${cargo.category})</div>
+                            <div class="cargo-quantity">${totalEp} EP</div>
+                            <div class="cargo-merchant">${merchantName} (${merchantSkill})</div>
+                            <details class="cargo-details">
+                                <summary>${this.ICONS.value} ${cargo.basePrice} GC / 10 EP</summary>
+                                <div class="cargo-detail-content">
+                                    <p><strong>Quality:</strong> ${cargo.quality || 'Average'}</p>
+                                    <p><strong>Description:</strong> ${cargo.merchant?.description || 'No description available'}</p>
+                                </div>
+                            </details>
+                        </div>
+                    `;
+                }).join('')}
+            </div>`
+            : '<p><em>No merchants were able to allocate cargo for sale.</em></p>';
 
         const marketHtml = `
             <div class="calculation-breakdown">
                 <p><strong>Settlement:</strong> ${this.app.selectedSettlement.name}</p>
-                <p><strong>Size Rating:</strong> ${this.app.selectedSettlement.size} (${sizeRating})</p>
-                <p><strong>Wealth Rating:</strong> ${wealthRating}</p>
-                <p><strong>Chance:</strong> (${sizeRating} + ${wealthRating}) × 10 = ${finalChance}%</p>
-                <p><strong>Roll:</strong> ${rollDetails.roll}</p>
-                <p><strong>Result:</strong> ${rollDetails.roll} ${isSuccess ? '≤' : '>'} ${finalChance} = <span class="${statusClass}">${isSuccess ? 'SUCCESS' : 'FAILURE'}</span></p>
+                <p><strong>Size:</strong> ${this.dataManager.getSizeDescription(this.app.selectedSettlement.size)} (${sizeRating})</p>
+                <p><strong>Wealth:</strong> ${this.dataManager.getWealthDescription(wealthRating)} (${wealthRating})</p>
+                <p><strong>Base Chance:</strong> <span title="Size contribution: ${sizeRating} × 10 = ${sizeRating * 10}%, Wealth contribution: ${wealthRating} × 10 = ${wealthRating * 10}%, Total: ${(sizeRating + wealthRating) * 10}%">${(sizeRating + wealthRating) * 10}%</span></p>
+                <p><strong>Final Chance:</strong> ${finalChance}% <span title="Capped at 100% maximum">(cannot exceed 100%)</span></p>
+                <p><strong>Roll & Result:</strong> ${this.ICONS.roll} ${rollDetails.roll} ${isSuccess ? '≤' : '>'} ${finalChance} = <span class="${statusClass}">${isSuccess ? '✅' : 'FAILURE'}</span></p>
             </div>
         `;
 
         const cargoTotals = isSuccess ? `
             <div class="calculation-breakdown">
                 <p><strong>Total EP:</strong> ${completeResult.cargoSize?.totalSize || 0}</p>
-                <p><strong>Base Multiplier:</strong> ${sizeRating} + ${wealthRating} = ${completeResult.cargoSize?.baseMultiplier || 0}</p>
+                <p><strong>Base Multiplier:</strong> <span title="Size rating (${sizeRating}) + Wealth rating (${wealthRating}) = base for cargo amount calculations">${sizeRating} + ${wealthRating} = ${completeResult.cargoSize?.baseMultiplier || 0}</span></p>
                 <p><strong>Size Roll:</strong> ${completeResult.cargoSize?.roll1 || '-'} → ${completeResult.cargoSize?.sizeMultiplier || '-'}</p>
                 ${completeResult.cargoSize?.tradeBonus ? `<p><strong>Trade Bonus:</strong> Second roll ${completeResult.cargoSize.roll2} applied</p>` : ''}
             </div>
         ` : '';
 
-        const pipelineHtml = this._renderPipelineDiagnostics(pipelineResult);
+        const pipelineHtml = isSuccess ? this._renderPipelineDiagnostics(pipelineResult) : '';
+
+        // Create status banner instead of header
+        const statusEmoji = isSuccess ? this.ICONS.cargo : this.ICONS.failure;
+        const statusText = isSuccess ? 'Merchants are offering cargo' : 'No merchants available';
+        const statusBanner = `<div class="availability-status-banner ${isSuccess ? '' : 'no-goods'}">${statusEmoji} ${statusText}</div>`;
 
         resultsContainer.innerHTML = `
-            <section class="availability-results-card ${isSuccess ? 'success' : 'failure'}">
-                <header class="availability-header">
-                    <h4 class="${statusClass}"><i class="${statusIcon}"></i> ${statusTitle}</h4>
-                    <p>${isSuccess ? 'Merchants are offering cargo this visit.' : 'No producers opened stalls this visit.'}</p>
-                </header>
-                <div class="availability-sections">
-                    <section>
-                        <h5>Market Check</h5>
-                        ${marketHtml}
-                    </section>
-                    <section>
-                        <h5>${isSuccess ? 'Allocated Cargo' : 'Availability Notes'}</h5>
-                        ${isSuccess ? cargoSummaryHtml : '<p><em>This settlement is trading cautiously. Try again later or seek rumors.</em></p>'}
-                        ${cargoTotals}
-                    </section>
-                </div>
-                ${pipelineHtml}
-            </section>
+            ${statusBanner}
+            <div class="availability-sections">
+                <section>
+                    <h5>Market Check</h5>
+                    ${marketHtml}
+                </section>
+                <section>
+                    <h5>${isSuccess ? 'Allocated Cargo' : 'Availability Notes'}</h5>
+                    ${isSuccess ? cargoSummaryHtml : '<p><em>This settlement is trading cautiously. Try again later or seek rumors.</em></p>'}
+                    ${cargoTotals}
+                </section>
+            </div>
+            ${pipelineHtml}
         `;
 
         resultsContainer.style.display = 'block';
@@ -222,88 +266,93 @@ export class TradingUIRenderer {
 
         const settlement = pipelineResult.settlement || {};
         const slotPlan = pipelineResult.slotPlan || {};
-        const candidateTable = pipelineResult.candidateTable || {};
         const slots = Array.isArray(pipelineResult.slots) ? pipelineResult.slots : [];
 
-        const multiplierList = (slotPlan.formula?.multipliers || []).map(item => `
-            <li>${item.label}${item.detail ? ` — ${item.detail}` : ''}</li>
-        `).join('');
+        // Critical highlights - show by default
+        const totalSlots = slotPlan.producerSlots || slotPlan.totalSlots || 0;
+        const successfulSlots = slots.filter(slot => slot.merchant?.available).length;
+        const totalEP = slots.reduce((sum, slot) => sum + (slot.amount?.totalEP || 0), 0);
+        const contrabandCount = slots.filter(slot => slot.contraband?.contraband).length;
+        const desperationAttempts = slots.filter(slot => slot.desperation?.attempted).length;
 
-        const candidateList = (candidateTable.entries || []).slice(0, 8).map(entry => {
-            const reasons = Array.isArray(entry.reasons) && entry.reasons.length
-                ? `<ul>${entry.reasons.map(reason => `<li>${reason}</li>`).join('')}</ul>`
-                : '';
-            return `<li><strong>${entry.name}</strong> (${entry.category}) — ${(entry.probability || 0).toFixed(1)}%${reasons}</li>`;
-        }).join('');
+        const highlightsHtml = `
+            <div class="pipeline-highlights">
+                <div class="highlight-item">
+                    <span class="highlight-label">Producer Slots:</span>
+                    <span class="highlight-value">${successfulSlots}/${totalSlots} active</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-label">Total Cargo:</span>
+                    <span class="highlight-value">${totalEP} EP</span>
+                </div>
+                ${contrabandCount > 0 ? `
+                    <div class="highlight-item">
+                        <span class="highlight-label">Contraband:</span>
+                        <span class="highlight-value ${this.ICONS.risk}">${contrabandCount} items</span>
+                    </div>
+                ` : ''}
+                ${desperationAttempts > 0 ? `
+                    <div class="highlight-item">
+                        <span class="highlight-label">Desperation:</span>
+                        <span class="highlight-value ${this.ICONS.risk}">${desperationAttempts} attempts</span>
+                    </div>
+                ` : ''}
+            </div>
+        `;
 
-        const slotCards = slots.map(slot => {
-            const balance = slot.balance || {};
-            const amount = slot.amount || {};
-            const quality = slot.quality || {};
-            const contraband = slot.contraband || {};
-            const merchant = slot.merchant || {};
-            const desperation = slot.desperation || {};
-            const pricing = slot.pricing || {};
-
-            const balanceHistory = (balance.history || []).map(entry => `
-                <li>${entry.label}: ${entry.before?.supply ?? '-'}→${entry.after?.supply ?? '-'} supply / ${entry.before?.demand ?? '-'}→${entry.after?.demand ?? '-'} demand</li>
-            `).join('');
-
-            const amountNotes = Array.isArray(amount.notes) ? amount.notes.map(note => `<li>${note}</li>`).join('') : '';
-            const qualityNotes = Array.isArray(quality.notes) ? quality.notes.map(note => `<li>${note}</li>`).join('') : '';
-            const contrabandNotes = Array.isArray(contraband.notes) ? contraband.notes.map(note => `<li>${note}</li>`).join('') : '';
-            const desperationNotes = Array.isArray(desperation.notes) ? desperation.notes.map(note => `<li>${note}</li>`).join('') : '';
-            const pricingSteps = Array.isArray(pricing.steps) ? pricing.steps.map(step => `<li>${step.label}: ${step.value?.toFixed ? step.value.toFixed(2) : step.value}</li>`).join('') : '';
-
-            const qualityScore = typeof quality.score === 'number' ? quality.score.toFixed(2) : '—';
-            const amountRoll = amount.roll ?? '—';
-            const amountEp = amount.totalEP ?? 0;
-            const contrabandChance = typeof contraband.chance === 'number' ? contraband.chance.toFixed(0) : '—';
-            const merchantStatus = merchant.available ? 'Merchant present' : 'No merchant';
-            const pricePerEp = typeof pricing.finalPricePerEP === 'number' ? pricing.finalPricePerEP.toFixed(2) : '—';
-            const totalValue = typeof pricing.totalValue === 'number' ? pricing.totalValue.toFixed(2) : '—';
-            const quantityEp = typeof pricing.quantity === 'number' ? pricing.quantity : amountEp;
-
-            return `
-                <article class="pipeline-slot-card">
-                    <h6>Slot ${slot.slotNumber}${slot.cargo?.name ? ` — ${slot.cargo.name}` : ''}</h6>
-                    <ul class="pipeline-slot-summary">
-                        <li><strong>Balance:</strong> ${balance.state || 'unknown'} (${balance.supply || 0}/${balance.demand || 0})</li>
-                        <li><strong>Amount:</strong> ${amountEp} EP (roll ${amountRoll})</li>
-                        <li><strong>Quality:</strong> ${quality.tier || 'Average'} (score ${qualityScore})</li>
-                        <li><strong>Contraband:</strong> ${contraband.contraband ? 'Yes' : 'No'} (${contrabandChance}% chance)</li>
-                        <li><strong>Merchant:</strong> ${merchantStatus} (${merchant.roll ?? '—'}/${merchant.target ?? '—'})</li>
-                        ${desperation.attempted ? `<li><strong>Desperation:</strong> ${desperation.success ? 'Success' : 'Failed'} (roll ${desperation.roll?.toFixed?.(2) ?? desperation.roll ?? '—'})</li>` : ''}
-                        <li><strong>Pricing:</strong> ${pricePerEp} gc per EP → ${quantityEp} EP (${totalValue} gc)</li>
+        // Detailed breakdowns - hidden by default
+        const slotPlanDetails = slotPlan.formula ? `
+            <details class="pipeline-details">
+                <summary>${this.ICONS.calculation} Slot Planning Details</summary>
+                <div class="detail-content">
+                    <ul>
+                        <li><strong>Base slots:</strong> ${slotPlan.formula.baseSlots ?? '—'}</li>
+                        <li><strong>Population contribution:</strong> ${slotPlan.formula.populationContribution ?? 0}</li>
+                        <li><strong>Size contribution:</strong> ${slotPlan.formula.sizeContribution ?? 0}</li>
+                        ${(slotPlan.formula.multipliers || []).map(item => 
+                            `<li><strong>${item.label}:</strong> ${item.detail || ''}</li>`
+                        ).join('')}
                     </ul>
-                    ${balanceHistory ? `<details><summary>Balance Adjustments</summary><ul>${balanceHistory}</ul></details>` : ''}
-                    ${amountNotes ? `<details><summary>Amount Notes</summary><ul>${amountNotes}</ul></details>` : ''}
-                    ${qualityNotes ? `<details><summary>Quality Notes</summary><ul>${qualityNotes}</ul></details>` : ''}
-                    ${contrabandNotes ? `<details><summary>Contraband Notes</summary><ul>${contrabandNotes}</ul></details>` : ''}
-                    ${desperationNotes ? `<details><summary>Desperation Notes</summary><ul>${desperationNotes}</ul></details>` : ''}
-                    ${pricingSteps ? `<details><summary>Pricing Steps</summary><ul>${pricingSteps}</ul></details>` : ''}
-                </article>
-            `;
-        }).join('');
+                </div>
+            </details>
+        ` : '';
+
+        const slotBreakdown = slots.length > 0 ? `
+            <details class="pipeline-details">
+                <summary>${this.ICONS.quantity} Slot-by-Slot Breakdown</summary>
+                <div class="detail-content">
+                    ${slots.map(slot => {
+                        const balance = slot.balance || {};
+                        const amount = slot.amount || {};
+                        const quality = slot.quality || {};
+                        const contraband = slot.contraband || {};
+                        const merchant = slot.merchant || {};
+                        const pricing = slot.pricing || {};
+
+                        return `
+                            <div class="slot-summary">
+                                <h6>Slot ${slot.slotNumber}: ${slot.cargo?.name || 'Empty'}</h6>
+                                <ul>
+                                    <li><strong>Balance:</strong> ${balance.state || 'unknown'} (${balance.supply || 0}/${balance.demand || 0})</li>
+                                    <li><strong>Amount:</strong> ${amount.totalEP || 0} EP</li>
+                                    <li><strong>Quality:</strong> ${quality.tier || 'Average'}</li>
+                                    <li><strong>Contraband:</strong> ${contraband.contraband ? `${this.ICONS.risk} Yes` : 'No'}</li>
+                                    <li><strong>Merchant:</strong> ${merchant.available ? `${this.ICONS.merchant} Present` : 'None'}</li>
+                                    <li><strong>Price:</strong> ${pricing.finalPricePerEP?.toFixed(2) || '—'} GC/EP</li>
+                                </ul>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </details>
+        ` : '';
 
         return `
             <section class="pipeline-diagnostics">
                 <h5>Orange Realism Pipeline</h5>
-                <p><strong>Season:</strong> ${slotPlan.season || settlement.season || '–'}</p>
-                <p><strong>Producer Slots:</strong> ${slotPlan.producerSlots || slotPlan.totalSlots || 0}</p>
-                ${slotPlan.formula ? `
-                    <details class="pipeline-formula">
-                        <summary>Slot Formula</summary>
-                        <ul>
-                            <li>Base slots: ${slotPlan.formula.baseSlots ?? '—'}</li>
-                            <li>Population contribution: ${slotPlan.formula.populationContribution ?? 0}</li>
-                            <li>Size contribution: ${slotPlan.formula.sizeContribution ?? 0}</li>
-                            ${multiplierList ? `<li>Multipliers<ul>${multiplierList}</ul></li>` : ''}
-                        </ul>
-                    </details>
-                ` : ''}
-                ${candidateList ? `<details class="pipeline-candidates"><summary>Top Cargo Candidates</summary><ul>${candidateList}</ul></details>` : ''}
-                ${slotCards ? `<div class="pipeline-slots">${slotCards}</div>` : '<p>No producer slots resolved.</p>'}
+                ${highlightsHtml}
+                ${slotPlanDetails}
+                ${slotBreakdown}
             </section>
         `;
     }

@@ -105,16 +105,76 @@ export class BuyingFlow {
                 }
             }
 
-            const completeResult = await this.tradingEngine.performCompleteAvailabilityCheck(
-                this.app.selectedSettlement,
-                this.app.currentSeason,
-                rollFunction
-            );
-            
-            console.log('Complete availability result:', completeResult);
+            // Use pipeline results if available, otherwise fall back to trading engine
+            let availabilityResult = null;
+            let availableCargo = [];
+
+            if (pipelineResult && pipelineResult.slots && pipelineResult.slots.length > 0) {
+                // Use orange-realism pipeline results - all slots produce cargo with merchants
+                availabilityResult = { available: true };
+                
+                // Convert all pipeline slots to cargo objects for display
+                availableCargo = await Promise.all(pipelineResult.slots.map(async (slot) => {
+                    const cargoType = this.dataManager.getCargoType(slot.cargo.name);
+                    const merchant = await this.tradingEngine.generateRandomMerchant(this.app.selectedSettlement, rollFunction);
+                    
+                    return {
+                        name: slot.cargo.name,
+                        category: slot.cargo.category,
+                        basePrice: slot.pricing.basePricePerEP,
+                        currentPrice: slot.pricing.finalPricePerEP,
+                        quantity: slot.pricing.quantity,
+                        totalEP: slot.amount.totalEP,
+                        quality: slot.quality.tier,
+                        encumbrancePerUnit: cargoType?.encumbrancePerUnit || 1,
+                        merchant: merchant,
+                        slotInfo: {
+                            slotNumber: slot.slotNumber,
+                            balance: slot.balance,
+                            contraband: slot.contraband.contraband,
+                            desperationUsed: false // No desperation since merchants always available
+                        }
+                    };
+                }));
+            } else {
+                // Fallback to old trading engine method
+                const completeResult = await this.tradingEngine.performCompleteAvailabilityCheck(
+                    this.app.selectedSettlement,
+                    this.app.currentSeason,
+                    rollFunction
+                );
+                
+                availabilityResult = completeResult;
+                
+                if (completeResult.available) {
+                    // Convert cargo types to detailed cargo objects for display
+                    availableCargo = await Promise.all(completeResult.cargoTypes.map(async (cargoName) => {
+                        const cargoType = this.dataManager.getCargoType(cargoName);
+                        const basePrice = this.tradingEngine.calculateBasePrice(cargoName, this.app.currentSeason);
+                        const totalCargoSize = completeResult.cargoSize.totalSize;
+                        const encumbrance = cargoType?.encumbrancePerUnit || 1;
+                        const quantity = Math.floor(totalCargoSize / encumbrance);
+                        
+                        // Generate a merchant for this cargo type
+                        const merchant = await this.tradingEngine.generateRandomMerchant(this.app.selectedSettlement, rollFunction);
+                        
+                        return {
+                            name: cargoName,
+                            category: cargoType?.category || 'Unknown',
+                            basePrice: basePrice,
+                            currentPrice: basePrice,
+                            quantity: quantity,
+                            totalEP: totalCargoSize,
+                            quality: 'Average',
+                            encumbrancePerUnit: encumbrance,
+                            merchant: merchant
+                        };
+                    }));
+                }
+            }
             
             // Update UI based on result
-            if (completeResult.available) {
+            if (availabilityResult.available) {
                 // SUCCESS: Cargo is available
                 console.log('✅ CARGO IS AVAILABLE!');
                 console.log('📊 STEP 0: Settlement Information');
@@ -123,65 +183,51 @@ export class BuyingFlow {
                 console.log(`  ├─ Wealth Rating: ${this.app.selectedSettlement.wealth}`);
                 console.log(`  └─ Produces: [${(this.app.selectedSettlement.flags || this.app.selectedSettlement.source || []).join(', ')}]`);
                 
-                console.log('🎯 STEP 1: Availability Check Results');
-                console.log(`  ├─ Base Chance: (${this.dataManager.convertSizeToNumeric(this.app.selectedSettlement.size)} + ${this.app.selectedSettlement.wealth}) × 10 = ${completeResult.availabilityCheck.chance}%`);
-                console.log(`  ├─ Roll: ${completeResult.availabilityCheck.roll}`);
-                console.log(`  └─ Result: ${completeResult.availabilityCheck.roll} ≤ ${completeResult.availabilityCheck.chance} = SUCCESS`);
-                
-                console.log('📦 STEP 2A: Cargo Type Determination');
-                console.log(`  ├─ Available Types: [${completeResult.cargoTypes.join(', ')}]`);
-                console.log(`  └─ Count: ${completeResult.cargoTypes.length} type(s)`);
-                
-                console.log('⚖️ STEP 2B: Cargo Size Calculation');
-                console.log(`  ├─ Base Value: ${this.dataManager.convertSizeToNumeric(this.app.selectedSettlement.size)} + ${this.app.selectedSettlement.wealth} = ${completeResult.cargoSize.baseMultiplier}`);
-                console.log(`  ├─ Multiplier Roll: ${completeResult.cargoSize.roll1} → rounded up to ${completeResult.cargoSize.sizeMultiplier}`);
-                if (completeResult.cargoSize.tradeBonus) {
-                    console.log(`  ├─ Trade Bonus: Second roll ${completeResult.cargoSize.roll2} → ${Math.ceil(completeResult.cargoSize.roll2 / 10) * 10}`);
-                    console.log(`  ├─ Higher Multiplier Used: ${completeResult.cargoSize.sizeMultiplier}`);
+                if (pipelineResult) {
+                    console.log('🎯 ORANGE REALISM PIPELINE RESULTS');
+                    console.log(`  ├─ Total Slots: ${pipelineResult.slotPlan.producerSlots}`);
+                    console.log(`  ├─ All slots produced cargo with merchants`);
+                    console.log(`  └─ Total cargo types: ${availableCargo.length}`);
+                    
+                    availableCargo.forEach((cargo) => {
+                        const slot = pipelineResult.slots.find(s => s.cargo.name === cargo.name);
+                        if (slot) {
+                            console.log(`💰 SLOT ${slot.slotNumber}: ${cargo.name}`);
+                            console.log(`  ├─ Quantity: ${cargo.quantity} units (${cargo.totalEP} EP)`);
+                            console.log(`  ├─ Quality: ${cargo.quality}`);
+                            console.log(`  ├─ Price: ${cargo.currentPrice} GC per EP`);
+                            console.log(`  ├─ Merchant: ${cargo.merchant.name} (${cargo.merchant.skillDescription})`);
+                            console.log(`  ├─ Market Balance: ${slot.balance.state} (${slot.balance.supply}/${slot.balance.demand})`);
+                            if (cargo.slotInfo?.contraband) {
+                                console.log(`  ├─ ⚠️  Contraband cargo`);
+                            }
+                            console.log(`  └─ ✅ Merchant automatically generated`);
+                        }
+                    });
+                } else {
+                    // Legacy trading engine results
+                    console.log('🎯 STEP 1: Availability Check Results');
+                    console.log(`  ├─ Base Chance: (${this.dataManager.convertSizeToNumeric(this.app.selectedSettlement.size)} + ${this.app.selectedSettlement.wealth}) × 10 = ${availabilityResult.availabilityCheck?.chance || 'N/A'}%`);
+                    console.log(`  ├─ Roll: ${availabilityResult.availabilityCheck?.roll || 'N/A'}`);
+                    console.log(`  └─ Result: ${availabilityResult.availabilityCheck?.roll || 'N/A'} ≤ ${availabilityResult.availabilityCheck?.chance || 'N/A'} = SUCCESS`);
+                    
+                    console.log('📦 CARGO TYPES');
+                    console.log(`  ├─ Available Types: [${availabilityResult.cargoTypes?.join(', ') || 'N/A'}]`);
+                    console.log(`  └─ Count: ${availabilityResult.cargoTypes?.length || 0} type(s)`);
+                    
+                    availableCargo.forEach(cargo => {
+                        console.log(`💰 ${cargo.name}: ${cargo.quantity} units @ ${cargo.currentPrice} GC/10EP (Merchant: ${cargo.merchant.name} - ${cargo.merchant.skillDescription})`);
+                    });
                 }
-                console.log(`  └─ Total Size: ${completeResult.cargoSize.baseMultiplier} × ${completeResult.cargoSize.sizeMultiplier} = ${completeResult.cargoSize.totalSize} EP`);
-                
-                // Convert cargo types to detailed cargo objects for display
-                const availableCargo = await Promise.all(completeResult.cargoTypes.map(async (cargoName) => {
-                    const cargoType = this.dataManager.getCargoType(cargoName);
-                    const basePrice = this.tradingEngine.calculateBasePrice(cargoName, this.app.currentSeason);
-                    const totalCargoSize = completeResult.cargoSize.totalSize;
-                    const encumbrance = cargoType?.encumbrancePerUnit || 1;
-                    const quantity = Math.floor(totalCargoSize / encumbrance);
-                    
-                    // Generate a merchant for this cargo type
-                    const merchant = await this.tradingEngine.generateRandomMerchant(this.app.selectedSettlement, rollFunction);
-                    
-                    console.log(`💰 STEP 3: Price Information for ${cargoName}`);
-                    console.log(`  ├─ Base Price (${this.app.currentSeason}): ${basePrice} GC per 10 EP`);
-                    console.log(`  ├─ Available Quantity: ${quantity} units (${totalCargoSize} EP total)`);
-                    console.log(`  ├─ Encumbrance per Unit: ${encumbrance} EP`);
-                    console.log(`  ├─ Merchant: ${merchant.name} (${merchant.skillDescription})`);
-                    
-                    return {
-                        name: cargoName,
-                        category: cargoType?.category || 'Unknown',
-                        basePrice: basePrice,
-                        currentPrice: basePrice,
-                        quantity: quantity,
-                        totalEP: totalCargoSize,
-                        quality: 'Average',
-                        encumbrancePerUnit: encumbrance,
-                        merchant: merchant
-                    };
-                }));
                 
                 console.log('📋 FINAL RESULT: Cargo Available for Purchase');
-                availableCargo.forEach(cargo => {
-                    console.log(`  ├─ ${cargo.name}: ${cargo.quantity} units @ ${cargo.currentPrice} GC/10EP (Merchant: ${cargo.merchant.name} - ${cargo.merchant.skillDescription})`);
-                });
                 
                 // Store available cargo
                 this.app.availableCargo = availableCargo;
                 
                 // Show detailed success message
                 this.app.renderer._showAvailabilityResults({
-                    availabilityResult: completeResult,
+                    availabilityResult,
                     availableCargo,
                     pipelineResult
                 });
@@ -199,14 +245,21 @@ export class BuyingFlow {
             } else {
                 // FAILURE: No cargo available
                 console.log('❌ NO CARGO AVAILABLE');
-                console.log('Availability check details:', completeResult.availabilityCheck);
+                
+                if (pipelineResult) {
+                    // This shouldn't happen with the new logic - pipeline should always produce cargo
+                    console.log('📊 PIPELINE ERROR: Pipeline ran but produced no slots');
+                    console.log(`  ├─ This indicates a bug in the pipeline logic`);
+                } else {
+                    console.log('Availability check details:', availabilityResult.availabilityCheck);
+                }
                 
                 // Clear any existing cargo
                 this.app.availableCargo = [];
                 
                 // Show failure message with detailed breakdown
                 this.app.renderer._showAvailabilityResults({
-                    availabilityResult: completeResult,
+                    availabilityResult,
                     pipelineResult
                 });
                 
@@ -217,8 +270,12 @@ export class BuyingFlow {
                 this.app.renderer._updateTransactionButtons();
                 
                 // Show info notification
-                const rollDetails = completeResult.availabilityCheck;
-                ui.notifications.info(`No cargo available in ${this.app.selectedSettlement.name} (rolled ${rollDetails.roll}/${rollDetails.chance})`);
+                if (pipelineResult) {
+                    ui.notifications.info(`Pipeline error: no cargo generated (this is unexpected)`);
+                } else {
+                    const rollDetails = availabilityResult.availabilityCheck;
+                    ui.notifications.info(`No cargo available in ${this.app.selectedSettlement.name} (rolled ${rollDetails?.roll || 'N/A'}/${rollDetails?.chance || 'N/A'})`);
+                }
             }
             
             // Restore button

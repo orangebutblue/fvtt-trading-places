@@ -464,17 +464,17 @@ class CargoAvailabilityPipeline {
     }
 
     _rollMerchant(selection, settlementProps, flagModifiers, balance, slotPlan) {
+        // Generate merchant stats for flavor - no availability roll needed
+        // Every successful cargo generation gets a merchant
         const baseTarget = 45 + (settlementProps.wealthRating || 3) * 5;
         const balanceBonus = (balance.supply - balance.demand) * 0.1;
         const flagBonus = (flagModifiers.totals.availabilityBonus || 0) * 100;
         const target = Math.max(10, Math.min(95, baseTarget + balanceBonus + flagBonus));
-        const roll = this._percentile();
-        const available = roll <= target;
 
         return {
-            roll,
+            roll: null, // No roll needed
             target,
-            available,
+            available: true, // Always available
             notes: [
                 `Base target ${baseTarget.toFixed(0)}%`,
                 balanceBonus ? `Supply/Demand ${(balanceBonus >= 0 ? '+' : '')}${balanceBonus.toFixed(0)}%` : null,
@@ -484,38 +484,15 @@ class CargoAvailabilityPipeline {
     }
 
     _applyDesperation(selection, balance, merchant, amount, quality) {
-        const desperationConfig = this.config.desperation || {};
-        const thresholds = this.config.equilibrium?.desperationThreshold || { supply: 20, demand: 20 };
-        const shouldAttempt = !merchant.available && (balance.supply <= thresholds.supply || balance.demand >= thresholds.demand);
-
-        if (!shouldAttempt) {
-            return {
-                attempted: false,
-                success: false,
-                roll: null,
-                notes: []
-            };
-        }
-
-        const roll = Math.random();
-        const success = roll <= (desperationConfig.rerollChance || 0);
-        const quantityPenalty = success ? (1 - (desperationConfig.quantityReduction || 0.25)) : 1;
-        const pricePenalty = success ? (1 + (desperationConfig.priceModifier || 0.15)) : 1;
-        const qualityPenalty = success ? this._downgradeQuality(quality.tier, desperationConfig.qualityPenalty || -1) : quality.tier;
-
+        // Since merchants are always available, desperation rerolls are not needed
         return {
-            attempted: true,
-            success,
-            roll,
-            quantityMultiplier: quantityPenalty,
-            priceMultiplier: pricePenalty,
-            adjustedQuality: qualityPenalty,
-            notes: [
-                `Chance ${(desperationConfig.rerollChance || 0) * 100}%`,
-                success ? `Quantity ×${quantityPenalty.toFixed(2)}` : 'No merchant found',
-                success ? `Price ×${pricePenalty.toFixed(2)}` : null,
-                success ? `Quality downgrades to ${qualityPenalty}` : null
-            ].filter(Boolean)
+            attempted: false,
+            success: false,
+            roll: null,
+            quantityMultiplier: 1,
+            priceMultiplier: 1,
+            adjustedQuality: quality.tier,
+            notes: ['Merchant always available - no desperation needed']
         };
     }
 

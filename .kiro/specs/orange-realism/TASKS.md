@@ -19,16 +19,16 @@
 
 ## Buyer Tab UI Redesign (Availability Breakdown)
 
-- [ ] Replace the availability header with a single status banner (emoji + concise text) and drop redundant phrasing about merchants.
-- [ ] Render settlement size/wealth using their descriptive names (e.g., “Town”, “Comfortable”) with numeric values available via hover tooltip.
-- [ ] Rewrite the availability chance line to show labeled components (base contributions, final percent) with an explanatory tooltip instead of raw formulas.
-- [ ] Combine roll/result messaging into one line and decorate dice rolls with a 🎲 icon for quick scanning.
-- [ ] Stop rendering slot diagnostics when the availability check fails; show a short failure notice and exit early.
-- [ ] For successful checks, present a compact allocation summary (cargo name/category, EP, merchant) first, then limit detailed math to a single collapsible per cargo.
-- [ ] Introduce reusable tooltip helpers in `trading-application-v2.js`/`trading.css` so hover text can explain modifiers without cluttering the layout.
-- [ ] Add a lightweight emoji/icon map (🎲 rolls, 💰 value, 🧮 calculations, ⚠️ risk) and apply consistently across the panel.
-- [ ] Refactor the pipeline diagnostics renderer to output only critical highlights by default and group optional details under clearly labeled toggles.
-- [ ] Update `templates/trading-unified.hbs` and `styles/trading.css` to support the new banner, summary layout, and tooltip styling.
+- [x] Replace the availability header with a single status banner (emoji + concise text) and drop redundant phrasing about merchants.
+- [x] Render settlement size/wealth using their descriptive names (e.g., "Town", "Comfortable") with numeric values available via hover tooltip.
+- [x] Rewrite the availability chance line to show labeled components (base contributions, final percent) with an explanatory tooltip instead of raw formulas.
+- [x] Combine roll/result messaging into one line and decorate dice rolls with a 🎲 icon for quick scanning.
+- [x] Stop rendering slot diagnostics when the availability check fails; show a short failure notice and exit early.
+- [x] For successful checks, present a compact allocation summary (cargo name/category, EP, merchant) first, then limit detailed math to a single collapsible per cargo.
+- [x] Introduce reusable tooltip helpers in `trading-application-v2.js`/`trading.css` so hover text can explain modifiers without cluttering the layout.
+- [x] Add a lightweight emoji/icon map (🎲 rolls, 💰 value, 🧮 calculations, ⚠️ risk) and apply consistently across the panel.
+- [x] Refactor the pipeline diagnostics renderer to output only critical highlights by default and group optional details under clearly labeled toggles.
+- [x] Update `templates/trading-unified.hbs` and `styles/trading.css` to support the new banner, summary layout, and tooltip styling.
 
 ## Data Authoring Toolkit
 

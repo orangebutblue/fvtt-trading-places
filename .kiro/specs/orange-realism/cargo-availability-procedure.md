@@ -39,13 +39,10 @@ This document outlines the step-by-step procedure executed when a GM clicks "Che
 8. **Roll Contraband**:
    - Determine contraband chance, affected by: default value, flags (e.g., Smuggling increases chance), settlement size (larger = higher chance), other factors.
 
-9. **Roll Actual Merchants**:
-   - For each producer slot, roll availability as configured (success = merchant appears; failure = no merchant).
-   - Assign skill levels using the distribution defined in the trading config.
+9. **Generate Merchant**: 
+   - Every successful cargo generation automatically gets a merchant
+   - Generate merchant name and haggle-skill for flavor (no availability roll needed)
+   - Merchant generation is purely cosmetic - all cargo slots produce merchants
 
-10. **Optional Desperation Reroll**:
-   - If an availability roll fails, offer a desperation reroll using the penalties defined in the config (worse prices, lower quantities, reduced quality).
-   - Apply penalties immediately to any merchant generated via this reroll.
-
-11. **Calculate Prices**:
-   - Compute final prices based on: base prices, quality, desperation penalties (if any), wealth, availability modifiers, skill results, contraband risk, and all prior adjustments.
+10. **Calculate Prices**:
+   - Compute final prices based on: base prices, quality, contraband risk, and all prior adjustments.

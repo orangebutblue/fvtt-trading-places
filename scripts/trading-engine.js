@@ -1822,13 +1822,39 @@ class TradingEngine {
     }
 
     /**
-     * Generate roll result message
-     * @param {Object} rollResult - Result from rollDice
-     * @param {string} description - Description of the roll
-     * @returns {string} - Formatted message
+     * Generate a random merchant for a settlement
+     * @param {Object} settlement - Settlement object
+     * @param {Function} rollFunction - Function that returns 1d100 result (for testing)
+     * @returns {Object} - Merchant object with name and skill description
      */
-    generateRollResultMessage(rollResult, description) {
-        return `${description}: ${rollResult.result} = ${rollResult.total}`;
+    async generateRandomMerchant(settlement, rollFunction = null) {
+        // For now, return a simple merchant object
+        // TODO: Integrate with MerchantGenerator class
+        
+        const merchantNames = [
+            'Aldric Voss', 'Beatrix Hale', 'Casper Thorne', 'Dalia Wren', 'Eldric Kane',
+            'Fiona Black', 'Gareth Stone', 'Helena Cross', 'Ian Rook', 'Jasmine Vale',
+            'Kael Drakes', 'Liora Swift', 'Marcus Grey', 'Nora Finch', 'Owen Blake',
+            'Piper Lane', 'Quentin Moss', 'Rhea Storm', 'Silas Wood', 'Talia Frost'
+        ];
+        
+        const skillLevels = [
+            'Novice (easily out-haggled)',
+            'Apprentice (basic bargaining skills)', 
+            'Competent (solid trading experience)',
+            'Skilled (experienced negotiator)',
+            'Expert (master of the trade)',
+            'Master (legendary trader)',
+            'Legendary (unmatched in the marketplace)'
+        ];
+        
+        const name = merchantNames[Math.floor(Math.random() * merchantNames.length)];
+        const skillDescription = skillLevels[Math.floor(Math.random() * skillLevels.length)];
+        
+        return {
+            name: name,
+            skillDescription: skillDescription
+        };
     }
 
     /**

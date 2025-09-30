@@ -669,6 +669,228 @@
     line-height: 1.4;
 }
 
+/* Tooltips */
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 4px;
+}
+
+.tooltip:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--bg-primary);
+    margin-bottom: -1px;
+}
+
+/* Pipeline Diagnostics */
+.pipeline-diagnostics {
+    margin-top: 16px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--bg-tertiary);
+    padding: 16px;
+}
+
+.pipeline-diagnostics h5 {
+    margin: 0 0 12px 0;
+    color: var(--text-primary);
+    font-size: 16px;
+}
+
+.pipeline-highlights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.highlight-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-accent);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+}
+
+.highlight-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.highlight-value {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.pipeline-details {
+    margin-top: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+}
+
+.pipeline-details summary {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
+.pipeline-details summary:hover {
+    background: var(--bg-accent);
+}
+
+.detail-content {
+    padding: 14px;
+    background: var(--bg-secondary);
+}
+
+.detail-content ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.detail-content li {
+    margin-bottom: 4px;
+    color: var(--text-secondary);
+}
+
+.slot-summary {
+    background: var(--bg-accent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.slot-summary h6 {
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.slot-summary ul {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.slot-summary li {
+    margin-bottom: 2px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* Availability Status Banner */
+.availability-status-banner {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 2px solid #28a745;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #155724;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Different states for the banner */
+.availability-status-banner.no-goods {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+/* Cargo Summary */
+.cargo-summary {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cargo-item {
+    background: var(--bg-accent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+}
+
+.cargo-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.cargo-quantity {
+    color: var(--accent-secondary);
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.cargo-merchant {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.cargo-details {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+}
+
+.cargo-details summary {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
+.cargo-details summary:hover {
+    background: var(--bg-accent);
+}
+
+.cargo-detail-content {
+    padding: 12px;
+    background: var(--bg-secondary);
+}
+
+.cargo-detail-content p {
+    margin: 4px 0;
+    color: var(--text-secondary);
+}
+
 /* Availability Results */
 .wfrp-trading .availability-section {
     margin-bottom: 24px;
