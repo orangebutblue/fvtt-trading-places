@@ -1,4 +1,5 @@
 /* WFRP Trading Places - Modern Unified UI Styles */
+@import url('./availability-status-banner.css');
 
 .wfrp-trading {
     /* Modern color palette - CSS Variables */
