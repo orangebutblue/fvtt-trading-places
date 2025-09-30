@@ -122,6 +122,12 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         if (typeof window.ValidationMixin !== 'undefined') {
             Object.assign(WFRPTradingApplication.prototype, window.ValidationMixin);
         }
+        if (typeof window.SeasonManagementMixin !== 'undefined') {
+            Object.assign(WFRPTradingApplication.prototype, window.SeasonManagementMixin);
+        }
+        if (typeof window.SettlementSelectorMixin !== 'undefined') {
+            Object.assign(WFRPTradingApplication.prototype, window.SettlementSelectorMixin);
+        }
     }
 
 
