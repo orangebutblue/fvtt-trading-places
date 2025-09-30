@@ -152,7 +152,7 @@ export class TradingUIRenderer {
     }
 
     /**
-     * Show detailed availability check results (always shows formula breakdown)
+     * Show detailed availability check results with slot-based organization
      * @param {Object} completeResult - Complete availability check result
      * @param {Array} availableCargo - Available cargo for display (empty on failure)
      * @private
@@ -179,181 +179,322 @@ export class TradingUIRenderer {
             buyingTab.appendChild(resultsContainer);
         }
 
+        // Create status banner
+        const statusEmoji = isSuccess ? this.ICONS.cargo : this.ICONS.failure;
+        const statusText = isSuccess ? 'Merchants are offering cargo' : 'No merchants available';
+        const statusBanner = `<div class="availability-status-banner ${isSuccess ? '' : 'no-goods'}">${statusEmoji} ${statusText}</div>`;
+
+        // Market check section (settlement info and overall roll)
         const rollDetails = completeResult.availabilityCheck || { roll: '-', chance: '-' };
         const sizeRating = this.dataManager.convertSizeToNumeric(this.app.selectedSettlement.size);
         const wealthRating = this.app.selectedSettlement.wealth;
         const baseChance = (sizeRating + wealthRating) * 10;
         const finalChance = Math.min(baseChance, 100);
 
-        const statusTitle = isSuccess ? 'Cargo Available' : 'No Cargo Available';
-        const statusIcon = isSuccess ? 'fas fa-check-circle' : 'fas fa-times-circle';
-        const statusClass = isSuccess ? 'success-text' : 'failure-text';
-
-        const cargoSummaryHtml = isSuccess && Array.isArray(availableCargo) && availableCargo.length > 0
-            ? `<div class="cargo-summary">
-                ${availableCargo.map(cargo => {
-                    const totalEp = cargo.totalEP ?? cargo.quantity ?? 0;
-                    const merchantName = cargo.merchant?.name || 'Unknown Merchant';
-                    const merchantSkill = cargo.merchant?.skillDescription || 'Unknown';
-                    return `
-                        <div class="cargo-item">
-                            <div class="cargo-name">${cargo.name} (${cargo.category})</div>
-                            <div class="cargo-quantity">${totalEp} EP</div>
-                            <div class="cargo-merchant">${merchantName} (${merchantSkill})</div>
-                            <details class="cargo-details">
-                                <summary>${this.ICONS.value} ${cargo.basePrice} GC / 10 EP</summary>
-                                <div class="cargo-detail-content">
-                                    <p><strong>Quality:</strong> ${cargo.quality || 'Average'}</p>
-                                    <p><strong>Description:</strong> ${cargo.merchant?.description || 'No description available'}</p>
-                                </div>
-                            </details>
-                        </div>
-                    `;
-                }).join('')}
-            </div>`
-            : '<p><em>No merchants were able to allocate cargo for sale.</em></p>';
-
-        const marketHtml = `
-            <div class="calculation-breakdown">
-                <p><strong>Settlement:</strong> ${this.app.selectedSettlement.name}</p>
-                <p><strong>Size:</strong> ${this.dataManager.getSizeDescription(this.app.selectedSettlement.size)} (${sizeRating})</p>
-                <p><strong>Wealth:</strong> ${this.dataManager.getWealthDescription(wealthRating)} (${wealthRating})</p>
-                <p><strong>Base Chance:</strong> <span title="Size contribution: ${sizeRating} × 10 = ${sizeRating * 10}%, Wealth contribution: ${wealthRating} × 10 = ${wealthRating * 10}%, Total: ${(sizeRating + wealthRating) * 10}%">${(sizeRating + wealthRating) * 10}%</span></p>
-                <p><strong>Final Chance:</strong> ${finalChance}% <span title="Capped at 100% maximum">(cannot exceed 100%)</span></p>
-                <p><strong>Roll & Result:</strong> ${this.ICONS.roll} ${rollDetails.roll} ${isSuccess ? '≤' : '>'} ${finalChance} = <span class="${statusClass}">${isSuccess ? '✅' : 'FAILURE'}</span></p>
-            </div>
+        const marketCheckHtml = `
+            <section class="market-check-section">
+                <h5>Market Check</h5>
+                <div class="calculation-breakdown">
+                    <p><strong>Settlement:</strong> ${this.app.selectedSettlement.name}</p>
+                    <p><strong>Size:</strong> ${this.dataManager.getSizeDescription(this.app.selectedSettlement.size)} (${sizeRating})</p>
+                    <p><strong>Wealth:</strong> ${this.dataManager.getWealthDescription(wealthRating)} (${wealthRating})</p>
+                    <p><strong>Base Chance:</strong> <span title="Size contribution: ${sizeRating} × 10 = ${sizeRating * 10}%, Wealth contribution: ${wealthRating} × 10 = ${wealthRating * 10}%, Total: ${(sizeRating + wealthRating) * 10}%">${(sizeRating + wealthRating) * 10}%</span></p>
+                    <p><strong>Final Chance:</strong> ${finalChance}% <span title="Capped at 100% maximum">(cannot exceed 100%)</span></p>
+                    <p><strong>Roll & Result:</strong> ${this.ICONS.roll} ${rollDetails.roll} ${isSuccess ? '≤' : '>'} ${finalChance} = <span class="${isSuccess ? 'success-text' : 'failure-text'}">${isSuccess ? '✅ SUCCESS' : '❌ FAILURE'}</span></p>
+                </div>
+            </section>
         `;
 
-        const cargoTotals = isSuccess ? `
-            <div class="calculation-breakdown">
-                <p><strong>Total EP:</strong> ${completeResult.cargoSize?.totalSize || 0}</p>
-                <p><strong>Base Multiplier:</strong> <span title="Size rating (${sizeRating}) + Wealth rating (${wealthRating}) = base for cargo amount calculations">${sizeRating} + ${wealthRating} = ${completeResult.cargoSize?.baseMultiplier || 0}</span></p>
-                <p><strong>Size Roll:</strong> ${completeResult.cargoSize?.roll1 || '-'} → ${completeResult.cargoSize?.sizeMultiplier || '-'}</p>
-                ${completeResult.cargoSize?.tradeBonus ? `<p><strong>Trade Bonus:</strong> Second roll ${completeResult.cargoSize.roll2} applied</p>` : ''}
-            </div>
-        ` : '';
-
-        const pipelineHtml = isSuccess ? this._renderPipelineDiagnostics(pipelineResult) : '';
-
-        // Create status banner instead of header
-        const statusEmoji = isSuccess ? this.ICONS.cargo : this.ICONS.failure;
-        const statusText = isSuccess ? 'Merchants are offering cargo' : 'No merchants available';
-        const statusBanner = `<div class="availability-status-banner ${isSuccess ? '' : 'no-goods'}">${statusEmoji} ${statusText}</div>`;
+        // Slot-based cargo display - DISABLED since cargo cards are now collapsible
+        let cargoSlotsHtml = '';
+        // The detailed slot information is now shown in the collapsible cargo cards
+        // instead of a separate slot breakdown section
 
         resultsContainer.innerHTML = `
             ${statusBanner}
-            <div class="availability-sections">
-                <section>
-                    <h5>Market Check</h5>
-                    ${marketHtml}
-                </section>
-                <section>
-                    <h5>${isSuccess ? 'Allocated Cargo' : 'Availability Notes'}</h5>
-                    ${isSuccess ? cargoSummaryHtml : '<p><em>This settlement is trading cautiously. Try again later or seek rumors.</em></p>'}
-                    ${cargoTotals}
-                </section>
-            </div>
-            ${pipelineHtml}
+            ${marketCheckHtml}
         `;
 
         resultsContainer.style.display = 'block';
     }
 
-    _renderPipelineDiagnostics(pipelineResult) {
-        if (!pipelineResult) {
-            return '';
+    /**
+     * Render a detailed slot card with complete pipeline information
+     * @param {Object} slot - Slot data from pipeline
+     * @param {number} slotNumber - Slot number for display
+     * @returns {string} - HTML for the slot card
+     * @private
+     */
+    _renderSlotCard(slot, slotNumber) {
+        const merchant = slot.merchant || {};
+        const cargo = slot.cargo || {};
+        const balance = slot.balance || {};
+        const amount = slot.amount || {};
+        const quality = slot.quality || {};
+        const contraband = slot.contraband || {};
+        const pricing = slot.pricing || {};
+
+        const isSuccessful = merchant.available !== false; // Since merchants are always available now
+        const statusIcon = isSuccessful ? this.ICONS.success : this.ICONS.failure;
+        const statusClass = isSuccessful ? 'slot-success' : 'slot-failure';
+        const statusText = isSuccessful ? 'Active Merchant' : 'No Merchant';
+
+        let slotContent = '';
+
+        if (isSuccessful) {
+            // Successful slot - show complete pipeline
+            const cargoTypeInfo = this._renderCargoTypeSelection(slot);
+            const balanceInfo = this._renderSupplyDemandBalance(slot);
+            const amountInfo = this._renderAmountCalculation(slot);
+            const qualityInfo = this._renderQualityDetermination(slot);
+            const contrabandInfo = this._renderContrabandCheck(slot);
+            const pricingInfo = this._renderFinalPricing(slot);
+
+            slotContent = `
+                <div class="slot-pipeline">
+                    <div class="pipeline-step">
+                        <h6>${this.ICONS.cargo} Cargo Type Selection</h6>
+                        ${cargoTypeInfo}
+                    </div>
+                    <div class="pipeline-step">
+                        <h6>${this.ICONS.calculation} Supply/Demand Balance</h6>
+                        ${balanceInfo}
+                    </div>
+                    <div class="pipeline-step">
+                        <h6>${this.ICONS.quantity} Amount Calculation</h6>
+                        ${amountInfo}
+                    </div>
+                    <div class="pipeline-step">
+                        <h6>${this.ICONS.quality} Quality Determination</h6>
+                        ${qualityInfo}
+                    </div>
+                    <div class="pipeline-step">
+                        <h6>${this.ICONS.risk} Contraband Check</h6>
+                        ${contrabandInfo}
+                    </div>
+                    <div class="pipeline-step">
+                        <h6>${this.ICONS.value} Final Pricing</h6>
+                        ${pricingInfo}
+                    </div>
+                </div>
+                <div class="slot-result">
+                    <div class="result-header">
+                        <span class="result-label">Result:</span>
+                        <span class="result-value">${cargo.name} (${cargo.category}) - ${amount.totalEP} EP @ ${pricing.finalPricePerEP?.toFixed(2)} GC/EP</span>
+                    </div>
+                    <div class="merchant-info">
+                        <span class="merchant-label">Merchant:</span>
+                        <span class="merchant-value">Available (skill level determined by settlement)</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Failed slot - show why it failed
+            slotContent = `
+                <div class="slot-failure-reason">
+                    <p><strong>Merchant Availability:</strong> ${merchant.roll || 'N/A'} > ${merchant.target || 'N/A'} target</p>
+                    <p><em>This slot could not attract a merchant. The market conditions or settlement characteristics made trading unattractive.</em></p>
+                    ${merchant.notes ? `<ul>${merchant.notes.map(note => `<li>${note}</li>`).join('')}</ul>` : ''}
+                </div>
+            `;
         }
 
-        const settlement = pipelineResult.settlement || {};
-        const slotPlan = pipelineResult.slotPlan || {};
-        const slots = Array.isArray(pipelineResult.slots) ? pipelineResult.slots : [];
-
-        // Critical highlights - show by default
-        const totalSlots = slotPlan.producerSlots || slotPlan.totalSlots || 0;
-        const successfulSlots = slots.filter(slot => slot.merchant?.available).length;
-        const totalEP = slots.reduce((sum, slot) => sum + (slot.amount?.totalEP || 0), 0);
-        const contrabandCount = slots.filter(slot => slot.contraband?.contraband).length;
-        const desperationAttempts = slots.filter(slot => slot.desperation?.attempted).length;
-
-        const highlightsHtml = `
-            <div class="pipeline-highlights">
-                <div class="highlight-item">
-                    <span class="highlight-label">Producer Slots:</span>
-                    <span class="highlight-value">${successfulSlots}/${totalSlots} active</span>
-                </div>
-                <div class="highlight-item">
-                    <span class="highlight-label">Total Cargo:</span>
-                    <span class="highlight-value">${totalEP} EP</span>
-                </div>
-                ${contrabandCount > 0 ? `
-                    <div class="highlight-item">
-                        <span class="highlight-label">Contraband:</span>
-                        <span class="highlight-value ${this.ICONS.risk}">${contrabandCount} items</span>
+        return `
+            <div class="slot-card ${statusClass}">
+                <div class="slot-header">
+                    <div class="slot-title">
+                        <span class="slot-number">Slot ${slotNumber}</span>
+                        <span class="slot-status">${statusIcon} ${statusText}</span>
                     </div>
+                </div>
+                <div class="slot-content">
+                    ${slotContent}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Render cargo type selection details
+     * @param {Object} slot - Slot data
+     * @returns {string} - HTML for cargo type selection
+     * @private
+     */
+    _renderCargoTypeSelection(slot) {
+        const cargo = slot.cargo || {};
+        const candidateTable = slot.candidateTable || {};
+
+        return `
+            <div class="pipeline-detail">
+                <p><strong>Selected Cargo:</strong> ${cargo.name} (${cargo.category})</p>
+                <p><strong>Selection Probability:</strong> ${cargo.probability?.toFixed(1) || 'N/A'}%</p>
+                ${cargo.reasons && cargo.reasons.length > 0 ? `
+                    <p><strong>Selection Reasons:</strong></p>
+                    <ul>
+                        ${cargo.reasons.map(reason => `<li>${reason}</li>`).join('')}
+                    </ul>
                 ` : ''}
-                ${desperationAttempts > 0 ? `
-                    <div class="highlight-item">
-                        <span class="highlight-label">Desperation:</span>
-                        <span class="highlight-value ${this.ICONS.risk}">${desperationAttempts} attempts</span>
-                    </div>
+                ${candidateTable.totalWeight ? `
+                    <p><strong>Candidate Pool:</strong> ${candidateTable.entries?.length || 0} types, total weight: ${candidateTable.totalWeight}</p>
                 ` : ''}
             </div>
         `;
+    }
 
-        // Detailed breakdowns - hidden by default
-        const slotPlanDetails = slotPlan.formula ? `
-            <details class="pipeline-details">
-                <summary>${this.ICONS.calculation} Slot Planning Details</summary>
-                <div class="detail-content">
-                    <ul>
-                        <li><strong>Base slots:</strong> ${slotPlan.formula.baseSlots ?? '—'}</li>
-                        <li><strong>Population contribution:</strong> ${slotPlan.formula.populationContribution ?? 0}</li>
-                        <li><strong>Size contribution:</strong> ${slotPlan.formula.sizeContribution ?? 0}</li>
-                        ${(slotPlan.formula.multipliers || []).map(item => 
-                            `<li><strong>${item.label}:</strong> ${item.detail || ''}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-            </details>
-        ` : '';
-
-        const slotBreakdown = slots.length > 0 ? `
-            <details class="pipeline-details">
-                <summary>${this.ICONS.quantity} Slot-by-Slot Breakdown</summary>
-                <div class="detail-content">
-                    ${slots.map(slot => {
-                        const balance = slot.balance || {};
-                        const amount = slot.amount || {};
-                        const quality = slot.quality || {};
-                        const contraband = slot.contraband || {};
-                        const merchant = slot.merchant || {};
-                        const pricing = slot.pricing || {};
-
-                        return `
-                            <div class="slot-summary">
-                                <h6>Slot ${slot.slotNumber}: ${slot.cargo?.name || 'Empty'}</h6>
-                                <ul>
-                                    <li><strong>Balance:</strong> ${balance.state || 'unknown'} (${balance.supply || 0}/${balance.demand || 0})</li>
-                                    <li><strong>Amount:</strong> ${amount.totalEP || 0} EP</li>
-                                    <li><strong>Quality:</strong> ${quality.tier || 'Average'}</li>
-                                    <li><strong>Contraband:</strong> ${contraband.contraband ? `${this.ICONS.risk} Yes` : 'No'}</li>
-                                    <li><strong>Merchant:</strong> ${merchant.available ? `${this.ICONS.merchant} Present` : 'None'}</li>
-                                    <li><strong>Price:</strong> ${pricing.finalPricePerEP?.toFixed(2) || '—'} GC/EP</li>
-                                </ul>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            </details>
-        ` : '';
+    /**
+     * Render supply/demand balance details
+     * @param {Object} slot - Slot data
+     * @returns {string} - HTML for balance information
+     * @private
+     */
+    _renderSupplyDemandBalance(slot) {
+        const balance = slot.balance || {};
 
         return `
-            <section class="pipeline-diagnostics">
-                <h5>Orange Realism Pipeline</h5>
-                ${highlightsHtml}
-                ${slotPlanDetails}
-                ${slotBreakdown}
-            </section>
+            <div class="pipeline-detail">
+                <p><strong>Final Balance:</strong> ${balance.supply || 0} supply / ${balance.demand || 0} demand</p>
+                <p><strong>Market State:</strong> ${balance.state || 'unknown'}</p>
+                ${balance.history && balance.history.length > 0 ? `
+                    <p><strong>Balance Adjustments:</strong></p>
+                    <ul>
+                        ${balance.history.map(change => `
+                            <li>${change.label}: ${change.percentage > 0 ? '+' : ''}${change.percentage} 
+                                (${change.before.supply}/${change.before.demand} → ${change.after.supply}/${change.after.demand})</li>
+                        `).join('')}
+                    </ul>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    /**
+     * Render amount calculation details
+     * @param {Object} slot - Slot data
+     * @returns {string} - HTML for amount calculation
+     * @private
+     */
+    _renderAmountCalculation(slot) {
+        const amount = slot.amount || {};
+
+        return `
+            <div class="pipeline-detail">
+                <p><strong>Base Roll:</strong> ${amount.roll || 'N/A'} (1d100)</p>
+                <p><strong>Size Modifier:</strong> ×${amount.sizeModifier?.toFixed(2) || 'N/A'}</p>
+                <p><strong>Wealth Modifier:</strong> ×${amount.wealthModifier?.toFixed(2) || 'N/A'}</p>
+                <p><strong>Supply Modifier:</strong> ×${amount.supplyModifier?.toFixed(2) || 'N/A'}</p>
+                <p><strong>Final Amount:</strong> ${amount.totalEP || 0} EP</p>
+                ${amount.notes && amount.notes.length > 0 ? `
+                    <ul>
+                        ${amount.notes.map(note => `<li>${note}</li>`).join('')}
+                    </ul>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    /**
+     * Render quality determination details
+     * @param {Object} slot - Slot data
+     * @returns {string} - HTML for quality information
+     * @private
+     */
+    _renderQualityDetermination(slot) {
+        const quality = slot.quality || {};
+
+        return `
+            <div class="pipeline-detail">
+                <p><strong>Quality Tier:</strong> ${quality.tier || 'Average'}</p>
+                <p><strong>Quality Score:</strong> ${quality.score?.toFixed(2) || 'N/A'}</p>
+                ${quality.notes && quality.notes.length > 0 ? `
+                    <ul>
+                        ${quality.notes.map(note => `<li>${note}</li>`).join('')}
+                    </ul>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    /**
+     * Render contraband check details
+     * @param {Object} slot - Slot data
+     * @returns {string} - HTML for contraband information
+     * @private
+     */
+    _renderContrabandCheck(slot) {
+        const contraband = slot.contraband || {};
+
+        return `
+            <div class="pipeline-detail">
+                <p><strong>Contraband Chance:</strong> ${contraband.chance?.toFixed(1) || 'N/A'}%</p>
+                <p><strong>Roll Result:</strong> ${contraband.roll || 'N/A'}</p>
+                <p><strong>Is Contraband:</strong> ${contraband.contraband ? `${this.ICONS.risk} Yes` : 'No'}</p>
+                ${contraband.notes && contraband.notes.length > 0 ? `
+                    <ul>
+                        ${contraband.notes.map(note => `<li>${note}</li>`).join('')}
+                    </ul>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    /**
+     * Render final pricing details
+     * @param {Object} slot - Slot data
+     * @returns {string} - HTML for pricing information
+     * @private
+     */
+    _renderFinalPricing(slot) {
+        const pricing = slot.pricing || {};
+
+        return `
+            <div class="pipeline-detail">
+                <p><strong>Base Price per EP:</strong> ${pricing.basePricePerEP?.toFixed(2) || 'N/A'} GC</p>
+                <p><strong>Final Price per EP:</strong> ${pricing.finalPricePerEP?.toFixed(2) || 'N/A'} GC</p>
+                <p><strong>Available Quantity:</strong> ${pricing.quantity || 0} EP</p>
+                <p><strong>Total Value:</strong> ${pricing.totalValue?.toFixed(2) || 'N/A'} GC</p>
+                ${pricing.steps && pricing.steps.length > 0 ? `
+                    <p><strong>Price Adjustments:</strong></p>
+                    <ul>
+                        ${pricing.steps.map(step => `<li>${step.label}</li>`).join('')}
+                    </ul>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    /**
+     * Render legacy cargo card for fallback when pipeline data isn't available
+     * @param {Object} cargo - Cargo data
+     * @param {number} slotNumber - Slot number
+     * @returns {string} - HTML for legacy cargo card
+     * @private
+     */
+    _renderLegacyCargoCard(cargo, slotNumber) {
+        const totalEp = cargo.totalEP ?? cargo.quantity ?? 0;
+        const merchantName = cargo.merchant?.name || 'Unknown Merchant';
+        const merchantSkill = cargo.merchant?.skillDescription || 'Unknown';
+
+        return `
+            <div class="slot-card slot-success">
+                <div class="slot-header">
+                    <div class="slot-title">
+                        <span class="slot-number">Slot ${slotNumber}</span>
+                        <span class="slot-status">${this.ICONS.success} Active Merchant</span>
+                    </div>
+                </div>
+                <div class="slot-content">
+                    <div class="slot-result">
+                        <div class="result-header">
+                            <span class="result-label">Result:</span>
+                            <span class="result-value">${cargo.name} (${cargo.category}) - ${totalEp} EP @ ${cargo.currentPrice || cargo.basePrice} GC/10EP</span>
+                        </div>
+                        <div class="merchant-info">
+                            <span class="merchant-label">Merchant:</span>
+                            <span class="merchant-value">${merchantName} (${merchantSkill})</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
     }
 
@@ -412,16 +553,17 @@ export class TradingUIRenderer {
     }
 
     /**
-     * Create a cargo card element
-     * @param {Object} cargo - Cargo data
+     * Create a cargo card element that can be expanded to show detailed pipeline information
+     * @param {Object} cargo - Cargo data with slotInfo for pipeline details
      * @returns {HTMLElement} - Cargo card element
      * @private
      */
     _createCargoCard(cargo) {
         const card = document.createElement('div');
-        card.className = 'cargo-card';
-        
-        card.innerHTML = `
+        card.className = 'cargo-card collapsible';
+
+        // Basic info (always visible) - matches original layout
+        const basicInfo = `
             <div class="cargo-header">
                 <div class="cargo-name">${cargo.name}</div>
                 <div class="cargo-category">${cargo.category || 'Goods'}</div>
@@ -429,7 +571,7 @@ export class TradingUIRenderer {
             <div class="cargo-details">
                 <div class="price-info">
                     <span class="price-label">Base Price:</span>
-                    <span class="price-value">${cargo.currentPrice || cargo.basePrice} GC</span>
+                    <span class="price-value">${cargo.currentPrice?.toFixed(2) || cargo.basePrice} GC</span>
                 </div>
                 <div class="price-info">
                     <span class="price-label">Available:</span>
@@ -440,14 +582,100 @@ export class TradingUIRenderer {
                     <span class="price-value">${cargo.quality || 'Average'}</span>
                 </div>
                 <div class="merchant-info">
-                    <span class="merchant-label">Merchant:</span>
-                    <span class="merchant-value">${cargo.merchant.name}</span>
-                    <div class="merchant-description">${cargo.merchant.description}</div>
-                    <div class="merchant-skill">Skill: ${cargo.merchant.skillDescription} (${cargo.merchant.skill})</div>
+                    <div class="merchant-header">
+                        <span class="merchant-name">${cargo.merchant?.name || 'Unknown'}</span>
+                        <div class="merchant-skill">${cargo.merchant?.skillDescription || 'Unknown'}</div>
+                    </div>
+                    <div class="merchant-description">${cargo.merchant?.description || ''}</div>
                 </div>
             </div>
         `;
+
+        // Detailed pipeline information (hidden by default)
+        let detailedInfo = '';
+        if (cargo.slotInfo) {
+            // This cargo came from the pipeline - show detailed breakdown
+            const slot = cargo.slotInfo;
+            detailedInfo = `
+                <div class="cargo-details expanded-content">
+                    <div class="pipeline-breakdown">
+                        <h6>${this.ICONS.calculation} Pipeline Details</h6>
+
+                        <div class="pipeline-section">
+                            <h7>${this.ICONS.cargo} Cargo Selection</h7>
+                            <p><strong>Type:</strong> ${cargo.name} (${cargo.category})</p>
+                            <p><strong>Market Balance:</strong> ${slot.balance?.state || 'unknown'} (${slot.balance?.supply || 0}/${slot.balance?.demand || 0})</p>
+                        </div>
+
+                        <div class="pipeline-section">
+                            <h7>${this.ICONS.quantity} Quantity & Quality</h7>
+                            <p><strong>Amount:</strong> ${cargo.totalEP} EP</p>
+                            <p><strong>Quality:</strong> ${cargo.quality}</p>
+                            ${slot.contraband ? `<p><strong>⚠️ Contraband:</strong> Yes</p>` : ''}
+                        </div>
+
+                        <div class="pipeline-section">
+                            <h7>${this.ICONS.value} Pricing</h7>
+                            <p><strong>Base Price:</strong> ${cargo.basePrice?.toFixed(2)} GC/EP</p>
+                            <p><strong>Final Price:</strong> ${cargo.currentPrice?.toFixed(2)} GC/EP</p>
+                            <p><strong>Total Value:</strong> ${(cargo.currentPrice * cargo.totalEP)?.toFixed(2)} GC</p>
+                        </div>
+
+                        <div class="pipeline-section">
+                            <h7>${this.ICONS.merchant} Merchant Details</h7>
+                            <p><strong>Name:</strong> ${cargo.merchant?.name || 'Unknown'}</p>
+                            <p><strong>Skill:</strong> ${cargo.merchant?.skillDescription || 'Unknown'}</p>
+                            ${cargo.merchant?.description ? `<p><strong>Description:</strong> ${cargo.merchant.description}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Fallback for legacy cargo without pipeline data
+            detailedInfo = `
+                <div class="cargo-details expanded-content">
+                    <div class="merchant-details">
+                        <h6>${this.ICONS.merchant} Merchant Details</h6>
+                        <p><strong>Name:</strong> ${cargo.merchant?.name || 'Unknown'}</p>
+                        <p><strong>Skill:</strong> ${cargo.merchant?.skillDescription || 'Unknown'}</p>
+                        ${cargo.merchant?.description ? `<p><strong>Description:</strong> ${cargo.merchant.description}</p>` : ''}
+                        ${cargo.merchant?.skill ? `<p><strong>Skill Level:</strong> ${cargo.merchant.skill}</p>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        card.innerHTML = basicInfo + detailedInfo;
+
+        // Add click handler to the header only
+        const header = card.querySelector('.cargo-header');
+        const expandedContent = card.querySelector('.expanded-content');
         
+        if (header) {
+            header.addEventListener('click', (event) => {
+                // Don't toggle if clicking on a button or other interactive element
+                if (event.target.tagName === 'BUTTON' || event.target.closest('button')) {
+                    return;
+                }
+
+                card.classList.toggle('expanded');
+                if (expandedContent) {
+                    if (card.classList.contains('expanded')) {
+                        expandedContent.style.display = 'block';
+                    } else {
+                        expandedContent.style.display = 'none';
+                    }
+                }
+            });
+        }
+        
+        // Prevent clicks on expanded content from collapsing the card
+        if (expandedContent) {
+            expandedContent.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+        }
+
         return card;
     }
 

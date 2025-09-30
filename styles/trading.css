@@ -410,25 +410,25 @@
     flex-direction: column;
 }
 
-/* Cargo Grid */
-.wfrp-trading .cargo-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
-}
-
-.wfrp-trading .cargo-card {
+/* Collapsible Cargo Cards */
+.wfrp-trading .cargo-card.collapsible {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
     padding: 20px;
+    margin-bottom: 12px;
     transition: all 0.2s ease;
+    position: relative;
 }
 
-.wfrp-trading .cargo-card:hover {
+.wfrp-trading .cargo-card.collapsible:hover {
     border-color: var(--accent-primary);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+}
+
+.wfrp-trading .cargo-card.collapsible.expanded {
+    box-shadow: var(--shadow-lg);
 }
 
 .wfrp-trading .cargo-header {
@@ -436,6 +436,30 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    cursor: pointer;
+    position: relative;
+}
+
+.wfrp-trading .cargo-header::after {
+    content: '▶';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+.wfrp-trading .cargo-card.collapsible.expanded .cargo-header::after {
+    transform: translateY(-50%) rotate(90deg);
+}
+
+.wfrp-trading .cargo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
 }
 
 .wfrp-trading .cargo-name {
@@ -453,10 +477,27 @@
     font-weight: 500;
 }
 
-.wfrp-trading .cargo-details {
+.wfrp-trading .cargo-summary {
     display: grid;
     gap: 12px;
     margin-bottom: 20px;
+}
+
+.wfrp-trading .price-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wfrp-trading .price-label {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.wfrp-trading .price-value {
+    color: var(--accent-secondary);
+    font-weight: 700;
+    font-size: 16px;
 }
 
 .wfrp-trading .merchant-info {
@@ -496,21 +537,88 @@
     line-height: 1.4;
 }
 
-.wfrp-trading .price-info {
+.wfrp-trading .cargo-details.expanded-content {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+    margin-left: 20px;
+    padding-left: 16px;
+    border-left: 3px solid var(--accent-primary);
+}
+
+.wfrp-trading .cargo-card.collapsible.expanded .cargo-details.expanded-content {
+    display: block;
+}
+
+.wfrp-trading .pipeline-breakdown {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.wfrp-trading .price-label {
-    color: var(--text-muted);
-    font-size: 14px;
-}
-
-.wfrp-trading .price-value {
-    color: var(--accent-secondary);
-    font-weight: 700;
+.wfrp-trading .pipeline-breakdown h6 {
+    margin: 0 0 12px 0;
+    color: var(--text-primary);
     font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wfrp-trading .pipeline-section {
+    background: var(--bg-accent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+}
+
+.wfrp-trading .pipeline-section h7 {
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wfrp-trading .pipeline-section p {
+    margin: 4px 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.wfrp-trading .pipeline-section strong {
+    color: var(--text-primary);
+}
+
+.wfrp-trading .merchant-details {
+    background: var(--bg-accent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+}
+
+.wfrp-trading .merchant-details h6 {
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wfrp-trading .merchant-details p {
+    margin: 4px 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.wfrp-trading .merchant-details strong {
+    color: var(--text-primary);
 }
 
 .wfrp-trading .cargo-actions {
@@ -891,11 +999,7 @@
     color: var(--text-secondary);
 }
 
-/* Availability Results */
-.wfrp-trading .availability-section {
-    margin-bottom: 24px;
-}
-
+/* Slot-based Availability Results */
 .wfrp-trading .availability-results {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
@@ -904,20 +1008,246 @@
     margin-top: 16px;
 }
 
-.wfrp-trading .availability-results h4 {
+.wfrp-trading .availability-summary {
+    margin-bottom: 24px;
+}
+
+.wfrp-trading .summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.wfrp-trading .summary-header h4 {
     color: var(--text-primary);
-    margin-bottom: 12px;
+    margin: 0;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.wfrp-trading .availability-results .success-icon {
+.wfrp-trading .summary-stats {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.wfrp-trading .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.wfrp-trading .stat-item.contraband {
+    color: var(--accent-warning);
+}
+
+.wfrp-trading .slot-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.wfrp-trading .slot-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.wfrp-trading .slot-card:hover {
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.wfrp-trading .slot-card.expanded {
+    box-shadow: var(--shadow-lg);
+}
+
+.wfrp-trading .slot-card.slot-success {
+    border-left: 4px solid var(--accent-secondary);
+}
+
+.wfrp-trading .slot-card.slot-failure {
+    border-left: 4px solid var(--accent-warning);
+}
+
+.wfrp-trading .slot-header {
+    background: var(--bg-accent);
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.wfrp-trading .slot-header:hover {
+    background: var(--bg-tertiary);
+}
+
+.wfrp-trading .slot-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wfrp-trading .slot-number {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 16px;
+}
+
+.wfrp-trading .slot-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.wfrp-trading .slot-card.slot-success .slot-status {
     color: var(--accent-secondary);
 }
 
-.wfrp-trading .availability-results .failure-icon {
+.wfrp-trading .slot-card.slot-failure .slot-status {
     color: var(--accent-warning);
+}
+
+.wfrp-trading .slot-content {
+    display: none;
+    padding: 20px;
+    border-top: 1px solid var(--border-light);
+}
+
+.wfrp-trading .slot-card.expanded .slot-content {
+    display: block;
+}
+
+.wfrp-trading .slot-pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.wfrp-trading .pipeline-step {
+    background: var(--bg-accent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+}
+
+.wfrp-trading .pipeline-step h6 {
+    margin: 0 0 12px 0;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wfrp-trading .pipeline-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wfrp-trading .pipeline-detail p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.wfrp-trading .pipeline-detail strong {
+    color: var(--text-primary);
+}
+
+.wfrp-trading .pipeline-detail ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.wfrp-trading .pipeline-detail li {
+    margin-bottom: 4px;
+}
+
+.wfrp-trading .slot-result {
+    background: var(--bg-accent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+}
+
+.wfrp-trading .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wfrp-trading .result-label {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.wfrp-trading .result-value {
+    color: var(--accent-secondary);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.wfrp-trading .merchant-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wfrp-trading .merchant-label {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.wfrp-trading .merchant-value {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.wfrp-trading .slot-failure-reason {
+    background: rgba(239, 83, 80, 0.1);
+    border: 1px solid var(--accent-warning);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+}
+
+.wfrp-trading .slot-failure-reason p {
+    margin: 0 0 8px 0;
+    color: var(--accent-warning);
+    font-size: 14px;
+}
+
+.wfrp-trading .slot-failure-reason ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.wfrp-trading .slot-failure-reason li {
+    margin-bottom: 4px;
 }
 
 /* Transaction History */
