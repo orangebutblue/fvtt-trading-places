@@ -459,6 +459,26 @@ function registerModuleSettings() {
         default: false,
         onChange: onDebugLoggingChange
     });
+
+    // Selected region setting (for persistence)
+    game.settings.register(MODULE_ID, "selectedRegion", {
+        name: "Selected Region",
+        hint: "Stores the last selected region in the trading interface",
+        scope: "client",
+        config: false,
+        type: String,
+        default: ""
+    });
+
+    // Selected settlement setting (for persistence)
+    game.settings.register(MODULE_ID, "selectedSettlement", {
+        name: "Selected Settlement",
+        hint: "Stores the last selected settlement in the trading interface",
+        scope: "client",
+        config: false,
+        type: String,
+        default: ""
+    });
 }
 
 /**

@@ -290,6 +290,9 @@ export class TradingUIEventHandlers {
             // Clear previous cargo
             this.app.availableCargo = [];
 
+            // Save to Foundry settings for persistence
+            game.settings.set("trading-places", "selectedSettlement", settlement.name);
+
             // Update UI
             await this.app.render(false);
             
@@ -538,6 +541,10 @@ export class TradingUIEventHandlers {
         this.app.selectedRegion = selectedRegion;
         this.app.selectedSettlement = null;
         this.app.availableCargo = [];
+        
+        // Save to Foundry settings for persistence
+        game.settings.set("trading-places", "selectedRegion", selectedRegion);
+        game.settings.set("trading-places", "selectedSettlement", null);
         
         // Re-render to update the settlement dropdown with filtered settlements
         this.app.render(false);

@@ -180,9 +180,9 @@ export class TradingUIRenderer {
         }
 
         // Create status banner
-        const statusEmoji = isSuccess ? this.ICONS.cargo : this.ICONS.failure;
-        const statusText = isSuccess ? 'Merchants are offering cargo' : 'No merchants available';
-        const statusBanner = `<div class="availability-status-banner ${isSuccess ? '' : 'no-goods'}">${statusEmoji} ${statusText}</div>`;
+        const statusEmoji = this.ICONS.cargo;
+        const statusText = 'Merchants are offering cargo';
+        const statusBanner = `<div class="availability-status-banner">${statusEmoji} ${statusText}</div>`;
 
         // Market check section (settlement info and overall roll)
         const rollDetails = completeResult.availabilityCheck || { roll: '-', chance: '-' };
@@ -191,6 +191,20 @@ export class TradingUIRenderer {
         const baseChance = (sizeRating + wealthRating) * 10;
         const finalChance = Math.min(baseChance, 100);
 
+        // Get slot information from pipeline result if available
+        let slotExplanation = '';
+        if (pipelineResult && pipelineResult.slotPlan) {
+            const slotPlan = pipelineResult.slotPlan;
+            slotExplanation = `
+                <p><strong>Available Slots:</strong> ${slotPlan.totalSlots}</p>
+                <p><strong>Slot Calculation:</strong></p>
+                <ul>
+                    ${slotPlan.reasons.map(reason => `<li>${reason.label}: ${reason.value}</li>`).join('')}
+                    ${slotPlan.formula.multipliers.map(multiplier => `<li>${multiplier.label}: ${multiplier.detail}</li>`).join('')}
+                </ul>
+            `;
+        }
+
         const marketCheckHtml = `
             <section class="market-check-section">
                 <h5>Market Check</h5>
@@ -198,9 +212,8 @@ export class TradingUIRenderer {
                     <p><strong>Settlement:</strong> ${this.app.selectedSettlement.name}</p>
                     <p><strong>Size:</strong> ${this.dataManager.getSizeDescription(this.app.selectedSettlement.size)} (${sizeRating})</p>
                     <p><strong>Wealth:</strong> ${this.dataManager.getWealthDescription(wealthRating)} (${wealthRating})</p>
-                    <p><strong>Base Chance:</strong> <span title="Size contribution: ${sizeRating} × 10 = ${sizeRating * 10}%, Wealth contribution: ${wealthRating} × 10 = ${wealthRating * 10}%, Total: ${(sizeRating + wealthRating) * 10}%">${(sizeRating + wealthRating) * 10}%</span></p>
-                    <p><strong>Final Chance:</strong> ${finalChance}% <span title="Capped at 100% maximum">(cannot exceed 100%)</span></p>
-                    <p><strong>Roll & Result:</strong> ${this.ICONS.roll} ${rollDetails.roll} ${isSuccess ? '≤' : '>'} ${finalChance} = <span class="${isSuccess ? 'success-text' : 'failure-text'}">${isSuccess ? '✅ SUCCESS' : '❌ FAILURE'}</span></p>
+                    <p><strong>Roll & Results:</strong> ${this.ICONS.roll} ${rollDetails.roll} ${isSuccess ? '≤' : '>'} ${finalChance} = ${isSuccess ? this.ICONS.success : this.ICONS.failure}</p>
+                    ${slotExplanation}
                 </div>
             </section>
         `;
@@ -324,16 +337,36 @@ export class TradingUIRenderer {
         const cargo = slot.cargo || {};
         const candidateTable = slot.candidateTable || {};
 
+        let otherCandidatesHtml = '';
+        if (candidateTable.entries && candidateTable.entries.length > 1) {
+            // Sort by probability descending, take top 5 including the selected one
+            const topCandidates = candidateTable.entries
+                .sort((a, b) => b.probability - a.probability)
+                .slice(0, 5);
+            
+            otherCandidatesHtml = `
+                <p><strong>Alternative Options:</strong></p>
+                <ul>
+                    ${topCandidates.map(candidate => 
+                        candidate.name === cargo.name 
+                            ? `<li><strong>${candidate.name}</strong> (${candidate.probability.toFixed(1)}%) - SELECTED</li>`
+                            : `<li>${candidate.name} (${candidate.probability.toFixed(1)}%)</li>`
+                    ).join('')}
+                </ul>
+            `;
+        }
+
         return `
             <div class="pipeline-detail">
                 <p><strong>Selected Cargo:</strong> ${cargo.name} (${cargo.category})</p>
                 <p><strong>Selection Probability:</strong> ${cargo.probability?.toFixed(1) || 'N/A'}%</p>
                 ${cargo.reasons && cargo.reasons.length > 0 ? `
-                    <p><strong>Selection Reasons:</strong></p>
+                    <p><strong>Why This Cargo:</strong></p>
                     <ul>
                         ${cargo.reasons.map(reason => `<li>${reason}</li>`).join('')}
                     </ul>
                 ` : ''}
+                ${otherCandidatesHtml}
                 ${candidateTable.totalWeight ? `
                     <p><strong>Candidate Pool:</strong> ${candidateTable.entries?.length || 0} types, total weight: ${candidateTable.totalWeight}</p>
                 ` : ''}
@@ -350,10 +383,38 @@ export class TradingUIRenderer {
     _renderSupplyDemandBalance(slot) {
         const balance = slot.balance || {};
 
+        let balanceExplanation = '';
+        switch (balance.state) {
+            case 'blocked':
+                balanceExplanation = 'Market is completely blocked - no trading possible. This cargo should not exist!';
+                break;
+            case 'desperate':
+                balanceExplanation = 'Market is desperate - merchants are willing to accept lower prices and offer larger quantities.';
+                break;
+            case 'scarce':
+                balanceExplanation = 'Supply is scarce - higher prices, smaller quantities available.';
+                break;
+            case 'glut':
+                balanceExplanation = 'Supply glut - lower prices, larger quantities available.';
+                break;
+            case 'balanced':
+                balanceExplanation = 'Market is balanced - normal prices and quantities.';
+                break;
+            default:
+                balanceExplanation = 'Market state unknown.';
+        }
+
         return `
             <div class="pipeline-detail">
                 <p><strong>Final Balance:</strong> ${balance.supply || 0} supply / ${balance.demand || 0} demand</p>
                 <p><strong>Market State:</strong> ${balance.state || 'unknown'}</p>
+                <p><strong>What This Means:</strong> ${balanceExplanation}</p>
+                <p><strong>How It Affects Trading:</strong></p>
+                <ul>
+                    <li><strong>Supply/Demand Ratio:</strong> Higher supply = lower prices, larger quantities</li>
+                    <li><strong>Market States:</strong> Blocked (no trade) → Desperate (best deals) → Scarce (high prices) → Glut (low prices) → Balanced (normal)</li>
+                    <li><strong>Price Impact:</strong> ${balance.supply > balance.demand ? 'Lower prices due to oversupply' : balance.supply < balance.demand ? 'Higher prices due to scarcity' : 'Normal prices'}</li>
+                </ul>
                 ${balance.history && balance.history.length > 0 ? `
                     <p><strong>Balance Adjustments:</strong></p>
                     <ul>
@@ -570,12 +631,12 @@ export class TradingUIRenderer {
             </div>
             <div class="cargo-details">
                 <div class="price-info">
-                    <span class="price-label">Base Price:</span>
+                    <span class="price-label">Price:</span>
                     <span class="price-value">${cargo.currentPrice?.toFixed(2) || cargo.basePrice} GC</span>
                 </div>
                 <div class="price-info">
                     <span class="price-label">Available:</span>
-                    <span class="price-value">${cargo.totalEP ?? cargo.quantity} EP${typeof cargo.quantity === 'number' ? ` (${cargo.quantity} units)` : ''}</span>
+                    <span class="price-value">${cargo.totalEP ?? cargo.quantity} EP</span>
                 </div>
                 <div class="price-info">
                     <span class="price-label">Quality:</span>

@@ -93,8 +93,25 @@ export class BuyingFlow {
             };
             
             let pipelineResult = null;
+            let marketRoll = null;
             if (this.app.cargoAvailabilityPipeline) {
                 try {
+                    // Perform the market availability roll first
+                    const roll = new Roll("1d100");
+                    await roll.evaluate();
+                    marketRoll = roll.total;
+                    
+                    // Show dice roll in chat if enabled
+                    const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+                    if (chatVisibility !== "disabled") {
+                        await roll.toMessage({
+                            speaker: ChatMessage.getSpeaker(),
+                            flavor: `Cargo Availability Check in ${this.app.selectedSettlement.name}`
+                        });
+                    }
+                    
+                    console.log(`🎲 Market availability roll: ${marketRoll}`);
+                    
                     pipelineResult = await this.app.cargoAvailabilityPipeline.run({
                         settlement: this.app.selectedSettlement,
                         season: this.app.currentSeason
@@ -111,7 +128,17 @@ export class BuyingFlow {
 
             if (pipelineResult && pipelineResult.slots && pipelineResult.slots.length > 0) {
                 // Use orange-realism pipeline results - all slots produce cargo with merchants
-                availabilityResult = { available: true };
+                const sizeRating = this.dataManager.convertSizeToNumeric(this.app.selectedSettlement.size);
+                const wealthRating = this.app.selectedSettlement.wealth;
+                const finalChance = Math.min((sizeRating + wealthRating) * 10, 100);
+                
+                availabilityResult = { 
+                    available: true,
+                    availabilityCheck: {
+                        roll: marketRoll,
+                        chance: finalChance
+                    }
+                };
                 
                 // Convert all pipeline slots to cargo objects for display
                 availableCargo = await Promise.all(pipelineResult.slots.map(async (slot) => {

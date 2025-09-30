@@ -318,6 +318,9 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
         this._logDebug('Template Context', 'Preparing template context data');
 
+        // Load saved selections first
+        await this._loadSavedSelections();
+
         // Add trading-specific data for templates
         context.currentSeason = this.getCurrentSeason();
         context.selectedSettlement = this.selectedSettlement;
@@ -544,6 +547,38 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         } catch (error) {
             this._logError('Season Management', 'Failed to load current season from settings', { error: error.message });
             this.currentSeason = null;
+        }
+    }
+
+    /**
+     * Load saved region and settlement selections from settings
+     * @private
+     */
+    async _loadSavedSelections() {
+        try {
+            // Load saved region
+            const savedRegion = await game.settings.get("trading-places", "selectedRegion");
+            if (savedRegion) {
+                this.selectedRegion = savedRegion;
+                this._logDebug('Saved Selections', 'Loaded saved region', { region: savedRegion });
+            }
+
+            // Load saved settlement
+            const savedSettlementName = await game.settings.get("trading-places", "selectedSettlement");
+            if (savedSettlementName && this.dataManager) {
+                const settlement = this.dataManager.getSettlement(savedSettlementName);
+                if (settlement) {
+                    this.selectedSettlement = settlement;
+                    this._logDebug('Saved Selections', 'Loaded saved settlement', { settlement: savedSettlementName });
+                } else {
+                    this._logError('Saved Selections', 'Saved settlement not found in data', { settlementName: savedSettlementName });
+                    // Clear invalid saved settlement
+                    await game.settings.set("trading-places", "selectedSettlement", null);
+                }
+            }
+
+        } catch (error) {
+            this._logError('Saved Selections', 'Failed to load saved selections', { error: error.message });
         }
     }
 
