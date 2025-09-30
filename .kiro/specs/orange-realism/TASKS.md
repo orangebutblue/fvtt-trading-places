@@ -17,6 +17,19 @@
 - [x] Implement Step 11 price calculator that composes base prices, quality, desperation, wealth, supply/demand, and contraband risk modifiers.
 - [ ] Surface each step’s results in the Buyer tab UI (`trading-application-v2.js` + templates) with expandable diagnostics for GMs.
 
+## Buyer Tab UI Redesign (Availability Breakdown)
+
+- [ ] Replace the availability header with a single status banner (emoji + concise text) and drop redundant phrasing about merchants.
+- [ ] Render settlement size/wealth using their descriptive names (e.g., “Town”, “Comfortable”) with numeric values available via hover tooltip.
+- [ ] Rewrite the availability chance line to show labeled components (base contributions, final percent) with an explanatory tooltip instead of raw formulas.
+- [ ] Combine roll/result messaging into one line and decorate dice rolls with a 🎲 icon for quick scanning.
+- [ ] Stop rendering slot diagnostics when the availability check fails; show a short failure notice and exit early.
+- [ ] For successful checks, present a compact allocation summary (cargo name/category, EP, merchant) first, then limit detailed math to a single collapsible per cargo.
+- [ ] Introduce reusable tooltip helpers in `trading-application-v2.js`/`trading.css` so hover text can explain modifiers without cluttering the layout.
+- [ ] Add a lightweight emoji/icon map (🎲 rolls, 💰 value, 🧮 calculations, ⚠️ risk) and apply consistently across the panel.
+- [ ] Refactor the pipeline diagnostics renderer to output only critical highlights by default and group optional details under clearly labeled toggles.
+- [ ] Update `templates/trading-unified.hbs` and `styles/trading.css` to support the new banner, summary layout, and tooltip styling.
+
 ## Data Authoring Toolkit
 
 - [ ] Build settlement CRUD UI in `data-management.hbs`/`data-management-ui.js` with validation and preview.
