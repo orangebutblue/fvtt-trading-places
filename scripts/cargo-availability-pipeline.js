@@ -1,8 +1,3 @@
-/**
- * Trading Places Module - Cargo Availability Pipeline
- * Orange-realism workflow executed per producer slot.
- */
-
 class CargoAvailabilityPipeline {
     constructor(dataManager, options = {}) {
         if (!dataManager) {
@@ -10,13 +5,39 @@ class CargoAvailabilityPipeline {
         }
 
         this.dataManager = dataManager;
-        this.options = options;
+        this.random = typeof options.random === 'function' ? options.random : Math.random;
+        this.logger = options.logger || null;
+
         this._refreshConfig();
     }
 
     _refreshConfig() {
-        this.config = this.dataManager.getSystemConfig() || {};
+        this.tradingConfig = this.dataManager.getSystemConfig() || {};
         this.sourceFlags = this.dataManager.sourceFlags || {};
+    }
+
+    async _ensureDataLoaded() {
+        if (!this.tradingConfig || Object.keys(this.tradingConfig).length === 0) {
+            if (typeof this.dataManager.loadTradingConfig === 'function') {
+                try {
+                    await this.dataManager.loadTradingConfig();
+                } catch (error) {
+                    // Ignore load failures here; downstream calls will surface issues if config is still missing
+                }
+            }
+            this._refreshConfig();
+        }
+
+        if (!Array.isArray(this.dataManager.cargoTypes) || this.dataManager.cargoTypes.length === 0) {
+            await this.dataManager.loadCargoTypes();
+        }
+
+        if (!this.sourceFlags || Object.keys(this.sourceFlags).length === 0) {
+            if (typeof this.dataManager.loadSourceFlags === 'function') {
+                await this.dataManager.loadSourceFlags();
+                this._refreshConfig();
+            }
+        }
     }
 
     async run({ settlement, season = 'spring' } = {}) {
@@ -24,30 +45,28 @@ class CargoAvailabilityPipeline {
             throw new Error('Settlement is required to run the cargo availability pipeline');
         }
 
+        await this._ensureDataLoaded();
         this._refreshConfig();
 
-        if (!Array.isArray(this.dataManager.cargoTypes) || this.dataManager.cargoTypes.length === 0) {
-            await this.dataManager.loadCargoTypes();
-        }
-
+        const normalizedSeason = (season || 'spring').toLowerCase();
         const settlementProps = this.dataManager.getSettlementProperties(settlement);
-        const settlementContext = this._buildSettlementContext(settlementProps, season);
-        const flagModifiers = this._collectFlagModifiers(settlementProps);
-        const slotPlan = this._buildSlotPlan(settlementProps, flagModifiers, season);
-        const candidateTable = this._buildCandidateTable(settlementProps, flagModifiers, season);
+        const settlementFlags = this._normaliseFlags(settlementProps.productionCategories);
+
+        const settlementContext = this._buildSettlementContext(settlementProps, normalizedSeason);
+        const slotPlan = this._calculateMerchantSlots(settlementProps, settlementFlags, normalizedSeason);
+        const candidateTable = this._buildCandidateTable(settlementProps, settlementFlags, normalizedSeason);
 
         const slots = [];
         for (let index = 0; index < slotPlan.producerSlots; index += 1) {
-            const slotNumber = index + 1;
-            const slotResult = this._processSlot({
-                slotNumber,
-                settlementProps,
-                flagModifiers,
-                candidateTable,
-                season,
-                slotPlan
-            });
-            slots.push(slotResult);
+            slots.push(
+                this._processSlot({
+                    slotNumber: index + 1,
+                    settlementProps,
+                    settlementFlags,
+                    candidateTable,
+                    season: normalizedSeason
+                })
+            );
         }
 
         return {
@@ -58,500 +77,902 @@ class CargoAvailabilityPipeline {
         };
     }
 
-    _buildSettlementContext(settlementProps, season) {
+    _normaliseFlags(flags) {
+        if (!Array.isArray(flags)) {
+            return [];
+        }
+        return flags
+            .map(flag => String(flag || '').toLowerCase().trim())
+            .filter(Boolean);
+    }
+
+    _buildSettlementContext(props, season) {
         return {
-            name: settlementProps.name,
-            region: settlementProps.region,
+            name: props.name,
+            region: props.region,
             size: {
-                enum: settlementProps.sizeEnum,
-                numeric: settlementProps.sizeNumeric,
-                description: settlementProps.sizeDescription
+                enum: props.sizeEnum,
+                numeric: props.sizeNumeric,
+                description: props.sizeDescription
             },
             wealth: {
-                rating: settlementProps.wealthRating,
-                description: settlementProps.wealthDescription
+                rating: props.wealthRating,
+                description: props.wealthDescription
             },
-            population: settlementProps.population,
-            flags: settlementProps.productionCategories || [],
-            produces: settlementProps.produces || [],
-            demands: settlementProps.demands || [],
+            population: props.population,
+            flags: props.productionCategories || [],
+            produces: props.produces || [],
+            demands: props.demands || [],
             season
         };
     }
 
-    _collectFlagModifiers(settlementProps) {
-        const entries = [];
-        const totals = {
-            supplyTransfer: 0,
-            demandTransfer: 0,
-            availabilityBonus: 0,
-            quality: 0,
-            contraband: 0,
-            producerMultiplier: 1
-        };
+    _calculateMerchantSlots(props, flags, season) {
+        const config = this.tradingConfig.merchantSlots || this.tradingConfig.merchantCount || {};
+        let baseSlots = null;
 
-        (settlementProps.productionCategories || []).forEach(rawFlag => {
-            const flag = rawFlag.toLowerCase();
-            const data = this.sourceFlags[flag];
-            if (!data) {
-                return;
-            }
+        if (config.basePerSize) {
+            baseSlots = config.basePerSize[String(props.sizeNumeric)] ?? config.basePerSize[props.sizeNumeric];
+        }
 
-            const entry = {
-                flag,
-                description: data.description || '',
-                supplyTransfer: data.supplyTransfer || 0,
-                demandTransfer: data.demandTransfer || 0,
-                availabilityBonus: data.availabilityBonus?.producers || 0,
-                quality: data.quality || 0,
-                contraband: data.contrabandChance || 0,
-                multiplier: this.config?.merchantCount?.flagMultipliers?.[flag] || 1
-            };
+        if (baseSlots === null && Array.isArray(config.minSlotsPerSize) && config.minSlotsPerSize.length > 0) {
+            const index = Math.max(0, Math.min(config.minSlotsPerSize.length - 1, (props.sizeNumeric || 1) - 1));
+            baseSlots = config.minSlotsPerSize[index];
+        }
 
-            entries.push(entry);
-            totals.supplyTransfer += entry.supplyTransfer;
-            totals.demandTransfer += entry.demandTransfer;
-            totals.availabilityBonus += entry.availabilityBonus;
-            totals.quality += entry.quality;
-            totals.contraband += entry.contraband;
-            totals.producerMultiplier *= entry.multiplier;
-        });
+        if (baseSlots === null) {
+            baseSlots = Math.max(1, props.sizeNumeric || 1);
+        }
 
-        return { entries, totals };
-    }
+        const contributions = [];
+        contributions.push({ label: 'Base slots by size', value: baseSlots });
 
-    _buildSlotPlan(settlementProps, flagModifiers, season) {
-        const merchantConfig = this.config.merchantCount || {};
-        const minSlotsPerSize = merchantConfig.minSlotsPerSize || [1, 2, 3, 4, 6];
-        const sizeIdx = Math.max(1, Math.min(settlementProps.sizeNumeric || 1, minSlotsPerSize.length)) - 1;
-        const baseSlots = minSlotsPerSize[sizeIdx] || 1;
-
-        const populationMultiplier = merchantConfig.populationMultiplier ?? 0;
-        const sizeMultiplier = merchantConfig.sizeMultiplier ?? 0;
-        const populationContribution = Math.round((settlementProps.population || 0) * populationMultiplier);
-        const sizeContribution = Math.round((settlementProps.sizeNumeric || 0) * sizeMultiplier);
-
-        const reasons = [];
-        reasons.push({ label: 'Base slots for settlement size', value: baseSlots });
+        const populationMultiplier = config.populationMultiplier ?? 0;
+        const populationContribution = (props.population || 0) * populationMultiplier;
         if (populationContribution) {
-            reasons.push({ label: 'Population contribution', value: populationContribution });
-        }
-        if (sizeContribution) {
-            reasons.push({ label: 'Size multiplier contribution', value: sizeContribution });
+            contributions.push({ label: 'Population multiplier', value: populationContribution });
         }
 
-        let slotTotal = baseSlots + populationContribution + sizeContribution;
-        const multiplierReasons = [];
-        (flagModifiers.entries || []).forEach(entry => {
-            if (entry.multiplier && entry.multiplier !== 1) {
-                const before = slotTotal;
-                slotTotal *= entry.multiplier;
-                multiplierReasons.push({
-                    label: `Flag: ${entry.flag}`,
-                    detail: `×${entry.multiplier.toFixed(2)} (from ${before.toFixed(2)} to ${slotTotal.toFixed(2)})`
+        const sizeMultiplier = config.sizeMultiplier ?? 0;
+        const sizeContribution = (props.sizeNumeric || 0) * sizeMultiplier;
+        if (sizeContribution) {
+            contributions.push({ label: 'Size multiplier', value: sizeContribution });
+        }
+
+        let total = baseSlots + populationContribution + sizeContribution;
+
+        const multiplierLog = [];
+        (flags || []).forEach(flag => {
+            const multiplier = config.flagMultipliers?.[flag];
+            if (multiplier && multiplier !== 1) {
+                const before = total;
+                total *= multiplier;
+                multiplierLog.push({
+                    flag,
+                    multiplier,
+                    before,
+                    after: total
                 });
             }
         });
 
-        const hardCap = merchantConfig.hardCap ?? null;
-        if (hardCap && slotTotal > hardCap) {
-            multiplierReasons.push({
-                label: 'Hard cap',
-                detail: `${slotTotal.toFixed(2)} → ${hardCap}`
-            });
-            slotTotal = hardCap;
+        const totalBeforeCap = total;
+        const hardCap = config.hardCap;
+        if (typeof hardCap === 'number' && total > hardCap) {
+            multiplierLog.push({ flag: 'cap', multiplier: null, before: total, after: hardCap });
+            total = hardCap;
         }
 
-        const roundedSlots = Math.max(1, Math.round(slotTotal));
+        const rounded = Math.max(1, Math.round(total));
+
+        const reasons = contributions.map(entry => ({
+            label: entry.label,
+            value: Number(entry.value.toFixed(2))
+        }));
+
+        const formulaMultipliers = multiplierLog.map(entry => ({
+            label: entry.flag === 'cap' ? 'Hard Cap' : `Flag: ${entry.flag}`,
+            detail: entry.flag === 'cap'
+                ? `Applied cap ${entry.after}/${entry.before}`
+                : `×${entry.multiplier}`,
+            before: entry.before,
+            after: entry.after
+        }));
 
         return {
             season,
-            totalSlots: roundedSlots,
-            producerSlots: roundedSlots,
+            totalSlots: rounded,
+            producerSlots: rounded,
+            reasons,
             formula: {
                 baseSlots,
                 populationContribution,
                 sizeContribution,
-                multipliers: multiplierReasons
+                multipliers: formulaMultipliers,
+                rawTotal: totalBeforeCap,
+                hardCap: hardCap ?? null
             },
-            reasons
+            breakdown: {
+                base: baseSlots,
+                contributions,
+                multipliers: multiplierLog,
+                hardCap: hardCap ?? null,
+                rawTotal: totalBeforeCap,
+                finalTotal: total
+            }
         };
     }
 
-    _buildCandidateTable(settlementProps, flagModifiers, season) {
-        const candidates = [];
-        const total = { weight: 0 };
+    _buildCandidateTable(props, flags, season) {
+        const weightsConfig = this.tradingConfig.candidateWeights || {};
+        const baseline = weightsConfig.baseline ?? 1;
+        const producesBonus = weightsConfig.producesBonus ?? weightsConfig.producesWeight ?? 0;
+        const demandsBonus = weightsConfig.demandsBonus ?? weightsConfig.demandsWeight ?? 0;
+        const flagTransferMultiplier = weightsConfig.flagTransferMultiplier ?? 10;
+        const seasonalScale = weightsConfig.seasonalWeightScale ?? 5;
+        const minimumWeight = weightsConfig.minimumWeight ?? 1;
 
-        this.dataManager.cargoTypes.forEach(cargo => {
+        const producesSet = new Set((props.produces || []).map(name => String(name)));
+        const demandsSet = new Set((props.demands || []).map(name => String(name)));
+        const seasonalShifts = this.tradingConfig.equilibrium?.seasonalShifts?.[season] || {};
+
+        const entries = [];
+        let totalWeight = 0;
+
+        (this.dataManager.cargoTypes || []).forEach(cargo => {
             if (!cargo || !cargo.name) {
                 return;
             }
 
             const reasons = [];
-            let weight = 0;
-            const produced = (settlementProps.produces || []).includes(cargo.name);
-            const demanded = (settlementProps.demands || []).includes(cargo.name);
+            let weight = baseline;
 
-            if (produced) {
-                weight += 8;
-                reasons.push('Settlement produces this cargo');
-            }
-            if (demanded) {
-                weight += 5;
-                reasons.push('Settlement demands this cargo');
+            if (producesSet.has(cargo.name)) {
+                weight += producesBonus;
+                reasons.push(`Produces ${cargo.name} (+${producesBonus})`);
             }
 
-            const flagSupply = flagModifiers.entries
-                .filter(entry => entry.supplyTransfer > 0)
-                .map(entry => entry.flag);
-            if (flagSupply.length > 0) {
-                weight += flagSupply.length * 2;
-                reasons.push(`Flags favor supply: ${flagSupply.join(', ')}`);
+            if (demandsSet.has(cargo.name)) {
+                weight += demandsBonus;
+                reasons.push(`Demands ${cargo.name} (+${demandsBonus})`);
             }
 
-            const flagDemand = flagModifiers.entries
-                .filter(entry => entry.demandTransfer > 0)
-                .map(entry => entry.flag);
-            if (flagDemand.length > 0 && demanded) {
-                weight += flagDemand.length;
-                reasons.push(`Flags increase demand: ${flagDemand.join(', ')}`);
+            const category = cargo.category || 'Unknown';
+            const flagTransfer = this._calculateFlagTransferWeight(flags, category, true);
+            if (flagTransfer !== 0) {
+                const delta = flagTransfer * flagTransferMultiplier;
+                weight += delta;
+                reasons.push(`Flag supply transfer (${flagTransfer.toFixed(2)}) × ${flagTransferMultiplier} = ${delta.toFixed(2)}`);
             }
 
-            const seasonalShift = this.config.equilibrium?.seasonalShifts?.[season] || {};
-            Object.entries(seasonalShift).forEach(([category, value]) => {
-                if (cargo.category && cargo.category.toLowerCase().includes(category.toLowerCase())) {
-                    const modifier = value >= 0 ? 2 : -2;
-                    weight += modifier;
-                    reasons.push(`Seasonal effect (${category} ${value >= 0 ? '+' : ''}${(value * 100).toFixed(0)}%)`);
+            const seasonalTags = this._getCategoryTags(category);
+            let seasonalDeltaAggregate = 0;
+            seasonalTags.forEach(tag => {
+                const shift = seasonalShifts[tag];
+                if (shift) {
+                    seasonalDeltaAggregate += shift;
                 }
             });
 
-            if (weight <= 0) {
-                weight = 1;
-                reasons.push('Baseline chance');
+            if (seasonalDeltaAggregate !== 0) {
+                const seasonalDelta = seasonalDeltaAggregate * seasonalScale;
+                weight += seasonalDelta;
+                reasons.push(`Seasonal shift ${season}: ${seasonalDeltaAggregate.toFixed(2)} × ${seasonalScale} = ${seasonalDelta.toFixed(2)}`);
             }
 
-            candidates.push({
+            if (weight < minimumWeight) {
+                reasons.push(`Minimum weight applied (${minimumWeight})`);
+                weight = minimumWeight;
+            }
+
+            entries.push({
                 name: cargo.name,
-                category: cargo.category || 'Unknown',
+                category,
                 weight,
                 reasons,
                 cargo
             });
-            total.weight += weight;
+            totalWeight += weight;
         });
 
-        candidates.forEach(candidate => {
-            candidate.probability = (candidate.weight / total.weight) * 100;
+        entries.sort((a, b) => b.weight - a.weight);
+        entries.forEach(entry => {
+            entry.probability = totalWeight > 0 ? (entry.weight / totalWeight) * 100 : 0;
         });
 
         return {
-            totalWeight: total.weight,
-            entries: candidates.sort((a, b) => b.weight - a.weight)
+            season,
+            totalWeight,
+            entries
         };
     }
 
-    _processSlot({ slotNumber, settlementProps, flagModifiers, candidateTable, season, slotPlan }) {
+    _processSlot({ slotNumber, settlementProps, settlementFlags, candidateTable, season }) {
+        if (!candidateTable.entries || candidateTable.entries.length === 0) {
+            throw new Error('No cargo candidates available to process merchant slots');
+        }
+
         const selection = this._selectCargo(candidateTable);
-        const balance = this._calculateCargoBalance(selection, settlementProps, flagModifiers, season);
-        const amount = this._rollAmount(selection, settlementProps, balance, slotPlan, season);
-        const quality = this._evaluateQuality(selection, settlementProps, flagModifiers, balance);
-        const contraband = this._evaluateContraband(selection, settlementProps, flagModifiers, season);
-        const merchant = this._rollMerchant(selection, settlementProps, flagModifiers, balance, slotPlan);
-        const desperation = this._applyDesperation(selection, balance, merchant, amount, quality);
-        const pricing = this._evaluatePricing(selection, amount, quality, contraband, desperation, season);
+        const balance = this._calculateBalance(selection, settlementProps, settlementFlags, season);
+        const amount = this._rollCargoAmount(balance, settlementProps, season);
+        const quality = this._evaluateQuality(balance, settlementProps, settlementFlags);
+        const contraband = this._evaluateContraband(settlementProps, settlementFlags, season);
+        const merchantSkill = this._generateMerchant(settlementProps);
+        const desperation = this._buildDesperation(balance);
+        const pricing = this._calculatePricing(selection, amount, quality, contraband, balance, season);
 
         return {
             slotNumber,
-            cargo: selection,
+            season,
+            cargo: {
+                name: selection.name,
+                category: selection.category,
+                probability: selection.probability,
+                reasons: selection.reasons,
+                roll: selection.roll,
+                alternatives: selection.alternatives
+            },
             balance,
             amount,
             quality,
             contraband,
-            merchant,
+            merchant: merchantSkill,
             desperation,
             pricing
         };
     }
 
     _selectCargo(candidateTable) {
-        const threshold = Math.random() * candidateTable.totalWeight;
+        const entries = Array.isArray(candidateTable?.entries) ? candidateTable.entries : [];
+
+        if (entries.length === 0) {
+            return {
+                name: 'Unavailable',
+                category: 'Unavailable',
+                probability: 0,
+                reasons: ['No cargo candidates available'],
+                cargoData: null,
+                roll: null,
+                alternatives: []
+            };
+        }
+
+        const computedTotal = entries.reduce((sum, entry) => sum + ((entry && typeof entry.weight === 'number') ? entry.weight : 0), 0);
+        const totalWeight = (candidateTable?.totalWeight && candidateTable.totalWeight > 0)
+            ? candidateTable.totalWeight
+            : computedTotal;
+        const safeTotal = totalWeight > 0 ? totalWeight : entries.length;
+
+        const threshold = this.random() * safeTotal;
         let running = 0;
-        for (const entry of candidateTable.entries) {
-            running += entry.weight;
+        let chosen = entries[entries.length - 1];
+
+        for (const entry of entries) {
+            const weight = typeof entry.weight === 'number' ? entry.weight : 0;
+            running += weight;
             if (threshold <= running) {
-                return {
-                    name: entry.name,
-                    category: entry.category,
-                    probability: entry.probability,
-                    reasons: entry.reasons,
-                    cargoData: entry.cargo
-                };
+                chosen = entry;
+                break;
             }
         }
-        const fallback = candidateTable.entries[candidateTable.entries.length - 1];
+
+        const alternatives = entries.map(entry => {
+            const weight = typeof entry.weight === 'number' ? entry.weight : 0;
+            return {
+                name: entry.name,
+                probability: entry.probability ?? (safeTotal > 0 ? (weight / safeTotal) * 100 : 0),
+                weight
+            };
+        });
+
+        const chosenWeight = typeof chosen.weight === 'number' ? chosen.weight : 0;
+        const chosenProbability = chosen.probability ?? (safeTotal > 0 ? (chosenWeight / safeTotal) * 100 : 0);
+
         return {
-            name: fallback.name,
-            category: fallback.category,
-            probability: fallback.probability,
-            reasons: fallback.reasons,
-            cargoData: fallback.cargo
+            name: chosen.name,
+            category: chosen.category,
+            probability: chosenProbability,
+            reasons: chosen.reasons,
+            cargoData: chosen.cargo,
+            weight: chosenWeight,
+            roll: threshold,
+            alternatives
         };
     }
 
-    _calculateCargoBalance(selection, settlementProps, flagModifiers, season) {
-        const equilibriumConfig = this.config.equilibrium || {};
-        const clamp = equilibriumConfig.clamp || { min: 5, max: 195 };
-
+    _calculateBalance(selection, settlementProps, settlementFlags, season) {
+        const equilibriumConfig = this.tradingConfig.equilibrium || {};
         let supply = equilibriumConfig.baseline?.supply ?? 100;
         let demand = equilibriumConfig.baseline?.demand ?? 100;
-
         const history = [];
-        const applyTransfer = (direction, percentage, label) => {
+
+        const applyMultiplier = (target, percentage, label) => {
             if (!percentage) {
                 return;
             }
+
             const before = { supply, demand };
-            const transferAmount = Math.round((direction === 'supply' ? demand : supply) * Math.abs(percentage));
-            if (direction === 'supply') {
-                if (percentage > 0) {
-                    supply += transferAmount;
-                    demand -= transferAmount;
-                } else {
-                    supply -= transferAmount;
-                    demand += transferAmount;
-                }
+            if (target === 'supply') {
+                supply = Math.max(0, supply * (1 + percentage));
             } else {
-                if (percentage > 0) {
-                    demand += transferAmount;
-                    supply -= transferAmount;
-                } else {
-                    demand -= transferAmount;
-                    supply += transferAmount;
-                }
+                demand = Math.max(0, demand * (1 + percentage));
             }
 
-            supply = Math.max(clamp.min, Math.min(clamp.max, supply));
-            demand = Math.max(clamp.min, Math.min(clamp.max, demand));
-
-            history.push({ label, percentage, before, after: { supply, demand } });
+            history.push({
+                label,
+                target,
+                percentage,
+                before,
+                after: { supply, demand }
+            });
         };
 
         if ((settlementProps.produces || []).includes(selection.name)) {
-            applyTransfer('supply', equilibriumConfig.producesShift || 0.5, 'Produces list');
+            applyMultiplier('supply', equilibriumConfig.producesShift ?? 0, 'Settlement produces cargo');
         }
+
         if ((settlementProps.demands || []).includes(selection.name)) {
-            applyTransfer('demand', equilibriumConfig.demandsShift || 0.35, 'Demands list');
+            applyMultiplier('demand', equilibriumConfig.demandsShift ?? 0, 'Settlement demands cargo');
         }
 
-        flagModifiers.entries.forEach(entry => {
-            if (entry.supplyTransfer) {
-                applyTransfer('supply', entry.supplyTransfer, `Flag: ${entry.flag}`);
+        (settlementFlags || []).forEach(flag => {
+            const data = this._getFlagData(flag);
+            if (!data) {
+                return;
             }
-            if (entry.demandTransfer) {
-                applyTransfer('demand', entry.demandTransfer, `Flag: ${entry.flag}`);
+
+            const supplyShift = (data.supplyTransfer ?? 0) + (data.categorySupplyTransfer?.[selection.category] ?? 0);
+            if (supplyShift) {
+                applyMultiplier('supply', supplyShift, `Flag ${flag} supply`);
+            }
+
+            const demandShift = (data.demandTransfer ?? 0) + (data.categoryDemandTransfer?.[selection.category] ?? 0);
+            if (demandShift) {
+                applyMultiplier('demand', demandShift, `Flag ${flag} demand`);
             }
         });
 
-        const seasonalShift = equilibriumConfig.seasonalShifts?.[season] || {};
-        Object.entries(seasonalShift).forEach(([category, value]) => {
-            if (selection.category && selection.category.toLowerCase().includes(category.toLowerCase())) {
-                applyTransfer(value >= 0 ? 'supply' : 'demand', value, `Seasonal (${category})`);
+        const seasonalShifts = equilibriumConfig.seasonalShifts?.[season] || {};
+        const seasonalTags = this._getCategoryTags(selection.category);
+        seasonalTags.forEach(tag => {
+            const shift = seasonalShifts[tag];
+            if (!shift) {
+                return;
+            }
+
+            if (shift >= 0) {
+                applyMultiplier('supply', shift, `Seasonal ${tag}`);
+            } else {
+                applyMultiplier('demand', Math.abs(shift), `Seasonal ${tag}`);
             }
         });
 
-        const wealthModifier = equilibriumConfig.wealthModifiers?.[String(settlementProps.wealthRating)] || 0;
-        if (wealthModifier) {
-            applyTransfer(wealthModifier >= 0 ? 'demand' : 'supply', wealthModifier, 'Wealth tier');
+        const wealthKey = String(settlementProps.wealthRating ?? '');
+        const wealthShift = equilibriumConfig.wealthModifiers?.[wealthKey];
+        if (wealthShift) {
+            if (wealthShift >= 0) {
+                applyMultiplier('demand', wealthShift, 'Wealth modifier (increased demand)');
+            } else {
+                applyMultiplier('supply', Math.abs(wealthShift), 'Wealth modifier (reduced supply)');
+            }
         }
 
-        const state = this._classifyBalance(
-            supply,
-            demand,
-            equilibriumConfig.blockTradeThreshold || { supply: 10, demand: 10 },
-            equilibriumConfig.desperationThreshold || { supply: 20, demand: 20 }
-        );
+        const clamp = equilibriumConfig.clamp || {};
+        if (typeof clamp.min === 'number') {
+            supply = Math.max(clamp.min, supply);
+            demand = Math.max(clamp.min, demand);
+        }
+        if (typeof clamp.max === 'number') {
+            supply = Math.min(clamp.max, supply);
+            demand = Math.min(clamp.max, demand);
+        }
 
-        return { supply, demand, state, history };
-    }
+        const ratio = demand > 0 ? supply / demand : (equilibriumConfig.ratioThresholds?.glut ?? 1.5);
+        const reverseRatio = supply > 0 ? demand / supply : (equilibriumConfig.ratioThresholds?.scarce ?? 1.5);
 
-    _classifyBalance(supply, demand, blockThreshold, desperationThreshold) {
+        const blockThreshold = equilibriumConfig.blockTradeThreshold || { supply: 10, demand: 10 };
+        const desperationThreshold = equilibriumConfig.desperationThreshold || { supply: 20, demand: 20 };
+        const ratioThresholds = equilibriumConfig.ratioThresholds || { glut: 1.5, scarce: 1.5 };
+
+        let state = 'balanced';
         if (supply <= blockThreshold.supply || demand <= blockThreshold.demand) {
-            return 'blocked';
+            state = 'blocked';
+        } else if (supply <= desperationThreshold.supply || demand <= desperationThreshold.demand) {
+            state = 'desperate';
+        } else if (ratio >= (ratioThresholds.glut ?? 1.5)) {
+            state = 'glut';
+        } else if (reverseRatio >= (ratioThresholds.scarce ?? 1.5)) {
+            state = 'scarce';
         }
-        if (supply <= desperationThreshold.supply || demand >= desperationThreshold.demand) {
-            return 'desperate';
-        }
-        if (supply > demand * 1.5) {
-            return 'glut';
-        }
-        if (demand > supply * 1.5) {
-            return 'scarce';
-        }
-        return 'balanced';
-    }
-
-    _rollAmount(selection, settlementProps, balance, slotPlan, season) {
-        const roll = this._percentile();
-        const sizeBase = Math.max(1, settlementProps.sizeNumeric || 1);
-        const wealthModifier = settlementProps.wealthModifier || this.dataManager.getWealthModifier(settlementProps.wealthRating);
-        const supplyModifier = Math.max(0.5, balance.supply / (balance.demand || 1));
-
-        const baseEP = Math.ceil(roll / 10) * 10 * sizeBase;
-        const adjusted = baseEP * supplyModifier * wealthModifier;
-        const totalEP = Math.max(10, Math.round(adjusted / 5) * 5);
 
         return {
-            roll,
-            baseEP,
-            supplyModifier,
-            wealthModifier,
-            totalEP,
-            notes: [
-                `Base from roll ${roll} → ${baseEP} EP`,
-                `Supply modifier ×${supplyModifier.toFixed(2)}`,
-                `Wealth modifier ×${wealthModifier.toFixed(2)}`
-            ]
+            supply: Math.round(supply),
+            demand: Math.round(demand),
+            ratio,
+            state,
+            history
         };
     }
 
-    _evaluateQuality(selection, settlementProps, flagModifiers, balance) {
-        const baseScore = settlementProps.wealthRating || 3;
-        const flagBonus = flagModifiers.totals.quality || 0;
-        const supplyPressure = balance.supply - balance.demand;
-        const pressureBonus = supplyPressure >= 0 ? 0.5 : -0.5;
-        const score = baseScore + flagBonus + pressureBonus;
-        const tier = this._qualityFromScore(score);
+    _rollCargoAmount(balance, settlementProps, season) {
+        const amountConfig = this.tradingConfig.cargoAmount || {};
+        const roundTo = amountConfig.roundTo ?? 10;
+        const minimumEP = amountConfig.minimumEP ?? 10;
+        const floor = amountConfig.supplyFloor ?? 0.5;
+        const ceiling = amountConfig.supplyCeiling ?? 2.5;
+
+        const roll = this._percentile();
+        const sizeRating = Math.max(1, settlementProps.sizeNumeric || 1);
+        const baseRoll = Math.ceil(roll / 10) * roundTo;
+        const baseEP = baseRoll * sizeRating;
+
+        const wealthRating = settlementProps.wealthRating ?? 3;
+        const wealthScale = amountConfig.wealthModifierScale ?? 0;
+        const wealthModifier = Math.max(0.1, 1 + (wealthRating - 3) * wealthScale);
+        const preSupplyEP = baseEP * wealthModifier;
+
+        const ratio = balance.demand > 0 ? balance.supply / balance.demand : ceiling;
+        const supplyModifier = Math.min(ceiling, Math.max(floor, ratio));
+        const adjustedEP = preSupplyEP * supplyModifier;
+
+        let totalEP = Math.max(minimumEP, Math.round(adjustedEP / roundTo) * roundTo);
+        if (totalEP < minimumEP) {
+            totalEP = minimumEP;
+        }
+
+        const units = totalEP / roundTo;
+        const notes = [
+            `1d100 roll ${roll} ⇒ rounded chunk ${baseRoll} EP`,
+            `Size rating ×${sizeRating.toFixed(2)} ⇒ ${Math.round(baseEP)} EP`,
+            `Wealth modifier ×${wealthModifier.toFixed(2)} ⇒ ${Math.round(preSupplyEP)} EP`,
+            `Supply/Demand ratio ${ratio.toFixed(2)} ⇒ ×${supplyModifier.toFixed(2)}`
+        ];
+
+        if (totalEP === minimumEP) {
+            notes.push(`Minimum availability applied (${minimumEP} EP)`);
+        }
+
+        return {
+            roll,
+            season,
+            roundTo,
+            baseRoll,
+            baseEP: Math.round(baseEP),
+            sizeModifier: sizeRating,
+            wealthModifier: Number(wealthModifier.toFixed(2)),
+            supplyModifier: Number(supplyModifier.toFixed(2)),
+            supplyRatio: Number(ratio.toFixed(2)),
+            adjustedEP: Math.round(adjustedEP),
+            totalEP,
+            units,
+            notes
+        };
+    }
+
+    _evaluateQuality(balance, settlementProps, settlementFlags) {
+        const qualityConfig = this.tradingConfig.qualityEvaluation || {};
+        const clamp = qualityConfig.clamp || {};
+
+        let score = settlementProps.wealthRating || 3;
+        const components = [{
+            label: 'Wealth rating',
+            value: settlementProps.wealthRating || 3
+        }];
+
+        const flagBonus = (settlementFlags || []).reduce((sum, flag) => {
+            const data = this._getFlagData(flag);
+            return sum + (data?.quality ?? 0);
+        }, 0);
+
+        if (flagBonus) {
+            score += flagBonus;
+            components.push({ label: 'Flag quality bonus', value: flagBonus });
+        }
+
+        const pressureModifier = qualityConfig.marketPressureModifiers?.[balance.state] ?? 0;
+        if (pressureModifier) {
+            score += pressureModifier;
+            components.push({ label: `Market state (${balance.state})`, value: pressureModifier });
+        }
+
+        if (typeof clamp.min === 'number') {
+            score = Math.max(clamp.min, score);
+        }
+        if (typeof clamp.max === 'number') {
+            score = Math.min(clamp.max, score);
+        }
+
+        const tier = this._mapQualityTier(score, qualityConfig.tierThresholds);
 
         return {
             tier,
             score,
-            notes: [
-                `Wealth rating ${baseScore}`,
-                flagBonus ? `Flag bonus ${flagBonus.toFixed(2)}` : null,
-                `Market pressure ${pressureBonus >= 0 ? '+' : ''}${pressureBonus.toFixed(2)}`
-            ].filter(Boolean)
+            components
         };
     }
 
-    _qualityFromScore(score) {
-        if (score >= 7) return 'Exceptional';
-        if (score >= 5) return 'High';
-        if (score >= 3) return 'Average';
-        if (score >= 1) return 'Common';
-        return 'Poor';
-    }
+    _evaluateContraband(settlementProps, settlementFlags, season) {
+        const contrabandConfig = this.tradingConfig.contraband || {};
+        let chance = contrabandConfig.baseChance ?? 0.05;
 
-    _evaluateContraband(selection, settlementProps, flagModifiers, season) {
-        const baseChance = this.options.baseContrabandChance ?? 0.05;
-        const flagBonus = flagModifiers.totals.contraband || 0;
-        const sizeBonus = ((settlementProps.sizeNumeric || 1) - 1) * 0.02;
-        const seasonalMultiplier = this.config.specialSourceBehaviors?.smuggling?.seasonalActivity?.[season] || 1;
-        const chance = Math.min(0.95, (baseChance + flagBonus + sizeBonus) * seasonalMultiplier);
+        (settlementFlags || []).forEach(flag => {
+            const data = this._getFlagData(flag);
+            if (data?.contrabandChance) {
+                chance += data.contrabandChance;
+            }
+        });
+
+        const sizeBonus = contrabandConfig.sizeBonuses?.[String(settlementProps.sizeNumeric)] ?? 0;
+        chance += sizeBonus;
+
+        const seasonalMultiplier = contrabandConfig.seasonalMultipliers?.[season] ?? 1;
+        chance = Math.max(0, chance) * seasonalMultiplier;
+        chance = Math.min(0.95, chance);
+
         const roll = this._percentile();
+        const triggered = roll <= chance * 100;
 
         return {
             chance: chance * 100,
             roll,
-            contraband: roll <= chance * 100,
-            notes: [
-                `Base ${(baseChance * 100).toFixed(0)}%`,
-                flagBonus ? `Flags ${(flagBonus * 100).toFixed(0)}%` : null,
-                sizeBonus ? `Size ${(sizeBonus * 100).toFixed(0)}%` : null,
-                seasonalMultiplier !== 1 ? `Season ×${seasonalMultiplier.toFixed(2)}` : null
-            ].filter(Boolean)
+            contraband: triggered
         };
     }
 
-    _rollMerchant(selection, settlementProps, flagModifiers, balance, slotPlan) {
-        // Generate merchant stats for flavor - no availability roll needed
-        // Every successful cargo generation gets a merchant
-        const baseTarget = 45 + (settlementProps.wealthRating || 3) * 5;
-        const balanceBonus = (balance.supply - balance.demand) * 0.1;
-        const flagBonus = (flagModifiers.totals.availabilityBonus || 0) * 100;
-        const target = Math.max(10, Math.min(95, baseTarget + balanceBonus + flagBonus));
+    _generateMerchant(settlementProps) {
+        const skillConfig = this.tradingConfig.skillDistribution || {};
 
-        return {
-            roll: null, // No roll needed
-            target,
-            available: true, // Always available
-            notes: [
-                `Base target ${baseTarget.toFixed(0)}%`,
-                balanceBonus ? `Supply/Demand ${(balanceBonus >= 0 ? '+' : '')}${balanceBonus.toFixed(0)}%` : null,
-                flagBonus ? `Flag bonus ${(flagBonus >= 0 ? '+' : '')}${flagBonus.toFixed(0)}%` : null
-            ].filter(Boolean)
-        };
+        const baseSkill = skillConfig.baseSkill ?? 25;
+        const wealthContribution = (skillConfig.wealthModifier ?? 0) * (settlementProps.wealthRating ?? 0);
+        let computedSkill = baseSkill + wealthContribution;
+
+        const percentileRoll = this._percentile();
+        const percentileModifier = this._resolvePercentileModifier(percentileRoll, skillConfig.percentileTable || {});
+        computedSkill += percentileModifier;
+
+        const varianceRange = skillConfig.variance ?? 0;
+        if (varianceRange > 0) {
+            const varianceRoll = Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
+            computedSkill += varianceRoll;
+        }
+
+        const minSkill = skillConfig.minSkill ?? 5;
+        const maxSkill = skillConfig.maxSkill ?? 95;
+
+        return Math.max(minSkill, Math.min(maxSkill, Math.round(computedSkill)));
     }
 
-    _applyDesperation(selection, balance, merchant, amount, quality) {
-        // Since merchants are always available, desperation rerolls are not needed
-        return {
-            attempted: false,
-            success: false,
-            roll: null,
-            quantityMultiplier: 1,
-            priceMultiplier: 1,
-            adjustedQuality: quality.tier,
-            notes: ['Merchant always available - no desperation needed']
-        };
-    }
+    _calculatePricing(selection, amount, quality, contraband, balance, season) {
+        const pricingConfig = this.tradingConfig.pricing || {};
+        const qualityMultipliers = pricingConfig.qualityMultipliers || {};
 
-    _downgradeQuality(tier, penalty) {
-        const order = ['Poor', 'Common', 'Average', 'High', 'Exceptional'];
-        const idx = Math.max(0, order.indexOf(tier));
-        const adjusted = Math.max(0, idx + penalty);
-        return order[adjusted] || order[0];
-    }
+        const basePricePer10 = this.dataManager.getSeasonalPrice(selection.cargoData, season);
+        if (typeof basePricePer10 !== 'number' || Number.isNaN(basePricePer10)) {
+            throw new Error(`Missing seasonal pricing for ${selection.name} in ${season}`);
+        }
 
-    _evaluatePricing(selection, amount, quality, contraband, desperation, season) {
-        const cargo = selection.cargoData;
-        const basePricePerUnit = this.dataManager.getSeasonalPrice(cargo, season);
-        const perEP = basePricePerUnit / (cargo.encumbrancePerUnit || 10);
+        const basePricePerEP = basePricePer10 / 10;
+        const steps = [
+            {
+                label: 'Seasonal base price',
+                per10: Number(basePricePer10.toFixed(2)),
+                perEP: Number(basePricePerEP.toFixed(2))
+            }
+        ];
 
-        const steps = [];
-        let runningPrice = perEP;
+        let pricePer10 = basePricePer10;
 
-        steps.push({ label: 'Seasonal price', value: runningPrice });
-
-        const qualityMultiplier = this._qualityMultiplier(desperation.success ? desperation.adjustedQuality : quality.tier);
-        runningPrice *= qualityMultiplier;
-        steps.push({ label: `Quality (${desperation.success ? desperation.adjustedQuality : quality.tier}) ×${qualityMultiplier.toFixed(2)}`, value: runningPrice });
+        const qualityMultiplier = qualityMultipliers[quality.tier] ?? 1;
+        if (qualityMultiplier !== 1) {
+            pricePer10 *= qualityMultiplier;
+            steps.push({
+                label: `Quality (${quality.tier}) ×${qualityMultiplier.toFixed(2)}`,
+                per10: Number(pricePer10.toFixed(2)),
+                perEP: Number((pricePer10 / 10).toFixed(2))
+            });
+        }
 
         if (contraband.contraband) {
-            runningPrice *= 0.85;
-            steps.push({ label: 'Contraband discount ×0.85', value: runningPrice });
+            const discount = pricingConfig.contrabandDiscount ?? 1;
+            pricePer10 *= discount;
+            steps.push({
+                label: `Contraband adjustment ×${discount.toFixed(2)}`,
+                per10: Number(pricePer10.toFixed(2)),
+                perEP: Number((pricePer10 / 10).toFixed(2))
+            });
         }
 
-        if (desperation.success) {
-            runningPrice *= desperation.priceMultiplier;
-            steps.push({ label: `Desperation penalty ×${desperation.priceMultiplier.toFixed(2)}`, value: runningPrice });
+        const desperationMultiplier = pricingConfig.desperationPenalties?.[balance.state];
+        if (desperationMultiplier) {
+            pricePer10 *= desperationMultiplier;
+            steps.push({
+                label: `Market state (${balance.state}) ×${desperationMultiplier.toFixed(2)}`,
+                per10: Number(pricePer10.toFixed(2)),
+                perEP: Number((pricePer10 / 10).toFixed(2))
+            });
         }
 
-        const quantity = Math.round(amount.totalEP * (desperation.success ? desperation.quantityMultiplier : 1));
-        const totalValue = runningPrice * quantity;
+        const quantity = amount.totalEP || 0;
+        const units = amount.units ?? (quantity / (amount.roundTo ?? 10));
+        const finalPricePer10 = Number(pricePer10.toFixed(2));
+        const finalPricePerEP = Number((pricePer10 / 10).toFixed(2));
+        const totalValue = Number((finalPricePerEP * quantity).toFixed(2));
 
         return {
-            basePricePerEP: perEP,
+            season,
+            basePricePer10: Number(basePricePer10.toFixed(2)),
+            basePricePerEP: Number(basePricePerEP.toFixed(2)),
+            finalPricePer10,
+            finalPricePerEP,
             steps,
-            finalPricePerEP: runningPrice,
             quantity,
+            units,
             totalValue
         };
     }
+_buildDesperation(balance) {
+    const desperationConfig = this.tradingConfig.desperation || {};
+    const pricingConfig = this.tradingConfig.pricing || {};
 
-    _qualityMultiplier(tier) {
-        const map = {
-            Poor: 0.85,
-            Common: 0.95,
-            Average: 1.0,
-            High: 1.1,
-            Exceptional: 1.25
+    const applicable = balance.state === 'desperate' || balance.state === 'scarce';
+
+    return {
+        state: balance.state,
+        applicable,
+        modifiers: applicable ? {
+            price: pricingConfig.desperationPenalties?.[balance.state] ?? 1,
+            quantity: 1 - (desperationConfig.quantityReduction ?? 0),
+            skill: 1 - (desperationConfig.skillPenalty ?? 0),
+            qualityShift: desperationConfig.qualityPenalty ?? 0
+        } : null
+    };
+}
+
+_buildCandidateSnapshot(candidateTable, selectedName) {
+    if (!candidateTable || !Array.isArray(candidateTable.entries)) {
+        return { season: candidateTable?.season, totalWeight: 0, entryCount: 0, entries: [] };
+    }
+
+    const sortedEntries = candidateTable.entries
+        .map(entry => ({
+            name: entry.name,
+            category: entry.category,
+            weight: Number((entry.weight ?? 0).toFixed(2)),
+            probability: Number((entry.probability ?? 0).toFixed(2)),
+            reasons: entry.reasons || [],
+            selected: entry.name === selectedName
+        }))
+        .sort((a, b) => b.weight - a.weight);
+
+    const topEntries = sortedEntries.slice(0, 10);
+
+    return {
+        season: candidateTable.season,
+        totalWeight: Number((candidateTable.totalWeight ?? 0).toFixed(2)),
+        entryCount: candidateTable.entries.length,
+        entries: topEntries
+    };
+}
+
+_selectMerchantProfile(personalityConfig) {
+    if (!personalityConfig) {
+        return {
+            key: 'standard',
+            name: 'Standard Merchant',
+            haggleSkillModifier: 0,
+            priceVariance: 0,
+            quantityVariance: 0,
+            specialBehaviors: []
         };
-        return map[tier] || 1;
+    }
+
+    const weights = personalityConfig.distributionWeights || {};
+    const keys = Object.keys(weights);
+    if (keys.length === 0) {
+        return { key: 'default', ...(personalityConfig.defaultProfile || {}) };
+    }
+
+    const totalWeight = keys.reduce((sum, key) => sum + (weights[key] ?? 0), 0);
+    let threshold = this.random() * totalWeight;
+
+    for (const key of keys) {
+        threshold -= weights[key] ?? 0;
+        if (threshold <= 0) {
+            const profile = key === 'defaultProfile'
+                ? personalityConfig.defaultProfile
+                : personalityConfig.profiles?.[key] || personalityConfig.defaultProfile;
+
+            return {
+                key,
+                ...(profile || personalityConfig.defaultProfile || {})
+            };
+        }
+    }
+
+    return {
+        key: 'default',
+        ...(personalityConfig.defaultProfile || {
+            name: 'Standard Merchant',
+            haggleSkillModifier: 0,
+            priceVariance: 0,
+            quantityVariance: 0,
+            specialBehaviors: []
+        })
+    };
+}
+
+
+    _buildCandidateSnapshot(candidateTable, selectedName) {
+        if (!candidateTable || !Array.isArray(candidateTable.entries)) {
+            return { totalWeight: 0, entries: [] };
+        }
+
+        const sortedEntries = [...candidateTable.entries]
+            .map(entry => ({
+                name: entry.name,
+                category: entry.category,
+                weight: Number((entry.weight ?? 0).toFixed(2)),
+                probability: Number((entry.probability ?? 0).toFixed(2)),
+                reasons: entry.reasons || [],
+                selected: entry.name === selectedName
+            }))
+            .sort((a, b) => b.weight - a.weight);
+
+        const topEntries = sortedEntries.slice(0, 10);
+        return {
+            season: candidateTable.season,
+            totalWeight: Number((candidateTable.totalWeight ?? 0).toFixed(2)),
+            entryCount: candidateTable.entries.length,
+            entries: topEntries
+        };
+    }
+
+    _selectMerchantProfile(personalityConfig) {
+        if (!personalityConfig) {
+            return {
+                key: 'standard',
+                name: 'Standard Merchant',
+                haggleSkillModifier: 0,
+                priceVariance: 0,
+                quantityVariance: 0,
+                specialBehaviors: []
+            };
+        }
+
+        const weights = personalityConfig.distributionWeights || {};
+        const keys = Object.keys(weights);
+        if (keys.length === 0) {
+            return { key: 'default', ...(personalityConfig.defaultProfile || {}) };
+        }
+
+        const totalWeight = keys.reduce((sum, key) => sum + (weights[key] ?? 0), 0);
+        let threshold = this.random() * totalWeight;
+
+        for (const key of keys) {
+            threshold -= weights[key] ?? 0;
+            if (threshold <= 0) {
+                const profile = key === 'defaultProfile'
+                    ? personalityConfig.defaultProfile
+                    : personalityConfig.profiles?.[key] || personalityConfig.defaultProfile;
+
+                return {
+                    key,
+                    ...(profile || personalityConfig.defaultProfile || {})
+                };
+            }
+        }
+
+        return {
+            key: 'default',
+            ...(personalityConfig.defaultProfile || {
+                name: 'Standard Merchant',
+                haggleSkillModifier: 0,
+                priceVariance: 0,
+                quantityVariance: 0,
+                specialBehaviors: []
+            })
+        };
+    }
+
+    _calculateFlagTransferWeight(flags, category, isProducer) {
+        if (!Array.isArray(flags) || flags.length === 0) {
+            return 0;
+        }
+
+        return flags.reduce((sum, flag) => {
+            const data = this._getFlagData(flag);
+            if (!data) {
+                return sum;
+            }
+
+            if (isProducer) {
+                const direct = data.supplyTransfer ?? 0;
+                const categorySpecific = data.categorySupplyTransfer?.[category] ?? 0;
+                return sum + direct + categorySpecific;
+            }
+
+            const direct = data.demandTransfer ?? 0;
+            const categorySpecific = data.categoryDemandTransfer?.[category] ?? 0;
+            return sum + direct + categorySpecific;
+        }, 0);
+    }
+
+    _getFlagData(flag) {
+        if (!flag) {
+            return null;
+        }
+        return this.sourceFlags?.[flag] || null;
+    }
+
+    _getCategoryTags(category) {
+        const tagsConfig = this.tradingConfig.seasonalCategoryTags || {};
+        if (Array.isArray(tagsConfig[category])) {
+            return tagsConfig[category];
+        }
+        if (category && Array.isArray(tagsConfig[category.toLowerCase?.()] ?? null)) {
+            return tagsConfig[category.toLowerCase()];
+        }
+        if (Array.isArray(tagsConfig.Unknown)) {
+            return tagsConfig.Unknown;
+        }
+        if (Array.isArray(tagsConfig.default)) {
+            return tagsConfig.default;
+        }
+        return [];
+    }
+
+    _mapQualityTier(score, thresholds = []) {
+        if (!Array.isArray(thresholds) || thresholds.length === 0) {
+            if (score >= 9) return 'Exceptional';
+            if (score >= 7) return 'High';
+            if (score >= 5) return 'Average';
+            if (score >= 3) return 'Common';
+            return 'Poor';
+        }
+
+        for (const entry of thresholds) {
+            const min = entry.min ?? -Infinity;
+            const max = entry.max ?? Infinity;
+            if (score >= min && score <= max) {
+                return entry.tier || 'Average';
+            }
+        }
+
+        return thresholds[thresholds.length - 1].tier || 'Average';
+    }
+
+    _resolvePercentileModifier(roll, table) {
+        const entries = Object.entries(table || {}).map(([key, value]) => ({
+            percentile: Number(key),
+            value
+        })).filter(entry => !Number.isNaN(entry.percentile));
+
+        if (entries.length === 0) {
+            return 0;
+        }
+
+        entries.sort((a, b) => a.percentile - b.percentile);
+
+        for (const entry of entries) {
+            if (roll <= entry.percentile) {
+                return entry.value;
+            }
+        }
+
+        return entries[entries.length - 1].value;
+    }
+
+    _describeSkill(skill) {
+        if (skill >= 85) return 'Legendary negotiator';
+        if (skill >= 70) return 'Master merchant';
+        if (skill >= 55) return 'Seasoned trader';
+        if (skill >= 40) return 'Competent haggler';
+        if (skill >= 25) return 'Novice merchant';
+        return 'Greenhorn dealer';
     }
 
     _percentile() {
-        return Math.floor(Math.random() * 100) + 1;
+        return Math.floor(this.random() * 100) + 1;
     }
 }
 

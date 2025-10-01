@@ -716,5 +716,9 @@ if (typeof window !== 'undefined') {
     window.SystemAdapter = SystemAdapter;
 }
 
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = SystemAdapter;
+}
+
 // ES module export
 export { SystemAdapter };

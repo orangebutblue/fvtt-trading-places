@@ -6,9 +6,14 @@
     "4": { "min": 10001, "max": 100000, "name": "City" },
     "5": { "min": 100001, "max": 999999999, "name": "Metropolis" }
   },
-  "merchantCount": {
-    "formula": "population-scaled",
-    "minSlotsPerSize": [1, 2, 3, 4, 5],
+  "merchantSlots": {
+    "basePerSize": {
+      "1": 1,
+      "2": 2,
+      "3": 3,
+      "4": 4,
+      "5": 5
+    },
     "populationMultiplier": 0.0001,
     "sizeMultiplier": 1.5,
     "flagMultipliers": {
@@ -16,10 +21,30 @@
     },
     "hardCap": 10
   },
-  "cargoSelection": {
-    "producesWeight": 8,
-    "demandsWeight": 5,
-    "flagTransferMultiplier": 10
+  "merchantCount": {
+    "formula": "population-scaled",
+    "minSlotsPerSize": [1, 2, 3, 4, 5],
+    "populationMultiplier": 0.0001,
+    "sizeMultiplier": 1.5,
+    "hardCap": 10
+  },
+  "candidateWeights": {
+    "baseline": 1,
+    "producesBonus": 12,
+    "demandsBonus": 10,
+    "producesWeight": 12,
+    "demandsWeight": 10,
+    "flagTransferMultiplier": 10,
+    "seasonalWeightScale": 5,
+    "minimumWeight": 1
+  },
+  "seasonalCategoryTags": {
+    "Bulk Goods": ["agriculture"],
+    "Raw Materials": ["subsistence"],
+    "Military": ["military"],
+    "Luxury Goods": ["luxury"],
+    "Trade": ["trade"],
+    "Unknown": []
   },
   "skillDistribution": {
     "type": "piecewise",
@@ -37,6 +62,60 @@
     },
     "minSkill": 5,
     "maxSkill": 95
+  },
+  "merchantPersonalities": {
+    "distributionWeights": {
+      "standard": 50,
+      "shrewd": 20,
+      "generous": 15,
+      "suspicious": 15
+    },
+    "defaultProfile": {
+      "name": "Standard Merchant",
+      "haggleSkillModifier": 0,
+      "priceVariance": 0,
+      "quantityVariance": 0,
+      "specialBehaviors": []
+    },
+    "profiles": {
+      "standard": {
+        "name": "Standard Merchant",
+        "haggleSkillModifier": 0,
+        "priceVariance": 0,
+        "quantityVariance": 0,
+        "specialBehaviors": []
+      },
+      "shrewd": {
+        "name": "Shrewd Dealer",
+        "haggleSkillModifier": 10,
+        "priceVariance": 0.1,
+        "quantityVariance": -0.1,
+        "specialBehaviors": [
+          "drives hard bargains",
+          "prefers exact coin"
+        ]
+      },
+      "generous": {
+        "name": "Generous Trader",
+        "haggleSkillModifier": -5,
+        "priceVariance": -0.1,
+        "quantityVariance": 0.15,
+        "specialBehaviors": [
+          "offers bundle discounts",
+          "open to favors"
+        ]
+      },
+      "suspicious": {
+        "name": "Suspicious Dealer",
+        "haggleSkillModifier": 5,
+        "priceVariance": 0.05,
+        "quantityVariance": -0.05,
+        "specialBehaviors": [
+          "requires references",
+          "demands collateral"
+        ]
+      }
+    }
   },
   "desperation": {
     "skillPenalty": 0.2,
@@ -65,6 +144,10 @@
       "4": 0.05,
       "5": 0.1
     },
+    "ratioThresholds": {
+      "glut": 1.5,
+      "scarce": 1.5
+    },
     "clamp": {
       "min": 5,
       "max": 195
@@ -79,23 +162,29 @@
     }
   },
   "cargoAmount": {
-    "baseFormula": "ceil(roll/10) * 10 * settlementSize",
-    "supplyModifier": "max(0.5, supply/demand)"
+    "minimumEP": 10,
+    "roundTo": 10,
+    "supplyFloor": 0.5,
+    "supplyCeiling": 2.5
   },
   "qualityEvaluation": {
-    "baseScore": "settlementWealthRating",
-    "flagBonuses": {},
     "marketPressureModifiers": {
-      "glut": 1,
-      "scarce": -1,
-      "desperate": -2
+      "balanced": 0,
+      "glut": -1,
+      "scarce": 1,
+      "desperate": -2,
+      "blocked": -3
     },
-    "tierMapping": {
-      "1-2": "Poor",
-      "3-4": "Common",
-      "5-6": "Average",
-      "7-8": "High",
-      "9-10": "Exceptional"
+    "tierThresholds": [
+      { "min": 0, "max": 2, "tier": "Poor" },
+      { "min": 3, "max": 4, "tier": "Common" },
+      { "min": 5, "max": 6, "tier": "Average" },
+      { "min": 7, "max": 8, "tier": "High" },
+      { "min": 9, "max": 12, "tier": "Exceptional" }
+    ],
+    "clamp": {
+      "min": 0,
+      "max": 12
     }
   },
   "contraband": {
@@ -107,10 +196,23 @@
       "3": 0.02,
       "4": 0.03,
       "5": 0.05
+    },
+    "seasonalMultipliers": {
+      "spring": 1,
+      "summer": 1,
+      "autumn": 1,
+      "winter": 1
     }
   },
   "pricing": {
     "cargoSizeFormula": "(settlementSizeRating + settlementWealthRating) * ceil(d100/10) * 10",
+    "qualityMultipliers": {
+      "Poor": 0.85,
+      "Common": 0.95,
+      "Average": 1.0,
+      "High": 1.1,
+      "Exceptional": 1.25
+    },
     "contrabandDiscount": 0.85,
     "desperationPenalties": {
       "scarce": 1.1,
