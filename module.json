@@ -40,21 +40,20 @@
     "scripts/mixins/ui-state-mixin.js",
     "scripts/availability-results-renderer.js",
     "scripts/fallback-dialogs-v2.js",
-    "scripts/simple-trading-v2.js",
     "scripts/ui/TradingUIEventHandlers.js",
     "scripts/ui/TradingUIRenderer.js",
     "scripts/flow/BuyingFlow.js",
     "scripts/flow/SellingFlow.js",
     "scripts/trading-application-v2.js",
     "scripts/data-management-ui.js",
-    "scripts/trading-dialog-enhanced.js",
+    "scripts/trading-dialog.js",
     "scripts/proper-scene-controls.js",
     "scripts/main.js"
   ],
   "styles": [
     "styles/trading.css",
     "styles/data-management.css",
-    "styles/trading-dialog-enhanced.css"
+    "styles/trading-dialog.css"
   ],
   "languages": [
     {
