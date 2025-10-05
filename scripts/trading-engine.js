@@ -1,5 +1,16 @@
 console.log('Trading Places | Loading trading-engine.js');
 
+function safeRequire(path) {
+    try {
+        if (typeof require !== 'undefined') {
+            return require(path);
+        }
+    } catch (error) {
+        // Module unavailable in this runtime; caller will handle fallback
+    }
+    return null;
+}
+
 /**
  * Trading Places Module - Trading Engine
  * Pure business logic implementation of WFRP trading algorithms
@@ -10,10 +21,26 @@ console.log('Trading Places | Loading trading-engine.js');
  * This class contains pure business logic with no FoundryVTT dependencies
  */
 class TradingEngine {
-    constructor(dataManager) {
+    constructor(dataManager, options = {}) {
+        if (!dataManager) {
+            throw new Error('TradingEngine requires a DataManager instance');
+        }
+
         this.dataManager = dataManager;
-        this.currentSeason = null;
-        this.logger = null; // Will be set by integration
+        this.currentSeason = options.currentSeason || null;
+        this.logger = options.logger || null; // Will be set by integration
+
+        this.pipeline = options.pipeline || null;
+        this.pipelineFactory = options.pipelineFactory || null;
+        this.pipelineOptions = options.pipelineOptions || {};
+        this.pipelineEnabled = options.disablePipeline === true
+            ? false
+            : (options.enablePipeline === true || !!this.pipeline || !!this.pipelineFactory);
+        this.pipelineStatus = this.pipelineEnabled ? 'pending' : 'disabled';
+        this.planCache = new Map();
+        this.lastPipelineError = null;
+
+        this.hagglingMechanics = null;
     }
 
     /**
@@ -22,6 +49,14 @@ class TradingEngine {
      */
     setLogger(logger) {
         this.logger = logger;
+
+        if (this.pipeline && typeof this.pipeline.setLogger === 'function') {
+            this.pipeline.setLogger(logger);
+        }
+
+        if (this.hagglingMechanics && typeof this.hagglingMechanics.setLogger === 'function') {
+            this.hagglingMechanics.setLogger(logger);
+        }
     }
 
     /**
@@ -43,30 +78,99 @@ class TradingEngine {
         };
     }
 
+    _normalizeSeason(season) {
+        if (!season || typeof season !== 'string') {
+            throw new Error('Season must be a non-empty string');
+        }
+
+        const normalized = season.toLowerCase();
+        const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
+
+        if (!validSeasons.includes(normalized)) {
+            throw new Error(`Invalid season: ${season}. Must be one of: ${validSeasons.join(', ')}`);
+        }
+
+        return normalized;
+    }
+
+    _resolveSettlement(settlement) {
+        if (!settlement) {
+            throw new Error('Settlement is required');
+        }
+
+        if (typeof settlement === 'string') {
+            const resolved = this.dataManager.getSettlement(settlement);
+            if (!resolved) {
+                throw new Error(`Settlement not found: ${settlement}`);
+            }
+            return resolved;
+        }
+
+        return settlement;
+    }
+
+    _estimateAvailabilityChance(slotPlan, settlement) {
+        if (slotPlan && typeof slotPlan.calculatedChance === 'number') {
+            return slotPlan.calculatedChance;
+        }
+
+        if (slotPlan && typeof slotPlan.chance === 'number') {
+            return slotPlan.chance;
+        }
+
+        return this.calculateAvailabilityChance(settlement);
+    }
+
     /**
      * Set the current trading season
      * @param {string} season - Season name (spring, summer, autumn, winter)
      */
-    async setCurrentSeason(season) {
-        const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
-        if (!validSeasons.includes(season)) {
-            throw new Error(`Invalid season: ${season}. Must be one of: ${validSeasons.join(', ')}`);
-        }
-        
+    setCurrentSeason(season, { persist = true } = {}) {
+        const normalizedSeason = this._normalizeSeason(season);
+        const previousSeason = this.currentSeason;
+
         const logger = this.getLogger();
-        logger.logSystem('Season Change', `Trading season changed from ${this.currentSeason || 'none'} to ${season}`, {
-            previousSeason: this.currentSeason,
-            newSeason: season
+        logger.logSystem('Season Change', `Trading season changed from ${previousSeason || 'none'} to ${normalizedSeason}`, {
+            previousSeason,
+            newSeason: normalizedSeason
         });
         
-        this.currentSeason = season;
+        this.currentSeason = normalizedSeason;
 
-        // Persist to settings if available (FoundryVTT or mock)
-        if (typeof global !== 'undefined' && global.foundryMock && global.foundryMock.setSetting) {
-            await global.foundryMock.setSetting('wfrp-trading', 'currentSeason', season);
-        } else if (typeof game !== 'undefined' && game.settings && game.settings.set) {
-            await game.settings.set('trading-places', 'currentSeason', season);
+        if (previousSeason !== normalizedSeason) {
+            this.planCache.clear();
         }
+
+        if (!persist) {
+            return this.currentSeason;
+        }
+
+        const persistSeason = async () => {
+            let persisted = false;
+
+            if (typeof this.dataManager?.setCurrentSeason === 'function') {
+                try {
+                    const result = await this.dataManager.setCurrentSeason(normalizedSeason);
+                    persisted = result === true;
+                } catch (error) {
+                    logger.logSystem('Season Change', 'DataManager.setCurrentSeason failed', { error: error.message });
+                }
+            }
+
+            if (!persisted) {
+                if (typeof globalThis !== 'undefined' && globalThis.foundryMock?.setSetting) {
+                    await globalThis.foundryMock.setSetting('wfrp-trading', 'currentSeason', normalizedSeason);
+                    persisted = true;
+                } else if (typeof game !== 'undefined' && game.settings && game.settings.set) {
+                    await game.settings.set('trading-places', 'currentSeason', normalizedSeason);
+                    persisted = true;
+                }
+            }
+
+            return this.currentSeason;
+        };
+
+        return persistSeason();
     }
 
     /**
@@ -74,7 +178,7 @@ class TradingEngine {
      * @returns {string|null} - Current season or null if not set
      */
     getCurrentSeason() {
-        return this.currentSeason;
+        return this.currentSeason || this.dataManager?.currentSeason || null;
     }
 
     /**
@@ -82,7 +186,7 @@ class TradingEngine {
      * @throws {Error} - If season is not set
      */
     validateSeasonSet() {
-        if (!this.currentSeason) {
+        if (!this.getCurrentSeason()) {
             throw new Error('Season must be set before trading operations. Call setCurrentSeason() first.');
         }
     }
@@ -130,10 +234,55 @@ class TradingEngine {
      * @param {Function} rollFunction - Function that returns 1d100 result (for testing)
      * @returns {Object} - Availability check result
      */
-    async checkCargoAvailability(settlement, rollFunction = null) {
+    checkCargoAvailability(settlement, rollFunction = null, options = {}) {
+        const resolvedSettlement = this._resolveSettlement(settlement);
+
+        if (!this.pipelineEnabled && options.plan === undefined) {
+            return this._legacyCheckCargoAvailability(resolvedSettlement, rollFunction);
+        }
+
+        if (options.plan !== undefined) {
+            return this._processAvailabilityPlan(resolvedSettlement, options.plan, rollFunction, options);
+        }
+
+        return this._checkCargoAvailabilityWithPipeline(resolvedSettlement, rollFunction, options);
+    }
+
+    _legacyCheckCargoAvailability(settlement, rollFunction = null) {
         const logger = this.getLogger();
-        
-        // Log algorithm step start
+
+        const logAndBuildResult = (roll, chance, rollResult) => {
+            const available = roll <= chance;
+
+            logger.logDiceRoll(
+                'Cargo Availability Check',
+                'd100',
+                [],
+                roll,
+                chance,
+                available,
+                available ? `${roll} ≤ ${chance}` : `${roll} > ${chance}`
+            );
+
+            const result = {
+                available,
+                chance,
+                roll,
+                rollResult,
+                settlement: settlement.name
+            };
+
+            logger.logDecision(
+                'Cargo Availability',
+                available ? 'Cargo Available' : 'No Cargo Available',
+                { roll, chance, settlement: settlement.name },
+                ['Cargo Available', 'No Cargo Available'],
+                `Roll of ${roll} ${available ? 'succeeded against' : 'failed against'} target of ${chance}`
+            );
+
+            return result;
+        };
+
         logger.logAlgorithmStep(
             'WFRP Buying Algorithm',
             'Step 1',
@@ -141,24 +290,97 @@ class TradingEngine {
             { settlementName: settlement.name, settlementRegion: settlement.region },
             'Death on the Reik Companion - Buying Algorithm Step 1'
         );
-        
+
         const chance = this.calculateAvailabilityChance(settlement);
-        
-        let roll, rollResult;
-        
+
         if (rollFunction) {
-            // Use provided roll function for testing
+            const rollValue = rollFunction();
+
+            if (rollValue && typeof rollValue.then === 'function') {
+                return rollValue.then(resolvedRoll => {
+                    const rollResult = {
+                        total: resolvedRoll,
+                        formula: '1d100',
+                        result: resolvedRoll.toString()
+                    };
+                    return logAndBuildResult(resolvedRoll, chance, rollResult);
+                });
+            }
+
+            const rollResult = {
+                total: rollValue,
+                formula: '1d100',
+                result: rollValue.toString()
+            };
+            return logAndBuildResult(rollValue, chance, rollResult);
+        }
+
+        try {
+            const rollMaybePromise = this.rollAvailability(chance);
+
+            if (rollMaybePromise && typeof rollMaybePromise.then === 'function') {
+                return rollMaybePromise.then(rollResult => logAndBuildResult(rollResult.total, chance, rollResult));
+            }
+
+            return logAndBuildResult(rollMaybePromise.total, chance, rollMaybePromise);
+        } catch (error) {
+            this.getLogger().logSystem('Dice Roller', 'rollAvailability failed, treating as unavailable', { error: error.message });
+            return logAndBuildResult(101, chance, { total: 101, formula: '1d100', result: '101', error: error.message });
+        }
+    }
+
+    async _checkCargoAvailabilityWithPipeline(settlement, rollFunction = null, options = {}) {
+        try {
+            const plan = await this.generateAvailabilityPlan({
+                settlement,
+                season: options.season || this.getCurrentSeason() || 'spring',
+                forceRefresh: !!rollFunction
+            });
+
+            if (!plan || !Array.isArray(plan.slots)) {
+                return this._legacyCheckCargoAvailability(settlement, rollFunction);
+            }
+
+            return this._processAvailabilityPlan(settlement, plan, rollFunction, options);
+        } catch (error) {
+            this.getLogger().logSystem('Pipeline Error', 'Falling back to legacy availability check', { error: error.message });
+            return this._legacyCheckCargoAvailability(settlement, rollFunction);
+        }
+    }
+
+    async _processAvailabilityPlan(settlement, planOrPromise, rollFunction = null) {
+        const plan = await Promise.resolve(planOrPromise);
+
+        if (!plan || !Array.isArray(plan.slots)) {
+            return this._legacyCheckCargoAvailability(settlement, rollFunction);
+        }
+
+        const logger = this.getLogger();
+
+        logger.logAlgorithmStep(
+            'WFRP Buying Algorithm',
+            'Step 1',
+            'Cargo Availability Check',
+            { settlementName: settlement.name, settlementRegion: settlement.region },
+            'Death on the Reik Companion - Buying Algorithm Step 1'
+        );
+
+        const chance = this._estimateAvailabilityChance(plan.slotPlan, settlement);
+
+        let roll;
+        let rollResult;
+
+        if (rollFunction) {
             roll = await rollFunction();
-            rollResult = { total: roll, formula: "1d100", result: roll.toString() };
+            rollResult = { total: roll, formula: '1d100', result: roll.toString() };
         } else {
-            // Use FoundryVTT dice roller
             rollResult = await this.rollAvailability(chance);
             roll = rollResult.total;
         }
-        
-        const available = roll <= chance;
-        
-        // Log the dice roll
+
+        const availableByPlan = plan.slots.length > 0;
+        const available = availableByPlan && (roll <= chance);
+
         logger.logDiceRoll(
             'Cargo Availability Check',
             'd100',
@@ -169,15 +391,6 @@ class TradingEngine {
             available ? `${roll} ≤ ${chance}` : `${roll} > ${chance}`
         );
 
-        const result = {
-            available: available,
-            chance: chance,
-            roll: roll,
-            rollResult: rollResult,
-            settlement: settlement.name
-        };
-        
-        // Log the decision outcome
         logger.logDecision(
             'Cargo Availability',
             available ? 'Cargo Available' : 'No Cargo Available',
@@ -186,7 +399,140 @@ class TradingEngine {
             `Roll of ${roll} ${available ? 'succeeded against' : 'failed against'} target of ${chance}`
         );
 
-        return result;
+        return {
+            available,
+            chance,
+            roll,
+            rollResult,
+            settlement: settlement.name,
+            slotPlan: plan.slotPlan || null,
+            candidateTable: plan.candidateTable || null,
+            plan
+        };
+    }
+
+    async generateAvailabilityPlan({ settlement, season, forceRefresh = false } = {}) {
+        if (!this.pipelineEnabled) {
+            this.pipelineStatus = 'disabled';
+            return null;
+        }
+
+        const pipeline = this._getPipeline();
+        if (!pipeline) {
+            return null;
+        }
+
+        const resolvedSettlement = this._resolveSettlement(settlement);
+        const resolvedSeason = this._normalizeSeason(season || this.getCurrentSeason() || 'spring');
+        const cacheKey = this._buildPlanCacheKey(resolvedSettlement, resolvedSeason);
+
+        if (!forceRefresh && this.planCache.has(cacheKey)) {
+            return this.planCache.get(cacheKey);
+        }
+
+        let rawPlan;
+
+        try {
+            if (typeof pipeline.generatePlan === 'function') {
+                rawPlan = await pipeline.generatePlan({ settlement: resolvedSettlement, season: resolvedSeason });
+            } else if (typeof pipeline.createPlan === 'function') {
+                rawPlan = await pipeline.createPlan(resolvedSettlement, resolvedSeason);
+            } else {
+                throw new Error('Pipeline must expose generatePlan() or createPlan()');
+            }
+        } catch (error) {
+            this.pipelineStatus = 'error';
+            this.getLogger().logSystem('Pipeline Error', 'Failed to generate availability plan', { error: error.message });
+            return null;
+        }
+
+        try {
+            const plan = this._standardiseAvailabilityPlan(rawPlan, resolvedSettlement, resolvedSeason);
+            this.planCache.set(cacheKey, plan);
+            this.pipelineStatus = 'ready';
+            return plan;
+        } catch (error) {
+            this.pipelineStatus = 'error';
+            this.getLogger().logSystem('Pipeline Error', 'Invalid availability plan returned', { error: error.message });
+            return null;
+        }
+    }
+
+    _standardiseAvailabilityPlan(plan, settlement, season) {
+        if (!plan || typeof plan !== 'object') {
+            throw new Error('Availability plan must be an object');
+        }
+
+        const slots = Array.isArray(plan.slots) ? plan.slots.map(slot => this._standardisePlanSlot(slot)) : [];
+
+        return {
+            settlement: plan.settlement || settlement,
+            season,
+            slotPlan: plan.slotPlan || null,
+            candidateTable: plan.candidateTable || null,
+            slots
+        };
+    }
+
+    _standardisePlanSlot(slot) {
+        if (!slot || typeof slot !== 'object') {
+            return { cargoType: null, tier: null, probability: 0, data: null };
+        }
+
+        return {
+            cargoType: slot.cargoType || slot.type || null,
+            label: slot.label || slot.cargoName || null,
+            tier: slot.tier ?? null,
+            probability: typeof slot.probability === 'number' ? slot.probability : null,
+            data: slot
+        };
+    }
+
+    _buildPlanCacheKey(settlement, season) {
+        const identifier = settlement.id || settlement._id || settlement.uuid || settlement.key || settlement.name;
+        if (!identifier) {
+            throw new Error('Settlement must provide an identifier for plan caching');
+        }
+        return `${season}::${identifier}`;
+    }
+
+    _getPipeline() {
+        if (!this.pipelineEnabled) {
+            this.pipelineStatus = 'disabled';
+            return null;
+        }
+
+        if (this.pipeline) {
+            return this.pipeline;
+        }
+
+        let pipelineInstance = null;
+
+        if (typeof this.pipelineFactory === 'function') {
+            pipelineInstance = this.pipelineFactory(this.dataManager, this.pipelineOptions);
+        } else if (typeof this.dataManager?.getCargoAvailabilityPipeline === 'function') {
+            pipelineInstance = this.dataManager.getCargoAvailabilityPipeline(this.pipelineOptions);
+        } else {
+            const PipelineClass = safeRequire('./cargo-availability-pipeline.js')
+                || (typeof window !== 'undefined' ? window.CargoAvailabilityPipeline : null);
+
+            if (PipelineClass) {
+                pipelineInstance = new PipelineClass(this.dataManager, this.pipelineOptions);
+            }
+        }
+
+        if (!pipelineInstance) {
+            this.pipelineStatus = 'unavailable';
+            return null;
+        }
+
+        if (typeof pipelineInstance.setLogger === 'function') {
+            pipelineInstance.setLogger(this.getLogger());
+        }
+
+        this.pipeline = pipelineInstance;
+        this.pipelineStatus = 'ready';
+        return this.pipeline;
     }
 
     /**
@@ -195,15 +541,61 @@ class TradingEngine {
      * @param {string} season - Current season
      * @returns {Array} - Array of available cargo type names
      */
-    determineCargoTypes(settlement, season) {
-        if (!settlement || !settlement.flags || !Array.isArray(settlement.flags)) {
-            throw new Error('Settlement must have a valid source array');
+    determineCargoTypes(settlement, season, options = {}) {
+        this.validateSeasonSet();
+
+        const resolvedSettlement = this._resolveSettlement(settlement);
+        const resolvedSeason = season
+            ? this._normalizeSeason(season)
+            : (this.getCurrentSeason() ? this._normalizeSeason(this.getCurrentSeason()) : 'spring');
+
+        let plan = options.plan || null;
+        if (!plan && this.pipelineEnabled) {
+            try {
+                const cacheKey = this._buildPlanCacheKey(resolvedSettlement, resolvedSeason);
+                plan = this.planCache.get(cacheKey) || null;
+            } catch (error) {
+                this.getLogger().logSystem('Plan Cache', 'Failed to read cached availability plan', { error: error.message });
+            }
+        }
+
+        if (!plan || !Array.isArray(plan.slots) || plan.slots.length === 0) {
+            return this._legacyDetermineCargoTypes(resolvedSettlement, resolvedSeason);
+        }
+
+        const cargoTypes = [];
+
+        for (const slot of plan.slots) {
+            const name = slot.cargoType || slot.label;
+            if (name && !cargoTypes.includes(name)) {
+                cargoTypes.push(name);
+            }
+        }
+
+        if (cargoTypes.length === 0) {
+            return this._legacyDetermineCargoTypes(resolvedSettlement, resolvedSeason);
+        }
+
+        return cargoTypes;
+    }
+
+    _legacyDetermineCargoTypes(settlement, season) {
+        const sourceCategories = Array.isArray(settlement?.flags)
+            ? settlement.flags
+            : Array.isArray(settlement?.source)
+                ? settlement.source
+                : Array.isArray(settlement?.productionCategories)
+                    ? settlement.productionCategories
+                    : null;
+
+        if (!settlement || !sourceCategories) {
+            throw new Error('Invalid source array');
         }
 
         this.validateSeasonSet();
         
         const availableCargo = [];
-        const productionCategories = settlement.flags;
+        const productionCategories = sourceCategories;
 
         // Mapping from settlement production categories to cargo types
         const productionToCargoMapping = {
@@ -280,60 +672,232 @@ class TradingEngine {
      * @param {Function} rollFunction - Function that returns 1d100 result (for testing)
      * @returns {Object} - Cargo size calculation result
      */
-    async calculateCargoSize(settlement, rollFunction = null) {
-        if (!settlement) {
-            throw new Error('Settlement object is required');
+    calculateCargoSize(settlement, rollFunction = null, options = {}) {
+        const resolvedSettlement = this._resolveSettlement(settlement);
+
+        if (!this.pipelineEnabled && options.plan === undefined) {
+            return this._legacyCalculateCargoSize(resolvedSettlement, rollFunction);
         }
 
+        if (options.plan !== undefined) {
+            return this._processCargoSizePlan(resolvedSettlement, options.plan, rollFunction, options);
+        }
+
+        return this._calculateCargoSizeWithPipeline(resolvedSettlement, rollFunction, options);
+    }
+
+    _legacyCalculateCargoSize(settlement, rollFunction = null) {
         const properties = this.dataManager.getSettlementProperties(settlement);
         const baseMultiplier = properties.sizeNumeric + properties.wealthRating;
-        
-        let roll1, roll1Result, roll2, roll2Result;
-        
-        if (rollFunction) {
-            // Use provided roll function for testing
-            roll1 = await rollFunction();
-            roll1Result = { total: roll1, formula: "1d100", result: roll1.toString() };
-        } else {
-            // Use FoundryVTT dice roller
-            roll1Result = await this.rollCargoSize();
-            roll1 = roll1Result.total;
-        }
-        
-        let multiplier = Math.ceil(roll1 / 10) * 10; // Round up to nearest 10
-        let tradeBonus = false;
+        const tradeEligible = this.dataManager.isTradeSettlement(settlement);
 
-        // Trade settlement bonus: roll twice, use higher
-        if (this.dataManager.isTradeSettlement(settlement)) {
-            if (rollFunction) {
-                roll2 = await rollFunction();
-                roll2Result = { total: roll2, formula: "1d100", result: roll2.toString() };
-            } else {
-                roll2Result = await this.rollCargoSize();
-                roll2 = roll2Result.total;
-            }
-            
-            const multiplier2 = Math.ceil(roll2 / 10) * 10;
-            
-            if (multiplier2 > multiplier) {
-                multiplier = multiplier2;
-            }
-            tradeBonus = true;
-        }
+        const finalize = rollData => {
+            const totalSize = baseMultiplier * rollData.multiplier;
 
-        const totalSize = baseMultiplier * multiplier;
-
-        return {
-            totalSize: totalSize,
-            baseMultiplier: baseMultiplier,
-            sizeMultiplier: multiplier,
-            roll1: roll1,
-            roll1Result: roll1Result,
-            roll2: roll2 || null,
-            roll2Result: roll2Result || null,
-            tradeBonus: tradeBonus,
-            settlement: settlement.name
+            return {
+                totalSize,
+                baseMultiplier,
+                sizeMultiplier: rollData.multiplier,
+                roll1: rollData.roll1,
+                roll1Result: rollData.roll1Result,
+                roll2: rollData.roll2,
+                roll2Result: rollData.roll2Result,
+                tradeBonus: rollData.tradeBonus,
+                settlement: settlement.name
+            };
         };
+
+        const rollDataMaybePromise = this._rollCargoMultiplier({ rollFunction, isTrade: tradeEligible });
+
+        if (rollDataMaybePromise && typeof rollDataMaybePromise.then === 'function') {
+            return rollDataMaybePromise.then(finalize);
+        }
+
+        return finalize(rollDataMaybePromise);
+    }
+
+    async _calculateCargoSizeWithPipeline(settlement, rollFunction = null, options = {}) {
+        try {
+            const plan = await this.generateAvailabilityPlan({
+                settlement,
+                season: options.season || this.getCurrentSeason() || 'spring',
+                forceRefresh: !!rollFunction
+            });
+
+            if (!plan || !plan.slotPlan) {
+                return this._legacyCalculateCargoSize(settlement, rollFunction);
+            }
+
+            return this._processCargoSizePlan(settlement, plan, rollFunction, options);
+        } catch (error) {
+            this.getLogger().logSystem('Pipeline Error', 'Falling back to legacy cargo size calculation', { error: error.message });
+            return this._legacyCalculateCargoSize(settlement, rollFunction);
+        }
+    }
+
+    _processCargoSizePlan(settlement, planOrPromise, rollFunction = null, options = {}) {
+        const planPromise = planOrPromise && typeof planOrPromise.then === 'function'
+            ? planOrPromise
+            : Promise.resolve(planOrPromise);
+
+        const handlePlan = plan => {
+            if (!plan || !plan.slotPlan) {
+                return this._legacyCalculateCargoSize(settlement, rollFunction);
+            }
+
+            const properties = this.dataManager.getSettlementProperties(settlement);
+            const defaultBaseMultiplier = properties.sizeNumeric + properties.wealthRating;
+            const slotPlan = plan.slotPlan || {};
+
+            const baseMultiplier = typeof slotPlan.baseMultiplier === 'number'
+                ? slotPlan.baseMultiplier
+                : defaultBaseMultiplier;
+
+            const forcedMultiplier = typeof slotPlan.sizeMultiplier === 'number'
+                ? slotPlan.sizeMultiplier
+                : (typeof slotPlan.multiplier === 'number' ? slotPlan.multiplier : null);
+
+            const totalSizeOverride = typeof slotPlan.totalSize === 'number'
+                ? slotPlan.totalSize
+                : null;
+
+            const tradeBonusPreference = slotPlan.tradeBonus;
+            const tradeEligible = typeof tradeBonusPreference === 'boolean'
+                ? tradeBonusPreference
+                : this.dataManager.isTradeSettlement(settlement);
+
+            const finalize = rollData => {
+                const totalSize = totalSizeOverride !== null
+                    ? totalSizeOverride
+                    : baseMultiplier * rollData.multiplier;
+
+                return {
+                    totalSize,
+                    baseMultiplier,
+                    sizeMultiplier: rollData.multiplier,
+                    roll1: rollData.roll1,
+                    roll1Result: rollData.roll1Result,
+                    roll2: rollData.roll2,
+                    roll2Result: rollData.roll2Result,
+                    tradeBonus: rollData.tradeBonus,
+                    settlement: settlement.name
+                };
+            };
+
+            if (forcedMultiplier !== null) {
+                return finalize({
+                    multiplier: forcedMultiplier,
+                    roll1: null,
+                    roll1Result: null,
+                    roll2: null,
+                    roll2Result: null,
+                    tradeBonus: Boolean(tradeBonusPreference && tradeEligible)
+                });
+            }
+
+            const rollDataMaybePromise = this._rollCargoMultiplier({ rollFunction, isTrade: tradeEligible });
+
+            if (rollDataMaybePromise && typeof rollDataMaybePromise.then === 'function') {
+                return rollDataMaybePromise.then(finalize);
+            }
+
+            return finalize(rollDataMaybePromise);
+        };
+
+        return planPromise.then(handlePlan);
+    }
+
+    _rollCargoMultiplier({ rollFunction = null, isTrade = false } = {}) {
+        const resolveRoll = () => {
+            if (rollFunction) {
+                const rollValue = rollFunction();
+                if (rollValue && typeof rollValue.then === 'function') {
+                    return Promise.resolve(rollValue).then(resolved => ({
+                        total: resolved,
+                        result: {
+                            total: resolved,
+                            formula: '1d100',
+                            result: resolved.toString()
+                        }
+                    }));
+                }
+
+                return {
+                    total: rollValue,
+                    result: {
+                        total: rollValue,
+                        formula: '1d100',
+                        result: rollValue != null ? rollValue.toString() : '0'
+                    }
+                };
+            }
+
+            const rollResultMaybePromise = this.rollCargoSize();
+
+            if (rollResultMaybePromise && typeof rollResultMaybePromise.then === 'function') {
+                return rollResultMaybePromise.then(rollResult => ({ total: rollResult.total, result: rollResult }));
+            }
+
+            return {
+                total: rollResultMaybePromise.total,
+                result: rollResultMaybePromise
+            };
+        };
+
+        const buildResult = (firstRoll, secondRoll = null) => {
+            const roll1 = firstRoll.total;
+            let multiplier = Math.ceil(roll1 / 10) * 10;
+            let roll2 = null;
+            let roll2Result = null;
+            let tradeBonus = false;
+
+            if (secondRoll) {
+                roll2 = secondRoll.total;
+                roll2Result = secondRoll.result;
+                const multiplier2 = Math.ceil(roll2 / 10) * 10;
+                if (multiplier2 > multiplier) {
+                    multiplier = multiplier2;
+                }
+                tradeBonus = true;
+            }
+
+            return {
+                multiplier,
+                roll1,
+                roll1Result: firstRoll.result,
+                roll2,
+                roll2Result,
+                tradeBonus
+            };
+        };
+
+        const firstRoll = resolveRoll();
+
+        if (firstRoll && typeof firstRoll.then === 'function') {
+            return firstRoll.then(resolvedFirst => {
+                if (!isTrade) {
+                    return buildResult(resolvedFirst);
+                }
+
+                const secondRoll = resolveRoll();
+                if (secondRoll && typeof secondRoll.then === 'function') {
+                    return secondRoll.then(resolvedSecond => buildResult(resolvedFirst, resolvedSecond));
+                }
+
+                return buildResult(resolvedFirst, secondRoll);
+            });
+        }
+
+        if (!isTrade) {
+            return buildResult(firstRoll);
+        }
+
+        const secondRoll = resolveRoll();
+        if (secondRoll && typeof secondRoll.then === 'function') {
+            return secondRoll.then(resolvedSecond => buildResult(firstRoll, resolvedSecond));
+        }
+
+        return buildResult(firstRoll, secondRoll);
     }
 
     /**
@@ -358,10 +922,13 @@ class TradingEngine {
         }
 
         // Step 2A: Determine cargo types
-        const cargoTypes = this.determineCargoTypes(settlement, season);
+    const plan = availabilityResult.plan || null;
+
+    // Step 2A: Determine cargo types
+    const cargoTypes = this.determineCargoTypes(settlement, season, { plan });
         
-        // Step 2B: Calculate cargo size
-        const cargoSize = await this.calculateCargoSize(settlement, rollFunction);
+    // Step 2B: Calculate cargo size
+    const cargoSize = await this.calculateCargoSize(settlement, rollFunction, { plan, season });
 
         return {
             available: true,
@@ -2020,16 +2587,11 @@ class TradingEngine {
     }
 }
 
-// ES module export
+// Export for use in other modules
+console.log('DEBUG: About to export TradingEngine, type:', typeof TradingEngine);
 export { TradingEngine };
 
 // Global registration for FoundryVTT
 if (typeof window !== 'undefined') {
     window.TradingEngine = TradingEngine;
-    console.log('Trading Places | TradingEngine assigned to window.TradingEngine, type:', typeof window.TradingEngine);
-} else if (typeof globalThis !== 'undefined') {
-    globalThis.TradingEngine = TradingEngine;
-    console.log('Trading Places | TradingEngine assigned to globalThis.TradingEngine, type:', typeof globalThis.TradingEngine);
-} else {
-    console.log('Trading Places | No global scope available for TradingEngine');
-}
+ }
