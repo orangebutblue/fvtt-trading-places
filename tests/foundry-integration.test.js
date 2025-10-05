@@ -514,13 +514,19 @@ global.CONST = {
         LIMITED: 1,
         OBSERVER: 2,
         OWNER: 3
+    },
+    USER_ROLES: {
+        PLAYER: 1,
+        TRUSTED: 2,
+        ASSISTANT: 3,
+        GAMEMASTER: 4
     }
 };
 
 // Import modules
 const SystemAdapter = require('../scripts/system-adapter.js');
 const DataManager = require('../scripts/data-manager.js');
-const TradingEngine = require('../scripts/trading-engine.js');
+const { TradingEngine } = require('../scripts/trading-engine.js');
 
 describe('FoundryVTT Integration Components Tests', () => {
     let systemAdapter;

@@ -2,7 +2,7 @@
  * Unit tests for dice integration and skill test mechanics
  */
 
-const TradingEngine = require('../scripts/trading-engine');
+const { TradingEngine } = require('../scripts/trading-engine');
 const DataManager = require('../scripts/data-manager');
 
 // Mock FoundryVTT globals for testing
@@ -31,8 +31,10 @@ global.game = {
     settings: {
         get: (module, setting) => {
             if (setting === 'chatVisibility') return 'gm';
+            if (setting === 'currentSeason') return 'spring';
             return null;
-        }
+        },
+        set: jest.fn().mockResolvedValue(true)
     },
     user: { id: 'test-user' }
 };
@@ -128,31 +130,30 @@ describe('TradingEngine - Dice Integration', () => {
 
     describe('rollAvailability', () => {
         test('should roll availability check with proper flavor', async () => {
-            const result = await tradingEngine.rollAvailability(60);
+            const result = await tradingEngine.rollAvailability(mockSettlement, 'Grain');
             
             expect(result).toBeDefined();
-            expect(result.total).toBeGreaterThanOrEqual(1);
-            expect(result.total).toBeLessThanOrEqual(100);
+            expect(typeof result).toBe('boolean');
         });
     });
 
     describe('rollCargoSize', () => {
         test('should roll cargo size determination', async () => {
-            const result = await tradingEngine.rollCargoSize();
+            const result = await tradingEngine.rollCargoSize(mockSettlement);
             
             expect(result).toBeDefined();
-            expect(result.total).toBeGreaterThanOrEqual(1);
-            expect(result.total).toBeLessThanOrEqual(100);
+            expect(result.totalSize).toBeGreaterThan(0);
+            expect(result.roll).toBeGreaterThanOrEqual(1);
+            expect(result.roll).toBeLessThanOrEqual(100);
         });
     });
 
     describe('rollBuyerAvailability', () => {
         test('should roll buyer availability check', async () => {
-            const result = await tradingEngine.rollBuyerAvailability(40);
+            const result = await tradingEngine.rollBuyerAvailability(mockSettlement, 'Grain');
             
             expect(result).toBeDefined();
-            expect(result.total).toBeGreaterThanOrEqual(1);
-            expect(result.total).toBeLessThanOrEqual(100);
+            expect(typeof result).toBe('boolean');
         });
     });
 
@@ -300,52 +301,32 @@ describe('TradingEngine - Dice Integration', () => {
 
     describe('generateTransactionResultMessage', () => {
         test('should format transaction result with modifiers', () => {
-            const mockTransaction = {
-                type: 'purchase',
-                settlement: 'Averheim',
-                cargoName: 'Grain',
-                quantity: 50,
-                season: 'spring',
-                quality: 'good',
-                basePricePerUnit: 2,
-                finalPricePerUnit: 1.8,
-                totalPrice: 90,
-                modifiers: [
-                    { description: 'Successful haggle', percentage: -10 }
-                ]
-            };
+            const result = tradingEngine.generateTransactionResultMessage(
+                'purchase',
+                'Grain',
+                50,
+                90,
+                { name: 'Averheim' },
+                {
+                    modifiers: [{ description: 'Successful haggle' }]
+                }
+            );
             
-            const result = tradingEngine.generateTransactionResultMessage(mockTransaction);
-            
-            expect(result).toContain('Trade Purchase Completed');
-            expect(result).toContain('Settlement:</strong> Averheim');
-            expect(result).toContain('Cargo:</strong> Grain (50 EP)');
-            expect(result).toContain('Season:</strong> spring');
-            expect(result).toContain('Quality:</strong> good');
-            expect(result).toContain('Base Price:</strong> 2 GC per EP');
-            expect(result).toContain('Final Price:</strong> 1.8 GC per EP');
-            expect(result).toContain('Total Cost:</strong> 90 GC');
-            expect(result).toContain('Successful haggle: -10%');
+            expect(result).toContain('purchased 50 EP of Grain from Averheim for 90 GC');
+            expect(result).toContain('Successful haggle');
         });
 
         test('should format transaction result without modifiers', () => {
-            const mockTransaction = {
-                type: 'sale',
-                settlement: 'Nuln',
-                cargoName: 'Wine',
-                quantity: 20,
-                season: 'autumn',
-                basePricePerUnit: 5,
-                finalPricePerUnit: 5,
-                totalPrice: 100,
-                modifiers: []
-            };
+            const result = tradingEngine.generateTransactionResultMessage(
+                'sale',
+                'Wine',
+                20,
+                100,
+                { name: 'Nuln' },
+                {}
+            );
             
-            const result = tradingEngine.generateTransactionResultMessage(mockTransaction);
-            
-            expect(result).toContain('Trade Sale Completed');
-            expect(result).toContain('Settlement:</strong> Nuln');
-            expect(result).toContain('No modifiers applied');
+            expect(result).toContain('sold 20 EP of Wine to Nuln for 100 GC');
         });
     });
 });

@@ -709,6 +709,50 @@ class SystemAdapter {
 
         return result;
     }
+
+    /**
+     * Validate user permissions for trading operations
+     * @param {Object} user - FoundryVTT User object
+     * @param {string} operation - Operation to check ('modify-settings', 'execute-trade', etc.)
+     * @returns {Object} - Permission result with allowed flag and reason
+     */
+    validateUserPermissions(user, operation) {
+        const result = {
+            allowed: false,
+            reason: 'Unknown operation'
+        };
+
+        if (!user) {
+            result.reason = 'User object is required';
+            return result;
+        }
+
+        // Check if user is GM
+        const isGM = user.role === CONST.USER_ROLES.GAMEMASTER || user.isGM;
+
+        switch (operation) {
+            case 'modify-settings':
+                result.allowed = isGM;
+                result.reason = isGM ? 'GM can modify settings' : 'Only GM can modify settings';
+                break;
+
+            case 'execute-trade':
+                result.allowed = true; // Players can trade
+                result.reason = 'Players can execute trades';
+                break;
+
+            case 'gm-only-operation':
+                result.allowed = isGM;
+                result.reason = isGM ? 'GM operation allowed' : 'Insufficient permissions';
+                break;
+
+            default:
+                result.reason = `Unknown operation: ${operation}`;
+                break;
+        }
+
+        return result;
+    }
 }
 
 // Global registration for FoundryVTT

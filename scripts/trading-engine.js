@@ -1,5 +1,8 @@
 console.log('Trading Places | Loading trading-engine.js');
 
+import { PurchasePriceCalculator } from './purchase-price-calculator.js';
+import { SaleMechanics } from './sale-mechanics.js';
+
 function safeRequire(path) {
     try {
         if (typeof require !== 'undefined') {
@@ -41,6 +44,8 @@ class TradingEngine {
         this.lastPipelineError = null;
 
         this.hagglingMechanics = null;
+        this.purchasePriceCalculator = new PurchasePriceCalculator(dataManager, this);
+        this.saleMechanics = new SaleMechanics(dataManager, this);
     }
 
     /**
@@ -56,6 +61,14 @@ class TradingEngine {
 
         if (this.hagglingMechanics && typeof this.hagglingMechanics.setLogger === 'function') {
             this.hagglingMechanics.setLogger(logger);
+        }
+
+        if (this.purchasePriceCalculator && typeof this.purchasePriceCalculator.setLogger === 'function') {
+            this.purchasePriceCalculator.setLogger(logger);
+        }
+
+        if (this.saleMechanics && typeof this.saleMechanics.setLogger === 'function') {
+            this.saleMechanics.setLogger(logger);
         }
     }
 
@@ -191,6 +204,24 @@ class TradingEngine {
         }
     }
 
+    /**
+     * Validate that a season string is valid
+     * @param {string} season - Season to validate
+     * @throws {Error} - If season is invalid
+     */
+    validateSeason(season) {
+        this._normalizeSeason(season);
+    }
+
+    /**
+     * Normalize season string to lowercase
+     * @param {string} season - Season to normalize
+     * @returns {string} - Normalized season
+     */
+    normalizeSeason(season) {
+        return this._normalizeSeason(season);
+    }
+
     // ===== CARGO AVAILABILITY CHECKING ALGORITHM =====
 
     /**
@@ -316,15 +347,10 @@ class TradingEngine {
         }
 
         try {
-            const rollMaybePromise = this.rollAvailability(chance);
-
-            if (rollMaybePromise && typeof rollMaybePromise.then === 'function') {
-                return rollMaybePromise.then(rollResult => logAndBuildResult(rollResult.total, chance, rollResult));
-            }
-
-            return logAndBuildResult(rollMaybePromise.total, chance, rollMaybePromise);
+            const rollResult = rollFunction ? { total: rollFunction(), formula: '1d100', result: rollFunction().toString() } : this.rollDice('1d100');
+            return logAndBuildResult(rollResult.total, chance, rollResult);
         } catch (error) {
-            this.getLogger().logSystem('Dice Roller', 'rollAvailability failed, treating as unavailable', { error: error.message });
+            this.getLogger().logSystem('Dice Roller', 'rollDice failed, treating as unavailable', { error: error.message });
             return logAndBuildResult(101, chance, { total: 101, formula: '1d100', result: '101', error: error.message });
         }
     }
@@ -832,7 +858,7 @@ class TradingEngine {
                 };
             }
 
-            const rollResultMaybePromise = this.rollCargoSize();
+            const rollResultMaybePromise = this.rollDice('1d100');
 
             if (rollResultMaybePromise && typeof rollResultMaybePromise.then === 'function') {
                 return rollResultMaybePromise.then(rollResult => ({ total: rollResult.total, result: rollResult }));
@@ -1026,11 +1052,7 @@ class TradingEngine {
      * @returns {Object} - Cargo object
      */
     getCargoByName(cargoName) {
-        const cargo = this.dataManager.cargoTypes.find(c => c.name === cargoName);
-        if (!cargo) {
-            throw new Error(`Cargo type not found: ${cargoName}`);
-        }
-        return cargo;
+        return this.purchasePriceCalculator.getCargoByName(cargoName);
     }
 
     /**
@@ -1041,14 +1063,7 @@ class TradingEngine {
      * @returns {number} - Base price per unit
      */
     calculateBasePrice(cargoName, season = null, quality = 'average') {
-        const cargo = this.getCargoByName(cargoName);
-        const currentSeason = season || this.getCurrentSeason();
-        
-        if (!currentSeason) {
-            throw new Error('Season must be set or provided to calculate prices');
-        }
-
-        return this.dataManager.getSeasonalPrice(cargo, currentSeason, quality);
+        return this.purchasePriceCalculator.calculateBasePrice(cargoName, season, quality);
     }
 
     /**
@@ -1063,58 +1078,7 @@ class TradingEngine {
      * @returns {Object} - Detailed price calculation
      */
     calculatePurchasePrice(cargoName, quantity, options = {}) {
-        if (!cargoName || typeof cargoName !== 'string') {
-            throw new Error('Cargo name is required and must be a string');
-        }
-
-        if (!quantity || typeof quantity !== 'number' || quantity <= 0) {
-            throw new Error('Quantity must be a positive number');
-        }
-
-        const cargo = this.getCargoByName(cargoName);
-        const season = options.season || this.getCurrentSeason();
-        const quality = options.quality || 'average';
-
-        // Calculate base price per unit
-        const basePricePerUnit = this.calculateBasePrice(cargoName, season, quality);
-        let finalPricePerUnit = basePricePerUnit;
-
-        // Track all price modifiers
-        const modifiers = [];
-
-        // Apply partial purchase penalty (+10%)
-        if (options.isPartialPurchase) {
-            const partialPenalty = basePricePerUnit * 0.1;
-            finalPricePerUnit += partialPenalty;
-            modifiers.push({
-                type: 'partial_purchase',
-                description: 'Partial purchase penalty (+10%)',
-                amount: partialPenalty,
-                percentage: 10
-            });
-        }
-
-        // Apply haggle test results
-        if (options.haggleResult) {
-            const haggleModifier = this.applyHaggleResult(basePricePerUnit, options.haggleResult);
-            finalPricePerUnit += haggleModifier.amount;
-            modifiers.push(haggleModifier);
-        }
-
-        // Calculate total price
-        const totalPrice = finalPricePerUnit * quantity;
-
-        return {
-            cargoName: cargoName,
-            quantity: quantity,
-            season: season,
-            quality: quality,
-            basePricePerUnit: basePricePerUnit,
-            finalPricePerUnit: finalPricePerUnit,
-            totalPrice: totalPrice,
-            modifiers: modifiers,
-            encumbrancePerUnit: cargo.encumbrancePerUnit
-        };
+        return this.purchasePriceCalculator.calculatePurchasePrice(cargoName, quantity, options);
     }
 
     /**
@@ -1127,38 +1091,7 @@ class TradingEngine {
      * @returns {Object} - Price modifier object
      */
     applyHaggleResult(basePrice, haggleResult) {
-        if (!haggleResult || typeof haggleResult.success !== 'boolean') {
-            throw new Error('Invalid haggle result object');
-        }
-
-        let percentage = 0;
-        let description = '';
-
-        if (haggleResult.success) {
-            // Successful haggle reduces price
-            percentage = haggleResult.hasDealmakertTalent ? -20 : -10;
-            description = haggleResult.hasDealmakertTalent 
-                ? 'Successful haggle with Dealmaker (-20%)'
-                : 'Successful haggle (-10%)';
-        } else {
-            // Failed haggle can optionally increase price (GM discretion)
-            if (haggleResult.penalty) {
-                percentage = 10;
-                description = 'Failed haggle penalty (+10%)';
-            } else {
-                percentage = 0;
-                description = 'Failed haggle (no penalty)';
-            }
-        }
-
-        const amount = basePrice * (percentage / 100);
-
-        return {
-            type: 'haggle',
-            description: description,
-            amount: amount,
-            percentage: percentage
-        };
+        return this.purchasePriceCalculator.applyHaggleResult(basePrice, haggleResult);
     }
 
     /**
@@ -1169,31 +1102,7 @@ class TradingEngine {
      * @returns {Object} - Quality pricing information
      */
     calculateQualityTierPricing(cargoName, quality, season = null) {
-        const cargo = this.getCargoByName(cargoName);
-        const currentSeason = season || this.getCurrentSeason();
-
-        if (!cargo.qualityTiers) {
-            throw new Error(`Cargo ${cargoName} does not have quality tiers`);
-        }
-
-        if (!cargo.qualityTiers.hasOwnProperty(quality)) {
-            const availableTiers = Object.keys(cargo.qualityTiers);
-            throw new Error(`Invalid quality tier: ${quality}. Available tiers: ${availableTiers.join(', ')}`);
-        }
-
-        const baseSeasonalPrice = cargo.basePrices[currentSeason];
-        const qualityMultiplier = cargo.qualityTiers[quality];
-        const finalPrice = baseSeasonalPrice * qualityMultiplier;
-
-        return {
-            cargoName: cargoName,
-            season: currentSeason,
-            quality: quality,
-            baseSeasonalPrice: baseSeasonalPrice,
-            qualityMultiplier: qualityMultiplier,
-            finalPrice: finalPrice,
-            availableQualities: Object.keys(cargo.qualityTiers)
-        };
+        return this.purchasePriceCalculator.calculateQualityTierPricing(cargoName, quality, season);
     }
 
     /**
@@ -1202,8 +1111,7 @@ class TradingEngine {
      * @returns {Array} - Array of available quality tier names
      */
     getAvailableQualityTiers(cargoName) {
-        const cargo = this.getCargoByName(cargoName);
-        return cargo.qualityTiers ? Object.keys(cargo.qualityTiers) : ['average'];
+        return this.purchasePriceCalculator.getAvailableQualityTiers(cargoName);
     }
 
     /**
@@ -1212,8 +1120,7 @@ class TradingEngine {
      * @returns {boolean} - True if cargo supports quality tiers
      */
     hasQualityTiers(cargoName) {
-        const cargo = this.getCargoByName(cargoName);
-        return !!(cargo.qualityTiers && Object.keys(cargo.qualityTiers).length > 0);
+        return this.purchasePriceCalculator.hasQualityTiers(cargoName);
     }
 
     /**
@@ -1223,31 +1130,7 @@ class TradingEngine {
      * @returns {Object} - Price comparison across seasons
      */
     calculateSeasonalPriceComparison(cargoName, quality = 'average') {
-        const cargo = this.getCargoByName(cargoName);
-        const seasons = ['spring', 'summer', 'autumn', 'winter'];
-        const prices = {};
-        
-        seasons.forEach(season => {
-            prices[season] = this.dataManager.getSeasonalPrice(cargo, season, quality);
-        });
-
-        // Find best and worst seasons
-        const sortedSeasons = seasons.sort((a, b) => prices[a] - prices[b]);
-        const bestSeason = sortedSeasons[0]; // Lowest price (best for buying)
-        const worstSeason = sortedSeasons[sortedSeasons.length - 1]; // Highest price
-
-        return {
-            cargoName: cargoName,
-            quality: quality,
-            prices: prices,
-            bestBuyingSeason: bestSeason,
-            worstBuyingSeason: worstSeason,
-            priceRange: {
-                min: prices[bestSeason],
-                max: prices[worstSeason],
-                difference: prices[worstSeason] - prices[bestSeason]
-            }
-        };
+        return this.purchasePriceCalculator.calculateSeasonalPriceComparison(cargoName, quality);
     }
 
     /**
@@ -1259,48 +1142,7 @@ class TradingEngine {
      * @returns {Object} - Validation result
      */
     validatePurchaseTransaction(cargoName, quantity, availableQuantity, options = {}) {
-        const errors = [];
-
-        // Validate cargo exists
-        try {
-            this.getCargoByName(cargoName);
-        } catch (error) {
-            errors.push(error.message);
-        }
-
-        // Validate quantity
-        if (!quantity || typeof quantity !== 'number' || quantity <= 0) {
-            errors.push('Quantity must be a positive number');
-        }
-
-        if (quantity > availableQuantity) {
-            errors.push(`Requested quantity (${quantity}) exceeds available quantity (${availableQuantity})`);
-        }
-
-        // Validate quality tier if specified
-        if (options.quality) {
-            try {
-                const availableQualities = this.getAvailableQualityTiers(cargoName);
-                if (!availableQualities.includes(options.quality)) {
-                    errors.push(`Invalid quality tier: ${options.quality}. Available: ${availableQualities.join(', ')}`);
-                }
-            } catch (error) {
-                // Cargo validation already failed above
-            }
-        }
-
-        // Validate season
-        if (options.season) {
-            const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
-            if (!validSeasons.includes(options.season)) {
-                errors.push(`Invalid season: ${options.season}. Must be one of: ${validSeasons.join(', ')}`);
-            }
-        }
-
-        return {
-            valid: errors.length === 0,
-            errors: errors
-        };
+        return this.purchasePriceCalculator.validatePurchaseTransaction(cargoName, quantity, availableQuantity, options);
     }
 
     // ===== SALE MECHANICS AND RESTRICTIONS =====
@@ -1314,35 +1156,7 @@ class TradingEngine {
      * @returns {Object} - Sale eligibility result
      */
     checkSaleEligibility(cargo, currentSettlement, purchaseData, currentTime = null) {
-        if (!cargo || !currentSettlement || !purchaseData) {
-            throw new Error('Cargo, current settlement, and purchase data are required');
-        }
-
-        const errors = [];
-        const warnings = [];
-
-        // Location restriction: cannot sell where purchased
-        if (purchaseData.settlementName === currentSettlement.name) {
-            // Check if minimum time has passed (1 week)
-            if (currentTime && purchaseData.purchaseTime) {
-                const timeElapsed = currentTime - purchaseData.purchaseTime;
-                const oneWeekInDays = 7; // Assuming time is in days
-                
-                if (timeElapsed < oneWeekInDays) {
-                    errors.push(`Cannot sell in same settlement (${currentSettlement.name}) until 1 week has passed. Time remaining: ${oneWeekInDays - timeElapsed} days`);
-                } else {
-                    warnings.push(`Selling in same settlement after waiting period`);
-                }
-            } else {
-                errors.push(`Cannot sell in same settlement where purchased (${currentSettlement.name})`);
-            }
-        }
-
-        return {
-            eligible: errors.length === 0,
-            errors: errors,
-            warnings: warnings
-        };
+        return this.saleMechanics.checkSaleEligibility(cargo, currentSettlement, purchaseData, currentTime);
     }
 
     /**
@@ -1353,33 +1167,7 @@ class TradingEngine {
      * @returns {number} - Buyer availability percentage
      */
     calculateBuyerAvailabilityChance(settlement, cargoName) {
-        if (!settlement) {
-            throw new Error('Settlement object is required');
-        }
-
-        const properties = this.dataManager.getSettlementProperties(settlement);
-        let chance = properties.sizeNumeric * 10;
-
-        // Trade settlement bonus
-        if (this.dataManager.isTradeSettlement(settlement)) {
-            chance += 30;
-        }
-
-        // Village restrictions for non-Grain goods
-        if (properties.sizeNumeric === 1) { // Village
-            const cargo = this.getCargoByName(cargoName);
-            if (cargo.category !== 'Bulk Goods' || cargoName !== 'Grain') {
-                // Villages only buy Grain, except in Spring (1d10 EP of other goods)
-                const currentSeason = this.getCurrentSeason();
-                if (currentSeason !== 'spring') {
-                    chance = 0; // No buyers for non-Grain in villages outside Spring
-                } else {
-                    chance = Math.min(chance, 10); // Limited to 1d10 EP in Spring
-                }
-            }
-        }
-
-        return Math.min(chance, 100); // Cap at 100%
+        return this.saleMechanics.calculateBuyerAvailabilityChance(settlement, cargoName);
     }
 
     /**
@@ -1390,57 +1178,7 @@ class TradingEngine {
      * @returns {Object} - Buyer availability result
      */
     async findBuyer(settlement, cargoName, rollFunction = null) {
-        const chance = this.calculateBuyerAvailabilityChance(settlement, cargoName);
-        
-        if (chance === 0) {
-            return {
-                buyerFound: false,
-                chance: 0,
-                roll: null,
-                rollResult: null,
-                reason: 'No buyers available for this cargo type at this settlement',
-                partialSaleOption: false
-            };
-        }
-
-        let roll, rollResult;
-        
-        if (rollFunction) {
-            // Use provided roll function for testing
-            roll = rollFunction();
-            rollResult = { total: roll, formula: "1d100", result: roll.toString() };
-        } else {
-            // Use FoundryVTT dice roller
-            rollResult = await this.rollBuyerAvailability(chance);
-            roll = rollResult.total;
-        }
-        
-        const buyerFound = roll <= chance;
-
-        if (buyerFound) {
-            // Generate a random merchant for successful buyer encounters
-            const merchant = await this.generateRandomMerchant(settlement, rollFunction);
-            
-            return {
-                buyerFound: true,
-                chance: chance,
-                roll: roll,
-                rollResult: rollResult,
-                settlement: settlement.name,
-                partialSaleOption: false, // Normal sale succeeded
-                merchant: merchant
-            };
-        } else {
-            return {
-                buyerFound: false,
-                chance: chance,
-                roll: roll,
-                rollResult: rollResult,
-                settlement: settlement.name,
-                partialSaleOption: true, // Can try to sell half and re-roll
-                merchant: null
-            };
-        }
+        return this.saleMechanics.findBuyer(settlement, cargoName, rollFunction);
     }
 
     /**
@@ -1455,56 +1193,7 @@ class TradingEngine {
      * @returns {Object} - Sale price calculation
      */
     calculateSalePrice(cargoName, quantity, settlement, options = {}) {
-        if (!cargoName || !settlement) {
-            throw new Error('Cargo name and settlement are required');
-        }
-
-        if (!quantity || typeof quantity !== 'number' || quantity <= 0) {
-            throw new Error('Quantity must be a positive number');
-        }
-
-        const cargo = this.getCargoByName(cargoName);
-        const season = options.season || this.getCurrentSeason();
-        const quality = options.quality || 'average';
-
-        // Calculate base price per unit
-        const basePricePerUnit = this.calculateBasePrice(cargoName, season, quality);
-        
-        // Apply wealth-based price modifier
-        const properties = this.dataManager.getSettlementProperties(settlement);
-        const wealthModifier = properties.wealthModifier;
-        let finalPricePerUnit = basePricePerUnit * wealthModifier;
-
-        // Track all price modifiers
-        const modifiers = [{
-            type: 'wealth',
-            description: `${properties.wealthDescription} settlement (${Math.round(wealthModifier * 100)}%)`,
-            amount: basePricePerUnit * (wealthModifier - 1),
-            percentage: Math.round((wealthModifier - 1) * 100)
-        }];
-
-        // Apply haggle test results (increases sale price if successful)
-        if (options.haggleResult) {
-            const haggleModifier = this.applySaleHaggleResult(basePricePerUnit, options.haggleResult);
-            finalPricePerUnit += haggleModifier.amount;
-            modifiers.push(haggleModifier);
-        }
-
-        // Calculate total price
-        const totalPrice = finalPricePerUnit * quantity;
-
-        return {
-            cargoName: cargoName,
-            quantity: quantity,
-            season: season,
-            quality: quality,
-            settlement: settlement.name,
-            basePricePerUnit: basePricePerUnit,
-            finalPricePerUnit: finalPricePerUnit,
-            totalPrice: totalPrice,
-            modifiers: modifiers,
-            wealthModifier: wealthModifier
-        };
+        return this.saleMechanics.calculateSalePrice(cargoName, quantity, settlement, options);
     }
 
     /**
@@ -1514,33 +1203,7 @@ class TradingEngine {
      * @returns {Object} - Price modifier object
      */
     applySaleHaggleResult(basePrice, haggleResult) {
-        if (!haggleResult || typeof haggleResult.success !== 'boolean') {
-            throw new Error('Invalid haggle result object');
-        }
-
-        let percentage = 0;
-        let description = '';
-
-        if (haggleResult.success) {
-            // Successful haggle increases sale price
-            percentage = haggleResult.hasDealmakertTalent ? 20 : 10;
-            description = haggleResult.hasDealmakertTalent 
-                ? 'Successful haggle with Dealmaker (+20%)'
-                : 'Successful haggle (+10%)';
-        } else {
-            // Failed haggle has no effect on sale price
-            percentage = 0;
-            description = 'Failed haggle (no effect)';
-        }
-
-        const amount = basePrice * (percentage / 100);
-
-        return {
-            type: 'haggle',
-            description: description,
-            amount: amount,
-            percentage: percentage
-        };
+        return this.saleMechanics.applySaleHaggleResult(basePrice, haggleResult);
     }
 
     /**
@@ -1551,46 +1214,7 @@ class TradingEngine {
      * @returns {Object} - Village restriction check result
      */
     checkVillageRestrictions(settlement, cargoName, season = null) {
-        const properties = this.dataManager.getSettlementProperties(settlement);
-        const currentSeason = season || this.getCurrentSeason();
-        
-        if (properties.sizeNumeric !== 1) {
-            // Not a village, no restrictions
-            return {
-                restricted: false,
-                reason: null,
-                allowedQuantity: null
-            };
-        }
-
-        const cargo = this.getCargoByName(cargoName);
-        
-        // Villages only buy Grain normally
-        if (cargo.category === 'Bulk Goods' && cargoName === 'Grain') {
-            return {
-                restricted: false,
-                reason: null,
-                allowedQuantity: null
-            };
-        }
-
-        // Non-Grain goods in villages
-        if (currentSeason === 'spring') {
-            // In Spring, villages buy up to 1d10 EP of other goods
-            return {
-                restricted: true,
-                reason: 'Village only buys limited non-Grain goods in Spring',
-                allowedQuantity: Math.floor(Math.random() * 10) + 1, // 1d10
-                season: 'spring'
-            };
-        } else {
-            // Outside Spring, villages don't buy non-Grain goods
-            return {
-                restricted: true,
-                reason: `Villages don't buy ${cargoName} in ${currentSeason}`,
-                allowedQuantity: 0
-            };
-        }
+        return this.saleMechanics.checkVillageRestrictions(settlement, cargoName, season);
     }
 
     /**
@@ -1604,42 +1228,7 @@ class TradingEngine {
      * @returns {Object} - Enhanced partial sale result
      */
     async processEnhancedPartialSale(cargoName, originalQuantity, settlement, purchaseData, options = {}, rollFunction = null) {
-        const halfQuantity = Math.floor(originalQuantity / 2);
-        
-        if (halfQuantity <= 0) {
-            return {
-                success: false,
-                reason: 'Cannot sell partial quantity (less than 1 EP remaining)',
-                quantitySold: 0,
-                quantityRemaining: originalQuantity,
-                saleType: 'partial_failed'
-            };
-        }
-
-        // Re-roll for buyer with half quantity
-        const buyerResult = await this.findBuyer(settlement, cargoName, rollFunction);
-        
-        if (buyerResult.buyerFound) {
-            const salePrice = this.calculateSalePrice(cargoName, halfQuantity, settlement, options);
-            
-            return {
-                success: true,
-                quantitySold: halfQuantity,
-                quantityRemaining: originalQuantity - halfQuantity,
-                salePrice: salePrice,
-                buyerResult: buyerResult,
-                saleType: 'partial_success'
-            };
-        } else {
-            return {
-                success: false,
-                reason: 'No buyer found even for partial sale',
-                quantitySold: 0,
-                quantityRemaining: originalQuantity,
-                buyerResult: buyerResult,
-                saleType: 'partial_failed'
-            };
-        }
+        return this.saleMechanics.processEnhancedPartialSale(cargoName, originalQuantity, settlement, purchaseData, options, rollFunction);
     }
 
     /**
@@ -1653,71 +1242,7 @@ class TradingEngine {
      * @returns {Object} - Complete sale result
      */
     async performCompleteSaleCheck(cargoName, quantity, settlement, purchaseData, options = {}, rollFunction = null) {
-        // Step 1: Check sale eligibility
-        const eligibilityCheck = this.checkSaleEligibility(
-            { name: cargoName, quantity: quantity },
-            settlement,
-            purchaseData,
-            options.currentTime
-        );
-
-        if (!eligibilityCheck.eligible) {
-            return {
-                success: false,
-                step: 'eligibility',
-                eligibilityCheck: eligibilityCheck,
-                buyerResult: null,
-                salePrice: null
-            };
-        }
-
-        // Step 2: Check village restrictions
-        const villageRestrictions = this.checkVillageRestrictions(settlement, cargoName, options.season);
-        
-        if (villageRestrictions.restricted && villageRestrictions.allowedQuantity === 0) {
-            return {
-                success: false,
-                step: 'village_restrictions',
-                eligibilityCheck: eligibilityCheck,
-                villageRestrictions: villageRestrictions,
-                buyerResult: null,
-                salePrice: null
-            };
-        }
-
-        // Adjust quantity for village restrictions
-        const effectiveQuantity = villageRestrictions.restricted 
-            ? Math.min(quantity, villageRestrictions.allowedQuantity)
-            : quantity;
-
-        // Step 3: Find buyer
-        const buyerResult = await this.findBuyer(settlement, cargoName, rollFunction);
-        
-        if (!buyerResult.buyerFound) {
-            return {
-                success: false,
-                step: 'buyer_availability',
-                eligibilityCheck: eligibilityCheck,
-                villageRestrictions: villageRestrictions,
-                buyerResult: buyerResult,
-                salePrice: null,
-                partialSaleOption: buyerResult.partialSaleOption
-            };
-        }
-
-        // Step 4: Calculate sale price
-        const salePrice = this.calculateSalePrice(cargoName, effectiveQuantity, settlement, options);
-
-        return {
-            success: true,
-            step: 'completed',
-            eligibilityCheck: eligibilityCheck,
-            villageRestrictions: villageRestrictions,
-            buyerResult: buyerResult,
-            salePrice: salePrice,
-            quantitySold: effectiveQuantity,
-            quantityRemaining: quantity - effectiveQuantity
-        };
+        return this.saleMechanics.performCompleteSaleCheck(cargoName, quantity, settlement, purchaseData, options, rollFunction);
     }
 
     /**
@@ -1730,51 +1255,7 @@ class TradingEngine {
      * @returns {Object} - Validation result
      */
     validateSaleTransaction(cargoName, quantity, settlement, purchaseData, options = {}) {
-        const errors = [];
-
-        // Validate cargo exists
-        try {
-            this.getCargoByName(cargoName);
-        } catch (error) {
-            errors.push(error.message);
-        }
-
-        // Validate quantity
-        if (!quantity || typeof quantity !== 'number' || quantity <= 0) {
-            errors.push('Quantity must be a positive number');
-        }
-
-        // Validate settlement
-        if (!settlement) {
-            errors.push('Settlement object is required');
-        } else {
-            const settlementValidation = this.dataManager.validateSettlement(settlement);
-            if (!settlementValidation.valid) {
-                errors.push(`Invalid settlement: ${settlementValidation.errors.join(', ')}`);
-            }
-        }
-
-        // Validate purchase data
-        if (!purchaseData) {
-            errors.push('Purchase data is required for sale validation');
-        } else {
-            if (!purchaseData.settlementName) {
-                errors.push('Purchase data must include settlement name');
-            }
-        }
-
-        // Validate season
-        if (options.season) {
-            const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
-            if (!validSeasons.includes(options.season)) {
-                errors.push(`Invalid season: ${options.season}. Must be one of: ${validSeasons.join(', ')}`);
-            }
-        }
-
-        return {
-            valid: errors.length === 0,
-            errors: errors
-        };
+        return this.saleMechanics.validateSaleTransaction(cargoName, quantity, settlement, purchaseData, options);
     }
 
     // ===== SPECIAL SALE METHODS =====
@@ -1790,48 +1271,7 @@ class TradingEngine {
      * @returns {Object} - Desperate sale result
      */
     processDesperateSale(cargoName, quantity, settlement, options = {}) {
-        if (!settlement) {
-            throw new Error('Settlement object is required');
-        }
-
-        // Check if settlement is a Trade settlement
-        if (!this.dataManager.isTradeSettlement(settlement)) {
-            return {
-                success: false,
-                reason: 'Desperate sales are only available at Trade settlements',
-                settlement: settlement.name,
-                isTradeSettlement: false
-            };
-        }
-
-        const cargo = this.getCargoByName(cargoName);
-        const season = options.season || this.getCurrentSeason();
-        const quality = options.quality || 'average';
-
-        // Calculate base price per unit
-        const basePricePerUnit = this.calculateBasePrice(cargoName, season, quality);
-        
-        // Desperate sale is 50% of base price (no wealth modifiers)
-        const desperatePricePerUnit = basePricePerUnit * 0.5;
-        const totalPrice = desperatePricePerUnit * quantity;
-
-        return {
-            success: true,
-            cargoName: cargoName,
-            quantity: quantity,
-            season: season,
-            quality: quality,
-            settlement: settlement.name,
-            basePricePerUnit: basePricePerUnit,
-            desperatePricePerUnit: desperatePricePerUnit,
-            totalPrice: totalPrice,
-            saleType: 'desperate',
-            modifier: {
-                type: 'desperate_sale',
-                description: 'Desperate sale at Trade settlement (50% base price)',
-                percentage: -50
-            }
-        };
+        return this.saleMechanics.processDesperateSale(cargoName, quantity, settlement, options);
     }
 
     /**
@@ -1847,49 +1287,7 @@ class TradingEngine {
      * @returns {Object} - Rumor sale result
      */
     processRumorSale(cargoName, quantity, settlement, rumorData, options = {}) {
-        if (!rumorData || typeof rumorData.multiplier !== 'number') {
-            throw new Error('Valid rumor data with multiplier is required');
-        }
-
-        if (rumorData.multiplier <= 0) {
-            throw new Error('Rumor multiplier must be positive');
-        }
-
-        const cargo = this.getCargoByName(cargoName);
-        const season = options.season || this.getCurrentSeason();
-        const quality = options.quality || 'average';
-
-        // Calculate base price with normal wealth modifiers
-        const normalSalePrice = this.calculateSalePrice(cargoName, quantity, settlement, options);
-        
-        // Apply rumor multiplier to the final price (after wealth modifiers)
-        const rumorPricePerUnit = normalSalePrice.finalPricePerUnit * rumorData.multiplier;
-        const totalPrice = rumorPricePerUnit * quantity;
-
-        // Calculate the premium amount
-        const premiumAmount = rumorPricePerUnit - normalSalePrice.finalPricePerUnit;
-        const premiumPercentage = Math.round((rumorData.multiplier - 1) * 100);
-
-        return {
-            success: true,
-            cargoName: cargoName,
-            quantity: quantity,
-            season: season,
-            quality: quality,
-            settlement: settlement.name,
-            normalPrice: normalSalePrice.finalPricePerUnit,
-            rumorPricePerUnit: rumorPricePerUnit,
-            totalPrice: totalPrice,
-            saleType: 'rumor',
-            rumor: {
-                type: rumorData.type,
-                description: rumorData.description,
-                multiplier: rumorData.multiplier,
-                premiumAmount: premiumAmount,
-                premiumPercentage: premiumPercentage
-            },
-            baseModifiers: normalSalePrice.modifiers
-        };
+        return this.saleMechanics.processRumorSale(cargoName, quantity, settlement, rumorData, options);
     }
 
     /**
@@ -1900,14 +1298,7 @@ class TradingEngine {
      * @returns {Object} - Rumor check result
      */
     checkForRumors(cargoName, settlement, rollFunction = null) {
-        const rumor = this.generateRandomRumor(cargoName, settlement, rollFunction);
-        
-        return {
-            hasRumor: rumor !== null,
-            rumor: rumor,
-            settlement: settlement.name,
-            cargoName: cargoName
-        };
+        return this.saleMechanics.checkForRumors(cargoName, settlement, rollFunction);
     }
 
     /**
@@ -1918,68 +1309,7 @@ class TradingEngine {
      * @returns {Object|null} - Generated rumor or null if no rumor
      */
     generateRandomRumor(cargoName, settlement, rollFunction = null) {
-        // Use provided roll function or default to random
-        const roll = rollFunction ? rollFunction() : Math.floor(Math.random() * 100) + 1;
-        
-        // 20% chance of rumor (roll 1-20)
-        if (roll > 20) {
-            return null;
-        }
-
-        const cargo = this.getCargoByName(cargoName);
-        const rumorTypes = [
-            {
-                type: 'shortage',
-                description: `Local shortage of ${cargoName} due to poor harvest`,
-                multiplier: 1.5,
-                weight: 30
-            },
-            {
-                type: 'demand',
-                description: `Increased demand for ${cargoName} from nearby settlements`,
-                multiplier: 1.3,
-                weight: 25
-            },
-            {
-                type: 'festival',
-                description: `Upcoming festival requires large quantities of ${cargoName}`,
-                multiplier: 1.4,
-                weight: 20
-            },
-            {
-                type: 'trade_route',
-                description: `New trade route opened, increasing ${cargoName} prices`,
-                multiplier: 1.2,
-                weight: 15
-            },
-            {
-                type: 'noble_demand',
-                description: `Local noble requires ${cargoName} for special occasion`,
-                multiplier: 1.6,
-                weight: 10
-            }
-        ];
-
-        // Select rumor based on weighted probability
-        const totalWeight = rumorTypes.reduce((sum, rumor) => sum + rumor.weight, 0);
-        const rumorRoll = Math.floor(Math.random() * totalWeight) + 1;
-        
-        let currentWeight = 0;
-        for (const rumor of rumorTypes) {
-            currentWeight += rumor.weight;
-            if (rumorRoll <= currentWeight) {
-                return {
-                    type: rumor.type,
-                    description: rumor.description,
-                    multiplier: rumor.multiplier,
-                    settlement: settlement.name,
-                    cargoName: cargoName
-                };
-            }
-        }
-
-        // Fallback (should not reach here)
-        return rumorTypes[0];
+        return this.saleMechanics.generateRandomRumor(cargoName, settlement, rollFunction);
     }
 
     /**
@@ -1990,75 +1320,7 @@ class TradingEngine {
      * @returns {Object|null} - Generated rumor or null if gossip failed
      */
     async generateRumorFromGossip(gossipResult, cargoName, settlement) {
-        if (!gossipResult.success) {
-            return null;
-        }
-
-        // Higher degrees of success = better rumors
-        const rumorQuality = gossipResult.degrees;
-
-        const rumors = [
-            // Basic rumors (degrees 1-2)
-            {
-                type: 'minor_demand',
-                description: `Slight increase in demand for ${cargoName}`,
-                multiplier: 1.1,
-                minDegrees: 1
-            },
-            {
-                type: 'local_shortage',
-                description: `Local merchants are running low on ${cargoName}`,
-                multiplier: 1.2,
-                minDegrees: 1
-            },
-            // Good rumors (degrees 2-3)
-            {
-                type: 'increased_demand',
-                description: `Growing demand for ${cargoName} in the region`,
-                multiplier: 1.3,
-                minDegrees: 2
-            },
-            {
-                type: 'merchant_shortage',
-                description: `Several merchants are seeking ${cargoName}`,
-                multiplier: 1.4,
-                minDegrees: 2
-            },
-            // Excellent rumors (degrees 3+)
-            {
-                type: 'major_shortage',
-                description: `Critical shortage of ${cargoName} due to recent events`,
-                multiplier: 1.5,
-                minDegrees: 3
-            },
-            {
-                type: 'noble_requirement',
-                description: `Local nobility requires large quantities of ${cargoName}`,
-                multiplier: 1.6,
-                minDegrees: 3
-            }
-        ];
-
-        // Filter rumors by minimum degrees
-        const availableRumors = rumors.filter(rumor => rumorQuality >= rumor.minDegrees);
-
-        if (availableRumors.length === 0) {
-            return null;
-        }
-
-        // Select random rumor from available options
-        const selectedRumor = availableRumors[Math.floor(Math.random() * availableRumors.length)];
-
-        return {
-            type: selectedRumor.type,
-            description: selectedRumor.description,
-            multiplier: selectedRumor.multiplier,
-            cargoName: cargoName,
-            settlement: settlement.name,
-            gossipDegrees: gossipResult.degrees,
-            discoveredBy: 'gossip_test',
-            reliability: rumorQuality >= 3 ? 'reliable' : 'unreliable'
-        };
+        return this.saleMechanics.generateRumorFromGossip(gossipResult, cargoName, settlement);
     }
 
     /**
@@ -2068,22 +1330,7 @@ class TradingEngine {
      * @returns {Object} - Talent bonus information
      */
     calculateDealmakertBonus(hasTalent, transactionType) {
-        if (!hasTalent) {
-            return {
-                hasBonus: false,
-                bonusPercentage: 0,
-                description: 'No Dealmaker talent'
-            };
-        }
-
-        const bonusPercentage = 20; // 20% bonus
-
-        return {
-            hasBonus: true,
-            bonusPercentage: bonusPercentage,
-            description: `Dealmaker talent: ${transactionType === 'purchase' ? '-' : '+'}${bonusPercentage}% ${transactionType} price`,
-            transactionType: transactionType
-        };
+        return this.saleMechanics.calculateDealmakertBonus(hasTalent, transactionType);
     }
 
     /**
@@ -2095,29 +1342,7 @@ class TradingEngine {
      * @returns {Object} - Available sale options
      */
     getAvailableSaleOptions(cargoType, quantity, settlement, purchaseData) {
-        const options = {
-            normal: false,
-            desperate: false,
-            partial: false,
-            rumor: false
-        };
-
-        // Check if normal sale is possible
-        const eligibility = this.checkSaleEligibility({ name: cargoType, quantity }, settlement, purchaseData);
-        options.normal = eligibility.eligible;
-
-        // Check if desperate sale is possible (only at trade settlements)
-        const isTradeSettlement = this.dataManager.isTradeSettlement(settlement);
-        options.desperate = isTradeSettlement;
-
-        // Check if partial sale is possible (when normal sale fails)
-        options.partial = !eligibility.eligible;
-
-        // Check if rumor sale is possible (always available if rumors exist)
-        const rumors = this.checkForRumors(cargoType, settlement);
-        options.rumor = rumors.length > 0;
-
-        return { options };
+        return this.saleMechanics.getAvailableSaleOptions(cargoType, quantity, settlement, purchaseData);
     }
 
     /**
@@ -2133,52 +1358,7 @@ class TradingEngine {
      * @returns {Object} - Sale execution result
      */
     executeSpecialSale(saleType, cargoType, quantity, settlement, purchaseData, rumorData, rollOptions, rollFunction) {
-        const result = {
-            success: false,
-            saleType: saleType,
-            message: '',
-            price: 0,
-            quantitySold: 0
-        };
-
-        switch (saleType) {
-            case 'desperate':
-                // Desperate sale: roll 1d100 vs buyer availability, sell at 50% price
-                const desperateRoll = rollFunction ? rollFunction() : this.rollDice('1d100').total;
-                const buyerChance = this.calculateBuyerAvailabilityChance(settlement, cargoType);
-                result.success = desperateRoll <= buyerChance;
-                result.price = result.success ? this.calculateSalePrice(cargoType, quantity, settlement, rollOptions).totalPrice * 0.5 : 0;
-                result.quantitySold = result.success ? quantity : 0;
-                result.message = result.success ? 'Desperate sale successful' : 'No buyers found for desperate sale';
-                break;
-
-            case 'partial':
-                // Partial sale: roll for available quantity, sell at normal price
-                const partialResult = this.processEnhancedPartialSale(cargoType, quantity, settlement, purchaseData, rollFunction);
-                result.success = partialResult.success;
-                result.price = partialResult.price || 0;
-                result.quantitySold = partialResult.quantitySold || 0;
-                result.message = partialResult.message || 'Partial sale processed';
-                break;
-
-            case 'rumor':
-                // Rumor sale: use rumor multiplier for premium pricing
-                if (rumorData && rumorData.multiplier) {
-                    const basePrice = this.calculateSalePrice(cargoType, quantity, settlement, rollOptions).totalPrice;
-                    result.success = true;
-                    result.price = basePrice * rumorData.multiplier;
-                    result.quantitySold = quantity;
-                    result.message = `Rumor sale successful: ${rumorData.description}`;
-                } else {
-                    result.message = 'No valid rumor data provided';
-                }
-                break;
-
-            default:
-                result.message = `Unknown sale type: ${saleType}`;
-        }
-
-        return result;
+        return this.saleMechanics.executeSpecialSale(saleType, cargoType, quantity, settlement, purchaseData, rumorData, rollOptions, rollFunction);
     }
 
     /**
@@ -2191,59 +1371,7 @@ class TradingEngine {
      * @returns {Object} - Profit analysis for all sale options
      */
     analyzeSaleProfitability(cargoType, quantity, settlement, purchaseData, rollOptions) {
-        const originalCost = purchaseData.totalCost || 0;
-        const analysis = {
-            originalCost: originalCost,
-            saleOptions: {}
-        };
-
-        // Normal sale
-        const normalPrice = this.calculateSalePrice(cargoType, quantity, settlement, rollOptions).totalPrice;
-        analysis.saleOptions.normal = {
-            price: normalPrice,
-            profit: normalPrice - originalCost,
-            profitMargin: originalCost > 0 ? ((normalPrice - originalCost) / originalCost) * 100 : 0
-        };
-
-        // Desperate sale (if available)
-        const isTradeSettlement = this.dataManager.isTradeSettlement(settlement);
-        if (isTradeSettlement) {
-            const desperatePrice = normalPrice * 0.5;
-            analysis.saleOptions.desperate = {
-                price: desperatePrice,
-                profit: desperatePrice - originalCost,
-                profitMargin: originalCost > 0 ? ((desperatePrice - originalCost) / originalCost) * 100 : 0
-            };
-        }
-
-        // Partial sale (if normal not available)
-        const eligibility = this.checkSaleEligibility({ name: cargoType, quantity }, settlement, purchaseData);
-        if (!eligibility.eligible) {
-            // Estimate partial sale (assume 50% success rate)
-            const partialPrice = normalPrice * 0.75; // Rough estimate
-            analysis.saleOptions.partial = {
-                price: partialPrice,
-                profit: partialPrice - originalCost,
-                profitMargin: originalCost > 0 ? ((partialPrice - originalCost) / originalCost) * 100 : 0,
-                estimated: true
-            };
-        }
-
-        // Rumor sale (if rumors available)
-        const rumors = this.checkForRumors(cargoType, settlement);
-        if (rumors.length > 0) {
-            const bestRumor = rumors.reduce((best, current) => current.multiplier > best.multiplier ? current : best);
-            const rumorPrice = normalPrice * bestRumor.multiplier;
-            analysis.saleOptions.rumor = {
-                price: rumorPrice,
-                profit: rumorPrice - originalCost,
-                profitMargin: originalCost > 0 ? ((rumorPrice - originalCost) / originalCost) * 100 : 0,
-                rumorMultiplier: bestRumor.multiplier,
-                rumorDescription: bestRumor.description
-            };
-        }
-
-        return analysis;
+        return this.saleMechanics.analyzeSaleProfitability(cargoType, quantity, settlement, purchaseData, rollOptions);
     }
 
     /**
@@ -2333,7 +1461,7 @@ class TradingEngine {
         const roll = rollFunction ? rollFunction() : this.rollDice('1d100').total;
         
         const sizeModifier = properties.sizeNumeric;
-        const wealthModifier = settlement.wealth;
+        const wealthModifier = properties.wealthRating;
         const totalSize = (sizeModifier + wealthModifier) * roll;
 
         return {
@@ -2581,6 +1709,30 @@ class TradingEngine {
         
         if (options.specialType) {
             message += ` (${options.specialType} sale)`;
+        }
+        
+        return message;
+    }
+
+    /**
+     * Generate roll result message
+     * @param {Object} rollResult - Roll result object with total and formula
+     * @param {string} rollType - Type of roll (e.g., 'Availability Check')
+     * @param {Object} options - Additional options (target, details)
+     * @returns {string} - Formatted roll message
+     */
+    generateRollResultMessage(rollResult, rollType, options = {}) {
+        let message = `<strong>${rollType}:</strong><br>`;
+        message += `Roll:</strong> ${rollResult.total}`;
+        
+        if (options.target) {
+            const success = rollResult.total <= options.target;
+            const successText = success ? 'Success' : 'Failure';
+            message += ` vs Target:</strong> ${options.target} - <strong>${successText}</strong>`;
+        }
+        
+        if (options.details) {
+            message += `<br><em>${options.details}</em>`;
         }
         
         return message;

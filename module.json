@@ -28,6 +28,8 @@
     "scripts/buying-algorithm.js",
     "scripts/selling-algorithm.js",
     "scripts/price-calculator.js",
+    "scripts/purchase-price-calculator.js",
+    "scripts/sale-mechanics.js",
     "scripts/settlement-selector.js",
     "scripts/player-cargo-manager.js",
     "scripts/mixins/logging-mixin.js",

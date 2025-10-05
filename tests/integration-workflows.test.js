@@ -199,7 +199,7 @@ global.foundryMock = new MockFoundryVTT();
 
 // Import modules
 const DataManager = require('../scripts/data-manager.js');
-const TradingEngine = require('../scripts/trading-engine.js');
+const { TradingEngine } = require('../scripts/trading-engine.js');
 const SystemAdapter = require('../scripts/system-adapter.js');
 
 describe('Complete Trading Workflows Integration Tests', () => {
