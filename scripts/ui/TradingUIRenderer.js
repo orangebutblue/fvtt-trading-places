@@ -1,6 +1,6 @@
 console.log('Trading Places | Loading TradingUIRenderer.js');
 
-export class TradingUIRenderer {
+export default class TradingUIRenderer {
     constructor(app) {
         this.app = app;
         this.dataManager = app.dataManager;
@@ -18,6 +18,11 @@ export class TradingUIRenderer {
             quality: '⭐',
             quantity: '📊'
         };
+
+    // Tooltip management
+    this._currentTooltip = null;
+    this._currentTrigger = null;
+    this._handleGlobalPointerDown = this._handleGlobalPointerDown.bind(this);
     }
 
     _logDebug(category, message, data) {
@@ -58,9 +63,10 @@ export class TradingUIRenderer {
      * @private
      */
     _updateTransactionButtons() {
-        const hasSettlement = !!this.app.selectedSettlement;
-        const hasCargo = this.app.availableCargo.length > 0;
-        const hasSeason = !!this.app.currentSeason;
+    const hasSettlement = !!this.app.selectedSettlement;
+    const hasSeason = !!this.app.currentSeason;
+    const hasTradableCargo = Array.isArray(this.app.successfulCargo) && this.app.successfulCargo.length > 0;
+    const hasAnySlots = this.app.availableCargo.length > 0;
 
         // Get button elements
         const haggleBtn = this.app.element.querySelector('.haggle-button');
@@ -70,29 +76,30 @@ export class TradingUIRenderer {
 
         // Enable/disable buttons based on context
         if (haggleBtn) {
-            haggleBtn.disabled = !hasSettlement || !hasCargo || !hasSeason;
-            haggleBtn.title = this._getButtonTooltip('haggle', hasSettlement, hasCargo, hasSeason);
+            haggleBtn.disabled = !hasSettlement || !hasTradableCargo || !hasSeason;
+            haggleBtn.title = this._getButtonTooltip('haggle', hasSettlement, hasTradableCargo, hasSeason);
         }
 
         if (saleBtn) {
             saleBtn.disabled = !hasSettlement || !hasSeason;
-            saleBtn.title = this._getButtonTooltip('sale', hasSettlement, hasCargo, hasSeason);
+            saleBtn.title = this._getButtonTooltip('sale', hasSettlement, hasTradableCargo, hasSeason);
         }
 
         if (desperateSaleBtn) {
             const isTradeSettlement = this.dataManager?.isTradeSettlement(this.app.selectedSettlement);
             desperateSaleBtn.disabled = !hasSettlement || !hasSeason || !isTradeSettlement;
-            desperateSaleBtn.title = this._getButtonTooltip('desperate_sale', hasSettlement, hasCargo, hasSeason, isTradeSettlement);
+            desperateSaleBtn.title = this._getButtonTooltip('desperate_sale', hasSettlement, hasTradableCargo, hasSeason, isTradeSettlement);
         }
 
         if (rumorSaleBtn) {
             rumorSaleBtn.disabled = !hasSettlement || !hasSeason;
-            rumorSaleBtn.title = this._getButtonTooltip('rumor_sale', hasSettlement, hasCargo, hasSeason);
+            rumorSaleBtn.title = this._getButtonTooltip('rumor_sale', hasSettlement, hasTradableCargo, hasSeason);
         }
 
         this._logDebug('UI State', 'Transaction buttons updated', {
             hasSettlement,
-            hasCargo,
+            hasTradableCargo,
+            hasAnySlots,
             hasSeason,
             buttonsFound: {
                 haggle: !!haggleBtn,
@@ -113,7 +120,7 @@ export class TradingUIRenderer {
      * @returns {string} - Tooltip text
      * @private
      */
-    _getButtonTooltip(buttonType, hasSettlement, hasCargo, hasSeason, isTradeSettlement = false) {
+    _getButtonTooltip(buttonType, hasSettlement, hasTradableCargo, hasSeason, isTradeSettlement = false) {
         if (!hasSeason) {
             return 'Please set the current season first';
         }
@@ -123,7 +130,7 @@ export class TradingUIRenderer {
 
         switch (buttonType) {
             case 'haggle':
-                return hasCargo ? 'Attempt to negotiate better prices' : 'Check cargo availability first';
+                return hasTradableCargo ? 'Attempt to negotiate better prices' : 'Check cargo availability first';
             case 'sale':
                 return 'Sell cargo from inventory';
             case 'desperate_sale':
@@ -135,6 +142,17 @@ export class TradingUIRenderer {
             default:
                 return '';
         }
+    }
+
+    /**
+     * Create an info indicator HTML element
+     * @param {string} tooltip - The tooltip text to display
+     * @param {string} extraClass - Additional CSS classes (optional)
+     * @returns {string} - HTML string for the info indicator
+     * @private
+     */
+        _createInfoIndicator(tooltip, classes = 'info-indicator') {
+        return `<span class="${classes}" data-info-tooltip="${tooltip.replace(/"/g, '&quot;')}">?</span>`;
     }
 
     /**
@@ -184,7 +202,10 @@ export class TradingUIRenderer {
         const statusBanner = `<div class="availability-status-banner">${statusEmoji} ${statusText}</div>`;
 
         // Market check section (settlement info and overall roll)
-        const rollDetails = completeResult.availabilityCheck || { roll: '-', chance: '-' };
+        const availabilityCheck = completeResult.availabilityCheck || {};
+        const slotOutcomes = Array.isArray(availabilityCheck.rolls) ? availabilityCheck.rolls : [];
+        const successfulSlots = slotOutcomes.filter(outcome => outcome.success).length;
+        const totalSlots = slotOutcomes.length;
         const sizeRating = this.dataManager.convertSizeToNumeric(this.app.selectedSettlement.size);
         const wealthRating = this.app.selectedSettlement.wealth;
         const baseChance = (sizeRating + wealthRating) * 10;
@@ -194,14 +215,18 @@ export class TradingUIRenderer {
         let slotExplanation = '';
         if (pipelineResult && pipelineResult.slotPlan) {
             const slotPlan = pipelineResult.slotPlan;
-            slotExplanation = `
-                <p><strong>Available Slots:</strong> ${slotPlan.totalSlots}</p>
-                <p><strong>Slot Calculation:</strong></p>
-                <ul>
-                    ${slotPlan.reasons.map(reason => `<li>${reason.label}: ${reason.value}</li>`).join('')}
-                    ${slotPlan.formula.multipliers.map(multiplier => `<li>${multiplier.label}: ${multiplier.detail}</li>`).join('')}
-                </ul>
-            `;
+            const tooltipContent = `
+Availability Check: ${totalSlots} slots rolled, ${successfulSlots} successful
+
+Slot Calculation:
+${slotPlan.reasons.map(reason => `${reason.label}: ${reason.value}`).join('\n')}
+${slotPlan.formula.multipliers.map(multiplier => `${multiplier.label}: ${multiplier.detail}`).join('\n')}
+            `.trim();
+            slotExplanation = this.createTooltipElement(
+                `<strong>Available Slots:</strong> ${successfulSlots}/${slotPlan.totalSlots}`,
+                tooltipContent,
+                'p'
+            );
         }
 
         const marketCheckHtml = `
@@ -211,7 +236,6 @@ export class TradingUIRenderer {
                     <p><strong>Settlement:</strong> ${this.app.selectedSettlement.name}</p>
                     <p><strong>Size:</strong> ${this.dataManager.getSizeDescription(this.app.selectedSettlement.size)} (${sizeRating})</p>
                     <p><strong>Wealth:</strong> ${this.dataManager.getWealthDescription(wealthRating)} (${wealthRating})</p>
-                    <p><strong>Roll & Results:</strong> ${this.ICONS.roll} ${rollDetails.roll} ${isSuccess ? '≤' : '>'} ${finalChance} = ${isSuccess ? this.ICONS.success : this.ICONS.failure}</p>
                     ${slotExplanation}
                 </div>
             </section>
@@ -583,13 +607,9 @@ export class TradingUIRenderer {
         
         // Debug: Log what cargo we're displaying
         console.log('🎨 UI RENDERER RECEIVING CARGO:', cargoList.map(c => ({
-            name: c.name,
-            merchant: {
-                name: c.merchant?.name,
-                hagglingSkill: c.merchant?.hagglingSkill,
-                baseSkill: c.merchant?.baseSkill,
-                personalityModifier: c.merchant?.personalityModifier
-            }
+            slot: c.slotNumber,
+            available: c.isSlotAvailable,
+            name: c.name || null
         })));
         
         // Show the cargo grid
@@ -600,7 +620,9 @@ export class TradingUIRenderer {
         
         // Create cargo cards for each available cargo
         cargoList.forEach(cargo => {
-            const cargoCard = this._createCargoCard(cargo);
+            const cargoCard = cargo.isSlotAvailable
+                ? this._createSuccessfulCargoCard(cargo)
+                : this._createFailedSlotCard(cargo);
             cargoGrid.appendChild(cargoCard);
         });
         
@@ -629,46 +651,89 @@ export class TradingUIRenderer {
      * @returns {HTMLElement} - Cargo card element
      * @private
      */
-    _createCargoCard(cargo) {
+    _createSuccessfulCargoCard(cargo) {
         const card = document.createElement('div');
-        card.className = 'cargo-card collapsible';
+        card.className = 'cargo-card collapsible slot-success';
 
         // Basic info (always visible) - matches original layout
-        const basicInfo = `
+        let basicInfo = `
             <div class="cargo-header">
                 <div class="cargo-name">${cargo.name}</div>
                 <div class="cargo-category">${cargo.category || 'Goods'}</div>
             </div>
-            <div class="cargo-details">
+            <div class="cargo-details">`;
+
+        // Add info indicators for detailed information (all cargo now has slotInfo)
+        const slot = cargo.slotInfo;
+        
+        // Price per EP with info indicator
+        let priceTooltip = `Base Price: ${((slot.pricing?.basePricePerEP || 0) * 1).toFixed(2)} GC/EP\nFinal Price: ${((slot.pricing?.finalPricePerEP || 0) * 1).toFixed(2)} GC/EP`;
+        
+        if (slot.pricing?.steps && slot.pricing.steps.length > 0) {
+            priceTooltip += '\n\nPrice Calculation Steps:';
+            priceTooltip += `\n• Base: ${((slot.pricing.basePricePerEP || 0) * 1).toFixed(2)} GC/EP`;
+            slot.pricing.steps.forEach(step => {
+                priceTooltip += `\n• ${step?.label || 'Unknown'}: ${((step?.perEP || 0) * 1).toFixed(2)} GC/EP`;
+            });
+        }
+        
+        // Total price with info indicator (shows total amounts, not per EP)
+        const quantity = cargo.totalEP ?? cargo.quantity ?? 0;
+        let totalPriceTooltip = `Base Total: ${((slot.pricing?.basePricePerEP || 0) * quantity).toFixed(2)} GC\nFinal Total: ${((slot.pricing?.finalPricePerEP || 0) * quantity).toFixed(2)} GC`;
+        
+        if (slot.pricing?.steps && slot.pricing.steps.length > 0) {
+            totalPriceTooltip += '\n\nTotal Price Calculation Steps:';
+            totalPriceTooltip += `\n• Base: ${((slot.pricing.basePricePerEP || 0) * quantity).toFixed(2)} GC`;
+            slot.pricing.steps.forEach(step => {
+                totalPriceTooltip += `\n• ${step?.label || 'Unknown'}: ${((step?.perEP || 0) * quantity).toFixed(2)} GC`;
+            });
+        }
+        
+        // Available quantity with info indicator
+        const quantityTooltip = `Amount: ${cargo.totalEP} EP\n\nCalculated from:\n• Base Roll: ${slot.amount?.roll || 'N/A'} (1d100)\n• Size Modifier: ×${((slot.amount?.sizeModifier || 0) * 1).toFixed(2)}\n• Wealth Modifier: ×${((slot.amount?.wealthModifier || 0) * 1).toFixed(2)}\n• Supply Modifier: ×${((slot.amount?.supplyModifier || 0) * 1).toFixed(2)}`;
+        
+        // Quality with info indicator
+        const qualityTooltip = `Quality Tier: ${cargo.quality}\nQuality Score: ${((slot.quality?.score || 0) * 1).toFixed(2)}\n\nDetermined by settlement wealth rating plus production flags and market pressure.`;
+        
+        // Merchant with info indicator
+        const merchantTooltip = `Name: ${cargo.merchant?.name || 'Unknown'}\nSkill: ${cargo.merchant?.skillDescription || 'Unknown'}\nHaggling Skill: ${cargo.merchant?.hagglingSkill || 'N/A'}\n\nMerchant generated using percentile-based skill system. Base skill (${cargo.merchant?.baseSkill || 'N/A'}) calculated from settlement wealth rating and percentile roll. Higher skills make haggling harder for players.${cargo.merchant?.specialBehaviors?.length > 0 ? `\n\nSpecial Behaviors: ${cargo.merchant.specialBehaviors.join(', ')}` : ''}`;
+        
+        basicInfo += `
                 <div class="price-info">
-                    <span class="price-label">Price:</span>
-                    <span class="price-value">${cargo.currentPrice?.toFixed(2) || cargo.basePrice} GC</span>
+                    <span class="price-label">Price per EP:</span>
+                    <span class="price-value">${this._formatPricePerEP(cargo)} GC</span>
+                    ${this._createInfoIndicator(priceTooltip)}
                 </div>
                 <div class="price-info">
                     <span class="price-label">Available:</span>
                     <span class="price-value">${cargo.totalEP ?? cargo.quantity} EP</span>
+                    ${this._createInfoIndicator(quantityTooltip)}
+                </div>
+                <div class="price-info">
+                    <span class="price-label">Total Price:</span>
+                    <span class="price-value">${this._formatTotalPrice(cargo)} GC</span>
+                    ${this._createInfoIndicator(totalPriceTooltip)}
                 </div>
                 <div class="price-info">
                     <span class="price-label">Quality:</span>
                     <span class="price-value">${cargo.quality || 'Average'}</span>
+                    ${this._createInfoIndicator(qualityTooltip)}
                 </div>
                 <div class="merchant-info">
                     <div class="merchant-header">
-                        <span class="merchant-name">${cargo.merchant?.name || 'Unknown'}</span>
+                        <span class="merchant-name">${cargo.merchant?.name || 'Unknown'}</span> &nbsp;
                         <div class="merchant-skill">${cargo.merchant?.skillDescription || 'Unknown'}</div>
-                        <div class="merchant-personality">${cargo.merchant?.personality || ''}</div>
+                        ${this._createInfoIndicator(merchantTooltip, 'merchant-info-indicator')}
                     </div>
                     <div class="merchant-description">${cargo.merchant?.description || ''}</div>
-                </div>
+                </div>`;
+        
+        basicInfo += `
             </div>
         `;
 
-        // Detailed pipeline information (hidden by default)
-        let detailedInfo = '';
-        if (cargo.slotInfo) {
-            // This cargo came from the pipeline - show detailed breakdown
-            const slot = cargo.slotInfo;
-            detailedInfo = `
+        // Detailed pipeline information (hidden by default) - all cargo now has slotInfo
+        const detailedInfo = `
                 <div class="cargo-details expanded-content">
                     <div class="pipeline-breakdown">
                         <h6>${this.ICONS.calculation} Pipeline Details</h6>
@@ -684,19 +749,21 @@ export class TradingUIRenderer {
                             <h7>${this.ICONS.quantity} Quantity & Quality</h7>
                             <p><strong>Amount:</strong> ${cargo.totalEP} EP</p>
                             <p><strong>Quality:</strong> ${cargo.quality}</p>
-                            <p class="explanation">Amount calculated from percentile roll (${slot.amount?.roll || 'ERROR: Missing roll data'}) adjusted by settlement size (${(slot.amount?.wealthModifier || 0).toFixed(2)}× wealth) and supply/demand ratio (${(slot.amount?.supplyModifier || 0).toFixed(2)}×). Quality determined by settlement wealth rating (${slot.quality?.score || 'ERROR: Missing quality data'} total score) plus production flags and market pressure.</p>
+                            <p class="explanation">Amount calculated from percentile roll (${slot.amount?.roll || 'ERROR: Missing roll data'}) adjusted by settlement size (${((slot.amount?.wealthModifier || 0) * 1).toFixed(2)}× wealth) and supply/demand ratio (${((slot.amount?.supplyModifier || 0) * 1).toFixed(2)}×). Quality determined by settlement wealth rating (${((slot.quality?.score || 0) * 1).toFixed(2)} total score) plus production flags and market pressure.</p>
                             ${slot.contraband ? `<p><strong>⚠️ Contraband:</strong> Yes</p>` : ''}
                         </div>
 
                         <div class="pipeline-section">
                             <h7>${this.ICONS.value} Pricing</h7>
-                            <p><strong>Base Price:</strong> ${(slot.pricing?.basePricePerEP || 0).toFixed(2)} GC/EP</p>
-                            <p><strong>Final Price:</strong> ${(slot.pricing?.finalPricePerEP || 0).toFixed(2)} GC/EP</p>
-                            <p><strong>Total Value:</strong> ${(slot.pricing?.totalValue || 0).toFixed(2)} GC</p>
+                            <p><strong>Base Price:</strong> ${((slot.pricing?.basePricePerEP || 0) * 1).toFixed(2)} GC/EP</p>
+                            <p><strong>Final Price:</strong> ${((slot.pricing?.finalPricePerEP || 0) * 1).toFixed(2)} GC/EP</p>
+                            <p><strong>Total Value:</strong> ${((slot.pricing?.totalValue || 0) * 1).toFixed(2)} GC</p>
                             ${slot.pricing?.steps ? `<div class="pricing-breakdown">
                                 <p><strong>Pricing Breakdown:</strong></p>
                                 <ul>
-                                    ${slot.pricing.steps.map(step => `<li>${step.label}: ${(step.value || 0).toFixed(2)} GC/EP</li>`).join('')}
+                                    <li>Base: ${((slot.pricing?.basePricePerEP || 0) * 1).toFixed(2)} GC/EP</li>
+                                    ${slot.pricing.steps.map(step => `<li>${step?.label || 'Unknown'}: ${((step?.perEP || 0) * 1).toFixed(2)} GC/EP</li>`).join('')}
+                                    <li><strong>Final Price: ${((slot.pricing?.finalPricePerEP || 0) * 1).toFixed(2)} GC/EP</strong></li>
                                 </ul>
                             </div>` : '<p class="error">ERROR: Missing pricing calculation data</p>'}
                         </div>
@@ -704,29 +771,14 @@ export class TradingUIRenderer {
                         <div class="pipeline-section">
                             <h7>${this.ICONS.merchant} Merchant Details</h7>
                             <p><strong>Name:</strong> ${cargo.merchant?.name || 'Unknown'}</p>
-                            <p><strong>Personality:</strong> ${cargo.merchant?.personality || 'Unknown'}</p>
                             <p><strong>Skill:</strong> ${cargo.merchant?.skillDescription || 'Unknown'}</p>
-                            <p><strong>Haggling Skill:</strong> ${cargo.merchant?.hagglingSkill || 'N/A'} (${cargo.merchant?.baseSkill || 'N/A'} base + ${cargo.merchant?.personalityModifier || 0} personality)</p>
-                            <p class="explanation">Merchant generated using percentile-based skill system from config. Base skill (${cargo.merchant?.baseSkill || 'N/A'}) calculated from settlement wealth rating and percentile roll, then modified by personality (${cargo.merchant?.personalityModifier || 0}). Higher skills make haggling harder for players. Every cargo slot gets a unique merchant.</p>
+                            <p><strong>Haggling Skill:</strong> ${cargo.merchant?.hagglingSkill || 'N/A'}</p>
+                            <p class="explanation">Merchant generated using percentile-based skill system from config. Base skill (${cargo.merchant?.baseSkill || 'N/A'}) calculated from settlement wealth rating and percentile roll. Higher skills make haggling harder for players. Every cargo slot gets a unique merchant.</p>
                             ${cargo.merchant?.specialBehaviors?.length > 0 ? `<p><strong>Special Behaviors:</strong> ${cargo.merchant.specialBehaviors.join(', ')}</p>` : ''}
                         </div>
                     </div>
                 </div>
             `;
-        } else {
-            // Fallback for legacy cargo without pipeline data
-            detailedInfo = `
-                <div class="cargo-details expanded-content">
-                    <div class="merchant-details">
-                        <h6>${this.ICONS.merchant} Merchant Details</h6>
-                        <p><strong>Name:</strong> ${cargo.merchant?.name || 'Unknown'}</p>
-                        <p><strong>Skill:</strong> ${cargo.merchant?.skillDescription || 'Unknown'}</p>
-                        ${cargo.merchant?.description ? `<p><strong>Description:</strong> ${cargo.merchant.description}</p>` : ''}
-                        ${cargo.merchant?.skill ? `<p><strong>Skill Level:</strong> ${cargo.merchant.skill}</p>` : ''}
-                    </div>
-                </div>
-            `;
-        }
 
         card.innerHTML = basicInfo + detailedInfo;
 
@@ -759,7 +811,71 @@ export class TradingUIRenderer {
             });
         }
 
+        // Add click handlers for info indicators
+        const infoIndicators = card.querySelectorAll('.info-indicator');
+        infoIndicators.forEach(indicator => {
+            indicator.addEventListener('click', (event) => {
+                event.stopPropagation(); // Prevent card expansion
+                
+                const tooltip = indicator.dataset.infoTooltip;
+                if (tooltip) {
+                    this._showInfoTooltip(tooltip, indicator);
+                }
+            });
+        });
+
         return card;
+    }
+
+    _createFailedSlotCard(slotResult) {
+        const card = document.createElement('div');
+        card.className = 'cargo-card slot-failure';
+
+    const roll = slotResult?.availability?.roll;
+    const target = slotResult?.availability?.chance;
+        const failureMessage = slotResult?.failure?.message || 'No cargo generated for this slot.';
+
+        const header = document.createElement('div');
+        header.className = 'failed-slot-header';
+        header.innerHTML = `
+            <div class="failed-slot-icon">${this.ICONS.failure}</div>
+            <div class="failed-slot-title">Slot ${slotResult.slotNumber || '?'} unavailable</div>
+        `;
+
+        const details = document.createElement('div');
+        details.className = 'failed-slot-details';
+        details.innerHTML = `
+            <div class="failed-slot-roll">Roll ${roll ?? 'N/A'} > Target ${target ?? 'N/A'}</div>
+            <div class="failed-slot-message">${failureMessage}</div>
+        `;
+
+        card.appendChild(header);
+        card.appendChild(details);
+
+        return card;
+    }
+
+    _formatPricePerEP(cargo) {
+        const price = cargo.currentPrice ?? cargo.basePrice ?? cargo.slotInfo?.pricing?.finalPricePerEP;
+        if (typeof price === 'number') {
+            return price.toFixed(2);
+        }
+        return 'N/A';
+    }
+
+    _formatTotalPrice(cargo) {
+        const totalValue = cargo.slotInfo?.pricing?.totalValue ?? cargo.totalValue;
+        if (typeof totalValue === 'number') {
+            return totalValue.toFixed(2);
+        }
+
+        const pricePerEp = cargo.currentPrice ?? cargo.basePrice ?? cargo.slotInfo?.pricing?.finalPricePerEP;
+        const availableEp = cargo.totalEP ?? cargo.quantity ?? cargo.slotInfo?.amount?.totalEP;
+        if (typeof pricePerEp === 'number' && typeof availableEp === 'number') {
+            return (pricePerEp * availableEp).toFixed(2);
+        }
+
+        return 'N/A';
     }
 
     /**
@@ -834,6 +950,111 @@ export class TradingUIRenderer {
         return Array.from(allGoods).sort();
     }
 
+    /**
+     * Show an info tooltip with detailed information
+     * @param {string} content - The content to display in the tooltip
+     * @param {HTMLElement} triggerElement - The element that triggered the tooltip
+     * @private
+     */
+    _showInfoTooltip(content, triggerElement) {
+        // Toggle off if the same indicator is clicked while tooltip is visible
+        if (this._currentTooltip && this._currentTrigger === triggerElement) {
+            this._hideInfoTooltip();
+            return;
+        }
+
+        // Hide any existing tooltip first
+        this._hideInfoTooltip();
+
+        // Create tooltip element
+        const tooltip = document.createElement('div');
+        tooltip.className = 'info-tooltip';
+        tooltip.innerHTML = `<p>${content.replace(/\n/g, '<br>')}</p>`;
+
+        // Position the tooltip near the trigger element
+        const rect = triggerElement.getBoundingClientRect();
+        const appRect = this.app.element.getBoundingClientRect();
+
+        // Try to position below the trigger element first
+        let left = rect.left - appRect.left;
+        let top = rect.bottom - appRect.top + 5;
+
+        // If it would go off the right edge, position it to the left
+        if (left + 300 > appRect.width) {
+            left = appRect.width - 300 - 5;
+        }
+
+        // If it would go off the bottom, position it above
+        if (top + 200 > appRect.height) {
+            top = rect.top - appRect.top - 200 - 5;
+        }
+
+        // Ensure it doesn't go off the edges
+        left = Math.max(5, Math.min(left, appRect.width - 300 - 5));
+        top = Math.max(5, top);
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+        tooltip.style.position = 'absolute';
+
+        // Add to the app element instead of document.body
+        this.app.element.appendChild(tooltip);
+
+        // Show with animation
+        requestAnimationFrame(() => tooltip.classList.add('show'));
+
+        // Store reference for cleanup and attach global listener
+        this._currentTooltip = tooltip;
+        this._currentTrigger = triggerElement;
+
+        document.addEventListener('pointerdown', this._handleGlobalPointerDown, true);
+    }
+
+    _handleGlobalPointerDown(event) {
+        if (!this._currentTooltip) {
+            return;
+        }
+
+        const target = event.target;
+
+        if (this._currentTooltip.contains(target)) {
+            return;
+        }
+
+        if (this._currentTrigger && (target === this._currentTrigger || this._currentTrigger.contains(target))) {
+            return;
+        }
+
+        if (target.closest('.info-indicator')) {
+            return;
+        }
+
+        this._hideInfoTooltip();
+    }
+
+    /**
+     * Hide the current info tooltip
+     * @private
+     */
+    _hideInfoTooltip() {
+        if (this._currentTooltip) {
+            const tooltip = this._currentTooltip;
+            tooltip.classList.remove('show');
+            setTimeout(() => {
+                if (tooltip && tooltip.parentNode) {
+                    tooltip.parentNode.removeChild(tooltip);
+                }
+            }, 200); // Wait for animation
+        }
+        this._currentTooltip = null;
+        this._currentTrigger = null;
+        document.removeEventListener('pointerdown', this._handleGlobalPointerDown, true);
+    }
+
+    /**
+     * Update selling tab state
+     * @private
+     */
     _updateSellingTab() {
         this._logDebug('UI State', 'Updating selling tab');
     }

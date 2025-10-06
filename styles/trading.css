@@ -421,6 +421,55 @@
     position: relative;
 }
 
+.wfrp-trading .cargo-card.slot-success {
+    background: var(--bg-tertiary);
+}
+
+.wfrp-trading .cargo-card.slot-failure {
+    background: rgba(239, 83, 80, 0.1);
+    border: 1px solid rgba(239, 83, 80, 0.35);
+    border-left: 4px solid var(--accent-warning);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wfrp-trading .cargo-card.slot-failure .failed-slot-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--accent-warning);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.wfrp-trading .cargo-card.slot-failure .failed-slot-icon {
+    font-size: 22px;
+}
+
+.wfrp-trading .cargo-card.slot-failure .failed-slot-title {
+    font-size: 15px;
+}
+
+.wfrp-trading .cargo-card.slot-failure .failed-slot-details {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.wfrp-trading .cargo-card.slot-failure .failed-slot-roll {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.wfrp-trading .cargo-card.slot-failure .failed-slot-message {
+    margin-top: 4px;
+}
+
 .wfrp-trading .cargo-card.collapsible:hover {
     border-color: var(--accent-primary);
     transform: translateY(-2px);
@@ -468,6 +517,24 @@
     color: var(--text-primary);
 }
 
+.wfrp-trading .cargo-price-highlight {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.wfrp-trading .cargo-price-highlight .price-per-ep {
+    font-weight: 600;
+    color: var(--accent-secondary);
+}
+
+.wfrp-trading .cargo-price-highlight .price-total {
+    font-weight: 600;
+    color: var(--accent-primary);
+}
+
 .wfrp-trading .cargo-category {
     background: var(--accent-info);
     color: white;
@@ -487,6 +554,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.wfrp-trading .price-info .price-value {
+    margin-left: auto;
+    margin-right: 8px;
 }
 
 .wfrp-trading .price-label {
@@ -777,39 +849,55 @@
     line-height: 1.4;
 }
 
-/* Tooltips */
-.tooltip {
-    position: relative;
-    cursor: help;
+/* Info Indicators */
+.info-indicator {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 6px;
+    background: var(--accent-info);
+    color: white;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+    line-height: 1;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    vertical-align: middle;
 }
 
-.tooltip:hover::after {
-    content: attr(data-tooltip);
+.merchant-info-indicator {
+    margin-left: 8px;
+}
+
+/* Info Tooltip */
+.info-tooltip {
     position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
     background: var(--bg-primary);
-    color: var(--text-primary);
-    padding: 8px 12px;
+    border: 2px solid var(--border-medium);
     border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    box-shadow: var(--shadow-lg);
+    z-index: 10000;
+    max-width: 300px;
     font-size: 12px;
-    white-space: nowrap;
-    z-index: 1000;
-    border: 1px solid var(--border-medium);
-    box-shadow: var(--shadow-md);
-    margin-bottom: 4px;
+    line-height: 1.4;
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: all 0.2s ease;
+    white-space: pre-line;
 }
 
-.tooltip:hover::before {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 5px solid transparent;
-    border-top-color: var(--bg-primary);
-    margin-bottom: -1px;
+.info-tooltip.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.info-tooltip p {
+    margin: 0;
+    color: var(--text-secondary);
 }
 
 /* Pipeline Diagnostics */

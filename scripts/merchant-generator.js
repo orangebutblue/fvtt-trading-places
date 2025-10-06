@@ -1,6 +1,6 @@
 /**
  * Trading Places Module - Merchant Generator
- * Implements population-based merchant generation with skill distribution and personality profiles
+ * Implements population-based merchant generation with skill distribution
  */
 
 console.log('Trading Places | Loading merchant-generator.js');
@@ -172,44 +172,6 @@ class MerchantGenerator {
     }
 
     /**
-     * Assign personality profile to a merchant
-     * @param {number} roll - Random roll (0-100)
-     * @returns {Object} - Personality profile
-     */
-    assignPersonalityProfile(roll = null) {
-        const config = this.config.merchantPersonalities;
-        const weights = config.distributionWeights;
-        
-        if (roll === null) {
-            roll = Math.random() * 100;
-        }
-        
-        // Convert weights to cumulative percentages
-        const total = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
-        let cumulative = 0;
-        
-        for (const [profileName, weight] of Object.entries(weights)) {
-            cumulative += (weight / total) * 100;
-            if (roll <= cumulative) {
-                const profile = profileName === 'defaultProfile' ? 
-                    config.defaultProfile : 
-                    config.profiles[profileName];
-                
-                return {
-                    profileName,
-                    ...profile
-                };
-            }
-        }
-        
-        // Fallback to default
-        return {
-            profileName: 'defaultProfile',
-            ...config.defaultProfile
-        };
-    }
-
-    /**
      * Generate a complete merchant object
      * @param {Object} settlement - Settlement object
      * @param {string} cargoType - Type of cargo merchant deals in
@@ -230,12 +192,10 @@ class MerchantGenerator {
 
         // Generate core attributes
         const skill = this.generateMerchantSkill(settlement);
-        const personality = this.assignPersonalityProfile();
         
-        // Calculate final haggling skill (base skill + personality modifier)
+        // Calculate final haggling skill
         const baseSkill = skill;
-        const personalityModifier = personality.haggleSkillModifier || 0;
-        const hagglingSkill = Math.max(5, Math.min(95, baseSkill + personalityModifier));
+        const hagglingSkill = Math.max(5, Math.min(95, baseSkill));
         
         // Generate skill description
         const skillDescription = this.getMerchantSkillDescription(hagglingSkill);
@@ -243,7 +203,7 @@ class MerchantGenerator {
         // Calculate quantities and prices based on equilibrium
         const quantity = this.calculateMerchantQuantity(settlement, cargoType, merchantType, equilibrium);
         const basePrice = this.calculateBasePrice(cargoType, settlement);
-        const price = this.applyPriceModifiers(basePrice, settlement, equilibrium, personality);
+        const price = this.applyPriceModifiers(basePrice, settlement, equilibrium);
         
         // Create merchant object
         const merchant = {
@@ -259,13 +219,10 @@ class MerchantGenerator {
             skill: hagglingSkill, // Keep legacy skill property for compatibility
             hagglingSkill: hagglingSkill,
             baseSkill: baseSkill,
-            personalityModifier: personalityModifier,
             skillDescription: skillDescription,
             quantity,
             basePrice,
             finalPrice: price,
-            personality: personality.profileName, // Use profileName for display
-            personalityProfile: personality, // Keep full profile for internal use
             equilibrium: {
                 supply: equilibrium.supply,
                 demand: equilibrium.demand,
@@ -289,11 +246,9 @@ class MerchantGenerator {
         logger.logAlgorithmStep('Merchant Generation', 'Merchant generated', {
             merchantId,
             baseSkill,
-            personalityModifier,
             hagglingSkill,
             quantity,
-            price,
-            personality: personality.profileName
+            price
         });
 
         return merchant;
@@ -366,14 +321,13 @@ class MerchantGenerator {
     }
 
     /**
-     * Apply price modifiers based on equilibrium and personality
+     * Apply price modifiers based on equilibrium
      * @param {number} basePrice - Base price
      * @param {Object} settlement - Settlement object
      * @param {Object} equilibrium - Supply/demand equilibrium
-     * @param {Object} personality - Merchant personality
      * @returns {number} - Modified price
      */
-    applyPriceModifiers(basePrice, settlement, equilibrium, personality) {
+    applyPriceModifiers(basePrice, settlement, equilibrium) {
         let price = basePrice;
         
         // Apply equilibrium modifiers
@@ -389,10 +343,6 @@ class MerchantGenerator {
         // Apply wealth modifier
         const wealthMultiplier = 1 + ((settlement.wealth - 3) * 0.05);
         price *= wealthMultiplier;
-        
-        // Apply personality variance
-        const variance = (Math.random() - 0.5) * personality.priceVariance;
-        price *= (1 + variance);
         
         return Math.max(0.1, Math.round(price * 100) / 100);
     }

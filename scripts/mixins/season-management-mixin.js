@@ -72,7 +72,8 @@ const SeasonManagementMixin = {
      * @private
      */
     async _updateCargoPricing() {
-        if (!this.currentSeason || !this.availableCargo.length) {
+        const tradableCargo = this.availableCargo.filter(cargo => cargo?.isSlotAvailable);
+        if (!this.currentSeason || tradableCargo.length === 0) {
             return;
         }
 
@@ -81,6 +82,9 @@ const SeasonManagementMixin = {
 
             // Recalculate prices for all available cargo
             this.availableCargo = this.availableCargo.map(cargo => {
+                if (!cargo?.isSlotAvailable) {
+                    return cargo;
+                }
                 try {
                     const basePrice = this.tradingEngine.calculateBasePrice(
                         cargo.name,
@@ -98,6 +102,10 @@ const SeasonManagementMixin = {
                     return cargo;
                 }
             });
+
+            if (Array.isArray(this.successfulCargo)) {
+                this.successfulCargo = this.availableCargo.filter(cargo => cargo?.isSlotAvailable);
+            }
 
             // Re-render content to show updated prices
             await this.render(false);

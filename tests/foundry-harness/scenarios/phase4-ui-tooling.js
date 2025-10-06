@@ -159,7 +159,7 @@ export default async function phase4UIToolingScenario(harness) {
         // Show sample merchants
         merchants.slice(0, 3).forEach(merchant => {
             console.log(`  - ${merchant.cargoType} ${merchant.type}: Skill ${merchant.skill}, ${merchant.quantity} units @ ${merchant.finalPrice} GC`);
-            console.log(`    Personality: ${merchant.personality.name}, Available: ${merchant.availability.isAvailable}`);
+            console.log(`    Available: ${merchant.availability.isAvailable}`);
         });
 
         // Test 4: Enhanced Trading Dialog Template
@@ -369,9 +369,6 @@ function calculateEquilibrium(settlement, cargoType) {
 }
 
 function generateTestMerchant(settlement, cargoType, type, equilibrium, index) {
-    const personalities = ['Standard Merchant', 'Shrewd Dealer', 'Generous Trader', 'Suspicious Dealer'];
-    const personalityIndex = index % personalities.length;
-    
     const skill = Math.max(5, Math.min(95, 25 + (settlement.wealth * 8) + (Math.random() * 30)));
     const quantity = Math.max(1, settlement.size + Math.floor(Math.random() * settlement.size));
     const basePrice = getBasePrice(cargoType);
@@ -397,10 +394,6 @@ function generateTestMerchant(settlement, cargoType, type, equilibrium, index) {
         quantity,
         basePrice,
         finalPrice: Math.round(finalPrice * 100) / 100,
-        personality: { 
-            name: personalities[personalityIndex],
-            description: `A ${personalities[personalityIndex].toLowerCase()} with unique trading style`
-        },
         equilibrium: { supply: equilibrium.supply, demand: equilibrium.demand },
         availability: { 
             isAvailable,

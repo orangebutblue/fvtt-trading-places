@@ -26,9 +26,9 @@ const UIStateMixin = {
      * @private
      */
     _updateTransactionButtons() {
-        const hasSettlement = !!this.selectedSettlement;
-        const hasCargo = this.availableCargo.length > 0;
-        const hasSeason = !!this.currentSeason;
+    const hasSettlement = !!this.selectedSettlement;
+    const hasSeason = !!this.currentSeason;
+    const hasTradableCargo = Array.isArray(this.successfulCargo) && this.successfulCargo.length > 0;
 
         // Get button elements
         const haggleBtn = this.element.querySelector('.haggle-button');
@@ -38,29 +38,29 @@ const UIStateMixin = {
 
         // Enable/disable buttons based on context
         if (haggleBtn) {
-            haggleBtn.disabled = !hasSettlement || !hasCargo || !hasSeason;
-            haggleBtn.title = this._getButtonTooltip('haggle', hasSettlement, hasCargo, hasSeason);
+            haggleBtn.disabled = !hasSettlement || !hasTradableCargo || !hasSeason;
+            haggleBtn.title = this._getButtonTooltip('haggle', hasSettlement, hasTradableCargo, hasSeason);
         }
 
         if (saleBtn) {
             saleBtn.disabled = !hasSettlement || !hasSeason;
-            saleBtn.title = this._getButtonTooltip('sale', hasSettlement, hasCargo, hasSeason);
+            saleBtn.title = this._getButtonTooltip('sale', hasSettlement, hasTradableCargo, hasSeason);
         }
 
         if (desperateSaleBtn) {
             const isTradeSettlement = this.dataManager?.isTradeSettlement(this.selectedSettlement);
             desperateSaleBtn.disabled = !hasSettlement || !hasSeason || !isTradeSettlement;
-            desperateSaleBtn.title = this._getButtonTooltip('desperate_sale', hasSettlement, hasCargo, hasSeason, isTradeSettlement);
+            desperateSaleBtn.title = this._getButtonTooltip('desperate_sale', hasSettlement, hasTradableCargo, hasSeason, isTradeSettlement);
         }
 
         if (rumorSaleBtn) {
             rumorSaleBtn.disabled = !hasSettlement || !hasSeason;
-            rumorSaleBtn.title = this._getButtonTooltip('rumor_sale', hasSettlement, hasCargo, hasSeason);
+            rumorSaleBtn.title = this._getButtonTooltip('rumor_sale', hasSettlement, hasTradableCargo, hasSeason);
         }
 
         this._logDebug('UI State', 'Transaction buttons updated', {
             hasSettlement,
-            hasCargo,
+            hasTradableCargo,
             hasSeason,
             buttonsFound: {
                 haggle: !!haggleBtn,
@@ -81,7 +81,7 @@ const UIStateMixin = {
      * @returns {string} - Tooltip text
      * @private
      */
-    _getButtonTooltip(buttonType, hasSettlement, hasCargo, hasSeason, isTradeSettlement = false) {
+    _getButtonTooltip(buttonType, hasSettlement, hasTradableCargo, hasSeason, isTradeSettlement = false) {
         if (!hasSeason) {
             return 'Please set the current season first';
         }
@@ -91,7 +91,7 @@ const UIStateMixin = {
 
         switch (buttonType) {
             case 'haggle':
-                return hasCargo ? 'Attempt to negotiate better prices' : 'Check cargo availability first';
+                return hasTradableCargo ? 'Attempt to negotiate better prices' : 'Check cargo availability first';
             case 'sale':
                 return 'Sell cargo from inventory';
             case 'desperate_sale':

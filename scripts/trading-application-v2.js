@@ -1,7 +1,7 @@
 console.log('Trading Places | Loading trading-application-v2.js');
 
 import { TradingUIEventHandlers } from './ui/TradingUIEventHandlers.js';
-import { TradingUIRenderer } from './ui/TradingUIRenderer.js';
+import TradingUIRenderer from './ui/TradingUIRenderer.js';
 
 /**
  * Trading Places Module - V2 Application Framework
@@ -65,6 +65,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         this.selectedCargo = null;
         this.selectedResource = null;
         this.availableCargo = [];
+        this.successfulCargo = [];
         this.transactionHistory = [];
         this.playerCargo = [];
 
@@ -325,7 +326,10 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         context.currentSeason = this.getCurrentSeason();
         context.selectedSettlement = this.selectedSettlement;
         context.selectedRegion = this.selectedRegion || '';
-        context.availableCargo = this.availableCargo;
+    const successfulCargo = Array.isArray(this.successfulCargo) ? this.successfulCargo : [];
+    context.availableCargo = successfulCargo;
+    context.successfulCargo = successfulCargo;
+    context.slotAvailabilityResults = this.availableCargo;
         context.transactionHistory = this.transactionHistory;
         context.playerCargo = this.playerCargo;
         
@@ -338,12 +342,12 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
         // Add UI state data
         context.hasSettlement = !!this.selectedSettlement;
-        context.hasCargo = this.availableCargo.length > 0;
+    context.hasCargo = successfulCargo.length > 0;
         context.hasSeason = !!this.currentSeason;
         context.hasPlayerCargo = this.playerCargo.length > 0;
 
         // Add helper functions for template
-        context.getSizeDescription = (sizeCode) => {
+    context.getSizeDescription = (sizeCode) => {
             if (!this.dataManager) return sizeCode;
             try {
                 return this.dataManager.getSizeDescription(sizeCode);
@@ -396,7 +400,9 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
         this._logDebug('Template Context', 'Context prepared successfully', {
             settlements: context.settlements.length,
-            availableCargo: context.availableCargo.length,
+            availableCargo: successfulCargo.length,
+            slotResults: context.slotAvailabilityResults?.length || 0,
+            successfulCargo: successfulCargo.length,
             transactionHistory: context.transactionHistory.length,
             currentSeason: context.currentSeason,
             sellableCargoTypes: context.sellableCargoTypes.length
@@ -587,7 +593,8 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
      * @private
      */
     async _updateCargoPricing() {
-        if (!this.currentSeason || !this.availableCargo.length) {
+        const tradableCargo = this.availableCargo.filter(cargo => cargo?.isSlotAvailable);
+        if (!this.currentSeason || tradableCargo.length === 0) {
             return;
         }
 
@@ -596,6 +603,9 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
             // Recalculate prices for all available cargo
             this.availableCargo = this.availableCargo.map(cargo => {
+                if (!cargo?.isSlotAvailable) {
+                    return cargo;
+                }
                 try {
                     const basePrice = this.tradingEngine.calculateBasePrice(
                         cargo.name,
@@ -613,6 +623,8 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                     return cargo;
                 }
             });
+
+            this.successfulCargo = this.availableCargo.filter(cargo => cargo?.isSlotAvailable);
 
             // Re-render content to show updated prices
             await this.render(false);

@@ -83,7 +83,6 @@ describe('Merchant Generation', () => {
             expect(merchant).toHaveProperty('skill');
             expect(merchant).toHaveProperty('quantity');
             expect(merchant).toHaveProperty('finalPrice');
-            expect(merchant).toHaveProperty('personality');
             expect(merchant.settlement.name).toBe('Altdorf');
         });
 

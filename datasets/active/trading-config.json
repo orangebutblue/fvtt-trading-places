@@ -63,60 +63,6 @@
     "minSkill": 5,
     "maxSkill": 95
   },
-  "merchantPersonalities": {
-    "distributionWeights": {
-      "standard": 50,
-      "shrewd": 20,
-      "generous": 15,
-      "suspicious": 15
-    },
-    "defaultProfile": {
-      "name": "Standard Merchant",
-      "haggleSkillModifier": 0,
-      "priceVariance": 0,
-      "quantityVariance": 0,
-      "specialBehaviors": []
-    },
-    "profiles": {
-      "standard": {
-        "name": "Standard Merchant",
-        "haggleSkillModifier": 0,
-        "priceVariance": 0,
-        "quantityVariance": 0,
-        "specialBehaviors": []
-      },
-      "shrewd": {
-        "name": "Shrewd Dealer",
-        "haggleSkillModifier": 10,
-        "priceVariance": 0.1,
-        "quantityVariance": -0.1,
-        "specialBehaviors": [
-          "drives hard bargains",
-          "prefers exact coin"
-        ]
-      },
-      "generous": {
-        "name": "Generous Trader",
-        "haggleSkillModifier": -5,
-        "priceVariance": -0.1,
-        "quantityVariance": 0.15,
-        "specialBehaviors": [
-          "offers bundle discounts",
-          "open to favors"
-        ]
-      },
-      "suspicious": {
-        "name": "Suspicious Dealer",
-        "haggleSkillModifier": 5,
-        "priceVariance": 0.05,
-        "quantityVariance": -0.05,
-        "specialBehaviors": [
-          "requires references",
-          "demands collateral"
-        ]
-      }
-    }
-  },
   "desperation": {
     "skillPenalty": 0.2,
     "priceModifier": 0.85,

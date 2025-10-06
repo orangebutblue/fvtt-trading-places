@@ -73,44 +73,41 @@ export class BuyingFlow {
             console.log('Settlement:', this.app.selectedSettlement.name);
             console.log('Season:', this.app.currentSeason);
             
-            // Use FoundryVTT dice roller instead of fallback
-            const rollFunction = async () => {
+            const rollPercentile = async ({ flavor, logPrefix, postToChat = true }) => {
                 const roll = new Roll("1d100");
                 await roll.evaluate();
-                
-                // Show dice roll in chat if enabled
+
                 const chatVisibility = game.settings.get("trading-places", "chatVisibility");
-                if (chatVisibility !== "disabled") {
+                if (postToChat && chatVisibility !== "disabled") {
                     await roll.toMessage({
                         speaker: ChatMessage.getSpeaker(),
-                        flavor: `Cargo Availability Check in ${this.app.selectedSettlement.name}`
+                        flavor: flavor || `Cargo availability roll in ${this.app.selectedSettlement.name}`
                     });
                 }
-                
-                console.log(`🎲 Rolled 1d100: ${roll.total}`);
+
+                console.log(`${logPrefix || '🎲 Roll'} ${roll.total}`);
                 return roll.total;
             };
-            
+
+            const rollSlotAvailability = async (slotNumber) => {
+                return rollPercentile({
+                    flavor: `Cargo slot ${slotNumber} availability check in ${this.app.selectedSettlement.name}`,
+                    logPrefix: `🎲 Slot ${slotNumber} availability roll:`,
+                    postToChat: true
+                });
+            };
+
+            const merchantRollFunction = async () => {
+                return rollPercentile({
+                    flavor: `Merchant generation roll (${this.app.selectedSettlement.name})`,
+                    logPrefix: '🎲 Merchant generation roll:',
+                    postToChat: false
+                });
+            };
+
             let pipelineResult = null;
-            let marketRoll = null;
             if (this.app.cargoAvailabilityPipeline) {
                 try {
-                    // Perform the market availability roll first
-                    const roll = new Roll("1d100");
-                    await roll.evaluate();
-                    marketRoll = roll.total;
-                    
-                    // Show dice roll in chat if enabled
-                    const chatVisibility = game.settings.get("trading-places", "chatVisibility");
-                    if (chatVisibility !== "disabled") {
-                        await roll.toMessage({
-                            speaker: ChatMessage.getSpeaker(),
-                            flavor: `Cargo Availability Check in ${this.app.selectedSettlement.name}`
-                        });
-                    }
-                    
-                    console.log(`🎲 Market availability roll: ${marketRoll}`);
-                    
                     pipelineResult = await this.app.cargoAvailabilityPipeline.run({
                         settlement: this.app.selectedSettlement,
                         season: this.app.currentSeason
@@ -118,49 +115,85 @@ export class BuyingFlow {
                     console.log('Orange realism pipeline output:', pipelineResult);
                 } catch (pipelineError) {
                     this._logError('Availability Pipeline', 'Pipeline execution failed', { error: pipelineError.message });
+                    throw new Error(`Pipeline execution failed: ${pipelineError.message}`);
                 }
+            } else {
+                throw new Error('Cargo availability pipeline is not available');
             }
 
-            // Use pipeline results if available, otherwise fall back to trading engine
+            // Use pipeline results - pipeline must produce cargo
             let availabilityResult = null;
             let availableCargo = [];
+            let successfulCargo = [];
 
             if (pipelineResult && pipelineResult.slots && pipelineResult.slots.length > 0) {
-                // Use orange-realism pipeline results - all slots produce cargo with merchants
                 const sizeRating = this.dataManager.convertSizeToNumeric(this.app.selectedSettlement.size);
                 const wealthRating = this.app.selectedSettlement.wealth;
                 const finalChance = Math.min((sizeRating + wealthRating) * 10, 100);
-                
-                availabilityResult = { 
-                    available: true,
-                    availabilityCheck: {
-                        roll: marketRoll,
-                        chance: finalChance
+
+                const slotOutcomes = [];
+                const slotDisplayEntries = [];
+
+                for (const slot of pipelineResult.slots) {
+                    const slotRoll = await rollSlotAvailability(slot.slotNumber);
+                    const slotSuccessful = slotRoll <= finalChance;
+                    slotOutcomes.push({
+                        slotNumber: slot.slotNumber,
+                        roll: slotRoll,
+                        chance: finalChance,
+                        success: slotSuccessful
+                    });
+
+                    const baseEntry = {
+                        slotNumber: slot.slotNumber,
+                        potentialCargo: {
+                            name: slot.cargo?.name,
+                            category: slot.cargo?.category
+                        },
+                        isSlotAvailable: slotSuccessful,
+                        availability: {
+                            roll: slotRoll,
+                            chance: finalChance,
+                            success: slotSuccessful
+                        }
+                    };
+
+                    if (!slotSuccessful) {
+                        console.log(`❌ Slot ${slot.slotNumber} failed availability (${slotRoll} > ${finalChance}). Displaying as unavailable.`);
+                        slotDisplayEntries.push({
+                            slotNumber: slot.slotNumber,
+                            isSlotAvailable: false,
+                            availability: {
+                                roll: slotRoll,
+                                chance: finalChance,
+                                success: false
+                            },
+                            failure: {
+                                roll: slotRoll,
+                                target: finalChance,
+                                message: `Availability roll ${slotRoll} exceeded the required ${finalChance}.`
+                            }
+                        });
+                        continue;
                     }
-                };
-                
-                // Convert all pipeline slots to cargo objects for display
-                availableCargo = await Promise.all(pipelineResult.slots.map(async (slot) => {
+
                     const cargoType = this.dataManager.getCargoType(slot.cargo.name);
                     let merchant;
                     try {
-                        // Debug: Check if config is loaded
                         const systemConfig = this.tradingEngine.dataManager.getSystemConfig();
                         console.log('🔍 SYSTEM CONFIG DEBUG:', {
                             hasConfig: !!systemConfig,
                             configKeys: Object.keys(systemConfig),
-                            hasSkillDistribution: !!systemConfig.skillDistribution,
-                            hasMerchantPersonalities: !!systemConfig.merchantPersonalities
+                            hasSkillDistribution: !!systemConfig?.skillDistribution,
+                            hasMerchantPersonalities: !!systemConfig?.merchantPersonalities
                         });
-                        
-                        merchant = await this.tradingEngine.generateRandomMerchant(this.app.selectedSettlement, rollFunction);
+
+                        merchant = await this.tradingEngine.generateRandomMerchant(this.app.selectedSettlement, merchantRollFunction);
                         console.log('🔍 MERCHANT OBJECT DEBUG:', {
                             name: merchant.name,
                             skillDescription: merchant.skillDescription,
                             hagglingSkill: merchant.hagglingSkill,
                             baseSkill: merchant.baseSkill,
-                            personalityModifier: merchant.personalityModifier,
-                            personality: merchant.personality,
                             allKeys: Object.keys(merchant)
                         });
                     } catch (error) {
@@ -169,13 +202,12 @@ export class BuyingFlow {
                             name: 'Unknown Merchant',
                             skillDescription: 'Unknown',
                             hagglingSkill: 'N/A',
-                            baseSkill: 'N/A',
-                            personalityModifier: 0,
-                            personality: 'Unknown'
+                            baseSkill: 'N/A'
                         };
                     }
-                    
-                    return {
+
+                    const successfulEntry = {
+                        ...baseEntry,
                         name: slot.cargo.name,
                         category: slot.cargo.category,
                         basePrice: slot.pricing.basePricePerEP,
@@ -191,47 +223,30 @@ export class BuyingFlow {
                             amount: slot.amount,
                             quality: slot.quality,
                             pricing: slot.pricing,
-                            contraband: slot.contraband.contraband,
+                            contraband: slot.contraband?.contraband,
                             merchant: slot.merchant,
-                            desperationUsed: false // No desperation since merchants always available
+                            desperationUsed: false
                         }
                     };
-                }));
-            } else {
-                // Fallback to old trading engine method
-                const completeResult = await this.tradingEngine.performCompleteAvailabilityCheck(
-                    this.app.selectedSettlement,
-                    this.app.currentSeason,
-                    rollFunction
-                );
-                
-                availabilityResult = completeResult;
-                
-                if (completeResult.available) {
-                    // Convert cargo types to detailed cargo objects for display
-                    availableCargo = await Promise.all(completeResult.cargoTypes.map(async (cargoName) => {
-                        const cargoType = this.dataManager.getCargoType(cargoName);
-                        const basePrice = this.tradingEngine.calculateBasePrice(cargoName, this.app.currentSeason);
-                        const totalCargoSize = completeResult.cargoSize.totalSize;
-                        const encumbrance = cargoType?.encumbrancePerUnit || 1;
-                        const quantity = Math.floor(totalCargoSize / encumbrance);
-                        
-                        // Generate a merchant for this cargo type
-                        const merchant = await this.tradingEngine.generateRandomMerchant(this.app.selectedSettlement, rollFunction);
-                        
-                        return {
-                            name: cargoName,
-                            category: cargoType?.category || 'Unknown',
-                            basePrice: basePrice,
-                            currentPrice: basePrice,
-                            quantity: quantity,
-                            totalEP: totalCargoSize,
-                            quality: 'Average',
-                            encumbrancePerUnit: encumbrance,
-                            merchant: merchant
-                        };
-                    }));
+
+                    slotDisplayEntries.push(successfulEntry);
+                    successfulCargo.push(successfulEntry);
                 }
+
+                availabilityResult = {
+                    available: successfulCargo.length > 0,
+                    isAvailable: successfulCargo.length > 0,
+                    availabilityCheck: {
+                        chance: finalChance,
+                        rolls: slotOutcomes,
+                        successfulSlots: successfulCargo.length,
+                        attemptedSlots: pipelineResult.slots.length
+                    }
+                };
+
+                availableCargo = slotDisplayEntries;
+            } else {
+                throw new Error('Pipeline did not generate any cargo slots');
             }
             
             // Update UI based on result
@@ -246,14 +261,22 @@ export class BuyingFlow {
                 
                 if (pipelineResult) {
                     console.log('🎯 ORANGE REALISM PIPELINE RESULTS');
-                    console.log(`  ├─ Total Slots: ${pipelineResult.slotPlan.producerSlots}`);
-                    console.log(`  ├─ All slots produced cargo with merchants`);
-                    console.log(`  └─ Total cargo types: ${availableCargo.length}`);
-                    
-                    availableCargo.forEach((cargo) => {
+                    console.log(`  ├─ Total Slots Evaluated: ${pipelineResult.slotPlan.producerSlots}`);
+                    console.log(`  ├─ Successful Slots: ${availabilityResult.availabilityCheck.successfulSlots}`);
+                    console.log(`  └─ Successful cargo types: ${successfulCargo.length}`);
+
+                    const slotRollMap = new Map(
+                        availabilityResult.availabilityCheck.rolls.map(outcome => [outcome.slotNumber, outcome])
+                    );
+
+                    successfulCargo.forEach((cargo) => {
                         const slot = pipelineResult.slots.find(s => s.cargo.name === cargo.name);
                         if (slot) {
+                            const rollInfo = slotRollMap.get(slot.slotNumber);
                             console.log(`💰 SLOT ${slot.slotNumber}: ${cargo.name}`);
+                            if (rollInfo) {
+                                console.log(`  ├─ Availability Roll: ${rollInfo.roll} ≤ ${availabilityResult.availabilityCheck.chance} (success)`);
+                            }
                             console.log(`  ├─ Quantity: ${cargo.quantity} units (${cargo.totalEP} EP)`);
                             console.log(`  ├─ Quality: ${cargo.quality}`);
                             console.log(`  ├─ Price: ${cargo.currentPrice} GC per EP`);
@@ -265,12 +288,21 @@ export class BuyingFlow {
                             console.log(`  └─ ✅ Merchant automatically generated`);
                         }
                     });
+
+                    availabilityResult.availabilityCheck.rolls
+                        .filter(outcome => !outcome.success)
+                        .forEach(outcome => {
+                            console.log(`🚫 SLOT ${outcome.slotNumber}: Availability roll ${outcome.roll} > ${availabilityResult.availabilityCheck.chance} (no cargo generated)`);
+                        });
                 } else {
                     // Legacy trading engine results
                     console.log('🎯 STEP 1: Availability Check Results');
                     console.log(`  ├─ Base Chance: (${this.dataManager.convertSizeToNumeric(this.app.selectedSettlement.size)} + ${this.app.selectedSettlement.wealth}) × 10 = ${availabilityResult.availabilityCheck?.chance || 'N/A'}%`);
-                    console.log(`  ├─ Roll: ${availabilityResult.availabilityCheck?.roll || 'N/A'}`);
-                    console.log(`  └─ Result: ${availabilityResult.availabilityCheck?.roll || 'N/A'} ≤ ${availabilityResult.availabilityCheck?.chance || 'N/A'} = SUCCESS`);
+                    const firstSuccess = availabilityResult.availabilityCheck?.rolls?.find?.(outcome => outcome.success);
+                    if (firstSuccess) {
+                        console.log(`  ├─ Successful Slot Roll: ${firstSuccess.roll}`);
+                    }
+                    console.log('  └─ Result: Success via pipeline slots');
                     
                     console.log('📦 CARGO TYPES');
                     console.log(`  ├─ Available Types: [${availabilityResult.cargoTypes?.join(', ') || 'N/A'}]`);
@@ -285,6 +317,7 @@ export class BuyingFlow {
                 
                 // Store available cargo
                 this.app.availableCargo = availableCargo;
+                this.app.successfulCargo = successfulCargo;
                 
                 // Debug: Log what we're storing
                 console.log('📦 STORING AVAILABLE CARGO:', availableCargo.map(c => ({
@@ -292,8 +325,7 @@ export class BuyingFlow {
                     merchant: {
                         name: c.merchant?.name,
                         hagglingSkill: c.merchant?.hagglingSkill,
-                        baseSkill: c.merchant?.baseSkill,
-                        personalityModifier: c.merchant?.personalityModifier
+                        baseSkill: c.merchant?.baseSkill
                     }
                 })));
                 
@@ -311,7 +343,7 @@ export class BuyingFlow {
                 this.app.renderer._updateTransactionButtons();
                 
                 // Show success notification
-                const cargoSummary = availableCargo.map(c => `${c.name} (${c.quantity})`).join(', ');
+                const cargoSummary = successfulCargo.map(c => `${c.name} (${c.quantity})`).join(', ');
                 ui.notifications.info(`Cargo available in ${this.app.selectedSettlement.name}: ${cargoSummary}`);
                 
             } else {
@@ -319,34 +351,40 @@ export class BuyingFlow {
                 console.log('❌ NO CARGO AVAILABLE');
                 
                 if (pipelineResult) {
-                    // This shouldn't happen with the new logic - pipeline should always produce cargo
-                    console.log('📊 PIPELINE ERROR: Pipeline ran but produced no slots');
-                    console.log(`  ├─ This indicates a bug in the pipeline logic`);
+                    console.log('📊 PIPELINE RESULTS');
+                    console.log(`  ├─ Total Slots Evaluated: ${pipelineResult.slotPlan.producerSlots}`);
+                    console.log('  ├─ Availability rolls by slot:');
+                    (availabilityResult.availabilityCheck?.rolls || []).forEach(outcome => {
+                        console.log(`    • Slot ${outcome.slotNumber}: roll ${outcome.roll} > ${availabilityResult.availabilityCheck?.chance || 'N/A'} → no cargo`);
+                    });
+                    console.log('  └─ Outcome: No slots passed the availability check.');
                 } else {
                     console.log('Availability check details:', availabilityResult.availabilityCheck);
                 }
                 
-                // Clear any existing cargo
-                this.app.availableCargo = [];
+                // Store slot outcomes (even though none succeeded) so UI can show failed slots
+                this.app.availableCargo = availableCargo;
+                this.app.successfulCargo = successfulCargo;
                 
                 // Show failure message with detailed breakdown
                 this.app.renderer._showAvailabilityResults({
                     availabilityResult,
+                    availableCargo,
                     pipelineResult
                 });
                 
-                // Hide cargo display
-                this.app.renderer._hideCargoDisplay();
+                // Show cargo display with failure cards
+                this.app.renderer._updateCargoDisplay(availableCargo);
                 
                 // Update button states
                 this.app.renderer._updateTransactionButtons();
                 
                 // Show info notification
                 if (pipelineResult) {
-                    ui.notifications.info(`Pipeline error: no cargo generated (this is unexpected)`);
+                    ui.notifications.info(`No cargo available in ${this.app.selectedSettlement.name}: all slots failed their availability rolls.`);
                 } else {
                     const rollDetails = availabilityResult.availabilityCheck;
-                    ui.notifications.info(`No cargo available in ${this.app.selectedSettlement.name} (rolled ${rollDetails?.roll || 'N/A'}/${rollDetails?.chance || 'N/A'})`);
+                    ui.notifications.info(`No cargo available in ${this.app.selectedSettlement.name} (chance ${rollDetails?.chance || 'N/A'}%)`);
                 }
             }
             
@@ -364,6 +402,7 @@ export class BuyingFlow {
             
             // Clear cargo on error
             this.app.availableCargo = [];
+            this.app.successfulCargo = [];
             this.app.renderer._hideCargoDisplay();
             this.app.renderer._updateTransactionButtons();
             

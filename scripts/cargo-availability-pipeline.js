@@ -754,54 +754,6 @@ _buildCandidateSnapshot(candidateTable, selectedName) {
     };
 }
 
-_selectMerchantProfile(personalityConfig) {
-    if (!personalityConfig) {
-        return {
-            key: 'standard',
-            name: 'Standard Merchant',
-            haggleSkillModifier: 0,
-            priceVariance: 0,
-            quantityVariance: 0,
-            specialBehaviors: []
-        };
-    }
-
-    const weights = personalityConfig.distributionWeights || {};
-    const keys = Object.keys(weights);
-    if (keys.length === 0) {
-        return { key: 'default', ...(personalityConfig.defaultProfile || {}) };
-    }
-
-    const totalWeight = keys.reduce((sum, key) => sum + (weights[key] ?? 0), 0);
-    let threshold = this.random() * totalWeight;
-
-    for (const key of keys) {
-        threshold -= weights[key] ?? 0;
-        if (threshold <= 0) {
-            const profile = key === 'defaultProfile'
-                ? personalityConfig.defaultProfile
-                : personalityConfig.profiles?.[key] || personalityConfig.defaultProfile;
-
-            return {
-                key,
-                ...(profile || personalityConfig.defaultProfile || {})
-            };
-        }
-    }
-
-    return {
-        key: 'default',
-        ...(personalityConfig.defaultProfile || {
-            name: 'Standard Merchant',
-            haggleSkillModifier: 0,
-            priceVariance: 0,
-            quantityVariance: 0,
-            specialBehaviors: []
-        })
-    };
-}
-
-
     _buildCandidateSnapshot(candidateTable, selectedName) {
         if (!candidateTable || !Array.isArray(candidateTable.entries)) {
             return { totalWeight: 0, entries: [] };
@@ -824,53 +776,6 @@ _selectMerchantProfile(personalityConfig) {
             totalWeight: Number((candidateTable.totalWeight ?? 0).toFixed(2)),
             entryCount: candidateTable.entries.length,
             entries: topEntries
-        };
-    }
-
-    _selectMerchantProfile(personalityConfig) {
-        if (!personalityConfig) {
-            return {
-                key: 'standard',
-                name: 'Standard Merchant',
-                haggleSkillModifier: 0,
-                priceVariance: 0,
-                quantityVariance: 0,
-                specialBehaviors: []
-            };
-        }
-
-        const weights = personalityConfig.distributionWeights || {};
-        const keys = Object.keys(weights);
-        if (keys.length === 0) {
-            return { key: 'default', ...(personalityConfig.defaultProfile || {}) };
-        }
-
-        const totalWeight = keys.reduce((sum, key) => sum + (weights[key] ?? 0), 0);
-        let threshold = this.random() * totalWeight;
-
-        for (const key of keys) {
-            threshold -= weights[key] ?? 0;
-            if (threshold <= 0) {
-                const profile = key === 'defaultProfile'
-                    ? personalityConfig.defaultProfile
-                    : personalityConfig.profiles?.[key] || personalityConfig.defaultProfile;
-
-                return {
-                    key,
-                    ...(profile || personalityConfig.defaultProfile || {})
-                };
-            }
-        }
-
-        return {
-            key: 'default',
-            ...(personalityConfig.defaultProfile || {
-                name: 'Standard Merchant',
-                haggleSkillModifier: 0,
-                priceVariance: 0,
-                quantityVariance: 0,
-                specialBehaviors: []
-            })
         };
     }
 

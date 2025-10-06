@@ -1520,29 +1520,25 @@ class TradingEngine {
      * Generate a random merchant for a settlement using the config system
      * @param {Object} settlement - Settlement object
      * @param {Function} rollFunction - Function that returns 1d100 result (for testing)
-     * @returns {Object} - Merchant object with name, skills, and personality
+     * @returns {Object} - Merchant object with name and skills
      */
     async generateRandomMerchant(settlement, rollFunction = null) {
         // Get config data
         const config = this.dataManager.getSystemConfig();
         const skillConfig = config.skillDistribution;
-        const personalityConfig = config.merchantPersonalities;
 
-        if (!skillConfig || !personalityConfig) {
+        if (!skillConfig) {
             throw new Error('Merchant generation config missing from trading-config.json');
         }
 
         // Generate base skill using percentile system
         const skill = this._calculateMerchantSkill(settlement, skillConfig, rollFunction);
 
-        // Select personality profile
-        const personality = this._selectMerchantPersonality(personalityConfig, rollFunction);
-
-        // Generate name based on personality
-        const name = this._generateMerchantName(personality);
+        // Generate name
+        const name = this._generateMerchantName();
 
         // Calculate final haggling skill
-        const finalHagglingSkill = Math.max(5, Math.min(95, skill + personality.haggleSkillModifier));
+        const finalHagglingSkill = Math.max(5, Math.min(95, skill));
 
         // Generate skill description based on final skill
         const skillDescription = this._getSkillDescription(finalHagglingSkill);
@@ -1551,12 +1547,7 @@ class TradingEngine {
             name: name,
             skillDescription: skillDescription,
             hagglingSkill: finalHagglingSkill,
-            personality: personality.name,
-            priceVariance: personality.priceVariance,
-            quantityVariance: personality.quantityVariance,
-            specialBehaviors: personality.specialBehaviors,
-            baseSkill: skill,
-            personalityModifier: personality.haggleSkillModifier
+            baseSkill: skill
         };
     }
 
@@ -1610,62 +1601,15 @@ class TradingEngine {
     }
 
     /**
-     * Select merchant personality based on distribution weights
-     * @param {Object} personalityConfig - Personality config
-     * @param {Function} rollFunction - Roll function for testing
-     * @returns {Object} - Selected personality profile
-     */
-    _selectMerchantPersonality(personalityConfig, rollFunction = null) {
-        const weights = personalityConfig.distributionWeights;
-        const totalWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
-
-        const roll = rollFunction ? rollFunction() : Math.floor(Math.random() * totalWeight) + 1;
-        let runningWeight = 0;
-
-        for (const [profileKey, weight] of Object.entries(weights)) {
-            runningWeight += weight;
-            if (roll <= runningWeight) {
-                if (profileKey === 'defaultProfile') {
-                    return personalityConfig.defaultProfile;
-                } else {
-                    return personalityConfig.profiles[profileKey];
-                }
-            }
-        }
-
-        // Fallback
-        return personalityConfig.defaultProfile;
-    }
-
-    /**
-     * Generate merchant name based on personality
-     * @param {Object} personality - Personality profile
+     * Generate merchant name
      * @returns {string} - Generated merchant name
      */
-    _generateMerchantName(personality) {
-        // Name pools based on personality traits
-        const namePools = {
-            'Standard Merchant': {
-                first: ['Aldric', 'Beatrix', 'Casper', 'Dalia', 'Eldric', 'Fiona', 'Gareth', 'Helena', 'Ian', 'Jasmine'],
-                last: ['Voss', 'Hale', 'Thorne', 'Wren', 'Kane', 'Black', 'Stone', 'Cross', 'Rook', 'Vale']
-            },
-            'Shrewd Dealer': {
-                first: ['Silas', 'Morrigan', 'Lucius', 'Seraphina', 'Damian', 'Isolde', 'Victor', 'Raven', 'Cassius', 'Lilith'],
-                last: ['Shadow', 'Sharp', 'Keen', 'Wise', 'Cunning', 'Craft', 'Deal', 'Trade', 'Profit', 'Gain']
-            },
-            'Generous Trader': {
-                first: ['Barnabas', 'Matilda', 'Theodore', 'Rose', 'Samuel', 'Margaret', 'Benjamin', 'Elizabeth', 'Joseph', 'Catherine'],
-                last: ['Goodwill', 'Kind', 'Fair', 'Honest', 'Square', 'True', 'Noble', 'Generous', 'Benevolent', 'Charitable']
-            },
-            'Suspicious Dealer': {
-                first: ['Grim', 'Wary', 'Distrust', 'Cautious', 'Paranoid', 'Dubious', 'Skeptical', 'Leery', 'Mistrustful', 'Apprehensive'],
-                last: ['Guard', 'Watch', 'Eye', 'Spy', 'Scrutiny', 'Inspection', 'Examination', 'Review', 'Check', 'Verify']
-            }
-        };
+    _generateMerchantName() {
+        const firstNames = ['Aldric', 'Beatrix', 'Casper', 'Dalia', 'Eldric', 'Fiona', 'Gareth', 'Helena', 'Ian', 'Jasmine', 'Karl', 'Lena', 'Marcus', 'Nina', 'Otto', 'Paula', 'Quentin', 'Rosa', 'Stefan', 'Tina'];
+        const lastNames = ['Voss', 'Hale', 'Thorne', 'Wren', 'Kane', 'Black', 'Stone', 'Cross', 'Rook', 'Vale', 'Wolf', 'Hart', 'Bear', 'Eagle', 'Fox'];
 
-        const pool = namePools[personality.name] || namePools['Standard Merchant'];
-        const first = pool.first[Math.floor(Math.random() * pool.first.length)];
-        const last = pool.last[Math.floor(Math.random() * pool.last.length)];
+        const first = firstNames[Math.floor(Math.random() * firstNames.length)];
+        const last = lastNames[Math.floor(Math.random() * lastNames.length)];
 
         return `${first} ${last}`;
     }
