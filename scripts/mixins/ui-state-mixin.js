@@ -19,6 +19,11 @@ const UIStateMixin = {
 
         // Update button states
         this._updateTransactionButtons();
+
+        // Update renderer UI state (for tooltip attachments, etc.)
+        if (this.renderer && typeof this.renderer._updateUIState === 'function') {
+            this.renderer._updateUIState();
+        }
     },
 
     /**
@@ -119,6 +124,32 @@ const UIStateMixin = {
             // Check if season is set, prompt if not
             if (!this.currentSeason) {
                 await this._promptForSeasonSelection();
+            }
+
+            // Update UI with restored cargo data if available
+            if (this.availableCargo && this.availableCargo.length > 0) {
+                console.log('🔄 CARGO PERSISTENCE: Updating UI renderer with restored cargo data after render', {
+                    availableCargoLength: this.availableCargo.length,
+                    successfulCargoLength: this.successfulCargo.length,
+                    hasRenderer: !!this.renderer,
+                    hasUpdateMethod: !!(this.renderer && typeof this.renderer._updateCargoDisplay === 'function')
+                });
+                if (this.renderer && typeof this.renderer._updateCargoDisplay === 'function') {
+                    this.renderer._updateCargoDisplay(this.availableCargo);
+                    
+                    // Also update transaction buttons since cargo availability affects them
+                    if (typeof this.renderer._updateTransactionButtons === 'function') {
+                        this.renderer._updateTransactionButtons();
+                    }
+                } else {
+                    console.warn('🔄 CARGO PERSISTENCE: UI renderer not available or missing _updateCargoDisplay method');
+                }
+            } else {
+                console.log('🔄 CARGO PERSISTENCE: No cargo data to update UI with', {
+                    availableCargo: this.availableCargo,
+                    availableCargoLength: this.availableCargo ? this.availableCargo.length : 'undefined',
+                    successfulCargoLength: this.successfulCargo ? this.successfulCargo.length : 'undefined'
+                });
             }
 
             // Update UI state

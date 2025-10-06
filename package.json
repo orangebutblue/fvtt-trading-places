@@ -5,7 +5,6 @@
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
-    "demo": "open demo-real.html",
     "migrate:settlements": "node scripts/migrate-settlements.js",
     "migrate:settlements:live": "node scripts/migrate-settlements.js --live",
     "validate:schema": "node scripts/validate-schema.js",

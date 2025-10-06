@@ -72,37 +72,24 @@ export class BuyingFlow {
             console.log('=== CARGO AVAILABILITY CHECK ===');
             console.log('Settlement:', this.app.selectedSettlement.name);
             console.log('Season:', this.app.currentSeason);
-            
-            const rollPercentile = async ({ flavor, logPrefix, postToChat = true }) => {
+
+            // Create a simple roll function that uses Foundry's dice system
+            const foundryRollFunction = async ({ description, postToChat = true }) => {
                 const roll = new Roll("1d100");
                 await roll.evaluate();
 
-                const chatVisibility = game.settings.get("trading-places", "chatVisibility");
-                if (postToChat && chatVisibility !== "disabled") {
-                    await roll.toMessage({
-                        speaker: ChatMessage.getSpeaker(),
-                        flavor: flavor || `Cargo availability roll in ${this.app.selectedSettlement.name}`
-                    });
+                if (postToChat && typeof game !== 'undefined' && game.settings) {
+                    const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+                    if (chatVisibility !== "disabled") {
+                        await roll.toMessage({
+                            speaker: ChatMessage.getSpeaker(),
+                            flavor: `${description} in ${this.app.selectedSettlement.name}`
+                        });
+                    }
                 }
 
-                console.log(`${logPrefix || '🎲 Roll'} ${roll.total}`);
+                console.log(`🎲 ${description}: ${roll.total}`);
                 return roll.total;
-            };
-
-            const rollSlotAvailability = async (slotNumber) => {
-                return rollPercentile({
-                    flavor: `Cargo slot ${slotNumber} availability check in ${this.app.selectedSettlement.name}`,
-                    logPrefix: `🎲 Slot ${slotNumber} availability roll:`,
-                    postToChat: true
-                });
-            };
-
-            const merchantRollFunction = async () => {
-                return rollPercentile({
-                    flavor: `Merchant generation roll (${this.app.selectedSettlement.name})`,
-                    logPrefix: '🎲 Merchant generation roll:',
-                    postToChat: false
-                });
             };
 
             let pipelineResult = null;
@@ -110,7 +97,8 @@ export class BuyingFlow {
                 try {
                     pipelineResult = await this.app.cargoAvailabilityPipeline.run({
                         settlement: this.app.selectedSettlement,
-                        season: this.app.currentSeason
+                        season: this.app.currentSeason,
+                        rollPercentile: foundryRollFunction
                     });
                     console.log('Orange realism pipeline output:', pipelineResult);
                 } catch (pipelineError) {
@@ -127,6 +115,7 @@ export class BuyingFlow {
             let successfulCargo = [];
 
             if (pipelineResult && pipelineResult.slots && pipelineResult.slots.length > 0) {
+
                 const sizeRating = this.dataManager.convertSizeToNumeric(this.app.selectedSettlement.size);
                 const wealthRating = this.app.selectedSettlement.wealth;
                 const finalChance = Math.min((sizeRating + wealthRating) * 10, 100);
@@ -135,7 +124,11 @@ export class BuyingFlow {
                 const slotDisplayEntries = [];
 
                 for (const slot of pipelineResult.slots) {
-                    const slotRoll = await rollSlotAvailability(slot.slotNumber);
+                    // Use the same roll function as the pipeline for consistency
+                    const slotRoll = await foundryRollFunction({ 
+                        description: `Cargo slot ${slot.slotNumber} availability check`, 
+                        postToChat: true 
+                    });
                     const slotSuccessful = slotRoll <= finalChance;
                     slotOutcomes.push({
                         slotNumber: slot.slotNumber,
@@ -196,7 +189,7 @@ export class BuyingFlow {
 
                         merchant = {
                             name: merchantName,
-                            skillDescription: skillDescription,
+                            skillDescription: `${merchantSkill}`,
                             hagglingSkill: Math.max(5, Math.min(95, merchantSkill)),
                             baseSkill: merchantSkill,
                             calculation: merchantData.calculation
@@ -217,7 +210,7 @@ export class BuyingFlow {
                         category: slot.cargo.category,
                         basePrice: slot.pricing.basePricePerEP,
                         currentPrice: slot.pricing.finalPricePerEP,
-                        quantity: slot.pricing.quantity,
+                        quantity: slot.amount.totalEP,
                         totalEP: slot.amount.totalEP,
                         quality: slot.quality.tier,
                         encumbrancePerUnit: cargoType?.encumbrancePerUnit || 1,
@@ -324,14 +317,17 @@ export class BuyingFlow {
                 this.app.availableCargo = availableCargo;
                 this.app.successfulCargo = successfulCargo;
                 
+                // Save cargo availability data for persistence
+                await this.app._saveCargoAvailability(availableCargo, successfulCargo, pipelineResult, availabilityResult);
+                
                 // Debug: Log what we're storing
                 console.log('📦 STORING AVAILABLE CARGO:', availableCargo.map(c => ({
                     name: c.name,
-                    merchant: {
-                        name: c.merchant?.name,
-                        hagglingSkill: c.merchant?.hagglingSkill,
-                        baseSkill: c.merchant?.baseSkill
-                    }
+                    isSlotAvailable: c.isSlotAvailable,
+                    hasFailure: !!c.failure,
+                    failureMessage: c.failure?.message,
+                    quantity: c.quantity,
+                    currentPrice: c.currentPrice
                 })));
                 
                 // Show detailed success message
@@ -350,6 +346,9 @@ export class BuyingFlow {
                 // Show success notification
                 const cargoSummary = successfulCargo.map(c => `${c.name} (${c.quantity})`).join(', ');
                 ui.notifications.info(`Cargo available in ${this.app.selectedSettlement.name}: ${cargoSummary}`);
+                
+                // Create comprehensive roll summary message
+                await this._createRollSummaryMessage(pipelineResult, availabilityResult, successfulCargo);
                 
             } else {
                 // FAILURE: No cargo available
@@ -417,4 +416,108 @@ export class BuyingFlow {
             button.disabled = false;
         }
     }
+
+    /**
+     * Create a comprehensive roll summary message for the chat
+     * @param {Object} pipelineResult - Results from the cargo availability pipeline
+     * @param {Object} availabilityResult - Overall availability check results
+     * @param {Array} successfulCargo - Array of successfully generated cargo
+     * @private
+     */
+    async _createRollSummaryMessage(pipelineResult, availabilityResult, successfulCargo) {
+        try {
+            let summaryContent = `
+                <div class="trading-roll-summary">
+                    <h3>🎲 Cargo Availability Check: ${this.app.selectedSettlement.name}</h3>
+                    <div class="summary-section">
+                        <h4>Settlement Details</h4>
+                        <p><strong>Settlement:</strong> ${this.app.selectedSettlement.name}</p>
+                        <p><strong>Size:</strong> ${this.app.selectedSettlement.size} (Rating: ${this.dataManager.convertSizeToNumeric(this.app.selectedSettlement.size)})</p>
+                        <p><strong>Wealth:</strong> ${this.app.selectedSettlement.wealth}</p>
+                        <p><strong>Season:</strong> ${this.app.currentSeason}</p>
+                        <p><strong>Availability Chance:</strong> ${availabilityResult.availabilityCheck.chance}%</p>
+                    </div>
+                    
+                    <div class="summary-section">
+                        <h4>Slot Results (${availabilityResult.availabilityCheck.successfulSlots}/${availabilityResult.availabilityCheck.attemptedSlots} successful)</h4>
+                        <div class="slot-results">
+            `;
+
+            // Add slot-by-slot results
+            availabilityResult.availabilityCheck.rolls.forEach(outcome => {
+                const slot = pipelineResult.slots.find(s => s.slotNumber === outcome.slotNumber);
+                const status = outcome.success ? '✅ Success' : '❌ Failed';
+                const cargoInfo = outcome.success && slot ? ` - ${slot.cargo.name}` : '';
+                
+                summaryContent += `
+                    <div class="slot-result ${outcome.success ? 'success' : 'failure'}">
+                        <strong>Slot ${outcome.slotNumber}:</strong> ${outcome.roll} ≤ ${outcome.chance} ${status}${cargoInfo}
+                    </div>
+                `;
+            });
+
+            summaryContent += `
+                        </div>
+                    </div>
+            `;
+
+            if (successfulCargo.length > 0) {
+                summaryContent += `
+                    <div class="summary-section">
+                        <h4>Generated Cargo</h4>
+                        <div class="cargo-results">
+                `;
+
+                successfulCargo.forEach((cargo, index) => {
+                    const slot = pipelineResult.slots.find(s => s.cargo.name === cargo.name);
+                    if (slot) {
+                        summaryContent += `
+                            <div class="cargo-result">
+                                <h5>${cargo.name} (Slot ${slot.slotNumber})</h5>
+                                <p><strong>Quantity:</strong> ${cargo.quantity} EP</p>
+                                <p><strong>Quality:</strong> ${cargo.quality}</p>
+                                <p><strong>Price:</strong> ${cargo.currentPrice} GC/EP</p>
+                                <p><strong>Merchant:</strong> ${cargo.merchant.name} (${cargo.merchant.skillDescription})</p>
+                                <p><strong>Market Balance:</strong> ${slot.balance.state} (${slot.balance.supply}/${slot.balance.demand})</p>
+                                ${cargo.slotInfo?.contraband?.contraband ? '<p><strong>⚠️ Contraband</strong></p>' : ''}
+                                
+                                <div class="roll-details">
+                                    <small>
+                                        <strong>Rolls:</strong><br>
+                                        • Amount: ${slot.amount.roll} → ${slot.amount.totalEP} EP<br>
+                                        • Quality: ${slot.quality.rollDetails.percentileRoll} (+${slot.quality.rollDetails.percentileModifier}) → ${slot.quality.tier}<br>
+                                        • Merchant: ${slot.merchant.calculation.percentileRoll} (+${slot.merchant.calculation.percentileModifier}) → ${slot.merchant.skill}<br>
+                                        ${slot.contraband.roll ? `• Contraband: ${slot.contraband.roll} ≤ ${slot.contraband.chance.toFixed(1)}% → ${slot.contraband.contraband ? 'Yes' : 'No'}` : ''}
+                                    </small>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+
+                summaryContent += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            summaryContent += `
+                </div>
+            `;
+
+            // Post the summary to chat
+            const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+            if (chatVisibility !== "disabled") {
+                await ChatMessage.create({
+                    content: summaryContent,
+                    speaker: ChatMessage.getSpeaker(),
+                    type: CONST.CHAT_MESSAGE_STYLES.OTHER
+                });
+            }
+
+        } catch (error) {
+            console.error('Failed to create roll summary message:', error);
+        }
+    }
 }
+

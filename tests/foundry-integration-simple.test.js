@@ -248,12 +248,12 @@ describe('FoundryVTT Integration - Core Features', () => {
             
             await ChatMessage.create({
                 content: messageContent,
-                type: CONST.CHAT_MESSAGE_TYPES.OTHER
+                type: CONST.CHAT_MESSAGE_STYLES.OTHER
             });
             
             expect(ChatMessage.create).toHaveBeenCalledWith({
                 content: messageContent,
-                type: CONST.CHAT_MESSAGE_TYPES.OTHER
+                type: CONST.CHAT_MESSAGE_STYLES.OTHER
             });
         });
 

@@ -25,44 +25,14 @@
         {{!-- Available Cargo Panel --}}
         <div class="cargo-section">
             <h3><i class="fas fa-boxes"></i> Available Cargo</h3>
-            <div class="cargo-list">
-                {{#if availableCargo.length}}
-                    {{#each availableCargo}}
-                        <div class="cargo-item" data-cargo="{{name}}">
-                            <div class="cargo-header">
-                                <h5>{{name}}</h5>
-                                <span class="cargo-category">{{category}}</span>
-                            </div>
-                            <div class="cargo-details">
-                                <div class="cargo-price">
-                                    <span class="price-label">Base Price:</span>
-                                    <span class="price-value">{{currentPrice}} GC</span>
-                                </div>
-                                {{#if availableQuantity}}
-                                <div class="cargo-quantity">
-                                    <span class="quantity-label">Available:</span>
-                                    <span class="quantity-value">{{availableQuantity}} EP</span>
-                                </div>
-                                {{/if}}
-                            </div>
-                            <div class="cargo-actions">
-                                <input type="number" class="quantity-input" data-cargo="{{name}}" 
-                                       placeholder="Quantity (EP)" min="1" max="{{availableQuantity}}" />
-                                <button class="purchase-button" data-cargo="{{name}}" type="button">
-                                    <i class="fas fa-shopping-cart"></i> Purchase
-                                </button>
-                            </div>
-                        </div>
-                    {{/each}}
-                {{else}}
-                    <p class="no-cargo">
-                        {{#if hasSettlement}}
-                            Check cargo availability to see available goods.
-                        {{else}}
-                            Select a settlement and check cargo availability to see available goods.
-                        {{/if}}
-                    </p>
-                {{/if}}
+            <div id="buying-cargo-grid" class="cargo-list">
+                <p class="no-cargo">
+                    {{#if hasSettlement}}
+                        Check cargo availability to see available goods.
+                    {{else}}
+                        Select a settlement and check cargo availability to see available goods.
+                    {{/if}}
+                </p>
             </div>
         </div>
         

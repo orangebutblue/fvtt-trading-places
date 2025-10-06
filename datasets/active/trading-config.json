@@ -139,7 +139,7 @@
     }
   },
   "contraband": {
-    "baseChance": 0.55,
+    "baseChance": 0.03,
     "flagBonuses": {},
     "sizeBonuses": {
       "1": 0,

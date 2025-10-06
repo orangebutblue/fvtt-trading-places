@@ -18,6 +18,7 @@ class DataManager {
         this.activeDatasetName = 'active';
         this.dataPath = `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
         this.sourceFlags = {};
+        this.tradingConfig = {};
     }
 
     setModuleId(moduleId) {
@@ -1389,6 +1390,31 @@ class DataManager {
     }
 
     /**
+     * Reset current season to null
+     * @returns {Promise<boolean>} - Success status
+     */
+    async resetSeason() {
+        try {
+            const oldSeason = this.currentSeason;
+            this.currentSeason = null;
+
+            // Clear from FoundryVTT settings
+            if (typeof game !== 'undefined' && game.settings) {
+                await game.settings.set("trading-places", "currentSeason", null);
+            }
+
+            // Notify season change
+            this.notifySeasonChange(null, oldSeason);
+
+            console.log(`Season reset from ${oldSeason || 'unset'} to unset`);
+            return true;
+        } catch (error) {
+            console.error('Failed to reset season:', error);
+            return false;
+        }
+    }
+
+    /**
      * Notify about season change and update prices
      * @param {string} newSeason - New season
      * @param {string|null} oldSeason - Previous season
@@ -1608,24 +1634,38 @@ class DataManager {
     }
 
     /**
-     * Reset season (for testing purposes)
+     * Initialize merchant system data and configuration
      * @returns {Promise<boolean>} - Success status
      */
-    async resetSeason() {
+    async initializeMerchantSystem() {
         try {
-            this.currentSeason = null;
-
-            if (typeof game !== 'undefined' && game.settings) {
-                await game.settings.set("trading-places", "currentSeason", null);
+            // Load merchant-related configuration if needed
+            // This method is called during module initialization to ensure
+            // merchant system components are properly set up
+            
+            console.log('Initializing merchant system...');
+            
+            // Ensure trading config is loaded (merchant config is part of trading config)
+            if (!this.tradingConfig || Object.keys(this.tradingConfig).length === 0) {
+                await this.loadTradingConfig();
             }
-
-            console.log('Season reset to unset state');
+            
+            // Validate that merchant-related config exists
+            const merchantConfig = this.tradingConfig?.skillDistribution || this.tradingConfig?.merchantConfig;
+            if (!merchantConfig) {
+                console.warn('Merchant system configuration not found in trading config');
+                // This is not necessarily an error - merchant system can work with defaults
+            } else {
+                console.log('Merchant system configuration loaded successfully');
+            }
+            
             return true;
         } catch (error) {
-            console.error('Failed to reset season:', error);
+            console.error('Failed to initialize merchant system:', error);
             return false;
         }
     }
+
     /**
      * Settlement lookup and search methods
      */
@@ -1735,60 +1775,6 @@ class DataManager {
         });
 
         return Array.from(sizes).sort();
-    }
-
-    /**
-     * Advanced search functionality
-     */
-    searchSettlements(criteria) {
-        if (!this.settlements || this.settlements.length === 0) {
-            return [];
-        }
-
-        return this.settlements.filter(settlement => {
-            // Name search (partial match)
-            if (criteria.name) {
-                const nameMatch = settlement.name &&
-                    settlement.name.toLowerCase().includes(criteria.name.toLowerCase());
-                if (!nameMatch) return false;
-            }
-
-            // Region exact match
-            if (criteria.region) {
-                const regionMatch = settlement.region &&
-                    settlement.region.toLowerCase() === criteria.region.toLowerCase();
-                if (!regionMatch) return false;
-            }
-
-            // Size exact match
-            if (criteria.size) {
-                if (settlement.size !== criteria.size) return false;
-            }
-
-            // Wealth exact match
-            if (criteria.wealth !== undefined) {
-                if (settlement.wealth !== criteria.wealth) return false;
-            }
-
-            // Production category match
-            if (criteria.production) {
-                const productionMatch = settlement.source &&
-                    Array.isArray(settlement.source) &&
-                    settlement.source.includes(criteria.production);
-                if (!productionMatch) return false;
-            }
-
-            // Population range
-            if (criteria.minPopulation !== undefined) {
-                if (!settlement.population || settlement.population < criteria.minPopulation) return false;
-            }
-
-            if (criteria.maxPopulation !== undefined) {
-                if (!settlement.population || settlement.population > criteria.maxPopulation) return false;
-            }
-
-            return true;
-        });
     }
 
     /**
@@ -2078,358 +2064,157 @@ class DataManager {
     }
 
     /**
-     * Load trading configuration
-     * @param {string} configPath - Path to trading config file
+     * Load trading configuration from trading-config.json
+     * @returns {Promise<boolean>} - Success status
      */
-    async loadTradingConfig(configPath = null) {
+    async loadTradingConfig() {
         try {
-            const path = configPath || `${this.dataPath}/trading-config.json`;
-            const logger = this.getLogger();
+            // For Node.js environment (testing)
+            if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+                const fs = require('fs');
+                const path = require('path');
+                const configPath = path.join(__dirname, '..', 'datasets', 'active', 'trading-config.json');
+                const configData = fs.readFileSync(configPath, 'utf8');
+                this.tradingConfig = JSON.parse(configData);
+                return true;
+            }
             
-            logger.logSystem('DataManager', `Loading trading configuration from ${path}`);
+            // For browser environment (FoundryVTT)
+            if (typeof fetch !== 'undefined') {
+                const response = await fetch(`${this.dataPath}/trading-config.json`);
+                if (!response.ok) {
+                    throw new Error(`Failed to load trading config: ${response.status}`);
+                }
+                this.tradingConfig = await response.json();
+                return true;
+            }
             
-            const configData = await this.loadFile(path);
-            this.config = { ...this.config, ...configData };
-            
-            logger.logSystem('DataManager', `Trading configuration loaded: ${Object.keys(configData).length} sections`);
-            
-            return configData;
+            throw new Error('No suitable file loading method available');
         } catch (error) {
-            const logger = this.getLogger();
-            logger.logSystem('DataManager', `Failed to load trading configuration: ${error.message}`);
-            throw new Error(`Failed to load trading configuration: ${error.message}`);
+            console.error('Failed to load trading config:', error);
+            this.tradingConfig = {};
+            return false;
         }
     }
 
     /**
-     * Load source flags configuration
-     * @param {string} flagsPath - Path to source flags file
+     * Load source flags from source-flags.json
+     * @returns {Promise<boolean>} - Success status
      */
-    async loadSourceFlags(flagsPath = null) {
+    async loadSourceFlags() {
         try {
-            const path = flagsPath || `${this.dataPath}/../source-flags.json`;
-            const logger = this.getLogger();
+            // For Node.js environment (testing)
+            if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+                const fs = require('fs');
+                const path = require('path');
+                const flagsPath = path.join(__dirname, '..', 'datasets', 'source-flags.json');
+                const flagsData = fs.readFileSync(flagsPath, 'utf8');
+                this.sourceFlags = JSON.parse(flagsData);
+                return true;
+            }
             
-            logger.logSystem('DataManager', `Loading source flags from ${path}`);
+            // For browser environment (FoundryVTT)
+            if (typeof fetch !== 'undefined') {
+                const response = await fetch('modules/trading-places/datasets/source-flags.json');
+                if (!response.ok) {
+                    throw new Error(`Failed to load source flags: ${response.status}`);
+                }
+                this.sourceFlags = await response.json();
+                return true;
+            }
             
-            const flagsData = await this.loadFile(path);
-            this.sourceFlags = flagsData;
-            
-            logger.logSystem('DataManager', `Source flags loaded: ${Object.keys(flagsData).length} flags`);
-            
-            return flagsData;
+            throw new Error('No suitable file loading method available');
         } catch (error) {
-            const logger = this.getLogger();
-            logger.logSystem('DataManager', `Failed to load source flags: ${error.message}`);
-            throw new Error(`Failed to load source flags: ${error.message}`);
+            console.error('Failed to load source flags:', error);
+            this.sourceFlags = {};
+            return false;
         }
     }
 
     /**
-     * Initialize merchant generator and equilibrium calculator
+     * Get trading configuration
+     * @returns {Object} - Trading configuration object
      */
-    initializeMerchantSystem() {
-        if (!this.config || !this.sourceFlags) {
-            throw new Error('Trading config and source flags must be loaded before initializing merchant system');
-        }
-
-        const logger = this.getLogger();
-        logger.logSystem('DataManager', 'Initializing merchant generation system');
-
-        // Check for global classes (set by the imported modules)
-        const EquilibriumCalculatorClass = window.EquilibriumCalculator || window.WFRPTradingEquilibriumCalculator;
-        const MerchantGeneratorClass = window.MerchantGenerator || window.WFRPTradingMerchantGenerator;
-
-        // Initialize equilibrium calculator
-        if (EquilibriumCalculatorClass) {
-            this.equilibriumCalculator = new EquilibriumCalculatorClass(this.config, this.sourceFlags);
-            this.equilibriumCalculator.setLogger(logger);
-            logger.logSystem('DataManager', 'EquilibriumCalculator initialized');
-        } else {
-            logger.logSystem('DataManager', 'WARNING: EquilibriumCalculator not available');
-        }
-
-        // Initialize merchant generator
-        if (MerchantGeneratorClass) {
-            this.merchantGenerator = new MerchantGeneratorClass(this, this.config);
-            this.merchantGenerator.setLogger(logger);
-            logger.logSystem('DataManager', 'MerchantGenerator initialized');
-        } else {
-            logger.logSystem('DataManager', 'WARNING: MerchantGenerator not available');
-        }
-
-        const hasCalculator = !!this.equilibriumCalculator;
-        const hasGenerator = !!this.merchantGenerator;
-        
-        if (hasCalculator && hasGenerator) {
-            logger.logSystem('DataManager', 'Merchant system fully initialized');
-        } else {
-            logger.logSystem('DataManager', `Merchant system partially initialized (Calculator: ${hasCalculator}, Generator: ${hasGenerator})`);
-        }
+    getTradingConfig() {
+        return this.tradingConfig || {};
     }
 
     /**
-     * Generate merchants for a settlement and cargo type
+     * Calculate cargo slots for a settlement (deterministic calculation)
      * @param {Object} settlement - Settlement object
-     * @param {string} cargoType - Cargo type
-     * @param {string} merchantType - 'producer' or 'seeker'
-     * @param {string} season - Current season
-     * @returns {Array} - Array of generated merchants
+     * @param {string} season - Season name (optional, defaults to current season)
+     * @returns {number} - Number of cargo slots available
      */
-    generateMerchants(settlement, cargoType, merchantType, season = 'spring') {
-        if (!this.merchantGenerator || !this.equilibriumCalculator) {
-            throw new Error('Merchant system not initialized. Call initializeMerchantSystem() first.');
+    calculateCargoSlots(settlement, season = null) {
+        if (!settlement) {
+            return 0;
         }
 
-        const logger = this.getLogger();
-        
-        // Calculate equilibrium
-        const cargoData = this.getCargoType(cargoType);
-        const equilibrium = this.equilibriumCalculator.calculateEquilibrium(settlement, cargoType, {
-            season,
-            cargoData
+        // Use provided season or current season
+        const targetSeason = season || this.currentSeason || 'spring';
+
+        // Get settlement properties
+        const props = this.getSettlementProperties(settlement);
+        const flags = this._normaliseFlags(props.productionCategories);
+
+        // Load config if not already loaded
+        if (!this.tradingConfig || Object.keys(this.tradingConfig).length === 0) {
+            // For synchronous calculation, we need config to be loaded
+            // This assumes config is loaded elsewhere (in main.js or during initialization)
+            console.warn('Trading config not loaded, cannot calculate slots');
+            return 0;
+        }
+
+        // Use the same calculation logic as the pipeline
+        const config = this.tradingConfig.cargoSlots || {
+            basePerSize: { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5 },
+            populationMultiplier: 0.0001,
+            sizeMultiplier: 1.5,
+            hardCap: 10
+        };
+
+        let baseSlots = config.basePerSize?.[String(props.sizeNumeric)] ?? config.basePerSize?.[props.sizeNumeric];
+        if (baseSlots === undefined) {
+            baseSlots = Math.max(1, props.sizeNumeric || 1);
+        }
+
+        const populationMultiplier = config.populationMultiplier ?? 0;
+        const populationContribution = (props.population || 0) * populationMultiplier;
+
+        const sizeMultiplier = config.sizeMultiplier ?? 0;
+        const sizeContribution = (props.sizeNumeric || 0) * sizeMultiplier;
+
+        let total = baseSlots + populationContribution + sizeContribution;
+
+        // Apply flag multipliers
+        (flags || []).forEach(flag => {
+            const multiplier = config.flagMultipliers?.[flag];
+            if (multiplier && multiplier !== 1) {
+                total *= multiplier;
+            }
         });
 
-        // Check if trade should be blocked
-        if (this.equilibriumCalculator.shouldBlockTrade(equilibrium)) {
-            logger.logDecision('Merchant Generation', 'Trade blocked by equilibrium', {
-                settlement: settlement.name,
-                cargoType,
-                equilibrium: equilibrium.state
-            });
+        // Apply hard cap
+        const hardCap = config.hardCap;
+        if (typeof hardCap === 'number' && total > hardCap) {
+            total = hardCap;
+        }
+
+        return Math.max(1, Math.round(total));
+    }
+
+    /**
+     * Normalize flags array (internal helper)
+     * @param {Array} flags - Array of flag strings
+     * @returns {Array} - Normalized flag array
+     */
+    _normaliseFlags(flags) {
+        if (!Array.isArray(flags)) {
             return [];
         }
-
-        // Calculate cargo slots
-        const slotInfo = this.merchantGenerator.calculateMerchantSlots(settlement);
-        const merchantCount = Math.max(1, Math.floor(slotInfo.totalSlots / 2)); // Distribute between producers/seekers
-
-        // Generate merchants
-        const merchants = [];
-        for (let i = 0; i < merchantCount; i++) {
-            const merchant = this.merchantGenerator.generateMerchant(settlement, cargoType, merchantType, equilibrium);
-            merchants.push(merchant);
-        }
-
-        logger.logSystem('DataManager', `Generated ${merchants.length} ${merchantType}s for ${settlement.name}`, {
-            cargoType,
-            equilibrium: equilibrium.state,
-            merchantCount
-        });
-
-        return merchants;
-    }
-
-    /**
-     * Get supply/demand equilibrium for a settlement and cargo type
-     * @param {Object} settlement - Settlement object
-     * @param {string} cargoType - Cargo type name
-     * @returns {Object} - Supply and demand values
-     */
-    calculateSupplyDemandEquilibrium(settlement, cargoType) {
-        // Use new equilibrium calculator if available
-        if (this.equilibriumCalculator) {
-            const cargoData = this.getCargoType(cargoType);
-            return this.equilibriumCalculator.calculateEquilibrium(settlement, cargoType, {
-                season: 'spring', // TODO: Get current season from game state
-                cargoData
-            });
-        }
-
-        // Fallback to legacy calculation
-        const equilibriumConfig = this.config.equilibrium || this.config.supplyDemand;
-        if (!equilibriumConfig) {
-            return { supply: 100, demand: 100 };
-        }
-
-        const baseline = equilibriumConfig.baseline;
-        let supply = baseline.supply;
-        let demand = baseline.demand;
-
-        // Apply produces effects
-        if (settlement.produces && settlement.produces.includes(cargoType)) {
-            const shift = equilibriumConfig.producesShift || 0.5;
-            const transfer = Math.floor(demand * shift);
-            supply += transfer;
-            demand -= transfer;
-        }
-
-        // Apply demands effects
-        if (settlement.demands && settlement.demands.includes(cargoType)) {
-            const shift = equilibriumConfig.demandsShift || 0.35;
-            const transfer = Math.floor(supply * shift);
-            demand += transfer;
-            supply -= transfer;
-        }
-
-        // Apply flag effects if source flags are loaded
-        if (this.sourceFlags && settlement.flags) {
-            settlement.flags.forEach(flag => {
-                const flagData = this.sourceFlags[flag];
-                if (flagData) {
-                    if (flagData.supplyTransfer) {
-                        const transfer = Math.floor(demand * flagData.supplyTransfer);
-                        supply += transfer;
-                        demand -= transfer;
-                    }
-                    if (flagData.demandTransfer) {
-                        const transfer = Math.floor(supply * flagData.demandTransfer);
-                        demand += transfer;
-                        supply -= transfer;
-                    }
-                }
-            });
-        }
-
-        // Clamp values
-        const clamp = equilibriumConfig.clamp;
-        if (clamp) {
-            supply = Math.max(clamp.min, Math.min(clamp.max, supply));
-            demand = Math.max(clamp.min, Math.min(clamp.max, demand));
-        }
-
-        return { supply, demand };
-    }
-
-    /**
-     * CRUD Operations for Data Management UI
-     */
-    
-    /**
-     * Load settlements data (alias for internal use)
-     * @returns {Promise<Array>} - Array of settlements
-     */
-    async loadSettlements() {
-        // Settlements are already loaded during initialization
-        return this.settlements || [];
-    }
-    
-    /**
-     * Update a settlement in the dataset
-     * @param {Object} settlement - Updated settlement object
-     * @returns {Promise<boolean>} - Success status
-     */
-    async updateSettlement(settlement) {
-        if (!settlement || !settlement.name) {
-            throw new Error('Settlement must have a name');
-        }
-        
-        const index = this.settlements.findIndex(s => s.name === settlement.name);
-        if (index === -1) {
-            throw new Error(`Settlement '${settlement.name}' not found`);
-        }
-        
-        // Validate the settlement
-        const validation = this.validateSettlement(settlement);
-        if (!validation.valid) {
-            throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
-        }
-        
-        // Update the settlement
-        this.settlements[index] = { ...settlement };
-        
-        // In a real implementation, this would save to files
-        // For now, just log the change
-        console.log(`Trading Places | Updated settlement: ${settlement.name}`);
-        
-        return true;
-    }
-    
-    /**
-     * Delete a settlement from the dataset
-     * @param {string} settlementName - Name of settlement to delete
-     * @returns {Promise<boolean>} - Success status
-     */
-    async deleteSettlement(settlementName) {
-        if (!settlementName) {
-            throw new Error('Settlement name is required');
-        }
-        
-        const index = this.settlements.findIndex(s => s.name === settlementName);
-        if (index === -1) {
-            throw new Error(`Settlement '${settlementName}' not found`);
-        }
-        
-        // Remove the settlement
-        this.settlements.splice(index, 1);
-        
-        // In a real implementation, this would update files
-        console.log(`Trading Places | Deleted settlement: ${settlementName}`);
-        
-        return true;
-    }
-    
-    /**
-     * Load cargo types data (alias for internal use)
-     * @returns {Promise<Array>} - Array of cargo types
-     */
-    async loadCargoTypes() {
-        if (Array.isArray(this.cargoTypes) && this.cargoTypes.length > 0) {
-            return this.cargoTypes;
-        }
-
-        try {
-            const path = `${this.dataPath}/cargo-types.json`;
-            const cargoData = await this.loadFile(path);
-            this.cargoTypes = cargoData.cargoTypes || [];
-            return this.cargoTypes;
-        } catch (error) {
-            console.error('Trading Places | Failed to load cargo types:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * Update a cargo type in the dataset
-     * @param {Object} cargoType - Updated cargo type object
-     * @returns {Promise<boolean>} - Success status
-     */
-    async updateCargoType(cargoType) {
-        if (!cargoType || !cargoType.name) {
-            throw new Error('Cargo type must have a name');
-        }
-        
-        const index = this.cargoTypes.findIndex(c => c.name === cargoType.name);
-        if (index === -1) {
-            throw new Error(`Cargo type '${cargoType.name}' not found`);
-        }
-        
-        // Basic validation
-        if (!cargoType.category || !cargoType.basePrice) {
-            throw new Error('Cargo type must have category and basePrice');
-        }
-        
-        // Update the cargo type
-        this.cargoTypes[index] = { ...cargoType };
-        
-        // In a real implementation, this would save to files
-        console.log(`Trading Places | Updated cargo type: ${cargoType.name}`);
-        
-        return true;
-    }
-    
-    /**
-     * Delete a cargo type from the dataset
-     * @param {string} cargoName - Name of cargo type to delete
-     * @returns {Promise<boolean>} - Success status
-     */
-    async deleteCargoType(cargoName) {
-        if (!cargoName) {
-            throw new Error('Cargo name is required');
-        }
-        
-        const index = this.cargoTypes.findIndex(c => c.name === cargoName);
-        if (index === -1) {
-            throw new Error(`Cargo type '${cargoName}' not found`);
-        }
-        
-        // Remove the cargo type
-        this.cargoTypes.splice(index, 1);
-        
-        // In a real implementation, this would update files
-        console.log(`Trading Places | Deleted cargo type: ${cargoName}`);
-        
-        return true;
+        return flags
+            .map(flag => String(flag || '').toLowerCase().trim())
+            .filter(Boolean);
     }
 }
 

@@ -1498,7 +1498,7 @@ class TradingEngine {
                 return ChatMessage.create({
                     content: message,
                     speaker: options.speaker || { alias: 'Trading Places' },
-                    type: options.type || CONST.CHAT_MESSAGE_TYPES.OTHER,
+                    type: options.type || CONST.CHAT_MESSAGE_STYLES.OTHER,
                     ...options
                 });
             }

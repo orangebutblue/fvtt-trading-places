@@ -287,11 +287,16 @@ export class TradingUIEventHandlers {
 
             this.app.selectedSettlement = settlement;
 
-            // Clear previous cargo
+            // Clear previous cargo and saved data
             this.app.availableCargo = [];
+            this.app.successfulCargo = [];
+            await this.app._clearCargoAvailability();
 
             // Save to Foundry settings for persistence
             game.settings.set("trading-places", "selectedSettlement", settlement.name);
+
+            // Try to load cargo availability for this settlement/season
+            await this.app._loadAndRestoreCargoAvailability();
 
             // Update UI
             await this.app.render(false);

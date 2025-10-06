@@ -319,19 +319,53 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
         this._logDebug('Template Context', 'Preparing template context data');
 
-        // Load saved selections first
+        // Load saved selections first (including cargo data)
         await this._loadSavedSelections();
+
+        // Load season before trying to load cargo
+        await this._loadCurrentSeason();
+
+        console.log('🔄 CARGO PERSISTENCE: In _prepareContext, settlement and season loaded', {
+            hasSettlement: !!this.selectedSettlement,
+            settlementName: this.selectedSettlement?.name,
+            hasSeason: !!this.currentSeason,
+            season: this.currentSeason
+        });
+
+        // Load cargo availability data if settlement and season are selected
+        if (this.selectedSettlement && this.currentSeason) {
+            console.log('🔄 CARGO PERSISTENCE: Loading cargo data in _prepareContext');
+            await this._loadAndRestoreCargoAvailability();
+        } else {
+            console.log('🔄 CARGO PERSISTENCE: Not loading cargo data - missing settlement or season');
+        }
 
         // Add trading-specific data for templates
         context.currentSeason = this.getCurrentSeason();
         context.selectedSettlement = this.selectedSettlement;
         context.selectedRegion = this.selectedRegion || '';
     const successfulCargo = Array.isArray(this.successfulCargo) ? this.successfulCargo : [];
-    context.availableCargo = successfulCargo;
+    const availableCargo = Array.isArray(this.availableCargo) ? this.availableCargo : [];
+    context.availableCargo = availableCargo;
     context.successfulCargo = successfulCargo;
-    context.slotAvailabilityResults = this.availableCargo;
+    context.slotAvailabilityResults = availableCargo;
         context.transactionHistory = this.transactionHistory;
         context.playerCargo = this.playerCargo;
+
+        console.log('🔄 CARGO PERSISTENCE: Context prepared with cargo data', {
+            successfulCargoCount: successfulCargo.length,
+            availableCargoCount: availableCargo.length,
+            firstSuccessfulCargo: successfulCargo[0] ? {
+                name: successfulCargo[0].name,
+                quantity: successfulCargo[0].quantity,
+                hasFailed: successfulCargo[0].hasFailed
+            } : null,
+            firstAvailableCargo: availableCargo[0] ? {
+                name: availableCargo[0].name,
+                quantity: availableCargo[0].quantity,
+                hasFailed: availableCargo[0].hasFailed
+            } : null
+        });
         
         // Get all settlements and filter by region if one is selected
         const allSettlements = this.dataManager?.getAllSettlements() || [];
@@ -408,6 +442,20 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             sellableCargoTypes: context.sellableCargoTypes.length
         });
 
+        console.log('🔄 CARGO PERSISTENCE: Final context for template', {
+            availableCargoLength: context.availableCargo.length,
+            successfulCargoLength: context.successfulCargo.length,
+            hasCargoData: context.availableCargo.length > 0,
+            firstAvailableCargo: context.availableCargo[0] ? {
+                name: context.availableCargo[0].name,
+                isSlotAvailable: context.availableCargo[0].isSlotAvailable,
+                quantity: context.availableCargo[0].quantity,
+                currentPrice: context.availableCargo[0].currentPrice,
+                category: context.availableCargo[0].category,
+                hasFailure: !!context.availableCargo[0].failure
+            } : null
+        });
+
         return context;
     }
 
@@ -460,37 +508,6 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
 
 
-
-
-    /**
-     * Initialize application state on render
-     * @private
-     */
-    async _initializeApplicationState() {
-        try {
-            this._logDebug('Application State', 'Initializing application state');
-
-            // Load current season
-            await this._loadCurrentSeason();
-
-            // Check if season is set, prompt if not
-            if (!this.currentSeason) {
-                await this._promptForSeasonSelection();
-            }
-
-            // Update UI state
-            this._updateUIState();
-
-            this._logInfo('Application State', 'Application state initialized successfully');
-
-        } catch (error) {
-            this._logError('Application State', 'Failed to initialize application state', { error: error.message });
-            ui.notifications.error(`Application initialization failed: ${error.message}`);
-        }
-    }
-
-
-
     // ===== SEASON MANAGEMENT =====
 
     /**
@@ -522,6 +539,11 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
         // Update FoundryVTT setting
         await game.settings.set("trading-places", "currentSeason", season);
+
+        // Clear cargo availability data when season changes (prices/availability may change)
+        await this._clearCargoAvailability();
+        this.availableCargo = [];
+        this.successfulCargo = [];
 
         // Update pricing for any selected cargo
         if (this.selectedCargo) {
@@ -585,6 +607,215 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
         } catch (error) {
             this._logError('Saved Selections', 'Failed to load saved selections', { error: error.message });
+        }
+    }
+
+    /**
+     * Load and restore cargo availability data for current settlement/season
+     * @private
+     */
+    async _loadAndRestoreCargoAvailability() {
+        try {
+            console.log('🔄 CARGO PERSISTENCE: Starting cargo restoration');
+            const cargoData = await this._loadCargoAvailability();
+
+            if (cargoData) {
+                console.log('🔄 CARGO PERSISTENCE: Loaded cargo data:', {
+                    settlement: cargoData.settlement,
+                    season: cargoData.season,
+                    availableCargoCount: cargoData.availableCargo?.length || 0,
+                    successfulCargoCount: cargoData.successfulCargo?.length || 0,
+                    firstAvailableCargo: cargoData.availableCargo?.[0] ? {
+                        name: cargoData.availableCargo[0].name,
+                        isSlotAvailable: cargoData.availableCargo[0].isSlotAvailable,
+                        hasFailure: !!cargoData.availableCargo[0].failure,
+                        failureMessage: cargoData.availableCargo[0].failure?.message,
+                        quantity: cargoData.availableCargo[0].quantity,
+                        currentPrice: cargoData.availableCargo[0].currentPrice,
+                        category: cargoData.availableCargo[0].category
+                    } : null
+                });
+                this.availableCargo = cargoData.availableCargo || [];
+                this.successfulCargo = cargoData.successfulCargo || [];
+
+                this._logInfo('Cargo Persistence', 'Restored cargo availability data', {
+                    settlement: cargoData.settlement,
+                    season: cargoData.season,
+                    cargoCount: this.successfulCargo.length
+                });
+
+                // Show notification that cargo was restored
+                if (this.successfulCargo.length > 0) {
+                    const cargoNames = this.successfulCargo.map(c => c.name).join(', ');
+                    ui.notifications.info(`Restored ${this.successfulCargo.length} cargo item(s) for ${cargoData.settlement}: ${cargoNames}`);
+                }
+
+                // Note: UI renderer will be updated in _initializeApplicationState after DOM is ready
+            } else {
+                console.log('🔄 CARGO PERSISTENCE: No cargo data to restore');
+                // Clear any existing cargo data if no valid saved data
+                this.availableCargo = [];
+                this.successfulCargo = [];
+            }
+
+        } catch (error) {
+            console.error('🔄 CARGO PERSISTENCE: Failed to load and restore cargo availability', error);
+            this._logError('Cargo Persistence', 'Failed to load and restore cargo availability', { error: error.message });
+            this.availableCargo = [];
+            this.successfulCargo = [];
+        }
+    }
+
+    /**
+     * Save cargo availability data to game settings
+     * @param {Array} availableCargo - Available cargo array
+     * @param {Array} successfulCargo - Successful cargo array
+     * @param {Object} pipelineResult - Pipeline result data
+     * @param {Object} availabilityResult - Availability check result
+     * @private
+     */
+    async _saveCargoAvailability(availableCargo, successfulCargo, pipelineResult, availabilityResult) {
+        try {
+            if (!this.selectedSettlement || !this.currentSeason) {
+                console.log('🔄 CARGO PERSISTENCE: Cannot save - missing settlement or season');
+                this._logDebug('Cargo Persistence', 'Cannot save cargo availability - missing settlement or season');
+                return;
+            }
+
+            const cargoData = {
+                settlement: this.selectedSettlement.name,
+                season: this.currentSeason,
+                timestamp: Date.now(),
+                availableCargo: availableCargo,
+                successfulCargo: successfulCargo,
+                pipelineResult: pipelineResult,
+                availabilityResult: availabilityResult
+            };
+
+            console.log('🔄 CARGO PERSISTENCE: Saving cargo data', {
+                settlement: this.selectedSettlement.name,
+                season: this.currentSeason,
+                availableCargoCount: availableCargo?.length || 0,
+                successfulCargoCount: successfulCargo?.length || 0
+            });
+
+            // Get existing cargo data and add/update this entry
+            const allCargoData = await game.settings.get("trading-places", "cargoAvailabilityData") || {};
+            const storageKey = `${this.selectedSettlement.name}_${this.currentSeason}`;
+
+            allCargoData[storageKey] = cargoData;
+
+            await game.settings.set("trading-places", "cargoAvailabilityData", allCargoData);
+
+            console.log('🔄 CARGO PERSISTENCE: Cargo data saved successfully');
+
+            this._logDebug('Cargo Persistence', 'Cargo availability data saved', {
+                settlement: this.selectedSettlement.name,
+                season: this.currentSeason,
+                cargoCount: successfulCargo.length
+            });
+
+        } catch (error) {
+            console.error('🔄 CARGO PERSISTENCE: Failed to save cargo availability data', error);
+            this._logError('Cargo Persistence', 'Failed to save cargo availability data', { error: error.message });
+        }
+    }
+
+    /**
+     * Load cargo availability data from game settings
+     * @returns {Object|null} - Cargo availability data or null if not found/valid
+     * @private
+     */
+    async _loadCargoAvailability() {
+        try {
+            if (!this.selectedSettlement || !this.currentSeason) {
+                console.log('🔄 CARGO PERSISTENCE: Cannot load - missing settlement or season', {
+                    hasSettlement: !!this.selectedSettlement,
+                    hasSeason: !!this.currentSeason
+                });
+                this._logDebug('Cargo Persistence', 'Cannot load cargo availability - missing settlement or season');
+                return null;
+            }
+
+            const allCargoData = await game.settings.get("trading-places", "cargoAvailabilityData") || {};
+            console.log('🔄 CARGO PERSISTENCE: Retrieved all cargo data from settings:', Object.keys(allCargoData));
+            const storageKey = `${this.selectedSettlement.name}_${this.currentSeason}`;
+            console.log('🔄 CARGO PERSISTENCE: Looking for storage key:', storageKey);
+
+            const cargoData = allCargoData[storageKey];
+
+            if (!cargoData) {
+                console.log('🔄 CARGO PERSISTENCE: No saved cargo data found for key:', storageKey);
+                this._logDebug('Cargo Persistence', 'No saved cargo availability data found');
+                return null;
+            }
+
+            // Validate that the data is still relevant
+            if (cargoData.settlement !== this.selectedSettlement.name ||
+                cargoData.season !== this.currentSeason) {
+                console.log('🔄 CARGO PERSISTENCE: Cargo data mismatch', {
+                    saved: { settlement: cargoData.settlement, season: cargoData.season },
+                    current: { settlement: this.selectedSettlement.name, season: this.currentSeason }
+                });
+                this._logDebug('Cargo Persistence', 'Saved cargo data is for different settlement/season, ignoring');
+                return null;
+            }
+
+            // Check if data is not too old (optional - could be configurable)
+            const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+            if (Date.now() - cargoData.timestamp > maxAge) {
+                console.log('🔄 CARGO PERSISTENCE: Cargo data is too old, ignoring');
+                this._logDebug('Cargo Persistence', 'Saved cargo data is too old, ignoring');
+                // Don't delete old data, just ignore it
+                return null;
+            }
+
+            console.log('🔄 CARGO PERSISTENCE: Successfully loaded cargo data', {
+                settlement: cargoData.settlement,
+                season: cargoData.season,
+                availableCargoCount: cargoData.availableCargo?.length || 0,
+                successfulCargoCount: cargoData.successfulCargo?.length || 0
+            });
+
+            this._logDebug('Cargo Persistence', 'Cargo availability data loaded', {
+                settlement: cargoData.settlement,
+                season: cargoData.season,
+                cargoCount: cargoData.successfulCargo?.length || 0,
+                age: Math.round((Date.now() - cargoData.timestamp) / 1000 / 60) + ' minutes'
+            });
+
+            return cargoData;
+
+        } catch (error) {
+            console.error('🔄 CARGO PERSISTENCE: Failed to load cargo availability data', error);
+            this._logError('Cargo Persistence', 'Failed to load cargo availability data', { error: error.message });
+            return null;
+        }
+    }
+
+    /**
+     * Clear saved cargo availability data for current settlement/season
+     * @private
+     */
+    async _clearCargoAvailability() {
+        try {
+            if (!this.selectedSettlement || !this.currentSeason) {
+                return;
+            }
+
+            const allCargoData = await game.settings.get("trading-places", "cargoAvailabilityData") || {};
+            const storageKey = `${this.selectedSettlement.name}_${this.currentSeason}`;
+
+            delete allCargoData[storageKey];
+            await game.settings.set("trading-places", "cargoAvailabilityData", allCargoData);
+
+            this._logDebug('Cargo Persistence', 'Cargo availability data cleared', {
+                settlement: this.selectedSettlement.name,
+                season: this.currentSeason
+            });
+
+        } catch (error) {
+            this._logError('Cargo Persistence', 'Failed to clear cargo availability data', { error: error.message });
         }
     }
 

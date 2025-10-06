@@ -6,13 +6,14 @@ class CargoAvailabilityPipeline {
 
         this.dataManager = dataManager;
         this.random = typeof options.random === 'function' ? options.random : Math.random;
+        this.rollPercentile = options.rollPercentile || null;
         this.logger = options.logger || null;
 
         this._refreshConfig();
     }
 
     _refreshConfig() {
-        this.tradingConfig = this.dataManager.getSystemConfig() || {};
+        this.tradingConfig = this.dataManager.tradingConfig || {};
         this.sourceFlags = this.dataManager.sourceFlags || {};
     }
 
@@ -40,9 +41,14 @@ class CargoAvailabilityPipeline {
         }
     }
 
-    async run({ settlement, season = 'spring' } = {}) {
+    async run({ settlement, season = 'spring', rollPercentile = null } = {}) {
         if (!settlement) {
             throw new Error('Settlement is required to run the cargo availability pipeline');
+        }
+
+        // Update roll function if provided
+        if (rollPercentile) {
+            this.rollPercentile = rollPercentile;
         }
 
         await this._ensureDataLoaded();
@@ -56,15 +62,44 @@ class CargoAvailabilityPipeline {
         const cargoSlotPlan = this._calculateCargoSlots(settlementProps, settlementFlags, normalizedSeason);
         const candidateTable = this._buildCandidateTable(settlementProps, settlementFlags, normalizedSeason);
 
+        // Create roll function that uses Foundry's dice system
+        const createFoundryRollFunction = (slotNumber) => {
+            return async ({ description, postToChat = true }) => {
+                // Use the provided roll function if available, otherwise create our own
+                if (rollPercentile) {
+                    return rollPercentile({ description, postToChat });
+                }
+
+                // Fallback: create our own Foundry roll
+                const roll = new Roll("1d100");
+                await roll.evaluate();
+
+                if (postToChat && typeof game !== 'undefined' && game.settings) {
+                    const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+                    if (chatVisibility !== "disabled") {
+                        await roll.toMessage({
+                            speaker: ChatMessage.getSpeaker(),
+                            flavor: `${description} (Slot ${slotNumber} - ${settlement.name})`
+                        });
+                    }
+                }
+
+                console.log(`🎲 Slot ${slotNumber} ${description}: ${roll.total}`);
+                return roll.total;
+            };
+        };
+
         const slots = [];
         for (let index = 0; index < cargoSlotPlan.producerSlots; index += 1) {
+            const slotRollFunction = createFoundryRollFunction(index + 1);
             slots.push(
-                this._processSlot({
+                await this._processSlot({
                     slotNumber: index + 1,
                     settlementProps,
                     settlementFlags,
                     candidateTable,
-                    season: normalizedSeason
+                    season: normalizedSeason,
+                    rollFunction: slotRollFunction
                 })
             );
         }
@@ -292,17 +327,20 @@ class CargoAvailabilityPipeline {
         };
     }
 
-    _processSlot({ slotNumber, settlementProps, settlementFlags, candidateTable, season }) {
+    async _processSlot({ slotNumber, settlementProps, settlementFlags, candidateTable, season, rollFunction = null }) {
         if (!candidateTable.entries || candidateTable.entries.length === 0) {
             throw new Error('No cargo candidates available to process cargo slots');
         }
 
-        const selection = this._selectCargo(candidateTable);
+        // Get the roll function for this slot
+        const slotRollFunction = typeof rollFunction === 'function' ? rollFunction : this._percentile;
+
+        const selection = this._selectCargo(candidateTable, slotRollFunction);
         const balance = this._calculateBalance(selection, settlementProps, settlementFlags, season);
-        const amount = this._rollCargoAmount(balance, settlementProps, season);
-        const quality = this._evaluateQuality(balance, settlementProps, settlementFlags);
-        const contraband = this._evaluateContraband(settlementProps, settlementFlags, season);
-        const merchantSkill = this._generateMerchant(settlementProps);
+        const amount = await this._rollCargoAmount(balance, settlementProps, season, slotRollFunction, slotNumber);
+        const quality = await this._evaluateQuality(balance, settlementProps, settlementFlags, slotRollFunction, slotNumber);
+        const contraband = await this._evaluateContraband(settlementProps, settlementFlags, season, slotRollFunction, slotNumber);
+        const merchantSkill = await this._generateMerchant(settlementProps, slotRollFunction, slotNumber);
         const desperation = this._buildDesperation(balance);
         const pricing = this._calculatePricing(selection, amount, quality, contraband, balance, season);
 
@@ -327,7 +365,7 @@ class CargoAvailabilityPipeline {
         };
     }
 
-    _selectCargo(candidateTable) {
+    _selectCargo(candidateTable, rollFunction = null) {
         const entries = Array.isArray(candidateTable?.entries) ? candidateTable.entries : [];
 
         if (entries.length === 0) {
@@ -348,7 +386,11 @@ class CargoAvailabilityPipeline {
             : computedTotal;
         const safeTotal = totalWeight > 0 ? totalWeight : entries.length;
 
-        const threshold = this.random() * safeTotal;
+        // For Foundry rolls, we need to simulate the weighted selection
+        // We'll use a percentile roll and map it to the weighted selection
+        const threshold = rollFunction 
+            ? (rollFunction({ description: 'Cargo selection', postToChat: false }) / 100) * safeTotal
+            : this.random() * safeTotal;
         let running = 0;
         let chosen = entries[entries.length - 1];
 
@@ -499,14 +541,16 @@ class CargoAvailabilityPipeline {
         };
     }
 
-    _rollCargoAmount(balance, settlementProps, season) {
+    async _rollCargoAmount(balance, settlementProps, season, rollFunction = null, slotNumber = null) {
         const amountConfig = this.tradingConfig.cargoAmount || {};
         const roundTo = amountConfig.roundTo ?? 10;
         const minimumEP = amountConfig.minimumEP ?? 10;
         const floor = amountConfig.supplyFloor ?? 0.5;
         const ceiling = amountConfig.supplyCeiling ?? 2.5;
 
-        const roll = this._percentile();
+        const roll = rollFunction 
+            ? await rollFunction({ description: 'Cargo amount calculation', postToChat: true })
+            : this._percentile();
         const sizeRating = Math.max(1, settlementProps.sizeNumeric || 1);
         const baseRoll = Math.ceil(roll / 10) * roundTo;
         const baseEP = baseRoll * sizeRating;
@@ -554,7 +598,7 @@ class CargoAvailabilityPipeline {
         };
     }
 
-    _evaluateQuality(balance, settlementProps, settlementFlags) {
+    async _evaluateQuality(balance, settlementProps, settlementFlags, rollFunction = null, slotNumber = null) {
         const qualityConfig = this.tradingConfig.qualityEvaluation || {};
         const clamp = qualityConfig.clamp || {};
 
@@ -582,7 +626,9 @@ class CargoAvailabilityPipeline {
 
         // Add random quality roll
         const qualityRoll = qualityConfig.qualityRoll || {};
-        const percentileRoll = this._percentile();
+        const percentileRoll = rollFunction 
+            ? await rollFunction({ description: 'Cargo quality determination', postToChat: true })
+            : this._percentile();
         const percentileModifier = this._resolvePercentileModifier(percentileRoll, qualityRoll.percentileTable || {});
         score += percentileModifier;
         components.push({ 
@@ -593,7 +639,9 @@ class CargoAvailabilityPipeline {
         const varianceRange = qualityRoll.variance ?? 0;
         let varianceRoll = 0;
         if (varianceRange > 0) {
-            varianceRoll = Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
+            varianceRoll = rollFunction 
+                ? await rollFunction({ description: `Cargo quality variance (±${varianceRange})`, postToChat: true })
+                : Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
             score += varianceRoll;
             components.push({ 
                 label: `Variance roll (±${varianceRange})`, 
@@ -623,49 +671,88 @@ class CargoAvailabilityPipeline {
         };
     }
 
-    _evaluateContraband(settlementProps, settlementFlags, season) {
+    async _evaluateContraband(settlementProps, settlementFlags, season, rollFunction = null, slotNumber = null) {
         const contrabandConfig = this.tradingConfig.contraband || {};
         let chance = contrabandConfig.baseChance ?? 0.05;
+        const steps = [
+            {
+                label: 'Base chance',
+                value: chance,
+                current: chance
+            }
+        ];
 
+        // Add flag bonuses
         (settlementFlags || []).forEach(flag => {
             const data = this._getFlagData(flag);
             if (data?.contrabandChance) {
                 chance += data.contrabandChance;
+                steps.push({
+                    label: `Flag: ${flag}`,
+                    value: data.contrabandChance,
+                    current: chance
+                });
             }
         });
 
+        // Add size bonus
         const sizeBonus = contrabandConfig.sizeBonuses?.[String(settlementProps.sizeNumeric)] ?? 0;
-        chance += sizeBonus;
+        if (sizeBonus > 0) {
+            chance += sizeBonus;
+            steps.push({
+                label: `Settlement size ${settlementProps.sizeNumeric}`,
+                value: sizeBonus,
+                current: chance
+            });
+        }
 
+        // Apply seasonal multiplier
         const seasonalMultiplier = contrabandConfig.seasonalMultipliers?.[season] ?? 1;
-        chance = Math.max(0, chance) * seasonalMultiplier;
+        if (seasonalMultiplier !== 1) {
+            chance = Math.max(0, chance) * seasonalMultiplier;
+            steps.push({
+                label: `Seasonal multiplier (${season})`,
+                value: seasonalMultiplier,
+                current: chance
+            });
+        }
+
+        // Clamp the chance
+        chance = Math.max(0, chance);
         chance = Math.min(0.95, chance);
 
-        const roll = this._percentile();
+        const roll = rollFunction 
+            ? await rollFunction({ description: 'Contraband check', postToChat: true })
+            : this._percentile();
         const triggered = roll <= chance * 100;
 
         return {
             chance: chance * 100,
             roll,
-            contraband: triggered
+            contraband: triggered,
+            steps
         };
     }
 
-    _generateMerchant(settlementProps) {
+    async _generateMerchant(settlementProps, rollFunction = null, slotNumber = null) {
         const skillConfig = this.tradingConfig.skillDistribution || {};
 
         const baseSkill = skillConfig.baseSkill ?? 25;
         const wealthContribution = (skillConfig.wealthModifier ?? 0) * (settlementProps.wealthRating ?? 0);
         let computedSkill = baseSkill + wealthContribution;
 
-        const percentileRoll = this._percentile();
+        const percentileRoll = rollFunction 
+            ? await rollFunction({ description: 'Merchant skill determination', postToChat: true })
+            : this._percentile();
         const percentileModifier = this._resolvePercentileModifier(percentileRoll, skillConfig.percentileTable || {});
         computedSkill += percentileModifier;
 
         const varianceRange = skillConfig.variance ?? 0;
         let varianceRoll = 0;
         if (varianceRange > 0) {
-            varianceRoll = Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
+            varianceRoll = rollFunction 
+                ? await rollFunction({ description: `Merchant skill variance (±${varianceRange})`, postToChat: true })
+                : Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
             computedSkill += varianceRoll;
         }
 
@@ -778,38 +865,12 @@ _buildDesperation(balance) {
     };
 }
 
-_buildCandidateSnapshot(candidateTable, selectedName) {
-    if (!candidateTable || !Array.isArray(candidateTable.entries)) {
-        return { season: candidateTable?.season, totalWeight: 0, entryCount: 0, entries: [] };
-    }
-
-    const sortedEntries = candidateTable.entries
-        .map(entry => ({
-            name: entry.name,
-            category: entry.category,
-            weight: Number((entry.weight ?? 0).toFixed(2)),
-            probability: Number((entry.probability ?? 0).toFixed(2)),
-            reasons: entry.reasons || [],
-            selected: entry.name === selectedName
-        }))
-        .sort((a, b) => b.weight - a.weight);
-
-    const topEntries = sortedEntries.slice(0, 10);
-
-    return {
-        season: candidateTable.season,
-        totalWeight: Number((candidateTable.totalWeight ?? 0).toFixed(2)),
-        entryCount: candidateTable.entries.length,
-        entries: topEntries
-    };
-}
-
     _buildCandidateSnapshot(candidateTable, selectedName) {
         if (!candidateTable || !Array.isArray(candidateTable.entries)) {
-            return { totalWeight: 0, entries: [] };
+            return { season: candidateTable?.season, totalWeight: 0, entryCount: 0, entries: [] };
         }
 
-        const sortedEntries = [...candidateTable.entries]
+        const sortedEntries = candidateTable.entries
             .map(entry => ({
                 name: entry.name,
                 category: entry.category,
@@ -821,15 +882,14 @@ _buildCandidateSnapshot(candidateTable, selectedName) {
             .sort((a, b) => b.weight - a.weight);
 
         const topEntries = sortedEntries.slice(0, 10);
+
         return {
             season: candidateTable.season,
             totalWeight: Number((candidateTable.totalWeight ?? 0).toFixed(2)),
             entryCount: candidateTable.entries.length,
             entries: topEntries
         };
-    }
-
-    _calculateFlagTransferWeight(flags, category, isProducer) {
+    }    _calculateFlagTransferWeight(flags, category, isProducer) {
         if (!Array.isArray(flags) || flags.length === 0) {
             return 0;
         }
@@ -927,6 +987,11 @@ _buildCandidateSnapshot(candidateTable, selectedName) {
     }
 
     _percentile() {
+        if (this.rollPercentile) {
+            // Use Foundry's dice system if available
+            return this.rollPercentile();
+        }
+        // Fallback to random number generator
         return Math.floor(this.random() * 100) + 1;
     }
 }

@@ -319,6 +319,11 @@ function registerHandlebarsHelpers() {
         return sizeNames[size] || `Size ${size}`;
     });
 
+    // Get size description helper (alias for getSizeName for template compatibility)
+    Handlebars.registerHelper('getSizeDescription', function(size) {
+        return Handlebars.helpers.getSizeName(size);
+    });
+
     // Get wealth name helper
     Handlebars.registerHelper('getWealthName', function(wealth) {
         const wealthNames = {
@@ -331,18 +336,131 @@ function registerHandlebarsHelpers() {
         return wealthNames[wealth] || `Wealth ${wealth}`;
     });
 
+    // Get wealth description helper (alias for getWealthName for template compatibility)
+    Handlebars.registerHelper('getWealthDescription', function(wealth) {
+        return Handlebars.helpers.getWealthName(wealth);
+    });
+
     // Get flag description helper
     Handlebars.registerHelper('getFlagDescription', function(flag) {
-        const flagDescriptions = {
-            'agriculture': 'Agricultural settlement with farming focus',
-            'trade': 'Major trading hub with increased merchant activity',
-            'government': 'Government center with official trade policies',
-            'subsistence': 'Subsistence farming with limited trade',
-            'smuggling': 'Smuggling operations with contraband goods',
-            'fort': 'Fortified settlement with military presence',
-            'boatbuilding': 'Shipbuilding and maritime trade focus'
+        try {
+            // Get the dataManager from the global scope
+            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            if (!dataManager || !dataManager.sourceFlags) {
+                return `${flag} settlement`;
+            }
+
+            const flagData = dataManager.sourceFlags[flag];
+            if (!flagData) {
+                return `${flag} settlement`;
+            }
+
+            // Format the tooltip with description and effects
+            let tooltip = `<strong>${flag.charAt(0).toUpperCase() + flag.slice(1)}</strong>\n\n`;
+            tooltip += `${flagData.description}\n\n`;
+            tooltip += '<strong>Trading Effects:</strong>\n';
+
+            const effects = [];
+
+            // Add transfer effects
+            if (flagData.supplyTransfer) {
+                effects.push(`• +${Math.round(flagData.supplyTransfer * 100)}% supply transfer rate`);
+            }
+            if (flagData.demandTransfer) {
+                effects.push(`• +${Math.round(flagData.demandTransfer * 100)}% demand transfer rate`);
+            }
+
+            // Add availability bonuses
+            if (flagData.availabilityBonus) {
+                if (flagData.availabilityBonus.producers) {
+                    const value = flagData.availabilityBonus.producers;
+                    const sign = value > 0 ? '+' : '';
+                    effects.push(`• ${sign}${Math.round(value * 100)}% availability bonus for producers`);
+                }
+                if (flagData.availabilityBonus.seekers) {
+                    const value = flagData.availabilityBonus.seekers;
+                    const sign = value > 0 ? '+' : '';
+                    effects.push(`• ${sign}${Math.round(value * 100)}% availability bonus for seekers`);
+                }
+            }
+
+            // Add category transfer effects
+            if (flagData.categorySupplyTransfer) {
+                Object.entries(flagData.categorySupplyTransfer).forEach(([category, value]) => {
+                    const sign = value > 0 ? '+' : '';
+                    effects.push(`• ${sign}${Math.round(value * 100)}% ${category} supply transfer`);
+                });
+            }
+            if (flagData.categoryDemandTransfer) {
+                Object.entries(flagData.categoryDemandTransfer).forEach(([category, value]) => {
+                    const sign = value > 0 ? '+' : '';
+                    effects.push(`• ${sign}${Math.round(value * 100)}% ${category} demand transfer`);
+                });
+            }
+
+            // Add special effects
+            if (flagData.contrabandChance) {
+                effects.push(`• +${Math.round(flagData.contrabandChance * 100)}% chance of contraband goods`);
+            }
+            if (flagData.quality) {
+                effects.push(`• +${Math.round((flagData.quality - 1) * 100)}% quality multiplier`);
+            }
+            if (flagData.uiTags && Array.isArray(flagData.uiTags)) {
+                effects.push(`• UI tags: ${flagData.uiTags.join(', ')}`);
+            }
+
+            tooltip += effects.join('\n');
+
+            return tooltip;
+        } catch (error) {
+            console.warn('Trading Places | Error formatting flag description:', error);
+            return `${flag} settlement`;
+        }
+    });
+
+    // Check if settlement is a trade settlement
+    Handlebars.registerHelper('isTradeSettlement', function(settlement) {
+        if (!settlement || !settlement.flags) return false;
+        return Array.isArray(settlement.flags) && settlement.flags.includes('trade');
+    });
+
+    // Get size rating helper (converts size string to numeric)
+    Handlebars.registerHelper('getSizeRating', function(size) {
+        const sizeMap = {
+            'CS': 5, 'C': 4, 'T': 3, 'ST': 2, 'V': 1, 'F': 1, 'M': 5
         };
-        return flagDescriptions[flag] || `${flag} settlement`;
+        if (typeof size === 'string') {
+            return sizeMap[size.toUpperCase()] || 1;
+        }
+        return Number(size) || 1;
+    });
+
+    // Calculate available slots helper
+    Handlebars.registerHelper('calculateAvailableSlots', function(size, wealth) {
+        const sizeRating = Handlebars.helpers.getSizeRating(size);
+        const wealthRating = Number(wealth) || 1;
+        return Math.max(1, Math.floor(sizeRating / 2) + Math.floor(wealthRating / 2));
+    });
+
+    // Math helpers
+    Handlebars.registerHelper('add', function(a, b) {
+        return Number(a) + Number(b);
+    });
+
+    Handlebars.registerHelper('multiply', function(a, b) {
+        return Number(a) * Number(b);
+    });
+
+    Handlebars.registerHelper('divide', function(a, b) {
+        return Number(a) / Number(b);
+    });
+
+    Handlebars.registerHelper('floor', function(a) {
+        return Math.floor(Number(a));
+    });
+
+    Handlebars.registerHelper('min', function(a, b) {
+        return Math.min(Number(a), Number(b));
     });
 
     // Get equilibrium state label helper
@@ -362,6 +480,166 @@ function registerHandlebarsHelpers() {
         if (!date) return '';
         const d = new Date(date);
         return d.toLocaleTimeString();
+    });
+
+    // Calculate available slots helper (using real pipeline logic)
+    Handlebars.registerHelper('calculateCargoSlots', function(settlement, season) {
+        try {
+            // Get the dataManager from the global scope
+            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            if (!dataManager) {
+                return 0;
+            }
+
+            return dataManager.calculateCargoSlots(settlement, season);
+        } catch (error) {
+            console.warn('Trading Places | Error calculating cargo slots:', error);
+            return 0;
+        }
+    });
+
+    // Get cargo slots base value helper
+    Handlebars.registerHelper('getCargoSlotsBase', function(size) {
+        const sizeRating = Handlebars.helpers.getSizeRating(size);
+        try {
+            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            if (dataManager && dataManager.tradingConfig?.cargoSlots?.basePerSize) {
+                return dataManager.tradingConfig.cargoSlots.basePerSize[sizeRating] || sizeRating;
+            }
+        } catch (error) {
+            console.warn('Trading Places | Error getting cargo slots base:', error);
+        }
+        return sizeRating;
+    });
+
+    // Get cargo slots population contribution helper
+    Handlebars.registerHelper('getCargoSlotsPopulation', function(settlement) {
+        try {
+            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            if (dataManager && dataManager.tradingConfig?.cargoSlots?.populationMultiplier && settlement?.population) {
+                return Math.round(settlement.population * dataManager.tradingConfig.cargoSlots.populationMultiplier * 100) / 100;
+            }
+        } catch (error) {
+            console.warn('Trading Places | Error getting population contribution:', error);
+        }
+        return 0;
+    });
+
+    // Get cargo slots size bonus helper
+    Handlebars.registerHelper('getCargoSlotsSizeBonus', function(settlement) {
+        try {
+            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            if (dataManager && dataManager.tradingConfig?.cargoSlots?.sizeMultiplier) {
+                const sizeRating = Handlebars.helpers.getSizeRating(settlement?.size);
+                return Math.round(sizeRating * dataManager.tradingConfig.cargoSlots.sizeMultiplier * 100) / 100;
+            }
+        } catch (error) {
+            console.warn('Trading Places | Error getting size bonus:', error);
+        }
+        return 0;
+    });
+
+    // Get cargo slots flag multipliers helper
+    Handlebars.registerHelper('getCargoSlotsFlagMultipliers', function(settlement, season) {
+        try {
+            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            if (!dataManager || !dataManager.tradingConfig?.cargoSlots?.flagMultipliers) {
+                return [];
+            }
+
+            const flags = settlement?.flags || [];
+            const multipliers = [];
+
+            flags.forEach(flag => {
+                const multiplier = dataManager.tradingConfig.cargoSlots.flagMultipliers[flag];
+                if (multiplier && multiplier !== 1) {
+                    multipliers.push({
+                        label: flag,
+                        multiplier: multiplier
+                    });
+                }
+            });
+
+            return multipliers;
+        } catch (error) {
+            console.warn('Trading Places | Error getting flag multipliers:', error);
+            return [];
+        }
+    });
+
+    // Get cargo slots calculation breakdown with running totals helper
+    Handlebars.registerHelper('getCargoSlotsCalculationBreakdown', function(settlement, season) {
+        try {
+            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            if (!dataManager || !dataManager.tradingConfig?.cargoSlots) {
+                return [];
+            }
+
+            const props = dataManager.getSettlementProperties(settlement);
+            const config = dataManager.tradingConfig.cargoSlots;
+            const flags = props.productionCategories || [];
+
+            const breakdown = [];
+            let currentTotal = 0;
+
+            // Base slots
+            const baseSlots = config.basePerSize?.[String(props.sizeNumeric)] ?? config.basePerSize?.[props.sizeNumeric] ?? Math.max(1, props.sizeNumeric || 1);
+            currentTotal = baseSlots;
+            breakdown.push({
+                label: `Base slots by size: ${baseSlots}`,
+                current: currentTotal.toFixed(2)
+            });
+
+            // Population contribution
+            const populationContribution = (props.population || 0) * (config.populationMultiplier ?? 0);
+            if (populationContribution > 0) {
+                currentTotal += populationContribution;
+                breakdown.push({
+                    label: `Population contribution: +${populationContribution.toFixed(2)}`,
+                    current: currentTotal.toFixed(2)
+                });
+            }
+
+            // Size multiplier bonus
+            const sizeContribution = (props.sizeNumeric || 0) * (config.sizeMultiplier ?? 0);
+            if (sizeContribution > 0) {
+                currentTotal += sizeContribution;
+                breakdown.push({
+                    label: `Size multiplier bonus: +${sizeContribution.toFixed(2)}`,
+                    current: currentTotal.toFixed(2)
+                });
+            }
+
+            // Flag multipliers
+            flags.forEach(flag => {
+                const multiplier = config.flagMultipliers?.[flag.toLowerCase()];
+                if (multiplier && multiplier !== 1) {
+                    const beforeFlag = currentTotal;
+                    currentTotal *= multiplier;
+                    breakdown.push({
+                        label: `Flag: ${flag} ×${multiplier}`,
+                        current: currentTotal.toFixed(2)
+                    });
+                }
+            });
+
+            // Apply hard cap
+            const hardCap = config.hardCap;
+            if (typeof hardCap === 'number' && currentTotal > hardCap) {
+                currentTotal = hardCap;
+            }
+
+            // Final result
+            breakdown.push({
+                label: `Final slots: ${Math.max(1, Math.round(currentTotal))} (capped at ${hardCap})`,
+                current: Math.max(1, Math.round(currentTotal)).toString()
+            });
+
+            return breakdown;
+        } catch (error) {
+            console.warn('Trading Places | Error getting calculation breakdown:', error);
+            return [];
+        }
     });
 
     console.log('Trading Places | Handlebars helpers registered');
@@ -483,6 +761,16 @@ function registerModuleSettings() {
         config: false,
         type: String,
         default: ""
+    });
+
+    // Cargo availability data setting (for persistence)
+    game.settings.register(MODULE_ID, "cargoAvailabilityData", {
+        name: "Cargo Availability Data",
+        hint: "Stores cargo availability data for all settlements and seasons",
+        scope: "client",
+        config: false,
+        type: Object,
+        default: {}
     });
 }
 

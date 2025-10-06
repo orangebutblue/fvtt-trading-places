@@ -46,6 +46,7 @@ export default class TradingUIRenderer {
      * @private
      */
     _updateUIState() {
+        console.log('🔍 DEBUG: _updateUIState called');
         // Update season display
         if (this.app.currentSeason) {
             const seasonSelect = this.app.element.querySelector('#current-season');
@@ -56,9 +57,10 @@ export default class TradingUIRenderer {
 
         // Update button states
         this._updateTransactionButtons();
-    }
 
-    /**
+        // Attach tooltip handlers for settlement info
+        this._attachSettlementInfoTooltips();
+    }    /**
      * Update transaction button states based on current context
      * @private
      */
@@ -107,6 +109,44 @@ export default class TradingUIRenderer {
                 desperateSale: !!desperateSaleBtn,
                 rumorSale: !!rumorSaleBtn
             }
+        });
+    }
+
+    /**
+     * Attach click handlers for settlement info tooltips
+     * @private
+     */
+    _attachSettlementInfoTooltips() {
+        // Find all info indicators in the settlement info section
+        const settlementInfoSection = this.app.element.querySelector('.settlement-info-section');
+        if (!settlementInfoSection) {
+            console.log('🔍 DEBUG: No settlement-info-section found, trying alternative selector');
+            // Try alternative selector
+            const settlementInfoDiv = this.app.element.querySelector('.settlement-info');
+            if (settlementInfoDiv) {
+                const section = settlementInfoDiv.querySelector('section');
+                if (section) {
+                    console.log('🔍 DEBUG: Found settlement info section via alternative path');
+                }
+            }
+            return;
+        }
+
+        const infoIndicators = settlementInfoSection.querySelectorAll('.info-indicator');
+        console.log('🔍 DEBUG: Found info indicators:', infoIndicators.length);
+
+        infoIndicators.forEach((indicator, index) => {
+            // Remove existing listeners to avoid duplicates
+            indicator.removeEventListener('click', this._handleInfoIndicatorClick);
+            // Add the click handler with proper binding
+            indicator.addEventListener('click', (event) => {
+                console.log('🔍 DEBUG: Info indicator clicked:', index, event.target.dataset.infoTooltip);
+                event.stopPropagation();
+                const tooltip = event.target.dataset.infoTooltip;
+                if (tooltip) {
+                    this._showInfoTooltip(tooltip, event.target);
+                }
+            });
         });
     }
 
@@ -206,36 +246,68 @@ export default class TradingUIRenderer {
         const slotOutcomes = Array.isArray(availabilityCheck.rolls) ? availabilityCheck.rolls : [];
         const successfulSlots = slotOutcomes.filter(outcome => outcome.success).length;
         const totalSlots = slotOutcomes.length;
-        const sizeRating = this.dataManager.convertSizeToNumeric(this.app.selectedSettlement.size);
-        const wealthRating = this.app.selectedSettlement.wealth;
-        const baseChance = (sizeRating + wealthRating) * 10;
-        const finalChance = Math.min(baseChance, 100);
 
         // Get slot information from pipeline result if available
         let slotExplanation = '';
-        if (pipelineResult && pipelineResult.slotPlan) {
-            const slotPlan = pipelineResult.slotPlan;
-            const tooltipContent = `
-Availability Check: ${totalSlots} slots rolled, ${successfulSlots} successful
+        if (pipelineResult && pipelineResult.slots && pipelineResult.slots.length > 0) {
+            // Filter to only successful slots
+            const successfulSlotsData = pipelineResult.slots.filter(slot => slot.merchant?.available !== false);
+            const slotDetails = successfulSlotsData.map((slot, index) => {
+                const slotNum = index + 1;
+                let details = `Slot ${slotNum}: ${slot.cargo?.name || 'Unknown'} (${slot.cargo?.category || 'Unknown'})`;
 
-Slot Calculation:
-${slotPlan.reasons.map(reason => `${reason.label}: ${reason.value}`).join('\n')}
-${slotPlan.formula.multipliers.map(multiplier => `${multiplier.label}: ${multiplier.detail}`).join('\n')}
+                // Add merchant availability roll
+                if (slot.merchant?.roll !== undefined && slot.merchant?.target !== undefined) {
+                    details += `\n• Merchant Roll: ${slot.merchant.roll} ≤ ${slot.merchant.target} (${slot.merchant.roll <= slot.merchant.target ? 'SUCCESS' : 'FAILED'})`;
+                }
+
+                // Add cargo selection details
+                if (slot.cargo?.roll !== undefined && slot.cargo?.target !== undefined) {
+                    details += `\n• Cargo Selection: ${slot.cargo.roll} ≤ ${slot.cargo.target} (${slot.cargo.name})`;
+                }
+
+                // Add amount calculation
+                if (slot.amount) {
+                    const amount = slot.amount;
+                    details += `\n• Amount: ${amount.roll || 'N/A'} (base) × ${amount.sizeModifier?.toFixed(2) || 'N/A'} (size) × ${amount.wealthModifier?.toFixed(2) || 'N/A'} (wealth) × ${amount.supplyModifier?.toFixed(2) || 'N/A'} (supply) = ${amount.totalEP || 0} EP`;
+                }
+
+                // Add quality calculation
+                if (slot.quality) {
+                    const quality = slot.quality;
+                    details += `\n• Quality: ${quality.tier || 'Unknown'} (score: ${quality.score?.toFixed(2) || 'N/A'})`;
+                }
+
+                // Add contraband check
+                if (slot.contraband) {
+                    const contraband = slot.contraband;
+                    details += `\n• Contraband: ${contraband.roll || 'N/A'} ≤ ${contraband.chance?.toFixed(1) || 'N/A'}% (${contraband.contraband ? 'YES' : 'NO'})`;
+                }
+
+                // Add pricing
+                if (slot.pricing) {
+                    const pricing = slot.pricing;
+                    details += `\n• Pricing: ${pricing.basePricePerEP?.toFixed(2) || 'N/A'} → ${pricing.finalPricePerEP?.toFixed(2) || 'N/A'} GC/EP`;
+                }
+
+                return details;
+            }).join('\n\n');
+
+            const tooltipContent = `Availability Check: ${totalSlots} slots rolled, ${successfulSlots} successful
+
+Detailed Slot Results:
+${slotDetails}
             `.trim();
-            slotExplanation = this.createTooltipElement(
-                `<strong>Available Slots:</strong> ${successfulSlots}/${slotPlan.totalSlots}`,
-                tooltipContent,
-                'p'
-            );
+            slotExplanation = `<div class="slot-info">
+                <strong>Successful Slots:</strong>
+                <span class="slot-value">${successfulSlots}/${totalSlots} ${this._createInfoIndicator(tooltipContent)}</span>
+            </div>`;
         }
 
         const marketCheckHtml = `
             <section class="market-check-section">
-                <h5>Market Check</h5>
+                <h5>Market Check Results</h5>
                 <div class="calculation-breakdown">
-                    <p><strong>Settlement:</strong> ${this.app.selectedSettlement.name}</p>
-                    <p><strong>Size:</strong> ${this.dataManager.getSizeDescription(this.app.selectedSettlement.size)} (${sizeRating})</p>
-                    <p><strong>Wealth:</strong> ${this.dataManager.getWealthDescription(wealthRating)} (${wealthRating})</p>
                     ${slotExplanation}
                 </div>
             </section>
@@ -252,6 +324,19 @@ ${slotPlan.formula.multipliers.map(multiplier => `${multiplier.label}: ${multipl
         `;
 
         resultsContainer.style.display = 'block';
+
+        // Add click handlers for info indicators in the market check section
+        const infoIndicators = resultsContainer.querySelectorAll('.info-indicator');
+        infoIndicators.forEach(indicator => {
+            indicator.addEventListener('click', (event) => {
+                event.stopPropagation();
+                
+                const tooltip = indicator.dataset.infoTooltip;
+                if (tooltip) {
+                    this._showInfoTooltip(tooltip, indicator);
+                }
+            });
+        });
     }
 
     /**
@@ -602,8 +687,12 @@ ${slotPlan.formula.multipliers.map(multiplier => `${multiplier.label}: ${multipl
      * @private
      */
     _updateCargoDisplay(cargoList) {
+        console.log('🎨 UI RENDERER: _updateCargoDisplay called with', cargoList.length, 'items');
         const cargoGrid = this.app.element.querySelector('#buying-cargo-grid');
-        if (!cargoGrid) return;
+        if (!cargoGrid) {
+            console.error('🎨 UI RENDERER: Cannot find #buying-cargo-grid element');
+            return;
+        }
         
         // Debug: Log what cargo we're displaying
         console.log('🎨 UI RENDERER RECEIVING CARGO:', cargoList.map(c => ({
@@ -840,7 +929,7 @@ ${slotPlan.formula.multipliers.map(multiplier => `${multiplier.label}: ${multipl
             qualityTooltip += `\n\nQuality Calculation:`;
             
             slot.quality.components.forEach(component => {
-                const value = component.value || 0;
+                const value = Number(component.value) || 0;
                 currentScore += value;
                 qualityTooltip += `\n• ${component.label}: ${value > 0 ? '+' : ''}${value} (current: ${currentScore.toFixed(2)})`;
             });
@@ -921,10 +1010,49 @@ ${slotPlan.formula.multipliers.map(multiplier => `${multiplier.label}: ${multipl
 
         // Add contraband warning if applicable
         if (isContraband) {
+            // Create contraband tooltip
+            const contrabandData = slot.contraband || {};
+            const rollResult = contrabandData.roll || 'N/A';
+            const chancePercent = contrabandData.chance?.toFixed(1) || 'N/A';
+            const isContrabandResult = contrabandData.contraband ? 'Yes' : 'No';
+            const contrabandSteps = Array.isArray(contrabandData.steps) ? contrabandData.steps : [];
+            
+            let contrabandTooltip = `Contraband Status: ${isContrabandResult}`;
+            contrabandTooltip += `\n\nRoll Results:`;
+            contrabandTooltip += `\n• Percentile Roll: ${rollResult}`;
+            contrabandTooltip += `\n• Required: ≤${chancePercent}% to be contraband`;
+            contrabandTooltip += `\n• Result: ${rollResult <= chancePercent ? 'Contraband' : 'Legal'}`;
+            
+            if (contrabandSteps.length > 0) {
+                contrabandTooltip += `\n\nChance Calculation:`;
+                contrabandSteps.forEach(step => {
+                    const stepValue = typeof step.value === 'number' ? step.value.toFixed(2) : step.value;
+                    const currentValue = typeof step.current === 'number' ? (step.current * 100).toFixed(1) : step.current;
+                    if (step.label.includes('multiplier')) {
+                        contrabandTooltip += `\n• ${step.label}: ×${stepValue} (current: ${currentValue}%)`;
+                    } else {
+                        contrabandTooltip += `\n• ${step.label}: +${stepValue} (current: ${currentValue}%)`;
+                    }
+                });
+            } else {
+                // Fallback if no steps data
+                contrabandTooltip += `\n\nChance Calculation:`;
+                contrabandTooltip += `\n• Base Chance: 55.0% (current: 55.0%)`;
+                contrabandTooltip += `\n• Settlement modifiers applied (current: ${chancePercent}%)`;
+            }
+            
+            contrabandTooltip += `\n\nWhat Affects Contraband Chance:`;
+            contrabandTooltip += `\n• Base chance is 55% for all settlements`;
+            contrabandTooltip += `\n• "Smuggling" flag adds +50% chance`;
+            contrabandTooltip += `\n• "Piracy" flag adds +35% chance`;
+            contrabandTooltip += `\n• Larger settlements add size bonuses`;
+            contrabandTooltip += `\n• Seasonal multipliers may apply`;
+            
             basicInfo += `
                 <div class="contraband-warning">
                     <span class="contraband-icon">🏴‍☠️</span>
                     <span class="contraband-text">Contraband - Illegal to transport</span>
+                    ${this._createInfoIndicator(contrabandTooltip)}
                 </div>`;
         }
 

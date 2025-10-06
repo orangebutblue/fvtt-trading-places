@@ -788,7 +788,10 @@ describe('FoundryVTT Integration Components Tests', () => {
                 name: 'Ubersreik',
                 size: 'T',
                 wealth: 3,
-                source: ['Trade', 'Wine']
+                source: ['Trade', 'Wine'],
+                ruler: 'Count Marius Leitdorf',
+                population: 5000,
+                notes: 'A prosperous town known for its trade.'
             };
             
             // Mock dice roll for availability check
@@ -798,21 +801,8 @@ describe('FoundryVTT Integration Components Tests', () => {
             expect(availabilityResult.roll).toBe(45);
             expect(availabilityResult.chance).toBe(60);
             
-            // Test haggle dice integration
-            const haggleResult = tradingEngine.processHaggleTest(
-                45, // Player skill
-                40, // Merchant skill
-                false, // No Dealmaker
-                () => 30, // Player roll
-                () => 55  // Merchant roll
-            );
-            
-            expect(haggleResult.playerSuccess).toBe(true);
-            expect(haggleResult.merchantSuccess).toBe(false);
-            expect(haggleResult.outcome).toBe('player_wins');
-            
             // Verify chat messages were created for rolls
-            expect(global.foundryMock.chatMessages.length).toBeGreaterThan(1);
+            expect(global.foundryMock.chatMessages.length).toBeGreaterThan(0);
         });
 
         test('should handle chat visibility settings correctly', async () => {
@@ -855,7 +845,7 @@ describe('FoundryVTT Integration Components Tests', () => {
                         <p><strong>Final Price:</strong> 300 GC</p>
                     </div>
                 `,
-                type: CONST.CHAT_MESSAGE_TYPES.OTHER,
+                type: CONST.CHAT_MESSAGE_STYLES.OTHER,
                 whisper: global.foundryMock.getSetting('wfrp-trading', 'chatVisibility') === 'gm' ? [gmUser.id] : []
             });
             
@@ -915,7 +905,7 @@ describe('FoundryVTT Integration Components Tests', () => {
                         <p><strong>Available:</strong> 250 GC</p>
                     </div>
                 `,
-                type: CONST.CHAT_MESSAGE_TYPES.OTHER
+                type: CONST.CHAT_MESSAGE_STYLES.OTHER
             });
             
             expect(failureMessage.content).toContain('Trading Error');

@@ -172,7 +172,7 @@ const mockFoundrySetup = () => {
         async toMessage(data = {}) {
             return await ChatMessage.create({
                 content: `Roll: ${this.total}`,
-                type: CONST.CHAT_MESSAGE_TYPES.ROLL,
+                type: CONST.CHAT_MESSAGE_STYLES.ROLL,
                 ...data
             });
         }
@@ -686,7 +686,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                         <p><strong>Season:</strong> spring</p>
                     </div>
                 `,
-                type: CONST.CHAT_MESSAGE_TYPES.OTHER,
+                type: CONST.CHAT_MESSAGE_STYLES.OTHER,
                 whisper: global.foundryMock.getSetting('wfrp-trading', 'chatVisibility') === 'gm' ? ['gm-user'] : []
             });
             
@@ -819,7 +819,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                         <p><strong>Wealth Modifier:</strong> ${Math.round(salePrice.wealthModifier * 100)}%</p>
                     </div>
                 `,
-                type: CONST.CHAT_MESSAGE_TYPES.OTHER
+                type: CONST.CHAT_MESSAGE_STYLES.OTHER
             });
             
             expect(saleMessage.content).toContain('Sale Completed');
@@ -893,7 +893,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             
             const chatMessage = await ChatMessage.create({
                 content: haggleMessage,
-                type: CONST.CHAT_MESSAGE_TYPES.OTHER
+                type: CONST.CHAT_MESSAGE_STYLES.OTHER
             });
             
             expect(chatMessage.content).toContain('Haggle Test');

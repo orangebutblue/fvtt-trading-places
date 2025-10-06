@@ -134,6 +134,39 @@
                     <span id="buying-error-message"></span>
                 </div>
 
+                {{#if selectedSettlement}}
+                <!-- Settlement Information Section -->
+                <div class="settlement-info">
+                    <section class="settlement-info-section">
+                        <h5><i class="fas fa-info-circle"></i> Settlement Information</h5>
+                                                <div class="calculation-breakdown">
+                            {{#if selectedSettlement.flags}}
+                            <div class="settlement-flags">
+                                <strong>Settlement Characteristics:</strong>
+                                <ul class="characteristics-list">
+                                    {{#each selectedSettlement.flags}}
+                                    <li>{{this}} <span class="info-indicator" data-info-tooltip="{{getFlagDescription this}}">?</span></li>
+                                    {{/each}}
+                                </ul>
+                            </div>
+                            {{/if}}
+                            <div class="slot-info">
+                                <strong>Available Slots:</strong>
+                                <span class="slot-value">{{calculateCargoSlots selectedSettlement currentSeason}} <span class="info-indicator" data-info-tooltip="Settlement Size: {{getSizeDescription selectedSettlement.size}} ({{getSizeRating selectedSettlement.size}})
+Settlement Wealth: {{selectedSettlement.wealth}}
+{{#if selectedSettlement.population}}Population: {{formatNumber selectedSettlement.population}}
+{{/if}}
+Season: {{currentSeason}}
+
+Slot Calculation:
+{{#each (getCargoSlotsCalculationBreakdown selectedSettlement currentSeason)}}• {{this.label}} (current: {{this.current}})
+{{/each}}">?</span></span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                {{/if}}
+
                 <!-- Check Availability Section -->
                 <div class="availability-check-section">
                     <button class="btn btn-primary check-availability" id="check-availability" style="width: 100%; margin-bottom: 24px;" {{#unless hasSettlement}}disabled{{/unless}}>
