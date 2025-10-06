@@ -53,11 +53,11 @@ class CargoAvailabilityPipeline {
         const settlementFlags = this._normaliseFlags(settlementProps.productionCategories);
 
         const settlementContext = this._buildSettlementContext(settlementProps, normalizedSeason);
-        const slotPlan = this._calculateMerchantSlots(settlementProps, settlementFlags, normalizedSeason);
+        const cargoSlotPlan = this._calculateCargoSlots(settlementProps, settlementFlags, normalizedSeason);
         const candidateTable = this._buildCandidateTable(settlementProps, settlementFlags, normalizedSeason);
 
         const slots = [];
-        for (let index = 0; index < slotPlan.producerSlots; index += 1) {
+        for (let index = 0; index < cargoSlotPlan.producerSlots; index += 1) {
             slots.push(
                 this._processSlot({
                     slotNumber: index + 1,
@@ -71,7 +71,7 @@ class CargoAvailabilityPipeline {
 
         return {
             settlement: settlementContext,
-            slotPlan,
+            slotPlan: cargoSlotPlan,
             candidateTable,
             slots
         };
@@ -107,8 +107,13 @@ class CargoAvailabilityPipeline {
         };
     }
 
-    _calculateMerchantSlots(props, flags, season) {
-        const config = this.tradingConfig.merchantSlots || this.tradingConfig.merchantCount || {};
+    _calculateCargoSlots(props, flags, season) {
+        const config = this.tradingConfig.cargoSlots || this.tradingConfig.merchantCount || {
+            basePerSize: { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5 },
+            populationMultiplier: 0.0001,
+            sizeMultiplier: 1.5,
+            hardCap: 10
+        };
         let baseSlots = null;
 
         if (config.basePerSize) {
@@ -289,7 +294,7 @@ class CargoAvailabilityPipeline {
 
     _processSlot({ slotNumber, settlementProps, settlementFlags, candidateTable, season }) {
         if (!candidateTable.entries || candidateTable.entries.length === 0) {
-            throw new Error('No cargo candidates available to process merchant slots');
+            throw new Error('No cargo candidates available to process cargo slots');
         }
 
         const selection = this._selectCargo(candidateTable);
@@ -575,6 +580,27 @@ class CargoAvailabilityPipeline {
             components.push({ label: `Market state (${balance.state})`, value: pressureModifier });
         }
 
+        // Add random quality roll
+        const qualityRoll = qualityConfig.qualityRoll || {};
+        const percentileRoll = this._percentile();
+        const percentileModifier = this._resolvePercentileModifier(percentileRoll, qualityRoll.percentileTable || {});
+        score += percentileModifier;
+        components.push({ 
+            label: `Quality roll (${percentileRoll})`, 
+            value: percentileModifier 
+        });
+
+        const varianceRange = qualityRoll.variance ?? 0;
+        let varianceRoll = 0;
+        if (varianceRange > 0) {
+            varianceRoll = Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
+            score += varianceRoll;
+            components.push({ 
+                label: `Variance roll (±${varianceRange})`, 
+                value: varianceRoll 
+            });
+        }
+
         if (typeof clamp.min === 'number') {
             score = Math.max(clamp.min, score);
         }
@@ -587,7 +613,13 @@ class CargoAvailabilityPipeline {
         return {
             tier,
             score,
-            components
+            components,
+            rollDetails: {
+                percentileRoll,
+                percentileModifier,
+                varianceRoll,
+                varianceRange
+            }
         };
     }
 
@@ -631,15 +663,33 @@ class CargoAvailabilityPipeline {
         computedSkill += percentileModifier;
 
         const varianceRange = skillConfig.variance ?? 0;
+        let varianceRoll = 0;
         if (varianceRange > 0) {
-            const varianceRoll = Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
+            varianceRoll = Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
             computedSkill += varianceRoll;
         }
 
         const minSkill = skillConfig.minSkill ?? 5;
         const maxSkill = skillConfig.maxSkill ?? 95;
+        const finalSkill = Math.max(minSkill, Math.min(maxSkill, Math.round(computedSkill)));
 
-        return Math.max(minSkill, Math.min(maxSkill, Math.round(computedSkill)));
+        return {
+            skill: finalSkill,
+            calculation: {
+                baseSkill,
+                wealthRating: settlementProps.wealthRating ?? 0,
+                wealthModifier: skillConfig.wealthModifier ?? 0,
+                wealthContribution,
+                percentileRoll,
+                percentileModifier,
+                varianceRange,
+                varianceRoll,
+                computedSkill: Math.round(computedSkill),
+                minSkill,
+                maxSkill,
+                clamped: finalSkill !== Math.round(computedSkill)
+            }
+        };
     }
 
     _calculatePricing(selection, amount, quality, contraband, balance, season) {

@@ -425,6 +425,38 @@
     background: var(--bg-tertiary);
 }
 
+.wfrp-trading .cargo-card.contraband {
+    border: 2px solid rgba(239, 83, 80, 0.4);
+    position: relative;
+}
+
+.wfrp-trading .cargo-card.contraband .cargo-name {
+    color: var(--accent-warning);
+    font-weight: 600;
+}
+
+/* Contraband Warning */
+.wfrp-trading .contraband-warning {
+    background: rgba(239, 83, 80, 0.1);
+    border: 1px solid rgba(239, 83, 80, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--accent-warning);
+}
+
+.wfrp-trading .contraband-icon {
+    font-size: 16px;
+}
+
+.wfrp-trading .contraband-text {
+    font-size: 14px;
+}
+
 .wfrp-trading .cargo-card.slot-failure {
     background: rgba(239, 83, 80, 0.1);
     border: 1px solid rgba(239, 83, 80, 0.35);
@@ -591,16 +623,6 @@
     font-weight: 600;
     color: var(--text-primary);
     font-size: 14px;
-}
-
-.wfrp-trading .merchant-skill {
-    background: var(--accent-primary);
-    color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
 }
 
 .wfrp-trading .merchant-description {
@@ -868,7 +890,7 @@
 }
 
 .merchant-info-indicator {
-    margin-left: 8px;
+    margin-left: 0;
 }
 
 /* Info Tooltip */

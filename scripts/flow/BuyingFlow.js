@@ -188,14 +188,19 @@ export class BuyingFlow {
                             hasMerchantPersonalities: !!systemConfig?.merchantPersonalities
                         });
 
-                        merchant = await this.tradingEngine.generateRandomMerchant(this.app.selectedSettlement, merchantRollFunction);
-                        console.log('🔍 MERCHANT OBJECT DEBUG:', {
-                            name: merchant.name,
-                            skillDescription: merchant.skillDescription,
-                            hagglingSkill: merchant.hagglingSkill,
-                            baseSkill: merchant.baseSkill,
-                            allKeys: Object.keys(merchant)
-                        });
+                        // Use the skill calculated by the pipeline instead of generating a new random one
+                        const merchantData = slot.merchant;
+                        const merchantSkill = merchantData.skill;
+                        const merchantName = await this.tradingEngine._generateMerchantName();
+                        const skillDescription = this.tradingEngine._getSkillDescription(Math.max(5, Math.min(95, merchantSkill)));
+
+                        merchant = {
+                            name: merchantName,
+                            skillDescription: skillDescription,
+                            hagglingSkill: Math.max(5, Math.min(95, merchantSkill)),
+                            baseSkill: merchantSkill,
+                            calculation: merchantData.calculation
+                        };
                     } catch (error) {
                         console.error('❌ MERCHANT GENERATION FAILED:', error);
                         merchant = {
@@ -223,7 +228,7 @@ export class BuyingFlow {
                             amount: slot.amount,
                             quality: slot.quality,
                             pricing: slot.pricing,
-                            contraband: slot.contraband?.contraband,
+                            contraband: slot.contraband,
                             merchant: slot.merchant,
                             desperationUsed: false
                         }

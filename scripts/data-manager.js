@@ -2200,7 +2200,7 @@ class DataManager {
             return [];
         }
 
-        // Calculate merchant slots
+        // Calculate cargo slots
         const slotInfo = this.merchantGenerator.calculateMerchantSlots(settlement);
         const merchantCount = Math.max(1, Math.floor(slotInfo.totalSlots / 2)); // Distribute between producers/seekers
 

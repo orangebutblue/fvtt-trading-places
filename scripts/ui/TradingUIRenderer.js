@@ -653,7 +653,12 @@ ${slotPlan.formula.multipliers.map(multiplier => `${multiplier.label}: ${multipl
      */
     _createSuccessfulCargoCard(cargo) {
         const card = document.createElement('div');
-        card.className = 'cargo-card collapsible slot-success';
+        
+        // Check if cargo is contraband
+        const isContraband = cargo.slotInfo?.contraband?.contraband === true;
+        const contrabandClass = isContraband ? 'contraband' : '';
+        
+        card.className = `cargo-card collapsible slot-success ${contrabandClass}`;
 
         // Basic info (always visible) - matches original layout
         let basicInfo = `
@@ -665,49 +670,243 @@ ${slotPlan.formula.multipliers.map(multiplier => `${multiplier.label}: ${multipl
 
         // Add info indicators for detailed information (all cargo now has slotInfo)
         const slot = cargo.slotInfo;
-        
-        // Price per EP with info indicator
-        let priceTooltip = `Base Price: ${((slot.pricing?.basePricePerEP || 0) * 1).toFixed(2)} GC/EP\nFinal Price: ${((slot.pricing?.finalPricePerEP || 0) * 1).toFixed(2)} GC/EP`;
-        
-        if (slot.pricing?.steps && slot.pricing.steps.length > 0) {
-            priceTooltip += '\n\nPrice Calculation Steps:';
-            priceTooltip += `\n• Base: ${((slot.pricing.basePricePerEP || 0) * 1).toFixed(2)} GC/EP`;
-            slot.pricing.steps.forEach(step => {
-                priceTooltip += `\n• ${step?.label || 'Unknown'}: ${((step?.perEP || 0) * 1).toFixed(2)} GC/EP`;
+
+        const toNumber = (value) => {
+            const num = Number(value);
+            return Number.isFinite(num) ? num : null;
+        };
+
+        const formatInt = (value) => {
+            const num = toNumber(value);
+            if (num === null) {
+                return 'N/A';
+            }
+            return Math.round(num).toLocaleString('en-US');
+        };
+
+        const formatCurrency = (value) => {
+            const num = toNumber(value);
+            if (num === null) {
+                return 'N/A';
+            }
+            return num.toFixed(2);
+        };
+
+        const formatMultiplier = (value) => {
+            const num = toNumber(value);
+            if (num === null) {
+                return '1.00';
+            }
+            return num.toFixed(2);
+        };
+
+        const pricingData = slot.pricing || {};
+        const priceSteps = Array.isArray(pricingData.steps) ? pricingData.steps : [];
+        const basePricePerEP = toNumber(pricingData.basePricePerEP);
+        const finalPricePerEP = toNumber(pricingData.finalPricePerEP);
+
+        const priceStepLines = [];
+        if (priceSteps.length > 0) {
+            priceSteps.forEach((step, index) => {
+                const stepValue = toNumber(step?.perEP);
+                if (stepValue === null) {
+                    return;
+                }
+                const label = step?.label || `Step ${index + 1}`;
+                const displayValue = formatCurrency(stepValue);
+                priceStepLines.push(`• ${label}: ${displayValue} GC/EP (current: ${displayValue})`);
             });
+        } else if (basePricePerEP !== null) {
+            const baseDisplay = formatCurrency(basePricePerEP);
+            priceStepLines.push(`• Base price: ${baseDisplay} GC/EP (current: ${baseDisplay})`);
+            if (finalPricePerEP !== null && Math.abs(finalPricePerEP - basePricePerEP) > 0.001) {
+                const finalDisplay = formatCurrency(finalPricePerEP);
+                priceStepLines.push(`• Final modifiers: ${finalDisplay} GC/EP (current: ${finalDisplay})`);
+            }
         }
-        
-        // Total price with info indicator (shows total amounts, not per EP)
-        const quantity = cargo.totalEP ?? cargo.quantity ?? 0;
-        let totalPriceTooltip = `Base Total: ${((slot.pricing?.basePricePerEP || 0) * quantity).toFixed(2)} GC\nFinal Total: ${((slot.pricing?.finalPricePerEP || 0) * quantity).toFixed(2)} GC`;
-        
-        if (slot.pricing?.steps && slot.pricing.steps.length > 0) {
-            totalPriceTooltip += '\n\nTotal Price Calculation Steps:';
-            totalPriceTooltip += `\n• Base: ${((slot.pricing.basePricePerEP || 0) * quantity).toFixed(2)} GC`;
-            slot.pricing.steps.forEach(step => {
-                totalPriceTooltip += `\n• ${step?.label || 'Unknown'}: ${((step?.perEP || 0) * quantity).toFixed(2)} GC`;
+
+        let priceTooltip = `Price per EP: ${formatCurrency(finalPricePerEP)} GC`;
+        if (priceStepLines.length > 0) {
+            priceTooltip += `\n\nCalculation Steps:\n${priceStepLines.join('\n')}`;
+        }
+
+        const quantityValue = toNumber(cargo.totalEP ?? cargo.quantity) ?? 0;
+
+        const totalStepLines = [];
+        if (priceSteps.length > 0 && quantityValue > 0) {
+            priceSteps.forEach((step, index) => {
+                const perEp = toNumber(step?.perEP);
+                if (perEp === null) {
+                    return;
+                }
+                const label = step?.label || `Step ${index + 1}`;
+                const stepTotal = perEp * quantityValue;
+                const displayTotal = formatCurrency(stepTotal);
+                totalStepLines.push(`• ${label}: ${displayTotal} GC (current: ${displayTotal})`);
             });
+        } else if (basePricePerEP !== null) {
+            const baseTotal = basePricePerEP * quantityValue;
+            const baseDisplay = formatCurrency(baseTotal);
+            totalStepLines.push(`• Base total: ${baseDisplay} GC (current: ${baseDisplay})`);
+            if (finalPricePerEP !== null && Math.abs(finalPricePerEP - basePricePerEP) > 0.001) {
+                const finalTotal = finalPricePerEP * quantityValue;
+                const finalDisplay = formatCurrency(finalTotal);
+                totalStepLines.push(`• Final modifiers: ${finalDisplay} GC (current: ${finalDisplay})`);
+            }
         }
-        
-        // Available quantity with info indicator
-        const quantityTooltip = `Amount: ${cargo.totalEP} EP\n\nCalculated from:\n• Base Roll: ${slot.amount?.roll || 'N/A'} (1d100)\n• Size Modifier: ×${((slot.amount?.sizeModifier || 0) * 1).toFixed(2)}\n• Wealth Modifier: ×${((slot.amount?.wealthModifier || 0) * 1).toFixed(2)}\n• Supply Modifier: ×${((slot.amount?.supplyModifier || 0) * 1).toFixed(2)}`;
+
+        let finalTotalValue = toNumber(pricingData.totalValue);
+        if (finalTotalValue === null && finalPricePerEP !== null) {
+            finalTotalValue = finalPricePerEP * quantityValue;
+        }
+
+        let totalPriceTooltip = `Total Price (${formatInt(quantityValue)} EP): ${formatCurrency(finalTotalValue)} GC`;
+        if (totalStepLines.length > 0) {
+            totalPriceTooltip += `\n\nCalculation Steps:\n${totalStepLines.join('\n')}`;
+        }
+
+        const amountData = slot.amount || {};
+        const amountNotes = Array.isArray(amountData.notes) ? amountData.notes.filter(note => typeof note === 'string' && note.trim().length > 0) : [];
+        const baseRollValue = toNumber(amountData.baseRoll);
+        const sizeModifierValue = toNumber(amountData.sizeModifier);
+        const baseEPValue = toNumber(amountData.baseEP);
+        const wealthModifierValue = toNumber(amountData.wealthModifier);
+        const supplyModifierValue = toNumber(amountData.supplyModifier);
+        const adjustedEPValue = toNumber(amountData.adjustedEP);
+        const finalAmountValue = toNumber(amountData.totalEP) ?? quantityValue;
+        const roundToValue = toNumber(amountData.roundTo);
+
+        const amountStepLines = [];
+        let currentAmountValue = null;
+
+        if (baseRollValue !== null) {
+            currentAmountValue = baseRollValue;
+            amountStepLines.push(`• Base roll ${amountData.roll ?? 'N/A'} ⇒ ${formatInt(currentAmountValue)} EP chunk (current: ${formatInt(currentAmountValue)})`);
+        }
+
+        if (sizeModifierValue !== null && baseEPValue !== null) {
+            currentAmountValue = baseEPValue;
+            amountStepLines.push(`• Settlement size ×${formatMultiplier(sizeModifierValue)} ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
+        } else if (sizeModifierValue !== null && currentAmountValue !== null) {
+            currentAmountValue = Math.round(currentAmountValue * sizeModifierValue);
+            amountStepLines.push(`• Settlement size ×${formatMultiplier(sizeModifierValue)} ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
+        } else if (baseEPValue !== null && currentAmountValue === null) {
+            currentAmountValue = baseEPValue;
+            amountStepLines.push(`• Base availability ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
+        }
+
+        if (wealthModifierValue !== null && currentAmountValue !== null) {
+            const baseForWealth = baseEPValue !== null ? baseEPValue : currentAmountValue;
+            const wealthApplied = Math.round(baseForWealth * wealthModifierValue);
+            if (Math.abs(wealthModifierValue - 1) > 0.001) {
+                currentAmountValue = wealthApplied;
+                amountStepLines.push(`• Wealth modifier ×${formatMultiplier(wealthModifierValue)} ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
+            } else if (currentAmountValue !== wealthApplied) {
+                currentAmountValue = wealthApplied;
+            }
+        }
+
+        if (supplyModifierValue !== null && (currentAmountValue !== null || adjustedEPValue !== null)) {
+            const supplyApplied = adjustedEPValue !== null ? adjustedEPValue : Math.round((currentAmountValue || 0) * supplyModifierValue);
+            currentAmountValue = supplyApplied;
+            amountStepLines.push(`• Supply modifier ×${formatMultiplier(supplyModifierValue)} ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
+        } else if (adjustedEPValue !== null) {
+            currentAmountValue = adjustedEPValue;
+            amountStepLines.push(`• Supply effects ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
+        }
+
+        if (finalAmountValue !== null) {
+            const roundingTarget = roundToValue !== null ? `${formatInt(roundToValue)} EP` : 'configured increment';
+            let roundingLine = `• Rounded to ${roundingTarget} ⇒ ${formatInt(finalAmountValue)} EP (current: ${formatInt(finalAmountValue)})`;
+            if (amountNotes.some(note => /minimum/i.test(note))) {
+                roundingLine += ' (minimum enforced)';
+            }
+            amountStepLines.push(roundingLine);
+        }
+
+        let quantityTooltip = `Available Amount: ${formatInt(finalAmountValue)} EP`;
+        if (amountStepLines.length > 0) {
+            quantityTooltip += `\n\nCalculation Steps:\n${amountStepLines.join('\n')}`;
+        }
+        if (amountNotes.length > 0) {
+            quantityTooltip += `\n\nNotes:\n${amountNotes.map(note => `• ${note}`).join('\n')}`;
+        }
         
         // Quality with info indicator
-        const qualityTooltip = `Quality Tier: ${cargo.quality}\nQuality Score: ${((slot.quality?.score || 0) * 1).toFixed(2)}\n\nDetermined by settlement wealth rating plus production flags and market pressure.`;
+        let qualityTooltip = `Quality Tier: ${cargo.quality}\nQuality Score: ${((slot.quality?.score || 0) * 1).toFixed(2)}`;
+        
+        if (slot.quality?.components && Array.isArray(slot.quality.components)) {
+            let currentScore = 0;
+            qualityTooltip += `\n\nQuality Calculation:`;
+            
+            slot.quality.components.forEach(component => {
+                const value = component.value || 0;
+                currentScore += value;
+                qualityTooltip += `\n• ${component.label}: ${value > 0 ? '+' : ''}${value} (current: ${currentScore.toFixed(2)})`;
+            });
+            
+        } else {
+            qualityTooltip += `\n\nDetermined by settlement wealth rating plus production flags and market pressure.`;
+        }
+        
+        // Add roll details if available
+        if (slot.quality?.rollDetails) {
+            const roll = slot.quality.rollDetails;
+            qualityTooltip += `\n\nRoll Details:`;
+            qualityTooltip += `\n• Percentile Roll: ${roll.percentileRoll} → Modifier: ${roll.percentileModifier > 0 ? '+' : ''}${roll.percentileModifier}`;
+            if (roll.varianceRange > 0) {
+                qualityTooltip += `\n• Variance Roll: ${roll.varianceRoll} (range ±${roll.varianceRange})`;
+            }
+        }
+        
+        // Add tier mapping explanation
+        qualityTooltip += `\n\nTier Mapping:`;
+        qualityTooltip += `\n• 0-2: Poor (15% discount)`;
+        qualityTooltip += `\n• 3-4: Common (5% discount)`;
+        qualityTooltip += `\n• 5-6: Average (normal price)`;
+        qualityTooltip += `\n• 7-8: High (10% premium)`;
+        qualityTooltip += `\n• 9-12: Exceptional (25% premium)`;
         
         // Merchant with info indicator
-        const merchantTooltip = `Name: ${cargo.merchant?.name || 'Unknown'}\nSkill: ${cargo.merchant?.skillDescription || 'Unknown'}\nHaggling Skill: ${cargo.merchant?.hagglingSkill || 'N/A'}\n\nMerchant generated using percentile-based skill system. Base skill (${cargo.merchant?.baseSkill || 'N/A'}) calculated from settlement wealth rating and percentile roll. Higher skills make haggling harder for players.${cargo.merchant?.specialBehaviors?.length > 0 ? `\n\nSpecial Behaviors: ${cargo.merchant.specialBehaviors.join(', ')}` : ''}`;
+        let merchantTooltip = `Name: ${cargo.merchant?.name || 'Unknown'}\nHaggling Skill: ${cargo.merchant?.hagglingSkill || 'N/A'}`;
+        
+        if (cargo.merchant?.calculation) {
+            const calc = cargo.merchant.calculation;
+            let currentSkill = calc.baseSkill;
+            
+            merchantTooltip += `\n\nSkill Calculation:`;
+            merchantTooltip += `\n• Base Skill: ${calc.baseSkill} (current: ${currentSkill})`;
+            
+            currentSkill += calc.wealthContribution;
+            merchantTooltip += `\n• Wealth Rating: ${calc.wealthRating} × ${calc.wealthModifier} = ${calc.wealthContribution} (current: ${currentSkill})`;
+            
+            currentSkill += calc.percentileModifier;
+            merchantTooltip += `\n• Percentile Roll: ${calc.percentileRoll} → Modifier: ${calc.percentileModifier} (current: ${currentSkill})`;
+            
+            currentSkill += calc.varianceRoll;
+            merchantTooltip += `\n• Variance: roll ${calc.varianceRoll} (range ±${calc.varianceRange}) (current: ${currentSkill})`;
+            
+            merchantTooltip += `\n• Computed Skill: ${calc.computedSkill}`;
+            
+            if (calc.clamped) {
+                merchantTooltip += ` (clamped to ${calc.minSkill}-${calc.maxSkill})`;
+            }
+        }
+        
+        if (cargo.merchant?.specialBehaviors?.length > 0) {
+            merchantTooltip += `\n\nSpecial Behaviors: ${cargo.merchant.specialBehaviors.join(', ')}`;
+        }
         
         basicInfo += `
-                <div class="price-info">
-                    <span class="price-label">Price per EP:</span>
-                    <span class="price-value">${this._formatPricePerEP(cargo)} GC</span>
-                    ${this._createInfoIndicator(priceTooltip)}
-                </div>
                 <div class="price-info">
                     <span class="price-label">Available:</span>
                     <span class="price-value">${cargo.totalEP ?? cargo.quantity} EP</span>
                     ${this._createInfoIndicator(quantityTooltip)}
+                </div>
+                <div class="price-info">
+                    <span class="price-label">Price per EP:</span>
+                    <span class="price-value">${this._formatPricePerEP(cargo)} GC</span>
+                    ${this._createInfoIndicator(priceTooltip)}
                 </div>
                 <div class="price-info">
                     <span class="price-label">Total Price:</span>
@@ -718,12 +917,21 @@ ${slotPlan.formula.multipliers.map(multiplier => `${multiplier.label}: ${multipl
                     <span class="price-label">Quality:</span>
                     <span class="price-value">${cargo.quality || 'Average'}</span>
                     ${this._createInfoIndicator(qualityTooltip)}
-                </div>
+                </div>`;
+
+        // Add contraband warning if applicable
+        if (isContraband) {
+            basicInfo += `
+                <div class="contraband-warning">
+                    <span class="contraband-icon">🏴‍☠️</span>
+                    <span class="contraband-text">Contraband - Illegal to transport</span>
+                </div>`;
+        }
+
+        basicInfo += `
                 <div class="merchant-info">
                     <div class="merchant-header">
-                        <span class="merchant-name">${cargo.merchant?.name || 'Unknown'}</span> &nbsp;
-                        <div class="merchant-skill">${cargo.merchant?.skillDescription || 'Unknown'}</div>
-                        ${this._createInfoIndicator(merchantTooltip, 'merchant-info-indicator')}
+                        <span class="merchant-name">${cargo.merchant?.name || 'Unknown'} (Skill: ${cargo.merchant?.baseSkill || 'N/A'})</span>${this._createInfoIndicator(merchantTooltip)}
                     </div>
                     <div class="merchant-description">${cargo.merchant?.description || ''}</div>
                 </div>`;
@@ -773,7 +981,6 @@ ${slotPlan.formula.multipliers.map(multiplier => `${multiplier.label}: ${multipl
                             <p><strong>Name:</strong> ${cargo.merchant?.name || 'Unknown'}</p>
                             <p><strong>Skill:</strong> ${cargo.merchant?.skillDescription || 'Unknown'}</p>
                             <p><strong>Haggling Skill:</strong> ${cargo.merchant?.hagglingSkill || 'N/A'}</p>
-                            <p class="explanation">Merchant generated using percentile-based skill system from config. Base skill (${cargo.merchant?.baseSkill || 'N/A'}) calculated from settlement wealth rating and percentile roll. Higher skills make haggling harder for players. Every cargo slot gets a unique merchant.</p>
                             ${cargo.merchant?.specialBehaviors?.length > 0 ? `<p><strong>Special Behaviors:</strong> ${cargo.merchant.specialBehaviors.join(', ')}</p>` : ''}
                         </div>
                     </div>

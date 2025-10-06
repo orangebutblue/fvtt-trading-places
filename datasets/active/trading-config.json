@@ -6,7 +6,7 @@
     "4": { "min": 10001, "max": 100000, "name": "City" },
     "5": { "min": 100001, "max": 999999999, "name": "Metropolis" }
   },
-  "merchantSlots": {
+  "cargoSlots": {
     "basePerSize": {
       "1": 1,
       "2": 2,
@@ -19,13 +19,6 @@
     "flagMultipliers": {
       "trade": 1.5
     },
-    "hardCap": 10
-  },
-  "merchantCount": {
-    "formula": "population-scaled",
-    "minSlotsPerSize": [1, 2, 3, 4, 5],
-    "populationMultiplier": 0.0001,
-    "sizeMultiplier": 1.5,
     "hardCap": 10
   },
   "candidateWeights": {
@@ -131,10 +124,22 @@
     "clamp": {
       "min": 0,
       "max": 12
+    },
+    "qualityRoll": {
+      "percentileTable": {
+        "10": -3,
+        "25": -2,
+        "50": 0,
+        "75": 1,
+        "90": 2,
+        "95": 3,
+        "99": 4
+      },
+      "variance": 2
     }
   },
   "contraband": {
-    "baseChance": 0.05,
+    "baseChance": 0.55,
     "flagBonuses": {},
     "sizeBonuses": {
       "1": 0,
