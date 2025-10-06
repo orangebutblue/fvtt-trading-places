@@ -423,6 +423,11 @@
 
 .wfrp-trading .cargo-card.slot-success {
     background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
 }
 
 .wfrp-trading .cargo-card.contraband {
@@ -517,7 +522,6 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
-    cursor: pointer;
     position: relative;
 }
 
@@ -625,11 +629,125 @@
     font-size: 14px;
 }
 
-.wfrp-trading .merchant-description {
-    color: var(--text-secondary);
-    font-size: 13px;
-    line-height: 1.4;
+.wfrp-trading .cargo-buying-interface {
+    background: var(--bg-accent);
+    border-top: 1px solid var(--border-light);
+    padding: 10px 12px;
+    margin-top: 10px;
 }
+
+/* Purchase Controls - Unified Grid Layout */
+
+/* Input Focus Styles */
+.wfrp-trading .quantity-input:focus,
+.wfrp-trading .discount-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.1);
+}
+
+/* Slider Base Styles */
+.wfrp-trading .quantity-slider,
+.wfrp-trading .discount-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: var(--border-light);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    flex: 1 1 0;
+    min-width: 40px;
+}
+
+/* Discount slider specific styling */
+.wfrp-trading .discount-slider {
+    background: linear-gradient(to right, #4caf50 0%, #4caf50 50%, #f44336 50%, #f44336 100%);
+}
+
+.wfrp-trading .quantity-slider::-webkit-slider-thumb,
+.wfrp-trading .discount-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.wfrp-trading .quantity-slider::-webkit-slider-thumb:hover,
+.wfrp-trading .discount-slider::-webkit-slider-thumb:hover {
+    background: #ff8f00;
+    transform: scale(1.05);
+}
+
+.wfrp-trading .quantity-slider::-moz-range-thumb,
+.wfrp-trading .discount-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.wfrp-trading .quantity-slider::-moz-range-thumb:hover,
+.wfrp-trading .discount-slider::-moz-range-thumb:hover {
+    background: #ff8f00;
+    transform: scale(1.05);
+}
+
+.wfrp-trading .purchase-controls .price-calculation {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 4px;
+    justify-self: end;
+    width: var(--purchase-col-width, 180px);
+}
+
+.wfrp-trading .total-price-display {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.wfrp-trading .total-price-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.wfrp-trading .total-price-value {
+    color: var(--accent-secondary);
+    font-weight: 700;
+    font-size: 13px;
+    background: rgba(76, 175, 80, 0.12);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    min-width: 72px;
+    text-align: center;
+}
+
+/* Purchase button styles defined in unified section below */
+
+/* Compact the header/footer spacing inside the buying interface */
+.wfrp-trading .purchase-controls .control-block .control-label { margin-bottom: 0; }
+
+/* Ensure grid children don’t force oversized columns */
+.wfrp-trading .purchase-controls > .control-block,
+.wfrp-trading .purchase-controls .price-calculation { min-width: 0; }
+
 
 .wfrp-trading .cargo-details.expanded-content {
     display: none;
@@ -721,15 +839,123 @@
     align-items: center;
 }
 
-.wfrp-trading .quantity-input {
-    flex: 1;
-    background: var(--bg-accent);
-    border: 1px solid var(--border-light);
-    color: var(--text-primary);
-    padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
+/* quantity-input styles now defined in unified section below */
+
+/* Unified Purchase Controls Layout */
+.wfrp-trading .cargo-buying-interface .purchase-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 2fr) var(--purchase-col-width, 140px);
+    align-items: center;
+    column-gap: 6px;
+    row-gap: 4px;
 }
+
+.wfrp-trading .purchase-controls .control-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    min-width: 0;
+    width: 100%;
+}
+
+.wfrp-trading .purchase-controls .control-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.wfrp-trading .purchase-controls .control-body {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 0;
+    flex-wrap: nowrap;
+    min-width: 0;
+    width: 100%;
+}
+
+/* Input and Display Elements */
+.wfrp-trading .quantity-input {
+    width: 50px;
+    min-width: 48px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-light);
+    color: var(--text-primary);
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0;
+}
+
+.wfrp-trading .discount-display {
+    width: 50px;
+    min-width: 48px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border-light);
+    margin: 0;
+}
+
+/* Purchase Button */
+.wfrp-trading .purchase-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    padding: 6px 12px;
+    min-width: 96px;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.wfrp-trading .purchase-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--border-light) !important;
+    color: var(--text-muted) !important;
+}
+
+.wfrp-trading .purchase-btn:not(:disabled):hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Price Calculation Section */
+.wfrp-trading .purchase-controls .price-calculation {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    justify-self: end;
+    width: var(--purchase-col-width, 140px);
+    max-width: var(--purchase-col-width, 140px);
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.wfrp-trading .total-price-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Legacy trading-app selectors removed - all styles unified under .wfrp-trading */
 
 /* Selling Tab Styles */
 .wfrp-trading .resource-selection {

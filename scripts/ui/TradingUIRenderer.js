@@ -735,8 +735,8 @@ ${slotDetails}
     }
 
     /**
-     * Create a cargo card element that can be expanded to show detailed pipeline information
-     * @param {Object} cargo - Cargo data with slotInfo for pipeline details
+     * Create a cargo card element
+     * @param {Object} cargo - Cargo data
      * @returns {HTMLElement} - Cargo card element
      * @private
      */
@@ -747,7 +747,7 @@ ${slotDetails}
         const isContraband = cargo.slotInfo?.contraband?.contraband === true;
         const contrabandClass = isContraband ? 'contraband' : '';
         
-        card.className = `cargo-card collapsible slot-success ${contrabandClass}`;
+        card.className = `cargo-card slot-success ${contrabandClass}`;
 
         // Basic info (always visible) - matches original layout
         let basicInfo = `
@@ -757,409 +757,233 @@ ${slotDetails}
             </div>
             <div class="cargo-details">`;
 
-        // Add info indicators for detailed information (all cargo now has slotInfo)
-        const slot = cargo.slotInfo;
-
-        const toNumber = (value) => {
-            const num = Number(value);
-            return Number.isFinite(num) ? num : null;
-        };
-
-        const formatInt = (value) => {
-            const num = toNumber(value);
-            if (num === null) {
-                return 'N/A';
-            }
-            return Math.round(num).toLocaleString('en-US');
-        };
-
-        const formatCurrency = (value) => {
-            const num = toNumber(value);
-            if (num === null) {
-                return 'N/A';
-            }
-            return num.toFixed(2);
-        };
-
-        const formatMultiplier = (value) => {
-            const num = toNumber(value);
-            if (num === null) {
-                return '1.00';
-            }
-            return num.toFixed(2);
-        };
-
-        const pricingData = slot.pricing || {};
-        const priceSteps = Array.isArray(pricingData.steps) ? pricingData.steps : [];
-        const basePricePerEP = toNumber(pricingData.basePricePerEP);
-        const finalPricePerEP = toNumber(pricingData.finalPricePerEP);
-
-        const priceStepLines = [];
-        if (priceSteps.length > 0) {
-            priceSteps.forEach((step, index) => {
-                const stepValue = toNumber(step?.perEP);
-                if (stepValue === null) {
-                    return;
-                }
-                const label = step?.label || `Step ${index + 1}`;
-                const displayValue = formatCurrency(stepValue);
-                priceStepLines.push(`• ${label}: ${displayValue} GC/EP (current: ${displayValue})`);
-            });
-        } else if (basePricePerEP !== null) {
-            const baseDisplay = formatCurrency(basePricePerEP);
-            priceStepLines.push(`• Base price: ${baseDisplay} GC/EP (current: ${baseDisplay})`);
-            if (finalPricePerEP !== null && Math.abs(finalPricePerEP - basePricePerEP) > 0.001) {
-                const finalDisplay = formatCurrency(finalPricePerEP);
-                priceStepLines.push(`• Final modifiers: ${finalDisplay} GC/EP (current: ${finalDisplay})`);
-            }
-        }
-
-        let priceTooltip = `Price per EP: ${formatCurrency(finalPricePerEP)} GC`;
-        if (priceStepLines.length > 0) {
-            priceTooltip += `\n\nCalculation Steps:\n${priceStepLines.join('\n')}`;
-        }
-
-        const quantityValue = toNumber(cargo.totalEP ?? cargo.quantity) ?? 0;
-
-        const totalStepLines = [];
-        if (priceSteps.length > 0 && quantityValue > 0) {
-            priceSteps.forEach((step, index) => {
-                const perEp = toNumber(step?.perEP);
-                if (perEp === null) {
-                    return;
-                }
-                const label = step?.label || `Step ${index + 1}`;
-                const stepTotal = perEp * quantityValue;
-                const displayTotal = formatCurrency(stepTotal);
-                totalStepLines.push(`• ${label}: ${displayTotal} GC (current: ${displayTotal})`);
-            });
-        } else if (basePricePerEP !== null) {
-            const baseTotal = basePricePerEP * quantityValue;
-            const baseDisplay = formatCurrency(baseTotal);
-            totalStepLines.push(`• Base total: ${baseDisplay} GC (current: ${baseDisplay})`);
-            if (finalPricePerEP !== null && Math.abs(finalPricePerEP - basePricePerEP) > 0.001) {
-                const finalTotal = finalPricePerEP * quantityValue;
-                const finalDisplay = formatCurrency(finalTotal);
-                totalStepLines.push(`• Final modifiers: ${finalDisplay} GC (current: ${finalDisplay})`);
-            }
-        }
-
-        let finalTotalValue = toNumber(pricingData.totalValue);
-        if (finalTotalValue === null && finalPricePerEP !== null) {
-            finalTotalValue = finalPricePerEP * quantityValue;
-        }
-
-        let totalPriceTooltip = `Total Price (${formatInt(quantityValue)} EP): ${formatCurrency(finalTotalValue)} GC`;
-        if (totalStepLines.length > 0) {
-            totalPriceTooltip += `\n\nCalculation Steps:\n${totalStepLines.join('\n')}`;
-        }
-
-        const amountData = slot.amount || {};
-        const amountNotes = Array.isArray(amountData.notes) ? amountData.notes.filter(note => typeof note === 'string' && note.trim().length > 0) : [];
-        const baseRollValue = toNumber(amountData.baseRoll);
-        const sizeModifierValue = toNumber(amountData.sizeModifier);
-        const baseEPValue = toNumber(amountData.baseEP);
-        const wealthModifierValue = toNumber(amountData.wealthModifier);
-        const supplyModifierValue = toNumber(amountData.supplyModifier);
-        const adjustedEPValue = toNumber(amountData.adjustedEP);
-        const finalAmountValue = toNumber(amountData.totalEP) ?? quantityValue;
-        const roundToValue = toNumber(amountData.roundTo);
-
-        const amountStepLines = [];
-        let currentAmountValue = null;
-
-        if (baseRollValue !== null) {
-            currentAmountValue = baseRollValue;
-            amountStepLines.push(`• Base roll ${amountData.roll ?? 'N/A'} ⇒ ${formatInt(currentAmountValue)} EP chunk (current: ${formatInt(currentAmountValue)})`);
-        }
-
-        if (sizeModifierValue !== null && baseEPValue !== null) {
-            currentAmountValue = baseEPValue;
-            amountStepLines.push(`• Settlement size ×${formatMultiplier(sizeModifierValue)} ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
-        } else if (sizeModifierValue !== null && currentAmountValue !== null) {
-            currentAmountValue = Math.round(currentAmountValue * sizeModifierValue);
-            amountStepLines.push(`• Settlement size ×${formatMultiplier(sizeModifierValue)} ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
-        } else if (baseEPValue !== null && currentAmountValue === null) {
-            currentAmountValue = baseEPValue;
-            amountStepLines.push(`• Base availability ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
-        }
-
-        if (wealthModifierValue !== null && currentAmountValue !== null) {
-            const baseForWealth = baseEPValue !== null ? baseEPValue : currentAmountValue;
-            const wealthApplied = Math.round(baseForWealth * wealthModifierValue);
-            if (Math.abs(wealthModifierValue - 1) > 0.001) {
-                currentAmountValue = wealthApplied;
-                amountStepLines.push(`• Wealth modifier ×${formatMultiplier(wealthModifierValue)} ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
-            } else if (currentAmountValue !== wealthApplied) {
-                currentAmountValue = wealthApplied;
-            }
-        }
-
-        if (supplyModifierValue !== null && (currentAmountValue !== null || adjustedEPValue !== null)) {
-            const supplyApplied = adjustedEPValue !== null ? adjustedEPValue : Math.round((currentAmountValue || 0) * supplyModifierValue);
-            currentAmountValue = supplyApplied;
-            amountStepLines.push(`• Supply modifier ×${formatMultiplier(supplyModifierValue)} ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
-        } else if (adjustedEPValue !== null) {
-            currentAmountValue = adjustedEPValue;
-            amountStepLines.push(`• Supply effects ⇒ ${formatInt(currentAmountValue)} EP (current: ${formatInt(currentAmountValue)})`);
-        }
-
-        if (finalAmountValue !== null) {
-            const roundingTarget = roundToValue !== null ? `${formatInt(roundToValue)} EP` : 'configured increment';
-            let roundingLine = `• Rounded to ${roundingTarget} ⇒ ${formatInt(finalAmountValue)} EP (current: ${formatInt(finalAmountValue)})`;
-            if (amountNotes.some(note => /minimum/i.test(note))) {
-                roundingLine += ' (minimum enforced)';
-            }
-            amountStepLines.push(roundingLine);
-        }
-
-        let quantityTooltip = `Available Amount: ${formatInt(finalAmountValue)} EP`;
-        if (amountStepLines.length > 0) {
-            quantityTooltip += `\n\nCalculation Steps:\n${amountStepLines.join('\n')}`;
-        }
-        if (amountNotes.length > 0) {
-            quantityTooltip += `\n\nNotes:\n${amountNotes.map(note => `• ${note}`).join('\n')}`;
-        }
-        
-        // Quality with info indicator
-        let qualityTooltip = `Quality Tier: ${cargo.quality}\nQuality Score: ${((slot.quality?.score || 0) * 1).toFixed(2)}`;
-        
-        if (slot.quality?.components && Array.isArray(slot.quality.components)) {
-            let currentScore = 0;
-            qualityTooltip += `\n\nQuality Calculation:`;
-            
-            slot.quality.components.forEach(component => {
-                const value = Number(component.value) || 0;
-                currentScore += value;
-                qualityTooltip += `\n• ${component.label}: ${value > 0 ? '+' : ''}${value} (current: ${currentScore.toFixed(2)})`;
-            });
-            
-        } else {
-            qualityTooltip += `\n\nDetermined by settlement wealth rating plus production flags and market pressure.`;
-        }
-        
-        // Add roll details if available
-        if (slot.quality?.rollDetails) {
-            const roll = slot.quality.rollDetails;
-            qualityTooltip += `\n\nRoll Details:`;
-            qualityTooltip += `\n• Percentile Roll: ${roll.percentileRoll} → Modifier: ${roll.percentileModifier > 0 ? '+' : ''}${roll.percentileModifier}`;
-            if (roll.varianceRange > 0) {
-                qualityTooltip += `\n• Variance Roll: ${roll.varianceRoll} (range ±${roll.varianceRange})`;
-            }
-        }
-        
-        // Add tier mapping explanation
-        qualityTooltip += `\n\nTier Mapping:`;
-        qualityTooltip += `\n• 0-2: Poor (15% discount)`;
-        qualityTooltip += `\n• 3-4: Common (5% discount)`;
-        qualityTooltip += `\n• 5-6: Average (normal price)`;
-        qualityTooltip += `\n• 7-8: High (10% premium)`;
-        qualityTooltip += `\n• 9-12: Exceptional (25% premium)`;
-        
-        // Merchant with info indicator
-        let merchantTooltip = `Name: ${cargo.merchant?.name || 'Unknown'}\nHaggling Skill: ${cargo.merchant?.hagglingSkill || 'N/A'}`;
-        
-        if (cargo.merchant?.calculation) {
-            const calc = cargo.merchant.calculation;
-            let currentSkill = calc.baseSkill;
-            
-            merchantTooltip += `\n\nSkill Calculation:`;
-            merchantTooltip += `\n• Base Skill: ${calc.baseSkill} (current: ${currentSkill})`;
-            
-            currentSkill += calc.wealthContribution;
-            merchantTooltip += `\n• Wealth Rating: ${calc.wealthRating} × ${calc.wealthModifier} = ${calc.wealthContribution} (current: ${currentSkill})`;
-            
-            currentSkill += calc.percentileModifier;
-            merchantTooltip += `\n• Percentile Roll: ${calc.percentileRoll} → Modifier: ${calc.percentileModifier} (current: ${currentSkill})`;
-            
-            currentSkill += calc.varianceRoll;
-            merchantTooltip += `\n• Variance: roll ${calc.varianceRoll} (range ±${calc.varianceRange}) (current: ${currentSkill})`;
-            
-            merchantTooltip += `\n• Computed Skill: ${calc.computedSkill}`;
-            
-            if (calc.clamped) {
-                merchantTooltip += ` (clamped to ${calc.minSkill}-${calc.maxSkill})`;
-            }
-        }
-        
-        if (cargo.merchant?.specialBehaviors?.length > 0) {
-            merchantTooltip += `\n\nSpecial Behaviors: ${cargo.merchant.specialBehaviors.join(', ')}`;
-        }
-        
         basicInfo += `
                 <div class="price-info">
                     <span class="price-label">Available:</span>
                     <span class="price-value">${cargo.totalEP ?? cargo.quantity} EP</span>
-                    ${this._createInfoIndicator(quantityTooltip)}
                 </div>
                 <div class="price-info">
                     <span class="price-label">Price per EP:</span>
                     <span class="price-value">${this._formatPricePerEP(cargo)} GC</span>
-                    ${this._createInfoIndicator(priceTooltip)}
                 </div>
                 <div class="price-info">
                     <span class="price-label">Total Price:</span>
                     <span class="price-value">${this._formatTotalPrice(cargo)} GC</span>
-                    ${this._createInfoIndicator(totalPriceTooltip)}
                 </div>
                 <div class="price-info">
                     <span class="price-label">Quality:</span>
                     <span class="price-value">${cargo.quality || 'Average'}</span>
-                    ${this._createInfoIndicator(qualityTooltip)}
                 </div>`;
 
         // Add contraband warning if applicable
         if (isContraband) {
-            // Create contraband tooltip
-            const contrabandData = slot.contraband || {};
-            const rollResult = contrabandData.roll || 'N/A';
-            const chancePercent = contrabandData.chance?.toFixed(1) || 'N/A';
-            const isContrabandResult = contrabandData.contraband ? 'Yes' : 'No';
-            const contrabandSteps = Array.isArray(contrabandData.steps) ? contrabandData.steps : [];
-            
-            let contrabandTooltip = `Contraband Status: ${isContrabandResult}`;
-            contrabandTooltip += `\n\nRoll Results:`;
-            contrabandTooltip += `\n• Percentile Roll: ${rollResult}`;
-            contrabandTooltip += `\n• Required: ≤${chancePercent}% to be contraband`;
-            contrabandTooltip += `\n• Result: ${rollResult <= chancePercent ? 'Contraband' : 'Legal'}`;
-            
-            if (contrabandSteps.length > 0) {
-                contrabandTooltip += `\n\nChance Calculation:`;
-                contrabandSteps.forEach(step => {
-                    const stepValue = typeof step.value === 'number' ? step.value.toFixed(2) : step.value;
-                    const currentValue = typeof step.current === 'number' ? (step.current * 100).toFixed(1) : step.current;
-                    if (step.label.includes('multiplier')) {
-                        contrabandTooltip += `\n• ${step.label}: ×${stepValue} (current: ${currentValue}%)`;
-                    } else {
-                        contrabandTooltip += `\n• ${step.label}: +${stepValue} (current: ${currentValue}%)`;
-                    }
-                });
-            } else {
-                // Fallback if no steps data
-                contrabandTooltip += `\n\nChance Calculation:`;
-                contrabandTooltip += `\n• Base Chance: 55.0% (current: 55.0%)`;
-                contrabandTooltip += `\n• Settlement modifiers applied (current: ${chancePercent}%)`;
-            }
-            
-            contrabandTooltip += `\n\nWhat Affects Contraband Chance:`;
-            contrabandTooltip += `\n• Base chance is 55% for all settlements`;
-            contrabandTooltip += `\n• "Smuggling" flag adds +50% chance`;
-            contrabandTooltip += `\n• "Piracy" flag adds +35% chance`;
-            contrabandTooltip += `\n• Larger settlements add size bonuses`;
-            contrabandTooltip += `\n• Seasonal multipliers may apply`;
-            
             basicInfo += `
                 <div class="contraband-warning">
                     <span class="contraband-icon">🏴‍☠️</span>
                     <span class="contraband-text">Contraband - Illegal to transport</span>
-                    ${this._createInfoIndicator(contrabandTooltip)}
                 </div>`;
         }
 
         basicInfo += `
                 <div class="merchant-info">
                     <div class="merchant-header">
-                        <span class="merchant-name">${cargo.merchant?.name || 'Unknown'} (Skill: ${cargo.merchant?.baseSkill || 'N/A'})</span>${this._createInfoIndicator(merchantTooltip)}
+                        <span class="merchant-name">${cargo.merchant?.name || 'Unknown'} (Skill: ${cargo.merchant?.baseSkill || 'N/A'})</span>
                     </div>
                     <div class="merchant-description">${cargo.merchant?.description || ''}</div>
-                </div>`;
-        
-        basicInfo += `
+                </div>
             </div>
-        `;
 
-        // Detailed pipeline information (hidden by default) - all cargo now has slotInfo
-        const detailedInfo = `
-                <div class="cargo-details expanded-content">
-                    <div class="pipeline-breakdown">
-                        <h6>${this.ICONS.calculation} Pipeline Details</h6>
-
-                        <div class="pipeline-section">
-                            <h7>${this.ICONS.cargo} Cargo Selection</h7>
-                            <p><strong>Type:</strong> ${cargo.name} (${cargo.category})</p>
-                            <p><strong>Market Balance:</strong> ${slot.balance?.state || 'unknown'} (${slot.balance?.supply || 0}/${slot.balance?.demand || 0})</p>
-                            <p class="explanation">Market balance represents supply (${slot.balance?.supply || 0}) vs demand (${slot.balance?.demand || 0}) levels that affect cargo quantity and pricing. ${slot.balance?.state === 'desperate' ? 'Low supply creates desperate conditions affecting merchant behavior and pricing.' : slot.balance?.state === 'glut' ? 'Excess supply makes goods plentiful and potentially cheaper.' : slot.balance?.state === 'scarce' ? 'High demand with low supply increases prices and reduces availability.' : slot.balance?.state === 'balanced' ? 'Supply and demand are roughly equal, creating stable market conditions.' : 'Market conditions affect pricing and availability.'} Balance is calculated from settlement production, consumption, seasonal effects, and wealth factors.</p>
+            <!-- Buying Interface -->
+            <div class="cargo-buying-interface">
+                <div class="purchase-controls">
+                    <div class="control-block quantity-controls">
+                        <span class="control-label">Purchase (EP)</span>
+                        <div class="control-body">
+                            <input type="number" 
+                                   class="quantity-input" 
+                                   min="0" 
+                                   max="${cargo.totalEP ?? cargo.quantity ?? 0}" 
+                                   value="0" 
+                                   step="1"
+                                   data-cargo-id="${cargo.id || cargo.name}">
+                            <input type="range" 
+                                   class="quantity-slider" 
+                                   min="0" 
+                                   max="${cargo.totalEP ?? cargo.quantity ?? 0}" 
+                                   value="0" 
+                                   step="1">
                         </div>
-
-                        <div class="pipeline-section">
-                            <h7>${this.ICONS.quantity} Quantity & Quality</h7>
-                            <p><strong>Amount:</strong> ${cargo.totalEP} EP</p>
-                            <p><strong>Quality:</strong> ${cargo.quality}</p>
-                            <p class="explanation">Amount calculated from percentile roll (${slot.amount?.roll || 'ERROR: Missing roll data'}) adjusted by settlement size (${((slot.amount?.wealthModifier || 0) * 1).toFixed(2)}× wealth) and supply/demand ratio (${((slot.amount?.supplyModifier || 0) * 1).toFixed(2)}×). Quality determined by settlement wealth rating (${((slot.quality?.score || 0) * 1).toFixed(2)} total score) plus production flags and market pressure.</p>
-                            ${slot.contraband ? `<p><strong>⚠️ Contraband:</strong> Yes</p>` : ''}
+                    </div>
+                    <div class="control-block discount-controls">
+                        <span class="control-label">Adjust (%)</span>
+                        <div class="control-body">
+                            <span class="discount-display">+0%</span>
+                            <input type="range" 
+                                   class="discount-slider" 
+                                   min="-10" 
+                                   max="10" 
+                                   value="0" 
+                                   step="0.5">
                         </div>
-
-                        <div class="pipeline-section">
-                            <h7>${this.ICONS.value} Pricing</h7>
-                            <p><strong>Base Price:</strong> ${((slot.pricing?.basePricePerEP || 0) * 1).toFixed(2)} GC/EP</p>
-                            <p><strong>Final Price:</strong> ${((slot.pricing?.finalPricePerEP || 0) * 1).toFixed(2)} GC/EP</p>
-                            <p><strong>Total Value:</strong> ${((slot.pricing?.totalValue || 0) * 1).toFixed(2)} GC</p>
-                            ${slot.pricing?.steps ? `<div class="pricing-breakdown">
-                                <p><strong>Pricing Breakdown:</strong></p>
-                                <ul>
-                                    <li>Base: ${((slot.pricing?.basePricePerEP || 0) * 1).toFixed(2)} GC/EP</li>
-                                    ${slot.pricing.steps.map(step => `<li>${step?.label || 'Unknown'}: ${((step?.perEP || 0) * 1).toFixed(2)} GC/EP</li>`).join('')}
-                                    <li><strong>Final Price: ${((slot.pricing?.finalPricePerEP || 0) * 1).toFixed(2)} GC/EP</strong></li>
-                                </ul>
-                            </div>` : '<p class="error">ERROR: Missing pricing calculation data</p>'}
-                        </div>
-
-                        <div class="pipeline-section">
-                            <h7>${this.ICONS.merchant} Merchant Details</h7>
-                            <p><strong>Name:</strong> ${cargo.merchant?.name || 'Unknown'}</p>
-                            <p><strong>Skill:</strong> ${cargo.merchant?.skillDescription || 'Unknown'}</p>
-                            <p><strong>Haggling Skill:</strong> ${cargo.merchant?.hagglingSkill || 'N/A'}</p>
-                            ${cargo.merchant?.specialBehaviors?.length > 0 ? `<p><strong>Special Behaviors:</strong> ${cargo.merchant.specialBehaviors.join(', ')}</p>` : ''}
+                    </div>
+                    <div class="control-block price-calculation">
+                        <button class="purchase-btn btn btn-success" 
+                                data-cargo-id="${cargo.id || cargo.name}" 
+                                disabled>
+                            <i class="fas fa-shopping-cart"></i> Purchase
+                        </button>
+                        <div class="total-price-display">
+                            <span class="total-price-label">Total Cost:</span>
+                            <span class="total-price-value">0.00 GC</span>
                         </div>
                     </div>
                 </div>
-            `;
+            </div>
+        `;
 
-        card.innerHTML = basicInfo + detailedInfo;
+        card.innerHTML = basicInfo;
 
-        // Add click handler to the header only
-        const header = card.querySelector('.cargo-header');
-        const expandedContent = card.querySelector('.expanded-content');
-        
-        if (header) {
-            header.addEventListener('click', (event) => {
-                // Don't toggle if clicking on a button or other interactive element
-                if (event.target.tagName === 'BUTTON' || event.target.closest('button')) {
-                    return;
-                }
-
-                card.classList.toggle('expanded');
-                if (expandedContent) {
-                    if (card.classList.contains('expanded')) {
-                        expandedContent.style.display = 'block';
-                    } else {
-                        expandedContent.style.display = 'none';
-                    }
-                }
-            });
-        }
-        
-        // Prevent clicks on expanded content from collapsing the card
-        if (expandedContent) {
-            expandedContent.addEventListener('click', (event) => {
-                event.stopPropagation();
-            });
-        }
-
-        // Add click handlers for info indicators
-        const infoIndicators = card.querySelectorAll('.info-indicator');
-        infoIndicators.forEach(indicator => {
-            indicator.addEventListener('click', (event) => {
-                event.stopPropagation(); // Prevent card expansion
-                
-                const tooltip = indicator.dataset.infoTooltip;
-                if (tooltip) {
-                    this._showInfoTooltip(tooltip, indicator);
-                }
-            });
-        });
+        // Add event listeners for the buying interface
+        this._attachBuyingInterfaceListeners(card, cargo);
 
         return card;
+    }
+
+    /**
+     * Attach event listeners for the buying interface on a cargo card
+     * @param {HTMLElement} card - The cargo card element
+     * @param {Object} cargo - The cargo data
+     * @private
+     */
+    _attachBuyingInterfaceListeners(card, cargo) {
+        const quantityInput = card.querySelector('.quantity-input');
+        const quantitySlider = card.querySelector('.quantity-slider');
+        /* discount-input removed */
+        const discountSlider = card.querySelector('.discount-slider');
+        const discountDisplay = card.querySelector('.discount-display');
+        const purchaseBtn = card.querySelector('.purchase-btn');
+        const totalPriceValue = card.querySelector('.total-price-value');
+
+        if (!quantityInput || !quantitySlider || !discountSlider || !discountDisplay || !purchaseBtn || !totalPriceValue) {
+            console.warn('Buying interface elements not found for cargo:', cargo.name);
+            return;
+        }
+
+        const maxQuantity = cargo.totalEP ?? cargo.quantity ?? 0;
+        const pricePerEP = this._getPricePerEP(cargo);
+
+        // Function to update the total price display
+        const updateTotalPrice = (quantity, discountPercent) => {
+            const discountMultiplier = 1 + (discountPercent / 100);
+            const adjustedPricePerEP = pricePerEP * discountMultiplier;
+            const totalPrice = quantity * adjustedPricePerEP;
+            totalPriceValue.textContent = totalPrice.toFixed(2) + ' GC';
+            
+            // Enable/disable purchase button based on quantity
+            purchaseBtn.disabled = quantity <= 0;
+        };
+
+        // Function to update the discount display
+        const updateDiscountDisplay = (discountPercent) => {
+            discountDisplay.textContent = (discountPercent >= 0 ? '+' : '') + discountPercent + '%';
+            discountDisplay.style.color = discountPercent < 0 ? '#4caf50' : discountPercent > 0 ? '#f44336' : 'var(--text-primary)';
+        };
+
+        // Sync quantity controls
+        const syncQuantityValues = (source, target) => {
+            let value = parseInt(source.value) || 0;
+            
+            // Ensure value is within bounds
+            value = Math.max(0, Math.min(maxQuantity, value));
+            
+            // Update both controls
+            quantityInput.value = value;
+            quantitySlider.value = value;
+            
+            // Update price display
+            const discountPercent = parseFloat(discountSlider.value) || 0;
+            updateTotalPrice(value, discountPercent);
+        };
+
+        // Discount control: slider drives the value
+        const onDiscountChange = (source) => {
+            let value = parseFloat(source.value) || 0;
+            value = Math.max(-10, Math.min(10, value));
+            discountSlider.value = value;
+            updateDiscountDisplay(value);
+            const quantity = parseInt(quantityInput.value) || 0;
+            updateTotalPrice(quantity, value);
+        };
+
+        // Quantity event listeners
+        quantityInput.addEventListener('input', (e) => {
+            syncQuantityValues(e.target, quantitySlider);
+        });
+
+        quantityInput.addEventListener('change', (e) => {
+            syncQuantityValues(e.target, quantitySlider);
+        });
+
+        quantitySlider.addEventListener('input', (e) => {
+            syncQuantityValues(e.target, quantityInput);
+        });
+
+        // Discount event listeners (slider only)
+        discountSlider.addEventListener('input', (e) => {
+            onDiscountChange(e.target);
+        });
+        discountSlider.addEventListener('change', (e) => {
+            onDiscountChange(e.target);
+        });
+
+        // Purchase button click handler
+        purchaseBtn.addEventListener('click', (e) => {
+            const quantity = parseInt(quantityInput.value) || 0;
+            const discountPercent = parseFloat(discountSlider.value) || 0;
+            if (quantity > 0) {
+                this._handlePurchase(cargo, quantity, discountPercent);
+            }
+        });
+
+        // Initialize with 0 values
+        updateTotalPrice(0, 0);
+        updateDiscountDisplay(0);
+    }
+
+    /**
+     * Get the price per EP for a cargo item
+     * @param {Object} cargo - The cargo data
+     * @returns {number} - Price per EP
+     * @private
+     */
+    _getPricePerEP(cargo) {
+        return cargo.currentPrice ?? cargo.basePrice ?? cargo.slotInfo?.pricing?.finalPricePerEP ?? 0;
+    }
+
+    /**
+     * Handle purchase of cargo
+     * @param {Object} cargo - The cargo data
+     * @param {number} quantity - Quantity to purchase
+     * @param {number} discountPercent - Discount percentage (-10 to +10)
+     * @private
+     */
+    _handlePurchase(cargo, quantity, discountPercent = 0) {
+        console.log(`🛒 PURCHASING: ${quantity} EP of ${cargo.name} with ${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment`);
+        
+        // Calculate adjusted price
+        const pricePerEP = this._getPricePerEP(cargo);
+        const discountMultiplier = 1 + (discountPercent / 100);
+        const adjustedPricePerEP = pricePerEP * discountMultiplier;
+        const totalCost = quantity * adjustedPricePerEP;
+        
+        // Here we would typically call the trading engine to perform the purchase
+        // For now, we'll just log it and show a confirmation
+        if (this.app.eventHandlers && this.app.eventHandlers._onCargoPurchase) {
+            this.app.eventHandlers._onCargoPurchase(cargo, quantity, totalCost, discountPercent);
+        } else {
+            // Fallback: show a simple alert
+            alert(`Purchased ${quantity} EP of ${cargo.name} for ${totalCost.toFixed(2)} GC (${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment)`);
+        }
     }
 
     _createFailedSlotCard(slotResult) {

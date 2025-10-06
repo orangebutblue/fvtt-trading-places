@@ -534,6 +534,113 @@ export class TradingUIEventHandlers {
         this._logDebug('Event Handler', 'Rumor sale attempt');
     }
 
+    /**
+     * Handle cargo purchase from the buying interface
+     * @param {Object} cargo - The cargo data
+     * @param {number} quantity - Quantity to purchase
+     * @param {number} totalCost - Total cost of the purchase
+     * @param {number} discountPercent - Discount percentage applied (-10 to +10)
+     * @private
+     */
+    async _onCargoPurchase(cargo, quantity, totalCost, discountPercent = 0) {
+        this._logDebug('Event Handler', 'Cargo purchase attempt', {
+            cargo: cargo.name,
+            quantity,
+            totalCost,
+            discountPercent,
+            pricePerEP: totalCost / quantity
+        });
+
+        try {
+            // Validate purchase
+            const validation = await this.app.systemAdapter.validatePurchase(
+                this.app.selectedSettlement,
+                cargo,
+                quantity,
+                totalCost
+            );
+
+            if (!validation.valid) {
+                ui.notifications.error(`Purchase failed: ${validation.error}`);
+                return;
+            }
+
+            // Perform the purchase
+            const result = await this.app.systemAdapter.performPurchase(
+                this.app.selectedSettlement,
+                cargo,
+                quantity,
+                totalCost
+            );
+
+            if (result.success) {
+                // Update cargo availability (reduce available quantity)
+                await this._updateCargoAvailabilityAfterPurchase(cargo, quantity);
+
+                // Show success message
+                const discountText = discountPercent !== 0 ? ` (${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment)` : '';
+                ui.notifications.success(`Successfully purchased ${quantity} EP of ${cargo.name} for ${totalCost.toFixed(2)} GC${discountText}`);
+
+                // Re-render to update the UI
+                await this.app.render(false);
+
+                this._logInfo('Purchase Success', 'Cargo purchased successfully', {
+                    cargo: cargo.name,
+                    quantity,
+                    totalCost,
+                    discountPercent,
+                    remainingEP: (cargo.totalEP ?? cargo.quantity ?? 0) - quantity
+                });
+            } else {
+                ui.notifications.error(`Purchase failed: ${result.error}`);
+            }
+
+        } catch (error) {
+            this._logError('Purchase Error', 'Failed to complete purchase', { error: error.message });
+            ui.notifications.error(`Purchase failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Update cargo availability after a successful purchase
+     * @param {Object} purchasedCargo - The cargo that was purchased
+     * @param {number} purchasedQuantity - How much was purchased
+     * @private
+     */
+    async _updateCargoAvailabilityAfterPurchase(purchasedCargo, purchasedQuantity) {
+        // Find the cargo in available cargo and reduce its quantity
+        const cargoIndex = this.app.successfulCargo.findIndex(cargo =>
+            cargo.name === purchasedCargo.name &&
+            cargo.category === purchasedCargo.category
+        );
+
+        if (cargoIndex !== -1) {
+            const cargo = this.app.successfulCargo[cargoIndex];
+            const newQuantity = Math.max(0, (cargo.totalEP ?? cargo.quantity ?? 0) - purchasedQuantity);
+
+            // Update the cargo quantity
+            if (cargo.totalEP !== undefined) {
+                cargo.totalEP = newQuantity;
+            } else if (cargo.quantity !== undefined) {
+                cargo.quantity = newQuantity;
+            }
+
+            // If quantity is 0, remove the cargo from the list
+            if (newQuantity === 0) {
+                this.app.successfulCargo.splice(cargoIndex, 1);
+            }
+
+            // Save the updated cargo availability
+            await this.app._saveCargoAvailability();
+
+            this._logDebug('Cargo Update', 'Cargo availability updated after purchase', {
+                cargo: purchasedCargo.name,
+                purchased: purchasedQuantity,
+                remaining: newQuantity
+            });
+        }
+    }
+
     _onRegionChange(event) {
         const selectedRegion = event.target.value;
         this._logDebug('Event Handler', 'Region change', { value: selectedRegion });
