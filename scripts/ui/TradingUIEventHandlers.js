@@ -140,6 +140,41 @@ export class TradingUIEventHandlers {
             rumorSaleBtn.addEventListener('click', this._onRumorSaleAttempt.bind(this));
         }
 
+        // Delete transaction buttons - attach if they exist in the history tab
+        try {
+            const deleteTransactionBtns = html.querySelectorAll('#history-tab .delete-transaction-btn');
+            if (deleteTransactionBtns && deleteTransactionBtns.length > 0) {
+                deleteTransactionBtns.forEach(btn => {
+                    btn.addEventListener('click', this._onDeleteTransaction.bind(this));
+                });
+                this._logDebug('Event Listeners', `Attached ${deleteTransactionBtns.length} delete transaction listeners`);
+            }
+        } catch (error) {
+            this._logError('Event Listeners', 'Error attaching delete transaction listeners', { error: error.message });
+        }
+
+        // Manual entry collapsible toggle
+        const manualEntryToggle = html.querySelector('.manual-entry-toggle');
+        if (manualEntryToggle) {
+            manualEntryToggle.addEventListener('click', this._onToggleManualEntry.bind(this));
+            this._logDebug('Event Listeners', 'Attached manual entry toggle listener');
+        }
+
+        // Manual transaction entry button
+        const addManualTransactionBtn = html.querySelector('.add-manual-transaction-btn');
+        if (addManualTransactionBtn) {
+            addManualTransactionBtn.addEventListener('click', this._onAddManualTransaction.bind(this));
+            this._logDebug('Event Listeners', 'Attached manual transaction entry listener');
+        }
+
+        // Real-time price calculation for manual entry
+        const quantityInput = html.querySelector('#manual-quantity');
+        const costInput = html.querySelector('#manual-total-cost');
+        if (quantityInput && costInput) {
+            quantityInput.addEventListener('input', this._updatePricePreview.bind(this));
+            costInput.addEventListener('input', this._updatePricePreview.bind(this));
+        }
+
         this._logDebug('Event Listeners', 'Content listeners attached');
     }
 
@@ -663,4 +698,296 @@ export class TradingUIEventHandlers {
         
         this._logDebug('Region Selection', `Region set to ${selectedRegion}, settlements will be filtered`);
     }
+
+    /**
+     * Toggle the manual entry form collapse/expand
+     * @param {Event} event - Click event
+     * @private
+     */
+    _onToggleManualEntry(event) {
+        event.preventDefault();
+        
+        const toggle = event.currentTarget;
+        const form = this.app.element.querySelector('.manual-entry-form');
+        
+        if (!form) return;
+        
+        const isCollapsed = form.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // Expand
+            form.classList.remove('collapsed');
+            toggle.classList.add('expanded');
+            
+            // Focus on the first input after animation
+            setTimeout(() => {
+                const firstInput = form.querySelector('#manual-cargo');
+                if (firstInput) firstInput.focus();
+            }, 300);
+            
+        } else {
+            // Collapse
+            form.classList.add('collapsed');
+            toggle.classList.remove('expanded');
+        }
+        
+        this._logDebug('Manual Entry', `Form ${isCollapsed ? 'expanded' : 'collapsed'}`);
+    }
+
+    /**
+     * Update the price preview in real-time
+     * @private
+     */
+    _updatePricePreview() {
+        const quantityInput = this.app.element.querySelector('#manual-quantity');
+        const costInput = this.app.element.querySelector('#manual-total-cost');
+        const pricePreview = this.app.element.querySelector('.price-preview strong');
+        
+        if (!quantityInput || !costInput || !pricePreview) return;
+        
+        const quantity = parseFloat(quantityInput.value);
+        const totalCost = parseFloat(costInput.value);
+        
+        if (quantity > 0 && totalCost >= 0) {
+            const pricePerEP = (totalCost / quantity).toFixed(2);
+            pricePreview.textContent = `${pricePerEP} GC`;
+        } else {
+            pricePreview.textContent = '--';
+        }
+    }
+
+    /**
+     * Handle adding a manual transaction
+     * @param {Event} event - Click event
+     * @private
+     */
+    async _onAddManualTransaction(event) {
+        event.preventDefault();
+        
+        try {
+            // Get form values
+            const cargoName = this.app.element.querySelector('#manual-cargo')?.value?.trim();
+            const category = this.app.element.querySelector('#manual-category')?.value;
+            const quantity = parseFloat(this.app.element.querySelector('#manual-quantity')?.value);
+            const totalCost = parseFloat(this.app.element.querySelector('#manual-total-cost')?.value);
+            const settlement = this.app.element.querySelector('#manual-settlement')?.value?.trim();
+            const season = this.app.element.querySelector('#manual-season')?.value;
+            
+            // Validate inputs
+            const validation = this._validateManualTransactionInputs({
+                cargoName, category, quantity, totalCost, settlement, season
+            });
+            
+            if (!validation.valid) {
+                ui.notifications.error(validation.error);
+                return;
+            }
+            
+            // Calculate price per EP
+            const pricePerEP = totalCost / quantity;
+            
+            // Create transaction object
+            const transaction = {
+                cargo: cargoName,
+                category: category,
+                quantity: quantity,
+                pricePerEP: parseFloat(pricePerEP.toFixed(2)),
+                totalCost: parseFloat(totalCost.toFixed(2)),
+                settlement: settlement,
+                season: season,
+                date: new Date().toISOString(),
+                discountPercent: 0,
+                isManualEntry: true
+            };
+            
+            // Add to transaction history (at the beginning so newest appears on top)
+            if (!this.app.transactionHistory) {
+                this.app.transactionHistory = [];
+            }
+            this.app.transactionHistory.unshift(transaction);
+            
+            // Save to game settings
+            await game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory);
+            
+            // Clear and collapse the form
+            this._clearManualTransactionForm();
+            this._collapseManualEntry();
+            
+            // Re-render to show the new transaction (keeping history tab active)
+            await this._rerenderWithHistoryTabActive();
+            
+            // Show success message
+            ui.notifications.success(`Added: ${quantity} EP of ${cargoName} for ${totalCost} GC`);
+            
+            this._logInfo('Manual Transaction', 'Manual transaction added', {
+                cargo: cargoName, quantity, totalCost, settlement, season
+            });
+            
+        } catch (error) {
+            this._logError('Manual Transaction', 'Failed to add manual transaction', { error: error.message });
+            ui.notifications.error(`Failed to add transaction: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Validate manual transaction inputs
+     * @param {Object} inputs - Input values to validate
+     * @returns {Object} Validation result
+     * @private
+     */
+    _validateManualTransactionInputs(inputs) {
+        const { cargoName, category, quantity, totalCost, settlement, season } = inputs;
+        
+        if (!cargoName) return { valid: false, error: 'Cargo name is required' };
+        if (!category) return { valid: false, error: 'Category is required' };
+        if (!quantity || isNaN(quantity) || quantity <= 0) return { valid: false, error: 'Valid quantity (EP) is required' };
+        if (isNaN(totalCost) || totalCost < 0) return { valid: false, error: 'Valid total cost is required' };
+        if (!settlement) return { valid: false, error: 'Settlement name is required' };
+        if (!season) return { valid: false, error: 'Season is required' };
+        
+        return { valid: true };
+    }
+    
+    /**
+     * Clear the manual transaction form
+     * @private
+     */
+    _clearManualTransactionForm() {
+        const form = this.app.element.querySelector('.manual-entry-form');
+        if (!form) return;
+        
+        form.querySelector('#manual-cargo').value = '';
+        form.querySelector('#manual-category').value = '';
+        form.querySelector('#manual-quantity').value = '';
+        form.querySelector('#manual-total-cost').value = '';
+        
+        // Reset price preview
+        const pricePreview = form.querySelector('.price-preview strong');
+        if (pricePreview) pricePreview.textContent = '--';
+    }
+    
+    /**
+     * Collapse the manual entry form
+     * @private
+     */
+    _collapseManualEntry() {
+        const toggle = this.app.element.querySelector('.manual-entry-toggle');
+        const form = this.app.element.querySelector('.manual-entry-form');
+        
+        if (toggle && form) {
+            form.classList.add('collapsed');
+            toggle.classList.remove('expanded');
+        }
+    }
+    
+    /**
+     * Re-render while keeping history tab active
+     * @private
+     */
+    async _rerenderWithHistoryTabActive() {
+        await this.app.render(false);
+        
+        setTimeout(() => {
+            const tabs = this.app.element.querySelectorAll('.tab');
+            const tabContents = this.app.element.querySelectorAll('.tab-content');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            const historyTab = this.app.element.querySelector('.tab[data-tab="history"]');
+            const historyContent = this.app.element.querySelector('#history-tab');
+            
+            if (historyTab && historyContent) {
+                historyTab.classList.add('active');
+                historyContent.classList.add('active');
+            }
+        }, 50);
+    }
+
+    /**
+     * Handle delete transaction button click
+     * @param {Event} event - Click event
+     * @private
+     */
+    async _onDeleteTransaction(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const button = event.currentTarget;
+        const transactionIndex = parseInt(button.dataset.transactionIndex);
+        
+        if (isNaN(transactionIndex)) {
+            this._logError('Delete Transaction', 'Invalid transaction index', { transactionIndex });
+            return;
+        }
+
+        // Confirm deletion using modern ApplicationV2 approach
+        const confirmed = await foundry.applications.api.DialogV2.confirm({
+            window: { title: "Delete Transaction" },
+            content: "<p>Are you sure you want to delete this transaction from the history?</p>",
+            rejectClose: false,
+            modal: true
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            this._logDebug('Delete Transaction', 'Deleting transaction', { index: transactionIndex });
+            
+            // Remove the transaction from the history
+            if (this.app.transactionHistory && this.app.transactionHistory.length > transactionIndex) {
+                this.app.transactionHistory.splice(transactionIndex, 1);
+                
+                // Save updated transaction history
+                await game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory);
+                
+                // Store the current active tab before re-rendering
+                const currentActiveTab = this.app.element.querySelector('.tab.active');
+                const activeTabId = currentActiveTab ? currentActiveTab.getAttribute('data-tab') : 'history';
+                
+                // Re-render the application to update the history tab
+                await this.app.render(false);
+                
+                // Restore the active tab after re-rendering
+                setTimeout(() => {
+                    const tabs = this.app.element.querySelectorAll('.tab');
+                    const tabContents = this.app.element.querySelectorAll('.tab-content');
+                    
+                    // Remove active class from all tabs and content
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Activate the history tab
+                    const historyTab = this.app.element.querySelector('.tab[data-tab="history"]');
+                    const historyContent = this.app.element.querySelector('#history-tab');
+                    
+                    if (historyTab && historyContent) {
+                        historyTab.classList.add('active');
+                        historyContent.classList.add('active');
+                    }
+                }, 50);
+                
+                this._logDebug('Delete Transaction', 'Transaction deleted successfully', { 
+                    remainingTransactions: this.app.transactionHistory.length 
+                });
+                
+                ui.notifications.info("Transaction deleted from history");
+            } else {
+                this._logError('Delete Transaction', 'Transaction index out of bounds', { 
+                    index: transactionIndex, 
+                    historyLength: this.app.transactionHistory?.length || 0 
+                });
+                ui.notifications.error("Could not delete transaction: invalid index");
+            }
+        } catch (error) {
+            this._logError('Delete Transaction', 'Failed to delete transaction', { 
+                error: error.message, 
+                index: transactionIndex 
+            });
+            ui.notifications.error(`Failed to delete transaction: ${error.message}`);
+        }
+    }
+
 }

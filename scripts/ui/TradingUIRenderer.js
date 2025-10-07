@@ -820,8 +820,8 @@ ${slotDetails}
                             <span class="discount-display">+0%</span>
                             <input type="range" 
                                    class="discount-slider" 
-                                   min="-10" 
-                                   max="10" 
+                                   min="-20" 
+                                   max="20" 
                                    value="0" 
                                    step="0.5">
                         </div>
@@ -908,7 +908,7 @@ ${slotDetails}
         // Discount control: slider drives the value
         const onDiscountChange = (source) => {
             let value = parseFloat(source.value) || 0;
-            value = Math.max(-10, Math.min(10, value));
+            value = Math.max(-20, Math.min(20, value));
             discountSlider.value = value;
             updateDiscountDisplay(value);
             const quantity = parseInt(quantityInput.value) || 0;
@@ -964,7 +964,7 @@ ${slotDetails}
      * Handle purchase of cargo
      * @param {Object} cargo - The cargo data
      * @param {number} quantity - Quantity to purchase
-     * @param {number} discountPercent - Discount percentage (-10 to +10)
+     * @param {number} discountPercent - Discount percentage (-20 to +20)
      * @private
      */
     _handlePurchase(cargo, quantity, discountPercent = 0) {
@@ -976,14 +976,119 @@ ${slotDetails}
         const adjustedPricePerEP = pricePerEP * discountMultiplier;
         const totalCost = quantity * adjustedPricePerEP;
         
-        // Here we would typically call the trading engine to perform the purchase
-        // For now, we'll just log it and show a confirmation
-        if (this.app.eventHandlers && this.app.eventHandlers._onCargoPurchase) {
-            this.app.eventHandlers._onCargoPurchase(cargo, quantity, totalCost, discountPercent);
-        } else {
-            // Fallback: show a simple alert
-            alert(`Purchased ${quantity} EP of ${cargo.name} for ${totalCost.toFixed(2)} GC (${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment)`);
+        // Add transaction to history
+        const transaction = {
+            type: 'purchase',
+            cargo: cargo.name,
+            category: cargo.category || 'Goods',
+            quantity: quantity,
+            pricePerEP: adjustedPricePerEP.toFixed(2),
+            totalCost: totalCost.toFixed(2),
+            discountPercent: discountPercent,
+            settlement: `${this.app.selectedSettlement?.region || 'Unknown'}, ${this.app.selectedSettlement?.name || 'Unknown'}`,
+            season: this.app.currentSeason || 'Unknown',
+            date: (() => {
+                const now = new Date();
+                const year = now.getFullYear().toString();
+                const month = (now.getMonth() + 1).toString().padStart(2, '0');
+                const day = now.getDate().toString().padStart(2, '0');
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const formatted = `${year}-${month}-${day} ${hours}:${minutes}`;
+                console.log('📅 DEBUG - Raw date formatting:', {
+                    year, month, day, hours, minutes,
+                    formatted: formatted,
+                    expectedFormat: '2025-10-07 11:51'
+                });
+                return formatted;
+            })(),
+            timestamp: Date.now()
+        };
+        
+        // Add to transaction history
+        if (!this.app.transactionHistory) {
+            this.app.transactionHistory = [];
         }
+        this.app.transactionHistory.unshift(transaction); // Add to beginning for newest first
+        
+        console.log('💰 Transaction created:', transaction);
+        console.log('💰 Transaction history now has:', this.app.transactionHistory.length, 'items');
+        console.log('💰 First transaction:', this.app.transactionHistory[0]);
+        
+        // Save transaction history to Foundry settings for persistence
+        game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory)
+            .then(() => {
+                console.log('💰 Transaction history saved successfully');
+            })
+            .catch(error => {
+                console.error('💰 Failed to save transaction history:', error);
+            });
+        
+        // Switch to History tab
+        this._switchToHistoryTab();
+        
+        // Show success notification
+        if (ui && ui.notifications) {
+            ui.notifications.success(`Purchased ${quantity} EP of ${cargo.name} for ${totalCost.toFixed(2)} GC${discountPercent !== 0 ? ` (${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment)` : ''}`);
+        } else {
+            console.log(`✅ Purchase successful: ${quantity} EP of ${cargo.name} for ${totalCost.toFixed(2)} GC`);
+        }
+        
+        // Re-render to update the History tab with the new transaction
+        this.app.render(false);
+    }
+
+    /**
+     * Switch to the History tab
+     * @private
+     */
+    _switchToHistoryTab() {
+        console.log('🔄 Attempting to switch to History tab...');
+        
+        // Wait a small moment for DOM to be ready
+        setTimeout(() => {
+            const tabs = this.app.element.querySelectorAll('.tab');
+            const tabContents = this.app.element.querySelectorAll('.tab-content');
+            
+            console.log('🔄 Found elements:', {
+                tabs: tabs.length,
+                tabContents: tabContents.length
+            });
+            
+            // Remove active class from all tabs and content
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+                console.log('🔄 Removed active from tab:', tab.getAttribute('data-tab'));
+            });
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                console.log('🔄 Removed active from content:', content.id);
+            });
+            
+            // Find and activate the History tab
+            const historyTab = this.app.element.querySelector('.tab[data-tab="history"]');
+            const historyContent = this.app.element.querySelector('#history-tab');
+            
+            console.log('🔄 History elements:', {
+                historyTab: !!historyTab,
+                historyContent: !!historyContent,
+                historyTabDataTab: historyTab?.getAttribute('data-tab'),
+                historyContentId: historyContent?.id
+            });
+            
+            if (historyTab && historyContent) {
+                historyTab.classList.add('active');
+                historyContent.classList.add('active');
+                console.log('✅ Successfully switched to History tab');
+                
+                // Scroll to top of history content
+                historyContent.scrollTop = 0;
+            } else {
+                console.warn('⚠️ Could not find History tab elements');
+                console.log('Available tabs:', Array.from(tabs).map(t => t.getAttribute('data-tab')));
+                console.log('Available tab contents:', Array.from(tabContents).map(t => t.id));
+            }
+        }, 100);
     }
 
     _createFailedSlotCard(slotResult) {

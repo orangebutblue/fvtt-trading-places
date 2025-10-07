@@ -277,6 +277,49 @@ function registerHandlebarsHelpers() {
         return a >= b;
     });
 
+    // Greater-than helper
+    Handlebars.registerHelper('gt', function(a, b) {
+        if (typeof a === 'string') a = Number(a);
+        if (typeof b === 'string') b = Number(b);
+        return a > b;
+    });
+
+    // Date formatting helper
+    Handlebars.registerHelper('formatDate', function(dateString) {
+        if (!dateString) return 'Unknown';
+        
+        // If it's already in the correct format (YYYY-MM-DD HH:mm), return as is
+        if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(dateString)) {
+            return dateString;
+        }
+        
+        // Try to parse and format the date
+        let date;
+        if (typeof dateString === 'string') {
+            date = new Date(dateString);
+        } else if (dateString instanceof Date) {
+            date = dateString;
+        } else if (typeof dateString === 'number') {
+            date = new Date(dateString);
+        } else {
+            return 'Invalid Date';
+        }
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            return 'Invalid Date';
+        }
+        
+        // Format as YYYY-MM-DD HH:mm
+        const year = date.getFullYear().toString();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
+    });
+
     // Logical AND helper
     Handlebars.registerHelper('and', function() {
         const args = Array.prototype.slice.call(arguments, 0, -1);
@@ -771,6 +814,16 @@ function registerModuleSettings() {
         config: false,
         type: Object,
         default: {}
+    });
+
+    // Transaction history setting (for persistence)
+    game.settings.register(MODULE_ID, "transactionHistory", {
+        name: "Transaction History",
+        hint: "Stores trading transaction history for persistence across sessions",
+        scope: "world",
+        config: false,
+        type: Array,
+        default: []
     });
 }
 

@@ -249,17 +249,88 @@ Slot Calculation:
 
             <!-- History Tab -->
             <div class="tab-content" id="history-tab">
+                <!-- Collapsible Manual Entry -->
+                <div class="manual-entry-section">
+                    <button class="manual-entry-toggle" type="button">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Add manual transaction</span>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </button>
+                    
+                    <div class="manual-entry-form collapsed">
+                        <div class="manual-entry-grid">
+                            <div class="manual-entry-row">
+                                <input type="text" id="manual-cargo" placeholder="Cargo name" />
+                                <select id="manual-category">
+                                    <option value="">Category</option>
+                                    <option value="Food & Drink">Food & Drink</option>
+                                    <option value="Trade Goods">Trade Goods</option>
+                                    <option value="Raw Materials">Raw Materials</option>
+                                    <option value="Luxuries">Luxuries</option>
+                                    <option value="Animals">Animals</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="manual-entry-row">
+                                <input type="number" id="manual-quantity" placeholder="EP" min="1" />
+                                <input type="number" id="manual-total-cost" placeholder="Total cost" step="0.01" min="0" />
+                                <label><input type="checkbox" id="manual-contraband"> Contraband</label>
+                            </div>
+                            
+                            <div class="manual-entry-row">
+                                <input type="text" id="manual-settlement" placeholder="Settlement" value="{{#if selectedSettlement}}{{selectedSettlement.name}}{{/if}}" />
+                                <select id="manual-season">
+                                    <option value="spring" {{#if (eq currentSeason 'spring')}}selected{{/if}}>Spring</option>
+                                    <option value="summer" {{#if (eq currentSeason 'summer')}}selected{{/if}}>Summer</option>
+                                    <option value="autumn" {{#if (eq currentSeason 'autumn')}}selected{{/if}}>Autumn</option>
+                                    <option value="winter" {{#if (eq currentSeason 'winter')}}selected{{/if}}>Winter</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="manual-entry-actions">
+                            <span class="price-preview">Price per EP: <strong>--</strong></span>
+                            <button type="button" class="add-manual-transaction-btn">Add Transaction</button>
+                        </div>
+                    </div>
+                </div>
+
                 {{#if transactionHistory.length}}
                 <div class="transaction-list">
                     {{#each transactionHistory}}
-                    <div class="transaction-item">
-                        <div class="transaction-info">
-                            <h4>{{type}} - {{cargo}}</h4>
-                            <div class="transaction-details">
-                                {{quantity}} EP at {{settlement}} • {{timestamp}}
+                    <div class="transaction-card" data-transaction-index="{{@index}}">
+                        <div class="transaction-header">
+                            <div class="cargo-info">
+                                <span class="cargo-name">{{cargo}}</span>
+                                <span class="cargo-category">{{category}}</span>
+                            </div>
+                            <div class="transaction-actions">
+                                <div class="transaction-cost">{{totalCost}} GC</div>
+                                <button class="delete-transaction-btn" data-transaction-index="{{@index}}" title="Delete transaction">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </div>
-                        <div class="transaction-amount">{{totalPrice}} GC</div>
+                        <div class="transaction-body">
+                            <div class="transaction-details">
+                                <span class="detail-compact">{{quantity}} EP × {{pricePerEP}} GC</span>
+                                {{#if discountPercent}}
+                                <span class="detail-discount">{{#if (gt discountPercent 0)}}+{{/if}}{{discountPercent}}%</span>
+                                {{/if}}
+                            </div>
+                            <div class="transaction-meta">
+                                <span class="meta-compact">
+                                    <i class="fas fa-map-marker-alt"></i>{{settlement}}
+                                </span>
+                                <span class="meta-compact">
+                                    <i class="fas fa-calendar"></i>{{season}}
+                                </span>
+                                <span class="meta-compact">
+                                    <i class="fas fa-clock"></i>{{formatDate date}}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                     {{/each}}
                 </div>

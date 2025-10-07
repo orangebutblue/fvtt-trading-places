@@ -350,6 +350,11 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
     context.successfulCargo = successfulCargo;
     context.slotAvailabilityResults = availableCargo;
         context.transactionHistory = this.transactionHistory;
+        console.log('🎨 Template context - transactionHistory:', {
+            length: this.transactionHistory?.length || 0,
+            firstTransaction: this.transactionHistory?.[0] || null,
+            allTransactions: this.transactionHistory || []
+        });
         context.playerCargo = this.playerCargo;
 
         console.log('🔄 CARGO PERSISTENCE: Context prepared with cargo data', {
@@ -603,6 +608,16 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                     // Clear invalid saved settlement
                     await game.settings.set("trading-places", "selectedSettlement", null);
                 }
+            }
+
+            // Load saved transaction history
+            const savedTransactionHistory = await game.settings.get("trading-places", "transactionHistory");
+            if (savedTransactionHistory && Array.isArray(savedTransactionHistory)) {
+                this.transactionHistory = savedTransactionHistory;
+                this._logDebug('Saved Selections', 'Loaded saved transaction history', { transactionCount: savedTransactionHistory.length });
+            } else {
+                this.transactionHistory = [];
+                this._logDebug('Saved Selections', 'No saved transaction history found, initialized empty array');
             }
 
         } catch (error) {

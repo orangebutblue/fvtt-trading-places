@@ -679,12 +679,13 @@
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
+    transform: translateY(-3px);
 }
 
 .wfrp-trading .quantity-slider::-webkit-slider-thumb:hover,
 .wfrp-trading .discount-slider::-webkit-slider-thumb:hover {
     background: #ff8f00;
-    transform: scale(1.05);
+    transform: translateY(-3px) scale(1.05);
 }
 
 .wfrp-trading .quantity-slider::-moz-range-thumb,
@@ -697,12 +698,13 @@
     border: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
+    transform: translateY(-3px);
 }
 
 .wfrp-trading .quantity-slider::-moz-range-thumb:hover,
 .wfrp-trading .discount-slider::-moz-range-thumb:hover {
     background: #ff8f00;
-    transform: scale(1.05);
+    transform: translateY(-3px) scale(1.05);
 }
 
 .wfrp-trading .purchase-controls .price-calculation {
@@ -1586,8 +1588,8 @@
     margin-bottom: 4px;
 }
 
-/* Transaction History */
-.wfrp-trading .transaction-list {
+/* Transaction History - OLD STYLES (keeping for compatibility) */
+.wfrp-trading .legacy-transaction-list {
     max-height: 300px;
     overflow-y: auto;
 }
@@ -1835,6 +1837,67 @@
     font-size: 12px;
 }
 
+/* Transaction History Styles - ONLY APPLY TO HISTORY TAB */
+.wfrp-trading #history-tab .transaction-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wfrp-trading #history-tab .delete-transaction-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.wfrp-trading #history-tab .delete-transaction-btn:hover {
+    background: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+}
+
+.wfrp-trading #history-tab .delete-transaction-btn i {
+    font-size: 12px;
+}
+
+.wfrp-trading #history-tab .detail-compact {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.wfrp-trading #history-tab .detail-discount {
+    color: #4caf50;
+    font-weight: 700;
+    font-size: 12px;
+    background: rgba(76, 175, 80, 0.1);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+.wfrp-trading #history-tab .meta-compact {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--text-muted);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.wfrp-trading #history-tab .meta-compact i {
+    color: var(--accent-primary);
+    width: 12px;
+    font-size: 10px;
+}
+
 /* Error Message Styles */
 .wfrp-trading .pipeline-section p.error {
     color: var(--accent-warning);
@@ -1946,3 +2009,117 @@
     flex-direction: column;
     gap: 16px;
 }
+
+/* =============================================================================
+   MANUAL ENTRY - SIMPLE CLEAN DESIGN
+   ============================================================================= */
+
+.wfrp-trading .manual-entry-section {
+    margin-bottom: 20px;
+}
+
+.wfrp-trading .manual-entry-toggle {
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.wfrp-trading .manual-entry-toggle:hover {
+    background: var(--bg-primary);
+    border-color: var(--accent-color);
+}
+
+.wfrp-trading .manual-entry-toggle .toggle-icon {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+}
+
+.wfrp-trading .manual-entry-toggle.expanded .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.wfrp-trading .manual-entry-form {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    padding: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.wfrp-trading .manual-entry-form.collapsed {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+}
+
+.wfrp-trading .manual-entry-form:not(.collapsed) {
+    max-height: 500px;
+    opacity: 1;
+}
+
+.wfrp-trading .manual-entry-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+.wfrp-trading .manual-entry-grid input,
+.wfrp-trading .manual-entry-grid select {
+    padding: 10px;
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.wfrp-trading .manual-entry-grid input:focus,
+.wfrp-trading .manual-entry-grid select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.wfrp-trading .manual-entry-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.wfrp-trading .manual-entry-row input,
+.wfrp-trading .manual-entry-row select {
+    flex: 1;
+}
+
+.wfrp-trading .manual-entry-actions {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wfrp-trading .add-manual-transaction-btn {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.wfrp-trading .add-manual-transaction-btn:hover {
+    background: #45a049;
+}
+
