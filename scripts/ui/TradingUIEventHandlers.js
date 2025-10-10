@@ -175,6 +175,16 @@ export class TradingUIEventHandlers {
             costInput.addEventListener('input', this._updatePricePreview.bind(this));
         }
 
+        // Auto-select category when cargo is chosen from autocomplete
+        const cargoInput = html.querySelector('#manual-cargo');
+        if (cargoInput) {
+            cargoInput.addEventListener('input', this._onCargoInputChange.bind(this));
+            cargoInput.addEventListener('change', this._onCargoInputChange.bind(this));
+        }
+
+        // Populate cargo types for autocomplete
+        this._populateCargoAutocomplete();
+
         this._logDebug('Event Listeners', 'Content listeners attached');
     }
 
@@ -719,6 +729,9 @@ export class TradingUIEventHandlers {
             form.classList.remove('collapsed');
             toggle.classList.add('expanded');
             
+            // Ensure cargo autocomplete is populated when form is expanded
+            this._populateCargoAutocomplete();
+            
             // Focus on the first input after animation
             setTimeout(() => {
                 const firstInput = form.querySelector('#manual-cargo');
@@ -772,10 +785,12 @@ export class TradingUIEventHandlers {
             const totalCost = parseFloat(this.app.element.querySelector('#manual-total-cost')?.value);
             const settlement = this.app.element.querySelector('#manual-settlement')?.value?.trim();
             const season = this.app.element.querySelector('#manual-season')?.value;
+            const transactionType = this.app.element.querySelector('#manual-transaction-type')?.value;
+            const isContraband = this.app.element.querySelector('#manual-contraband')?.checked || false;
             
             // Validate inputs
             const validation = this._validateManualTransactionInputs({
-                cargoName, category, quantity, totalCost, settlement, season
+                cargoName, category, quantity, totalCost, settlement, season, transactionType
             });
             
             if (!validation.valid) {
@@ -797,6 +812,8 @@ export class TradingUIEventHandlers {
                 season: season,
                 date: new Date().toISOString(),
                 discountPercent: 0,
+                isSale: transactionType === 'sale',
+                contraband: isContraband,
                 isManualEntry: true
             };
             
@@ -836,7 +853,7 @@ export class TradingUIEventHandlers {
      * @private
      */
     _validateManualTransactionInputs(inputs) {
-        const { cargoName, category, quantity, totalCost, settlement, season } = inputs;
+        const { cargoName, category, quantity, totalCost, settlement, season, transactionType } = inputs;
         
         if (!cargoName) return { valid: false, error: 'Cargo name is required' };
         if (!category) return { valid: false, error: 'Category is required' };
@@ -844,6 +861,9 @@ export class TradingUIEventHandlers {
         if (isNaN(totalCost) || totalCost < 0) return { valid: false, error: 'Valid total cost is required' };
         if (!settlement) return { valid: false, error: 'Settlement name is required' };
         if (!season) return { valid: false, error: 'Season is required' };
+        if (!transactionType || (transactionType !== 'purchase' && transactionType !== 'sale')) {
+            return { valid: false, error: 'Transaction type must be either purchase or sale' };
+        }
         
         return { valid: true };
     }
@@ -860,6 +880,8 @@ export class TradingUIEventHandlers {
         form.querySelector('#manual-category').value = '';
         form.querySelector('#manual-quantity').value = '';
         form.querySelector('#manual-total-cost').value = '';
+        form.querySelector('#manual-transaction-type').value = 'purchase'; // Reset to default
+        form.querySelector('#manual-contraband').checked = false; // Reset contraband checkbox
         
         // Reset price preview
         const pricePreview = form.querySelector('.price-preview strong');
@@ -880,6 +902,111 @@ export class TradingUIEventHandlers {
         }
     }
     
+    /**
+     * Handle cargo input change to auto-select category
+     * @param {Event} event - Input/change event
+     * @private
+     */
+    async _onCargoInputChange(event) {
+        const cargoName = event.target.value.trim();
+        
+        if (!cargoName || !this.cargoTypesData) {
+            return;
+        }
+        
+        // Find matching cargo type
+        const matchingCargo = this.cargoTypesData.cargoTypes.find(cargo => 
+            cargo.name.toLowerCase() === cargoName.toLowerCase()
+        );
+        
+        if (matchingCargo) {
+            const categorySelect = this.app.element.querySelector('#manual-category');
+            if (categorySelect) {
+                categorySelect.value = matchingCargo.category;
+                
+                this._logDebug('Cargo Auto-Select', 'Category auto-selected for cargo', {
+                    cargo: cargoName,
+                    category: matchingCargo.category
+                });
+            }
+        }
+    }
+
+    /**
+     * Populate cargo types for autocomplete and categories from datasets/active/cargo-types.json
+     * @private
+     */
+    async _populateCargoAutocomplete() {
+        try {
+            // Load cargo types from the JSON file
+            const response = await fetch('/modules/trading-places/datasets/active/cargo-types.json');
+            if (!response.ok) {
+                throw new Error(`Failed to load cargo types: ${response.status}`);
+            }
+            
+            const cargoData = await response.json();
+            const datalist = this.app.element.querySelector('#cargo-datalist');
+            const categorySelect = this.app.element.querySelector('#manual-category');
+            
+            if (!cargoData.cargoTypes) {
+                return;
+            }
+            
+            // Store cargo data for auto-select functionality
+            this.cargoTypesData = cargoData;
+            
+            // Populate cargo autocomplete datalist
+            if (datalist) {
+                // Clear existing options
+                datalist.innerHTML = '';
+                
+                // Add cargo types as options
+                cargoData.cargoTypes.forEach(cargo => {
+                    const option = document.createElement('option');
+                    option.value = cargo.name;
+                    option.textContent = `${cargo.name} (${cargo.category})`;
+                    datalist.appendChild(option);
+                });
+            }
+            
+            // Populate category dropdown
+            if (categorySelect) {
+                // Get unique categories from cargo types
+                const categories = [...new Set(cargoData.cargoTypes.map(cargo => cargo.category))].sort();
+                
+                // Clear existing options (keep the default empty option)
+                const defaultOption = categorySelect.querySelector('option[value=""]');
+                categorySelect.innerHTML = '';
+                if (defaultOption) {
+                    categorySelect.appendChild(defaultOption);
+                } else {
+                    const emptyOption = document.createElement('option');
+                    emptyOption.value = '';
+                    emptyOption.textContent = 'Category';
+                    categorySelect.appendChild(emptyOption);
+                }
+                
+                // Add category options
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categorySelect.appendChild(option);
+                });
+            }
+            
+            this._logDebug('Cargo Autocomplete', 'Populated cargo types and categories', {
+                cargoCount: cargoData.cargoTypes.length,
+                categoryCount: categorySelect ? categorySelect.options.length - 1 : 0 // -1 for default option
+            });
+            
+        } catch (error) {
+            this._logError('Cargo Autocomplete', 'Failed to load cargo types and categories', {
+                error: error.message
+            });
+        }
+    }
+
     /**
      * Re-render while keeping history tab active
      * @private

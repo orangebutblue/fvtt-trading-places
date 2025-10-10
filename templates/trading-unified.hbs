@@ -260,21 +260,26 @@ Slot Calculation:
                     <div class="manual-entry-form collapsed">
                         <div class="manual-entry-grid">
                             <div class="manual-entry-row">
-                                <input type="text" id="manual-cargo" placeholder="Cargo name" />
+                                <input type="text" id="manual-cargo" placeholder="Cargo name" list="cargo-datalist" />
+                                <datalist id="cargo-datalist">
+                                    <!-- Cargo options will be populated dynamically -->
+                                </datalist>
                                 <select id="manual-category">
                                     <option value="">Category</option>
-                                    <option value="Food & Drink">Food & Drink</option>
-                                    <option value="Trade Goods">Trade Goods</option>
-                                    <option value="Raw Materials">Raw Materials</option>
-                                    <option value="Luxuries">Luxuries</option>
-                                    <option value="Animals">Animals</option>
-                                    <option value="Other">Other</option>
+                                    <!-- Categories will be populated dynamically from cargo types -->
                                 </select>
                             </div>
                             
                             <div class="manual-entry-row">
                                 <input type="number" id="manual-quantity" placeholder="EP" min="1" />
                                 <input type="number" id="manual-total-cost" placeholder="Total cost" step="0.01" min="0" />
+                                <select id="manual-transaction-type">
+                                    <option value="purchase">Purchase</option>
+                                    <option value="sale">Sale</option>
+                                </select>
+                            </div>
+                            
+                            <div class="manual-entry-row">
                                 <label><input type="checkbox" id="manual-contraband"> Contraband</label>
                             </div>
                             
@@ -299,14 +304,17 @@ Slot Calculation:
                 {{#if transactionHistory.length}}
                 <div class="transaction-list">
                     {{#each transactionHistory}}
-                    <div class="transaction-card" data-transaction-index="{{@index}}">
+                    <div class="transaction-card {{#if isSale}}sale{{else}}purchase{{/if}}" data-transaction-index="{{@index}}">
                         <div class="transaction-header">
                             <div class="cargo-info">
                                 <span class="cargo-name">{{cargo}}</span>
                                 <span class="cargo-category">{{category}}</span>
                             </div>
+                            <div class="transaction-summary">
+                                <div class="quantity-display">{{quantity}} EP</div>
+                                <div class="cost-display">{{totalCost}} GC</div>
+                            </div>
                             <div class="transaction-actions">
-                                <div class="transaction-cost">{{totalCost}} GC</div>
                                 <button class="delete-transaction-btn" data-transaction-index="{{@index}}" title="Delete transaction">
                                     <i class="fas fa-trash"></i>
                                 </button>

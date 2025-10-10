@@ -1838,10 +1838,65 @@
 }
 
 /* Transaction History Styles - ONLY APPLY TO HISTORY TAB */
+
+/* Transaction Cards with Buy/Sell Indicators */
+.wfrp-trading #history-tab .transaction-card {
+    border-left: 4px solid transparent;
+    transition: border-color 0.2s ease;
+}
+
+.wfrp-trading #history-tab .transaction-card.purchase {
+    border-left-color: #f44336; /* Red for purchases */
+}
+
+.wfrp-trading #history-tab .transaction-card.sale {
+    border-left-color: #4caf50; /* Green for sales */
+}
+
+/* Updated Transaction Header Layout */
+.wfrp-trading #history-tab .transaction-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.wfrp-trading #history-tab .cargo-info {
+    flex: 1;
+    min-width: 0; /* Allow text truncation */
+}
+
+.wfrp-trading #history-tab .transaction-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.wfrp-trading #history-tab .quantity-display {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent-color);
+    background: rgba(33, 150, 243, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.wfrp-trading #history-tab .cost-display {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 80px;
+    text-align: right;
+}
+
 .wfrp-trading #history-tab .transaction-actions {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-shrink: 0;
 }
 
 .wfrp-trading #history-tab .delete-transaction-btn {
@@ -2121,5 +2176,14 @@
 
 .wfrp-trading .add-manual-transaction-btn:hover {
     background: #45a049;
+}
+
+/* Cargo autocomplete styling */
+.wfrp-trading #manual-cargo {
+    position: relative;
+}
+
+.wfrp-trading #cargo-datalist {
+    display: none; /* Datalist is handled by browser */
 }
 
