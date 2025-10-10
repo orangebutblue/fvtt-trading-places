@@ -357,6 +357,36 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         });
         context.playerCargo = this.playerCargo;
 
+        // Cargo data for the cargo tab - ensure we use the most current data
+        // Check if currentCargo exists on the app instance first, otherwise load from settings
+        if (this.currentCargo && Array.isArray(this.currentCargo) && this.currentCargo.length > 0) {
+            context.currentCargo = this.currentCargo;
+            console.log('🚛 CARGO DEBUG: Using currentCargo from app instance', {
+                length: this.currentCargo.length
+            });
+        } else {
+            context.currentCargo = await this._getCurrentCargoData();
+            // Also update the app instance with the loaded data
+            this.currentCargo = context.currentCargo;
+            console.log('🚛 CARGO DEBUG: Loaded currentCargo from settings', {
+                length: context.currentCargo.length
+            });
+        }
+        context.cargoCapacity = await game.settings.get("trading-places", "cargoCapacity") || 400;
+        context.currentLoad = this._calculateCurrentLoad(context.currentCargo);
+        context.capacityPercentage = Math.min((context.currentLoad / context.cargoCapacity) * 100, 100);
+        context.isOverCapacity = context.currentLoad > context.cargoCapacity;
+        
+        // Debug logging for cargo data
+        console.log('🚛 CARGO DEBUG: Cargo data prepared for template', {
+            currentCargoLength: context.currentCargo?.length || 0,
+            cargoCapacity: context.cargoCapacity,
+            currentLoad: context.currentLoad,
+            capacityPercentage: context.capacityPercentage,
+            isOverCapacity: context.isOverCapacity,
+            currentCargo: context.currentCargo
+        });
+
         console.log('🔄 CARGO PERSISTENCE: Context prepared with cargo data', {
             successfulCargoCount: successfulCargo.length,
             availableCargoCount: availableCargo.length,
@@ -462,6 +492,54 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         });
 
         return context;
+    }
+
+    // ===== CARGO MANAGEMENT METHODS =====
+
+    /**
+     * Get current cargo data for the cargo tab
+     * @returns {Array} Current cargo array with formatted data
+     * @private
+     */
+    async _getCurrentCargoData() {
+        try {
+            const currentCargo = await game.settings.get("trading-places", "currentCargo") || [];
+            
+            console.log('🚛 CARGO DEBUG: Raw cargo data from settings', {
+                length: currentCargo.length,
+                data: currentCargo
+            });
+            
+            // Add formatted date and ensure all required fields exist
+            const processedCargo = currentCargo.map(cargo => ({
+                ...cargo,
+                // Fix: Don't add formatDate as a function in the data, handle it in template helper instead
+            }));
+            
+            console.log('🚛 CARGO DEBUG: Processed cargo data', {
+                length: processedCargo.length,
+                data: processedCargo
+            });
+            
+            return processedCargo;
+        } catch (error) {
+            this._logError('Cargo Management', 'Failed to load current cargo data', { error: error.message });
+            return [];
+        }
+    }
+
+    /**
+     * Calculate current load from cargo data
+     * @param {Array} cargoData - Current cargo array
+     * @returns {number} Total EP currently loaded
+     * @private
+     */
+    _calculateCurrentLoad(cargoData) {
+        if (!Array.isArray(cargoData)) return 0;
+        
+        return cargoData.reduce((total, cargo) => {
+            return total + (cargo.quantity || 0);
+        }, 0);
     }
 
     /** @override */

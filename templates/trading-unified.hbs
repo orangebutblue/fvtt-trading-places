@@ -120,6 +120,10 @@
                     <i class="fas fa-hand-holding-usd"></i>
                     Selling
                 </button>
+                <button class="tab" data-tab="cargo">
+                    <i class="fas fa-boxes"></i>
+                    Cargo
+                </button>
                 <button class="tab" data-tab="history">
                     <i class="fas fa-history"></i>
                     History
@@ -247,6 +251,131 @@ Slot Calculation:
                 </div>
             </div>
 
+            <!-- Cargo Tab -->
+            <div class="tab-content" id="cargo-tab" style="display: none;">
+                <div class="cargo-header">
+                    <div class="capacity-section">
+                        <div class="capacity-controls">
+                            <label for="cargo-capacity">Maximum Capacity:</label>
+                            <input type="number" id="cargo-capacity" value="{{cargoCapacity}}" min="0" step="1" />
+                            <span class="capacity-unit">EP</span>
+                        </div>
+                        <div class="capacity-display">
+                            <div class="capacity-bar-container">
+                                <div class="capacity-bar">
+                                    <div class="capacity-used" style="width: {{capacityPercentage}}%"></div>
+                                </div>
+                                <div class="capacity-text">
+                                    <span class="current-load {{#if isOverCapacity}}over-capacity{{/if}}">{{currentLoad}}</span>
+                                    <span class="capacity-separator">/</span>
+                                    <span class="max-capacity">{{cargoCapacity}}</span>
+                                    <span class="capacity-unit">EP</span>
+                                    {{#if isOverCapacity}}
+                                        <span class="over-capacity-warning">⚠️ Over Capacity</span>
+                                    {{/if}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collapsible Add Cargo Section -->
+                <div class="add-cargo-section">
+                    <button class="add-cargo-toggle" type="button">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Add cargo</span>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </button>
+                    
+                    <div class="add-cargo-form collapsed">
+                        <div class="add-cargo-grid">
+                            <div class="add-cargo-row">
+                                <input type="text" id="add-cargo-name" placeholder="Cargo name" list="add-cargo-datalist" />
+                                <datalist id="add-cargo-datalist">
+                                    <!-- Cargo options will be populated dynamically -->
+                                </datalist>
+                                <select id="add-cargo-category">
+                                    <option value="">Category</option>
+                                    <!-- Categories will be populated dynamically from cargo types -->
+                                </select>
+                            </div>
+                            
+                            <div class="add-cargo-row">
+                                <input type="number" id="add-cargo-quantity" placeholder="EP" min="1" step="1" />
+                                <input type="number" id="add-cargo-price" placeholder="Total price (optional)" step="0.01" min="0" />
+                            </div>
+                            
+                            <div class="add-cargo-row">
+                                <input type="text" id="add-cargo-settlement" placeholder="Settlement (optional)" value="{{#if selectedSettlement}}{{selectedSettlement.name}}{{/if}}" />
+                                <select id="add-cargo-season">
+                                    <option value="spring" {{#if (eq currentSeason 'spring')}}selected{{/if}}>Spring</option>
+                                    <option value="summer" {{#if (eq currentSeason 'summer')}}selected{{/if}}>Summer</option>
+                                    <option value="autumn" {{#if (eq currentSeason 'autumn')}}selected{{/if}}>Autumn</option>
+                                    <option value="winter" {{#if (eq currentSeason 'winter')}}selected{{/if}}>Winter</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="add-cargo-actions">
+                            <span class="total-cost-preview">Total cost: <strong>--</strong></span>
+                            <button type="button" class="add-cargo-btn">Add Cargo</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cargo-list">
+                    {{#if currentCargo.length}}
+                        {{#each currentCargo}}
+                        <div class="transaction-card purchase" data-cargo-id="{{id}}">
+                            <div class="transaction-header">
+                                <div class="cargo-info">
+                                    <span class="cargo-name">{{cargo}}</span>
+                                    <span class="cargo-category">{{category}}</span>
+                                    {{#if contraband}}
+                                        <span class="contraband-badge">Contraband</span>
+                                    {{/if}}
+                                </div>
+                                <div class="transaction-summary">
+                                    <div class="quantity-display">{{quantity}} EP</div>
+                                    <div class="cost-display">{{#if totalCost}}{{totalCost}} GC{{else}}? GC{{/if}}</div>
+                                </div>
+                                <div class="transaction-actions">
+                                    <button class="sell-cargo-btn" data-cargo-id="{{id}}" title="Sell cargo">
+                                        <i class="fas fa-coins"></i>
+                                    </button>
+                                    <button class="delete-cargo-btn" data-cargo-id="{{id}}" title="Remove cargo">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="transaction-body">
+                                <div class="transaction-details">
+                                    <span class="detail-compact">{{quantity}} EP × {{#if pricePerEP}}{{pricePerEP}} GC{{else}}? GC{{/if}}</span>
+                                </div>
+                                <div class="transaction-meta">
+                                    <span class="meta-compact">
+                                        <i class="fas fa-map-marker-alt"></i>{{settlement}}
+                                    </span>
+                                    <span class="meta-compact">
+                                        <i class="fas fa-calendar"></i>{{season}}
+                                    </span>
+                                    <span class="meta-compact">
+                                        <i class="fas fa-clock"></i>{{formatDate date}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {{/each}}
+                    {{else}}
+                        <div class="empty-cargo">
+                            <div class="empty-cargo-icon">📦</div>
+                            <div class="empty-cargo-text">No cargo currently loaded</div>
+                            <div class="empty-cargo-subtitle">Purchase cargo from the buying tab to see it here</div>
+                        </div>
+                    {{/if}}
+                </div>
+            </div>
+
             <!-- History Tab -->
             <div class="tab-content" id="history-tab">
                 <!-- Collapsible Manual Entry -->
@@ -312,7 +441,7 @@ Slot Calculation:
                             </div>
                             <div class="transaction-summary">
                                 <div class="quantity-display">{{quantity}} EP</div>
-                                <div class="cost-display">{{totalCost}} GC</div>
+                                <div class="cost-display">{{#if totalCost}}{{totalCost}} GC{{else}}? GC{{/if}}</div>
                             </div>
                             <div class="transaction-actions">
                                 <button class="delete-transaction-btn" data-transaction-index="{{@index}}" title="Delete transaction">
@@ -322,7 +451,7 @@ Slot Calculation:
                         </div>
                         <div class="transaction-body">
                             <div class="transaction-details">
-                                <span class="detail-compact">{{quantity}} EP × {{pricePerEP}} GC</span>
+                                <span class="detail-compact">{{quantity}} EP × {{#if pricePerEP}}{{pricePerEP}} GC{{else}}? GC{{/if}}</span>
                                 {{#if discountPercent}}
                                 <span class="detail-discount">{{#if (gt discountPercent 0)}}+{{/if}}{{discountPercent}}%</span>
                                 {{/if}}

@@ -978,31 +978,18 @@ ${slotDetails}
         
         // Add transaction to history
         const transaction = {
-            type: 'purchase',
             cargo: cargo.name,
             category: cargo.category || 'Goods',
             quantity: quantity,
-            pricePerEP: adjustedPricePerEP.toFixed(2),
-            totalCost: totalCost.toFixed(2),
-            discountPercent: discountPercent,
-            settlement: `${this.app.selectedSettlement?.region || 'Unknown'}, ${this.app.selectedSettlement?.name || 'Unknown'}`,
+            pricePerEP: parseFloat(adjustedPricePerEP.toFixed(2)),
+            totalCost: parseFloat(totalCost.toFixed(2)),
+            settlement: this.app.selectedSettlement?.name || 'Unknown',
             season: this.app.currentSeason || 'Unknown',
-            date: (() => {
-                const now = new Date();
-                const year = now.getFullYear().toString();
-                const month = (now.getMonth() + 1).toString().padStart(2, '0');
-                const day = now.getDate().toString().padStart(2, '0');
-                const hours = now.getHours().toString().padStart(2, '0');
-                const minutes = now.getMinutes().toString().padStart(2, '0');
-                const formatted = `${year}-${month}-${day} ${hours}:${minutes}`;
-                console.log('📅 DEBUG - Raw date formatting:', {
-                    year, month, day, hours, minutes,
-                    formatted: formatted,
-                    expectedFormat: '2025-10-07 11:51'
-                });
-                return formatted;
-            })(),
-            timestamp: Date.now()
+            date: new Date().toISOString(),
+            discountPercent: discountPercent,
+            isSale: false,
+            contraband: cargo.slotInfo?.contraband?.contraband || false,
+            isManualEntry: false
         };
         
         // Add to transaction history
@@ -1010,6 +997,13 @@ ${slotDetails}
             this.app.transactionHistory = [];
         }
         this.app.transactionHistory.unshift(transaction); // Add to beginning for newest first
+        
+        // Update cargo inventory - call the event handler method
+        if (this.app.eventHandlers && this.app.eventHandlers._addCargoToInventory) {
+            this.app.eventHandlers._addCargoToInventory(transaction).catch(error => {
+                console.error('Failed to update cargo inventory:', error);
+            });
+        }
         
         console.log('💰 Transaction created:', transaction);
         console.log('💰 Transaction history now has:', this.app.transactionHistory.length, 'items');
@@ -1024,9 +1018,6 @@ ${slotDetails}
                 console.error('💰 Failed to save transaction history:', error);
             });
         
-        // Switch to History tab
-        this._switchToHistoryTab();
-        
         // Show success notification
         if (ui && ui.notifications) {
             ui.notifications.success(`Purchased ${quantity} EP of ${cargo.name} for ${totalCost.toFixed(2)} GC${discountPercent !== 0 ? ` (${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment)` : ''}`);
@@ -1034,8 +1025,14 @@ ${slotDetails}
             console.log(`✅ Purchase successful: ${quantity} EP of ${cargo.name} for ${totalCost.toFixed(2)} GC`);
         }
         
-        // Re-render to update the History tab with the new transaction
-        this.app.render(false);
+        // Re-render to update all tabs with the new transaction
+        this.app.render(false).then(() => {
+            // After successful purchase and re-render, switch to cargo tab to show the purchased item
+            setTimeout(() => {
+                this._switchToCargoTab();
+                console.log('🛒 Automatically switched to cargo tab after purchase');
+            }, 100); // Small delay to ensure render is complete
+        });
     }
 
     /**
@@ -1321,5 +1318,29 @@ ${slotDetails}
      */
     _updateSellingTab() {
         this._logDebug('UI State', 'Updating selling tab');
+    }
+
+    _switchToCargoTab() {
+        console.log('🔄 Switching to cargo tab');
+        
+        // Remove active class from all tabs and content
+        this.app.element.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.app.element.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+            content.style.display = 'none';
+        });
+        
+        // Add active class to cargo tab
+        const cargoTab = this.app.element.querySelector('.tab[data-tab="cargo"]');
+        const cargoContent = this.app.element.querySelector('#cargo-tab');
+        
+        if (cargoTab && cargoContent) {
+            cargoTab.classList.add('active');
+            cargoContent.classList.add('active');
+            cargoContent.style.display = 'block';
+            console.log('🔄 Cargo tab activated successfully');
+        } else {
+            console.error('🔄 Failed to find cargo tab elements');
+        }
     }
 }

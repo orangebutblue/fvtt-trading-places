@@ -825,6 +825,26 @@ function registerModuleSettings() {
         type: Array,
         default: []
     });
+
+    // Cargo capacity setting
+    game.settings.register(MODULE_ID, "cargoCapacity", {
+        name: "Cargo Capacity",
+        hint: "Maximum cargo capacity in EP that players can carry",
+        scope: "world",
+        config: false,
+        type: Number,
+        default: 400
+    });
+
+    // Current cargo setting (for persistence)
+    game.settings.register(MODULE_ID, "currentCargo", {
+        name: "Current Cargo",
+        hint: "Stores current cargo inventory for persistence across sessions",
+        scope: "world",
+        config: false,
+        type: Array,
+        default: []
+    });
 }
 
 /**
@@ -1390,7 +1410,88 @@ window.WFRPRiverTrading = {
     getDebugLogger: () => debugLogger,
     
     // Simple utility function
-    openTradingDialog: () => openTradingInterface()
+    openTradingDialog: () => openTradingInterface(),
+    
+    // Debug/Test functions
+    addTestCargo: async () => {
+        const testCargo = {
+            id: foundry.utils.randomID(),
+            cargo: "Test Grain",
+            category: "Bulk Goods", 
+            quantity: 75,
+            pricePerEP: 1.5,
+            totalCost: 112.5,
+            settlement: "Altdorf",
+            season: "spring",
+            date: new Date().toISOString(),
+            contraband: false
+        };
+        
+        const currentCargo = await game.settings.get("trading-places", "currentCargo") || [];
+        currentCargo.push(testCargo);
+        await game.settings.set("trading-places", "currentCargo", currentCargo);
+        
+        console.log('✅ Test cargo added:', testCargo);
+        ui.notifications.info("Added test cargo: 75 EP of Test Grain");
+        
+        // Re-render any open trading applications
+        for (let app of Object.values(ui.windows)) {
+            if (app.constructor.name === 'WFRPTradingApplication') {
+                app.render(false);
+            }
+        }
+        
+        return testCargo;
+    },
+    
+    clearAllCargo: async () => {
+        await game.settings.set("trading-places", "currentCargo", []);
+        console.log('🗑️ All cargo cleared');
+        ui.notifications.info("Cleared all cargo from inventory");
+        
+        // Re-render any open trading applications
+        for (let app of Object.values(ui.windows)) {
+            if (app.constructor.name === 'WFRPTradingApplication') {
+                app.render(false);
+            }
+        }
+    },
+    
+    showCargoTab: () => {
+        // Force switch to cargo tab and check what's there
+        const cargoTab = document.querySelector('.tab[data-tab="cargo"]');
+        const cargoContent = document.querySelector('#cargo-tab');
+        
+        if (cargoTab && cargoContent) {
+            // Remove active from all tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Activate cargo tab
+            cargoTab.classList.add('active');
+            cargoContent.classList.add('active');
+            cargoContent.style.display = 'block';
+            
+            console.log('🚛 Cargo tab activated');
+            console.log('🚛 Cargo tab HTML:', cargoContent.innerHTML.substring(0, 500));
+            
+            // Check what data is in the cargo list
+            const cargoList = cargoContent.querySelector('.cargo-list');
+            const cargoItems = cargoContent.querySelectorAll('.cargo-item');
+            const emptyState = cargoContent.querySelector('.empty-cargo');
+            
+            console.log('🚛 Cargo list element:', cargoList);
+            console.log('🚛 Cargo items found:', cargoItems.length);
+            console.log('🚛 Empty state visible:', emptyState && emptyState.style.display !== 'none');
+            
+            return {
+                cargoTab, cargoContent, cargoList, cargoItems, emptyState
+            };
+        } else {
+            console.error('❌ Cargo tab elements not found');
+            return null;
+        }
+    }
 };
 
 // Also assign to the module object for direct access

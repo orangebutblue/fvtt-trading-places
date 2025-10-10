@@ -185,6 +185,56 @@ export class TradingUIEventHandlers {
         // Populate cargo types for autocomplete
         this._populateCargoAutocomplete();
 
+        // Cargo tab event listeners
+        const cargoCapacityInput = html.querySelector('#cargo-capacity');
+        if (cargoCapacityInput) {
+            cargoCapacityInput.addEventListener('input', this._onCargoCapacityChange.bind(this));
+        }
+
+        // Cargo action buttons
+        const sellCargoButtons = html.querySelectorAll('.sell-cargo-btn');
+        sellCargoButtons.forEach(btn => {
+            btn.addEventListener('click', this._onSellCargo.bind(this));
+        });
+
+        // Edit functionality removed
+
+        const deleteCargoButtons = html.querySelectorAll('.delete-cargo-btn');
+        deleteCargoButtons.forEach(btn => {
+            btn.addEventListener('click', this._onDeleteCargo.bind(this));
+        });
+
+        // Add cargo section event listeners
+        const addCargoToggle = html.querySelector('.add-cargo-toggle');
+        if (addCargoToggle) {
+            addCargoToggle.addEventListener('click', this._onToggleAddCargo.bind(this));
+            this._logDebug('Event Listeners', 'Attached add cargo toggle listener');
+        }
+
+        const addCargoBtn = html.querySelector('.add-cargo-btn');
+        if (addCargoBtn) {
+            addCargoBtn.addEventListener('click', this._onAddCargo.bind(this));
+            this._logDebug('Event Listeners', 'Attached add cargo button listener');
+        }
+
+        // Real-time cost calculation for add cargo
+        const addCargoQuantityInput = html.querySelector('#add-cargo-quantity');
+        const addCargoPriceInput = html.querySelector('#add-cargo-price');
+        if (addCargoQuantityInput && addCargoPriceInput) {
+            addCargoQuantityInput.addEventListener('input', this._updateAddCargoCostPreview.bind(this));
+            addCargoPriceInput.addEventListener('input', this._updateAddCargoCostPreview.bind(this));
+        }
+
+        // Auto-select category when cargo is chosen from autocomplete
+        const addCargoNameInput = html.querySelector('#add-cargo-name');
+        if (addCargoNameInput) {
+            addCargoNameInput.addEventListener('input', this._onAddCargoInputChange.bind(this));
+            addCargoNameInput.addEventListener('change', this._onAddCargoInputChange.bind(this));
+        }
+
+        // Populate cargo types for add cargo autocomplete
+        this._populateAddCargoAutocomplete();
+
         this._logDebug('Event Listeners', 'Content listeners attached');
     }
 
@@ -200,7 +250,10 @@ export class TradingUIEventHandlers {
             tab.addEventListener('click', () => {
                 // Remove active class from all tabs and content
                 html.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                html.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                html.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                    content.style.display = 'none'; // Explicitly hide
+                });
                 
                 // Add active class to clicked tab
                 tab.classList.add('active');
@@ -210,6 +263,7 @@ export class TradingUIEventHandlers {
                 const targetContent = html.querySelector(`#${targetTab}-tab`);
                 if (targetContent) {
                     targetContent.classList.add('active');
+                    targetContent.style.display = 'block'; // Explicitly show
                 }
                 
                 this._logDebug('UI Interaction', 'Switched to tab:', targetTab);
@@ -823,6 +877,13 @@ export class TradingUIEventHandlers {
             }
             this.app.transactionHistory.unshift(transaction);
             
+            // Update cargo inventory based on transaction type
+            if (transactionType === 'purchase') {
+                await this._addCargoToInventory(transaction);
+            } else if (transactionType === 'sale') {
+                await this._removeCargoFromInventory(transaction);
+            }
+            
             // Save to game settings
             await game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory);
             
@@ -1032,6 +1093,65 @@ export class TradingUIEventHandlers {
     }
 
     /**
+     * Re-render while keeping cargo tab active
+     * @private
+     */
+    async _rerenderWithCargoTabActive() {
+        // Ensure we reload cargo data before re-rendering
+        try {
+            const savedCargo = await game.settings.get("trading-places", "currentCargo");
+            if (savedCargo && Array.isArray(savedCargo)) {
+                this.app.currentCargo = savedCargo;
+                this._logDebug('Cargo Tab Rerender', 'Reloaded cargo data', {
+                    cargoCount: savedCargo.length
+                });
+            } else {
+                // Initialize empty cargo array if none exists
+                this.app.currentCargo = [];
+                this._logDebug('Cargo Tab Rerender', 'Initialized empty cargo array');
+            }
+        } catch (error) {
+            this._logError('Cargo Tab Rerender', 'Failed to reload cargo data', { error: error.message });
+            this.app.currentCargo = []; // Fallback to empty array
+        }
+        
+        // Force re-render with updated cargo data
+        await this.app.render(true); // Force re-render to pick up cargo data
+        
+        // Use a longer timeout to ensure rendering is complete
+        setTimeout(() => {
+            const tabs = this.app.element?.querySelectorAll('.tab');
+            const tabContents = this.app.element?.querySelectorAll('.tab-content');
+            
+            if (tabs && tabContents) {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    content.style.display = 'none';
+                });
+                
+                const cargoTab = this.app.element.querySelector('.tab[data-tab="cargo"]');
+                const cargoContent = this.app.element.querySelector('#cargo-tab');
+                
+                if (cargoTab && cargoContent) {
+                    cargoTab.classList.add('active');
+                    cargoContent.classList.add('active');
+                    cargoContent.style.display = 'block';
+                }
+                
+                this._logDebug('Cargo Tab Rerender', 'Switched to cargo tab', {
+                    currentCargoLength: this.app.currentCargo ? this.app.currentCargo.length : 0,
+                    tabsFound: tabs.length,
+                    cargoTabFound: !!cargoTab,
+                    cargoContentFound: !!cargoContent
+                });
+            } else {
+                this._logError('Cargo Tab Rerender', 'Could not find tab elements after render');
+            }
+        }, 100); // Increased timeout for better reliability
+    }
+
+    /**
      * Handle delete transaction button click
      * @param {Event} event - Click event
      * @private
@@ -1117,4 +1237,756 @@ export class TradingUIEventHandlers {
         }
     }
 
+    // ===== CARGO MANAGEMENT METHODS =====
+
+    /**
+     * Handle cargo capacity change
+     * @param {Event} event - Input event
+     * @private
+     */
+    async _onCargoCapacityChange(event) {
+        const newCapacity = parseInt(event.target.value) || 0;
+        
+        // Save cargo capacity to game settings
+        await game.settings.set("trading-places", "cargoCapacity", newCapacity);
+        
+        // Update the capacity display immediately
+        await this._updateCapacityDisplayReal();
+        
+        this._logDebug('Cargo Management', 'Cargo capacity updated', { newCapacity });
+    }
+
+    /**
+     * Handle selling cargo from inventory
+     * @param {Event} event - Click event
+     * @private
+     */
+    async _onSellCargo(event) {
+        event.preventDefault();
+        const cargoId = event.currentTarget.dataset.cargoId;
+        
+        if (!cargoId) return;
+        
+        // Find the cargo in current inventory
+        const currentCargo = await this._getCurrentCargo();
+        const cargoIndex = currentCargo.findIndex(cargo => cargo.id === cargoId);
+        
+        if (cargoIndex === -1) {
+            ui.notifications.error("Cargo not found in inventory");
+            return;
+        }
+        
+        const cargo = currentCargo[cargoIndex];
+        
+        // Switch to selling tab and pre-populate with this cargo
+        this._switchToSellingTab(cargo);
+        
+        this._logDebug('Cargo Management', 'Switched to selling tab for cargo', { cargo: cargo.cargo });
+    }
+
+    /**
+     * Handle deleting cargo from inventory
+     * @param {Event} event - Click event  
+     * @private
+     */
+    async _onDeleteCargo(event) {
+        event.preventDefault();
+        const cargoId = event.currentTarget.dataset.cargoId;
+        
+        if (!cargoId) return;
+        
+        // Find the cargo in current inventory
+        const currentCargo = await this._getCurrentCargo();
+        const cargoIndex = currentCargo.findIndex(cargo => cargo.id === cargoId);
+        
+        if (cargoIndex === -1) {
+            ui.notifications.error("Cargo not found in inventory");
+            return;
+        }
+        
+        const cargo = currentCargo[cargoIndex];
+        
+        // Confirm deletion
+        const confirmed = await foundry.applications.api.DialogV2.confirm({
+            window: { title: "Remove Cargo" },
+            content: `<p>Are you sure you want to remove <strong>${cargo.quantity} EP of ${cargo.cargo}</strong> from your cargo?</p>`,
+            rejectClose: false,
+            modal: true
+        });
+        
+        if (!confirmed) return;
+        
+        // Remove from inventory
+        currentCargo.splice(cargoIndex, 1);
+        await game.settings.set("trading-places", "currentCargo", currentCargo);
+        
+        // Re-render and stay in cargo tab
+        await this.app.render(false);
+        setTimeout(() => {
+            this._switchToCargoTab();
+        }, 50);
+        
+        ui.notifications.info(`Removed ${cargo.quantity} EP of ${cargo.cargo} from cargo`);
+        
+        this._logDebug('Cargo Management', 'Cargo removed from inventory', {
+            cargo: cargo.cargo,
+            quantity: cargo.quantity
+        });
+    }
+
+    /**
+     * Add cargo to inventory after purchase
+     * @param {Object} transaction - Transaction object
+     * @private
+     */
+    async _addCargoToInventory(transaction) {
+        const currentCargo = await this._getCurrentCargo();
+        
+        // Check if we already have this cargo type - if so, combine quantities
+        const existingCargoIndex = currentCargo.findIndex(cargo => 
+            cargo.cargo === transaction.cargo && 
+            cargo.category === transaction.category &&
+            cargo.settlement === transaction.settlement &&
+            cargo.season === transaction.season &&
+            cargo.contraband === transaction.contraband
+        );
+        
+        if (existingCargoIndex !== -1) {
+            // Combine with existing cargo
+            const existingCargo = currentCargo[existingCargoIndex];
+            const totalQuantity = existingCargo.quantity + transaction.quantity;
+            const totalCost = existingCargo.totalCost + transaction.totalCost;
+            
+            existingCargo.quantity = totalQuantity;
+            existingCargo.totalCost = totalCost;
+            existingCargo.pricePerEP = totalCost / totalQuantity;
+            existingCargo.date = transaction.date; // Update to latest purchase date
+        } else {
+            // Add as new cargo
+            const newCargo = {
+                id: foundry.utils.randomID(),
+                cargo: transaction.cargo,
+                category: transaction.category,
+                quantity: transaction.quantity,
+                pricePerEP: transaction.pricePerEP,
+                totalCost: transaction.totalCost,
+                settlement: transaction.settlement,
+                season: transaction.season,
+                date: transaction.date,
+                contraband: transaction.contraband || false
+            };
+            
+            currentCargo.push(newCargo);
+        }
+        
+        await game.settings.set("trading-places", "currentCargo", currentCargo);
+        
+        this._logDebug('Cargo Management', 'Cargo added to inventory', {
+            cargo: transaction.cargo,
+            quantity: transaction.quantity,
+            totalCargoItems: currentCargo.length
+        });
+    }
+
+    /**
+     * Remove cargo from inventory after sale
+     * @param {Object} transaction - Transaction object
+     * @private
+     */
+    async _removeCargoFromInventory(transaction) {
+        const currentCargo = await this._getCurrentCargo();
+        
+        // Find matching cargo to remove
+        const cargoIndex = currentCargo.findIndex(cargo => 
+            cargo.cargo === transaction.cargo && 
+            cargo.category === transaction.category
+        );
+        
+        if (cargoIndex !== -1) {
+            const cargo = currentCargo[cargoIndex];
+            
+            if (cargo.quantity <= transaction.quantity) {
+                // Remove entire cargo if selling all or more
+                currentCargo.splice(cargoIndex, 1);
+            } else {
+                // Reduce quantity
+                cargo.quantity -= transaction.quantity;
+                cargo.totalCost = cargo.quantity * cargo.pricePerEP; // Recalculate total cost
+            }
+            
+            await game.settings.set("trading-places", "currentCargo", currentCargo);
+            
+            this._logDebug('Cargo Management', 'Cargo removed from inventory', {
+                cargo: transaction.cargo,
+                quantitySold: transaction.quantity,
+                remainingQuantity: cargoIndex !== -1 && currentCargo[cargoIndex] ? currentCargo[cargoIndex].quantity : 0
+            });
+        }
+    }
+
+    /**
+     * Get current cargo from game settings
+     * @returns {Array} Current cargo array
+     * @private
+     */
+    async _getCurrentCargo() {
+        return await game.settings.get("trading-places", "currentCargo") || [];
+    }
+
+    /**
+     * Update capacity display in real-time
+     * @private
+     */
+    async _updateCapacityDisplayReal() {
+        const currentCargo = await this._getCurrentCargo();
+        const cargoCapacity = parseInt(this.app.element.querySelector('#cargo-capacity')?.value) || 400;
+        const currentLoad = currentCargo.reduce((total, cargo) => total + (cargo.quantity || 0), 0);
+        const capacityPercentage = Math.min((currentLoad / cargoCapacity) * 100, 100);
+        const isOverCapacity = currentLoad > cargoCapacity;
+        
+        const capacityBar = this.app.element.querySelector('.capacity-used');
+        const currentLoadSpan = this.app.element.querySelector('.current-load');
+        const maxCapacitySpan = this.app.element.querySelector('.max-capacity');
+        const capacityWarning = this.app.element.querySelector('.over-capacity-warning');
+        
+        if (capacityBar) {
+            capacityBar.style.width = `${capacityPercentage}%`;
+            capacityBar.classList.toggle('over-capacity', isOverCapacity);
+        }
+        
+        if (currentLoadSpan) {
+            currentLoadSpan.textContent = currentLoad;
+            currentLoadSpan.classList.toggle('over-capacity', isOverCapacity);
+        }
+        
+        if (maxCapacitySpan) {
+            maxCapacitySpan.textContent = cargoCapacity;
+        }
+        
+        if (capacityWarning) {
+            capacityWarning.style.display = isOverCapacity ? 'inline' : 'none';
+        }
+        
+        this._logDebug('Cargo Management', 'Capacity display updated', {
+            currentLoad, cargoCapacity, capacityPercentage, isOverCapacity
+        });
+    }
+
+    /**
+     * Switch to selling tab with pre-populated cargo
+     * @param {Object} cargo - Cargo to pre-populate
+     * @private
+     */
+    _switchToSellingTab(cargo) {
+        // Remove active class from all tabs and content
+        this.app.element.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.app.element.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        // Activate selling tab
+        const sellingTab = this.app.element.querySelector('.tab[data-tab="selling"]');
+        const sellingContent = this.app.element.querySelector('#selling-tab');
+        
+        if (sellingTab && sellingContent) {
+            sellingTab.classList.add('active');
+            sellingContent.classList.add('active');
+        }
+        
+        // Pre-populate selling form if available
+        // This would need to be implemented in the selling tab logic
+        
+        this._logDebug('Cargo Management', 'Switched to selling tab');
+    }
+
+    /**
+     * Switch to cargo tab
+     * @private
+     */
+    _switchToCargoTab() {
+        // Remove active class from all tabs and content
+        this.app.element.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.app.element.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+            content.style.display = 'none';
+        });
+        
+        // Activate cargo tab
+        const cargoTab = this.app.element.querySelector('.tab[data-tab="cargo"]');
+        const cargoContent = this.app.element.querySelector('#cargo-tab');
+        
+        if (cargoTab && cargoContent) {
+            cargoTab.classList.add('active');
+            cargoContent.classList.add('active');
+            cargoContent.style.display = 'block';
+        }
+        
+        this._logDebug('Cargo Management', 'Switched to cargo tab');
+    }
+
+    /**
+     * Re-render while keeping cargo tab active
+     * @private
+     */
+    async _rerenderWithCargoTabActive() {
+        await this.app.render(false);
+        
+        setTimeout(() => {
+            const tabs = this.app.element.querySelectorAll('.tab');
+            const tabContents = this.app.element.querySelectorAll('.tab-content');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            const cargoTab = this.app.element.querySelector('.tab[data-tab="cargo"]');
+            const cargoContent = this.app.element.querySelector('#cargo-tab');
+            
+            if (cargoTab && cargoContent) {
+                cargoTab.classList.add('active');
+                cargoContent.classList.add('active');
+            }
+        }, 50);
+    }
+
+    /**
+     * Add test cargo to inventory (for debugging/testing purposes)
+     * @private
+     */
+    async _addTestCargo() {
+        const testCargo = {
+            id: foundry.utils.randomID(),
+            cargo: "Grain",
+            category: "Bulk Goods",
+            quantity: 50,
+            pricePerEP: 1.2,
+            totalCost: 60,
+            settlement: "Altdorf",
+            season: "spring",
+            date: new Date().toISOString(),
+            contraband: false
+        };
+
+        const currentCargo = await this._getCurrentCargo();
+        currentCargo.push(testCargo);
+        await game.settings.set("trading-places", "currentCargo", currentCargo);
+        
+        ui.notifications.info("Added test cargo: 50 EP of Grain");
+        await this._rerenderWithCargoTabActive();
+        
+        this._logDebug('Test', 'Test cargo added to inventory');
+    }
+
+    /**
+     * Clear all cargo from inventory (for debugging/testing purposes)
+     * @private
+     */
+    async _clearAllCargo() {
+        await game.settings.set("trading-places", "currentCargo", []);
+        ui.notifications.info("Cleared all cargo from inventory");
+        await this._rerenderWithCargoTabActive();
+        
+        this._logDebug('Test', 'All cargo cleared from inventory');
+    }
+
+    /**
+     * Show dialog for cargo deletion reason
+     * @param {Object} cargoItem - The cargo item being deleted
+     * @returns {Promise<string|null>} The reason or null if cancelled
+     * @private
+     */
+    async _showDeleteCargoDialog(cargoItem) {
+        return new Promise((resolve) => {
+            const dialog = new Dialog({
+                title: "Remove Cargo",
+                content: `
+                    <p>Why are you removing <strong>${cargoItem.quantity} EP of ${cargoItem.cargo}</strong>?</p>
+                    <div class="form-group">
+                        <label>Reason (optional):</label>
+                        <input type="text" id="removal-reason" placeholder="e.g., sold privately, lost, mistake..." style="width: 100%; margin-top: 5px;" />
+                    </div>
+                `,
+                buttons: {
+                    remove: {
+                        icon: '<i class="fas fa-trash"></i>',
+                        label: "Remove Cargo",
+                        callback: (html) => {
+                            const reason = html.find('#removal-reason').val().trim();
+                            resolve(reason);
+                        }
+                    },
+                    cancel: {
+                        icon: '<i class="fas fa-times"></i>',
+                        label: "Cancel",
+                        callback: () => resolve(null)
+                    }
+                },
+                default: "remove",
+                close: () => resolve(null)
+            });
+
+            dialog.render(true);
+        });
+    }
+
+    /**
+     * Toggle the add cargo form collapse/expand
+     * @param {Event} event - Click event
+     * @private
+     */
+    _onToggleAddCargo(event) {
+        event.preventDefault();
+        
+        const toggle = event.currentTarget;
+        const form = this.app.element.querySelector('.add-cargo-form');
+        
+        if (!form) return;
+        
+        const isCollapsed = form.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // Expand
+            form.classList.remove('collapsed');
+            toggle.classList.add('expanded');
+            
+            // Ensure cargo autocomplete is populated when form is expanded
+            this._populateAddCargoAutocomplete();
+            
+            // Focus on the first input after animation
+            setTimeout(() => {
+                const firstInput = form.querySelector('#add-cargo-name');
+                if (firstInput) firstInput.focus();
+            }, 300);
+            
+        } else {
+            // Collapse
+            form.classList.add('collapsed');
+            toggle.classList.remove('expanded');
+        }
+        
+        this._logDebug('Add Cargo', `Form ${isCollapsed ? 'expanded' : 'collapsed'}`);
+    }
+
+    /**
+     * Update the cost preview for add cargo in real-time
+     * @private
+     */
+    _updateAddCargoCostPreview() {
+        const quantityInput = this.app.element.querySelector('#add-cargo-quantity');
+        const totalPriceInput = this.app.element.querySelector('#add-cargo-price');
+        const pricePreview = this.app.element.querySelector('.price-preview strong');
+        
+        if (!quantityInput || !totalPriceInput || !pricePreview) return;
+        
+        const quantity = parseFloat(quantityInput.value);
+        const totalPrice = parseFloat(totalPriceInput.value);
+        
+        if (quantity > 0 && !isNaN(totalPrice) && totalPrice > 0) {
+            const pricePerEP = (totalPrice / quantity).toFixed(2);
+            pricePreview.textContent = `${pricePerEP} GC`;
+        } else if (quantity > 0 && (isNaN(totalPrice) || totalPrice === 0)) {
+            pricePreview.textContent = '?';
+        } else {
+            pricePreview.textContent = '--';
+        }
+    }
+
+    /**
+     * Handle cargo input change to auto-select category for add cargo
+     * @param {Event} event - Input/change event
+     * @private
+     */
+    async _onAddCargoInputChange(event) {
+        const cargoName = event.target.value.trim();
+        
+        if (!cargoName || !this.addCargoTypesData) {
+            return;
+        }
+        
+        // Find matching cargo type
+        const matchingCargo = this.addCargoTypesData.cargoTypes.find(cargo => 
+            cargo.name.toLowerCase() === cargoName.toLowerCase()
+        );
+        
+        if (matchingCargo) {
+            const categorySelect = this.app.element.querySelector('#add-cargo-category');
+            if (categorySelect) {
+                categorySelect.value = matchingCargo.category;
+                
+                this._logDebug('Add Cargo Auto-Select', 'Category auto-selected for cargo', {
+                    cargo: cargoName,
+                    category: matchingCargo.category
+                });
+            }
+        }
+    }
+
+    /**
+     * Populate cargo types for add cargo autocomplete
+     * @private
+     */
+    async _populateAddCargoAutocomplete() {
+        try {
+            // Load cargo types from the JSON file
+            const response = await fetch('/modules/trading-places/datasets/active/cargo-types.json');
+            if (!response.ok) {
+                throw new Error(`Failed to load cargo types: ${response.status}`);
+            }
+            
+            const cargoData = await response.json();
+            const datalist = this.app.element.querySelector('#add-cargo-datalist');
+            const categorySelect = this.app.element.querySelector('#add-cargo-category');
+            
+            if (!cargoData.cargoTypes) {
+                return;
+            }
+            
+            // Store cargo data for auto-select functionality
+            this.addCargoTypesData = cargoData;
+            
+            // Populate cargo autocomplete datalist
+            if (datalist) {
+                // Clear existing options
+                datalist.innerHTML = '';
+                
+                // Add cargo types as options
+                cargoData.cargoTypes.forEach(cargo => {
+                    const option = document.createElement('option');
+                    option.value = cargo.name;
+                    option.textContent = `${cargo.name} (${cargo.category})`;
+                    datalist.appendChild(option);
+                });
+            }
+            
+            // Populate category dropdown
+            if (categorySelect) {
+                // Get unique categories from cargo types
+                const categories = [...new Set(cargoData.cargoTypes.map(cargo => cargo.category))].sort();
+                
+                // Clear existing options (keep the default empty option)
+                const defaultOption = categorySelect.querySelector('option[value=""]');
+                categorySelect.innerHTML = '';
+                if (defaultOption) {
+                    categorySelect.appendChild(defaultOption);
+                } else {
+                    const emptyOption = document.createElement('option');
+                    emptyOption.value = '';
+                    emptyOption.textContent = 'Category';
+                    categorySelect.appendChild(emptyOption);
+                }
+                
+                // Add category options
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categorySelect.appendChild(option);
+                });
+            }
+            
+            this._logDebug('Add Cargo Autocomplete', 'Populated cargo types and categories', {
+                cargoCount: cargoData.cargoTypes.length,
+                categoryCount: categorySelect ? categorySelect.options.length - 1 : 0 // -1 for default option
+            });
+            
+        } catch (error) {
+            this._logError('Add Cargo Autocomplete', 'Failed to load cargo types and categories', {
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Handle adding cargo to inventory
+     * @param {Event} event - Click event
+     * @private
+     */
+    async _onAddCargo(event) {
+        event.preventDefault();
+        
+        try {
+            // Ensure currentCargo is loaded from settings first
+            if (!this.app.currentCargo || !Array.isArray(this.app.currentCargo)) {
+                const savedCargo = await game.settings.get("trading-places", "currentCargo") || [];
+                this.app.currentCargo = savedCargo;
+                this._logDebug('Add Cargo', 'Loaded currentCargo from settings', {
+                    cargoCount: savedCargo.length
+                });
+            }
+
+            // Get form values
+            const cargoName = this.app.element.querySelector('#add-cargo-name')?.value?.trim();
+            const category = this.app.element.querySelector('#add-cargo-category')?.value;
+            const quantity = parseFloat(this.app.element.querySelector('#add-cargo-quantity')?.value);
+            const totalPrice = parseFloat(this.app.element.querySelector('#add-cargo-price')?.value);
+            const settlement = this.app.element.querySelector('#add-cargo-settlement')?.value?.trim() || 'Unknown';
+            const season = this.app.element.querySelector('#add-cargo-season')?.value;
+            
+            // Validate inputs
+            const validation = this._validateAddCargoInputs({
+                cargoName, category, quantity
+            });
+            
+            if (!validation.valid) {
+                ui.notifications.error(validation.error);
+                return;
+            }
+            
+            // Calculate pricePerEP and totalCost based on total price input
+            let pricePerEP = 0;
+            let totalCost = 0;
+            
+            if (!isNaN(totalPrice) && totalPrice > 0) {
+                totalCost = totalPrice;
+                pricePerEP = totalPrice / quantity;
+            }
+            // If totalPrice is NaN or 0, both totalCost and pricePerEP remain 0
+            
+            // Create cargo object
+            const cargoItem = {
+                id: foundry.utils.randomID(),
+                cargo: cargoName,
+                category: category,
+                quantity: quantity,
+                pricePerEP: parseFloat(pricePerEP.toFixed(2)),
+                totalCost: parseFloat(totalCost.toFixed(2)),
+                settlement: settlement,
+                season: season,
+                date: new Date().toISOString(),
+                contraband: false // TODO: Add contraband detection
+            };
+            
+            // Add to current cargo - ensure it's properly initialized
+            if (!this.app.currentCargo || !Array.isArray(this.app.currentCargo)) {
+                this.app.currentCargo = [];
+            }
+            this.app.currentCargo.push(cargoItem);
+            
+            // Create corresponding transaction for history
+            const transaction = {
+                cargo: cargoName,
+                category: category,
+                quantity: quantity,
+                pricePerEP: parseFloat(pricePerEP.toFixed(2)),
+                totalCost: parseFloat(totalCost.toFixed(2)),
+                settlement: settlement,
+                season: season,
+                date: new Date().toISOString(),
+                discountPercent: 0,
+                isSale: false,
+                contraband: false,
+                isManualAddition: true
+            };
+            
+            // Add to transaction history
+            if (!this.app.transactionHistory) {
+                this.app.transactionHistory = [];
+            }
+            this.app.transactionHistory.unshift(transaction);
+            
+            // Save both cargo and history
+            await game.settings.set("trading-places", "currentCargo", this.app.currentCargo);
+            await game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory);
+            
+            this._logDebug('Add Cargo', 'Saved cargo data', {
+                currentCargoLength: this.app.currentCargo.length,
+                savedCargo: this.app.currentCargo
+            });
+            
+            // Clear and collapse the form
+            this._clearAddCargoForm();
+            this._collapseAddCargo();
+            
+            // Re-render and switch to cargo tab to show the new cargo
+            await this.app.render(false);
+            
+            // After a short delay, switch to cargo tab
+            setTimeout(() => {
+                const tabs = this.app.element?.querySelectorAll('.tab');
+                const tabContents = this.app.element?.querySelectorAll('.tab-content');
+                
+                if (tabs && tabContents) {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        content.style.display = 'none';
+                    });
+                    
+                    const cargoTab = this.app.element.querySelector('.tab[data-tab="cargo"]');
+                    const cargoContent = this.app.element.querySelector('#cargo-tab');
+                    
+                    if (cargoTab && cargoContent) {
+                        cargoTab.classList.add('active');
+                        cargoContent.classList.add('active');
+                        cargoContent.style.display = 'block';
+                        
+                        this._logDebug('Add Cargo', 'Switched to cargo tab after adding cargo');
+                    }
+                }
+            }, 100);
+            
+            // Show success message
+            const costText = totalCost > 0 ? ` for ${totalCost.toFixed(2)} GC` : '';
+            ui.notifications.success(`Added ${quantity} EP of ${cargoName}${costText}`);
+            
+            this._logInfo('Add Cargo', 'Cargo added successfully', {
+                cargo: cargoName, quantity, totalCost, settlement, season
+            });
+            
+        } catch (error) {
+            this._logError('Add Cargo', 'Failed to add cargo', { error: error.message });
+            ui.notifications.error(`Failed to add cargo: ${error.message}`);
+        }
+    }
+
+    /**
+     * Validate add cargo inputs
+     * @param {Object} inputs - Input values to validate
+     * @returns {Object} Validation result
+     * @private
+     */
+    _validateAddCargoInputs(inputs) {
+        const { cargoName, category, quantity } = inputs;
+        
+        if (!cargoName) return { valid: false, error: 'Cargo name is required' };
+        if (!category) return { valid: false, error: 'Category is required' };
+        if (!quantity || isNaN(quantity) || quantity <= 0) return { valid: false, error: 'Valid quantity (EP) is required' };
+        
+        return { valid: true };
+    }
+
+    /**
+     * Clear the add cargo form
+     * @private
+     */
+    _clearAddCargoForm() {
+        const form = this.app.element.querySelector('.add-cargo-form');
+        if (!form) return;
+        
+        form.querySelector('#add-cargo-name').value = '';
+        form.querySelector('#add-cargo-category').value = '';
+        form.querySelector('#add-cargo-quantity').value = '';
+        form.querySelector('#add-cargo-price').value = '';
+        
+        // Reset cost preview
+        const costPreview = form.querySelector('.total-cost-preview strong');
+        if (costPreview) costPreview.textContent = '--';
+    }
+    
+    /**
+     * Collapse the add cargo form
+     * @private
+     */
+    _collapseAddCargo() {
+        const toggle = this.app.element.querySelector('.add-cargo-toggle');
+        const form = this.app.element.querySelector('.add-cargo-form');
+        
+        if (toggle && form) {
+            form.classList.add('collapsed');
+            toggle.classList.remove('expanded');
+        }
+    }
+
+    /**
+     * Handle editing cargo
+     * @param {Event} event - Click event
+     * @private
+     */
 }

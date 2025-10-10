@@ -525,19 +525,13 @@
     position: relative;
 }
 
+/* Removed arrow pseudo-element that was causing weird arrow in cargo tab */
 .wfrp-trading .cargo-header::after {
-    content: '▶';
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 12px;
-    transition: transform 0.2s ease;
+    display: none !important;
 }
 
 .wfrp-trading .cargo-card.collapsible.expanded .cargo-header::after {
-    transform: translateY(-50%) rotate(90deg);
+    display: none !important;
 }
 
 .wfrp-trading .cargo-header {
@@ -2185,5 +2179,380 @@
 
 .wfrp-trading #cargo-datalist {
     display: none; /* Datalist is handled by browser */
+}
+
+/* ================== CARGO TAB STYLES ================== */
+
+/* Cargo Header - Capacity Management */
+.wfrp-trading #cargo-tab .cargo-header {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.wfrp-trading #cargo-tab .capacity-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.wfrp-trading #cargo-tab .capacity-section::before,
+.wfrp-trading #cargo-tab .capacity-section::after {
+    display: none !important; /* Remove any pseudo-element arrows */
+}
+
+.wfrp-trading #cargo-tab .capacity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wfrp-trading #cargo-tab .capacity-controls label {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.wfrp-trading #cargo-tab #cargo-capacity {
+    width: 100px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.wfrp-trading #cargo-tab .capacity-unit {
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* Capacity Bar */
+.wfrp-trading #cargo-tab .capacity-bar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.wfrp-trading #cargo-tab .capacity-bar {
+    height: 20px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.wfrp-trading #cargo-tab .capacity-used {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #ffeb3b, #f44336);
+    background-size: 100% 100%;
+    transition: width 0.3s ease;
+    border-radius: 10px;
+}
+
+.wfrp-trading #cargo-tab .capacity-used.over-capacity {
+    background: linear-gradient(90deg, #f44336, #d32f2f);
+}
+
+.wfrp-trading #cargo-tab .capacity-text {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wfrp-trading #cargo-tab .current-load {
+    font-size: 18px;
+    color: var(--accent-color);
+}
+
+.wfrp-trading #cargo-tab .current-load.over-capacity {
+    color: #f44336;
+}
+
+.wfrp-trading #cargo-tab .over-capacity-warning {
+    color: #f44336;
+    font-weight: 700;
+    margin-left: 8px;
+}
+
+/* Cargo List - Now uses same styling as history tab */
+.wfrp-trading #cargo-tab .cargo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Apply the same transaction card styling to cargo tab */
+.wfrp-trading #cargo-tab .transaction-card {
+    border-left: 4px solid transparent;
+    transition: border-color 0.2s ease;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.wfrp-trading #cargo-tab .transaction-card.purchase {
+    border-left-color: #f44336; /* Red for purchases - same as history tab */
+}
+
+/* Updated Transaction Header Layout for cargo tab */
+.wfrp-trading #cargo-tab .transaction-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.wfrp-trading #cargo-tab .cargo-info {
+    flex: 1;
+    min-width: 0; /* Allow text truncation */
+}
+
+.wfrp-trading #cargo-tab .transaction-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.wfrp-trading #cargo-tab .quantity-display {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent-color);
+    background: rgba(33, 150, 243, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.wfrp-trading #cargo-tab .cost-display {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--success-color);
+    background: rgba(76, 175, 80, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.wfrp-trading #cargo-tab .transaction-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.wfrp-trading #cargo-tab .detail-compact {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-right: 12px;
+}
+
+.wfrp-trading #cargo-tab .meta-compact {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-right: 12px;
+}
+
+.wfrp-trading #cargo-tab .meta-compact i {
+    margin-right: 4px;
+    opacity: 0.7;
+}
+
+/* Contraband badge styling for cargo tab */
+.wfrp-trading #cargo-tab .contraband-badge {
+    font-size: 10px;
+    color: #fff;
+    background: #f44336;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-left: 8px;
+}
+
+/* Button styling for cargo actions */
+.wfrp-trading #cargo-tab .sell-cargo-btn,
+.wfrp-trading #cargo-tab .delete-cargo-btn {
+    background: var(--button-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+}
+
+.wfrp-trading #cargo-tab .sell-cargo-btn:hover {
+    background: #4caf50;
+    color: white;
+}
+
+.wfrp-trading #cargo-tab .delete-cargo-btn:hover {
+    background: #f44336;
+    color: white;
+}
+
+/* Empty State */
+.wfrp-trading #cargo-tab .empty-cargo {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.wfrp-trading #cargo-tab .empty-cargo-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.wfrp-trading #cargo-tab .empty-cargo-text {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.wfrp-trading #cargo-tab .empty-cargo-subtitle {
+    font-size: 14px;
+}
+
+/* Add Cargo Section - Collapsible Form */
+.wfrp-trading #cargo-tab .add-cargo-section {
+    margin-bottom: 20px;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-toggle {
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-toggle:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-toggle.expanded {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    background: var(--accent-color);
+    color: white;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-toggle i:first-child {
+    margin-right: 8px;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-toggle .toggle-icon {
+    transition: transform 0.2s ease;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-toggle.expanded .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.wfrp-trading #cargo-tab .add-cargo-form {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 16px;
+    max-height: 300px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-form.collapsed {
+    max-height: 0;
+    padding: 0 16px;
+    opacity: 0;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-row {
+    display: flex;
+    gap: 12px;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-row input,
+.wfrp-trading #cargo-tab .add-cargo-row select {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-row input:focus,
+.wfrp-trading #cargo-tab .add-cargo-row select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.wfrp-trading #cargo-tab .add-cargo-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.wfrp-trading #cargo-tab .total-cost-preview {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.wfrp-trading #cargo-tab .total-cost-preview strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-btn {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wfrp-trading #cargo-tab .add-cargo-btn:hover {
+    background: var(--accent-color-dark, #1976d2);
+    transform: translateY(-1px);
+}
+
+.wfrp-trading #cargo-tab .add-cargo-btn:active {
+    transform: translateY(0);
 }
 
