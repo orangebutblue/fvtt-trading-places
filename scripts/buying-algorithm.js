@@ -616,7 +616,8 @@ class WFRPBuyingAlgorithm {
                 cargoType: cargoType,
                 season: season,
                 quality: quality,
-                basePrices: cargo.basePrices
+                basePrice: cargo.basePrice,
+                seasonalModifiers: cargo.seasonalModifiers
             },
             basePrice,
             `Base price for ${cargoType} in ${season} (${quality} quality)`

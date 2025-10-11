@@ -249,7 +249,9 @@ class PurchasePriceCalculator {
             throw new Error(`Invalid quality tier: ${quality}. Available tiers: ${availableTiers.join(', ')}`);
         }
 
-        const baseSeasonalPrice = cargo.basePrices[currentSeason];
+        // Calculate seasonal price from basePrice * seasonalModifiers
+        const seasonalModifier = cargo.seasonalModifiers[currentSeason];
+        const baseSeasonalPrice = cargo.basePrice * seasonalModifier;
         const qualityMultiplier = cargo.qualityTiers[quality];
         const finalPrice = baseSeasonalPrice * qualityMultiplier;
 

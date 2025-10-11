@@ -537,7 +537,7 @@ class DataManager {
         };
 
         // Required fields for cargo
-        const requiredFields = ['name', 'category', 'basePrices', 'encumbrancePerUnit'];
+        const requiredFields = ['name', 'category', 'basePrice', 'seasonalModifiers', 'encumbrancePerUnit'];
 
         // Check for missing fields
         const missingFields = requiredFields.filter(field =>
@@ -565,27 +565,35 @@ class DataManager {
             }
         }
 
-        // Validate basePrices structure
-        if (cargo.hasOwnProperty('basePrices')) {
-            if (typeof cargo.basePrices !== 'object' || cargo.basePrices === null) {
+        // Validate basePrice
+        if (cargo.hasOwnProperty('basePrice')) {
+            if (typeof cargo.basePrice !== 'number' || cargo.basePrice <= 0) {
                 result.valid = false;
-                result.errors.push('BasePrices must be an object');
+                result.errors.push('BasePrice must be a positive number');
+            }
+        }
+
+        // Validate seasonalModifiers structure
+        if (cargo.hasOwnProperty('seasonalModifiers')) {
+            if (typeof cargo.seasonalModifiers !== 'object' || cargo.seasonalModifiers === null) {
+                result.valid = false;
+                result.errors.push('SeasonalModifiers must be an object');
             } else {
                 const requiredSeasons = ['spring', 'summer', 'autumn', 'winter'];
                 const missingSeasons = requiredSeasons.filter(season =>
-                    !cargo.basePrices.hasOwnProperty(season) || typeof cargo.basePrices[season] !== 'number'
+                    !cargo.seasonalModifiers.hasOwnProperty(season) || typeof cargo.seasonalModifiers[season] !== 'number'
                 );
 
                 if (missingSeasons.length > 0) {
                     result.valid = false;
-                    result.errors.push(`BasePrices missing or invalid for seasons: ${missingSeasons.join(', ')}`);
+                    result.errors.push(`SeasonalModifiers missing or invalid for seasons: ${missingSeasons.join(', ')}`);
                 }
 
-                // Validate all prices are positive numbers
-                Object.entries(cargo.basePrices).forEach(([season, price]) => {
-                    if (typeof price !== 'number' || price < 0) {
+                // Validate all modifiers are positive numbers
+                Object.entries(cargo.seasonalModifiers).forEach(([season, modifier]) => {
+                    if (typeof modifier !== 'number' || modifier < 0) {
                         result.valid = false;
-                        result.errors.push(`BasePrices.${season} must be a positive number`);
+                        result.errors.push(`SeasonalModifiers.${season} must be a non-negative number`);
                     }
                 });
             }
@@ -644,15 +652,14 @@ class DataManager {
 
         let basePrice;
 
-        // Handle different data formats
-        if (cargo.basePrices && cargo.basePrices.hasOwnProperty(season)) {
-            // New format: direct seasonal prices
-            basePrice = cargo.basePrices[season];
-        } else if (cargo.basePrice && cargo.seasonalModifiers && cargo.seasonalModifiers.hasOwnProperty(season)) {
-            // Legacy format: base price with seasonal modifiers
+        // Calculate seasonal price from basePrice * seasonalModifiers
+        if (cargo.basePrice && cargo.seasonalModifiers && cargo.seasonalModifiers.hasOwnProperty(season)) {
             basePrice = cargo.basePrice * cargo.seasonalModifiers[season];
+        } else if (cargo.basePrices && cargo.basePrices.hasOwnProperty(season)) {
+            // Backwards compatibility: direct seasonal prices (deprecated)
+            basePrice = cargo.basePrices[season];
         } else {
-            throw new Error(`No price data for season: ${season}. Cargo must have either basePrices or basePrice+seasonalModifiers`);
+            throw new Error(`No price data for season: ${season}. Cargo must have basePrice and seasonalModifiers`);
         }
 
         // Apply quality tier multiplier if cargo has quality tiers (wine/brandy)

@@ -864,7 +864,10 @@
     white-space: nowrap;
     margin: 0;
 }
-
+.wfrp-trading .control-block.discount-controls,
+.wfrp-trading .control-block.quantity-controls {
+    margin-top: -20px;
+}
 .wfrp-trading .purchase-controls .control-body {
     display: flex;
     align-items: center;
@@ -891,7 +894,7 @@
 }
 
 .wfrp-trading .discount-display {
-    width: 50px;
+    width: 60px;
     min-width: 48px;
     text-align: center;
     font-weight: 700;

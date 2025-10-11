@@ -1012,7 +1012,7 @@ class ConfigValidator {
         }
 
         const categorySet = new Set();
-        const requiredFields = ['name', 'category', 'basePrices', 'encumbrancePerUnit'];
+        const requiredFields = ['name', 'category', 'basePrice', 'seasonalModifiers', 'encumbrancePerUnit'];
         const requiredSeasons = ['spring', 'summer', 'autumn', 'winter'];
 
         cargoTypes.cargoTypes.forEach((cargo, index) => {
@@ -1031,16 +1031,30 @@ class ConfigValidator {
                 categorySet.add(cargo.category);
             }
 
-            // Validate base prices
-            if (cargo.basePrices && typeof cargo.basePrices === 'object') {
+            // Validate basePrice
+            if (cargo.basePrice !== undefined && (typeof cargo.basePrice !== 'number' || cargo.basePrice <= 0)) {
+                result.valid = false;
+                result.errors.push(`Cargo ${index} (${cargo.name || 'unnamed'}): BasePrice must be a positive number`);
+            }
+
+            // Validate seasonal modifiers
+            if (cargo.seasonalModifiers && typeof cargo.seasonalModifiers === 'object') {
                 const missingSeasons = requiredSeasons.filter(season => 
-                    !cargo.basePrices.hasOwnProperty(season) || typeof cargo.basePrices[season] !== 'number'
+                    !cargo.seasonalModifiers.hasOwnProperty(season) || typeof cargo.seasonalModifiers[season] !== 'number'
                 );
 
                 if (missingSeasons.length > 0) {
                     result.valid = false;
-                    result.errors.push(`Cargo ${index} (${cargo.name || 'unnamed'}): Missing or invalid seasonal prices: ${missingSeasons.join(', ')}`);
+                    result.errors.push(`Cargo ${index} (${cargo.name || 'unnamed'}): Missing or invalid seasonal modifiers: ${missingSeasons.join(', ')}`);
                 }
+
+                // Validate all modifiers are non-negative
+                requiredSeasons.forEach(season => {
+                    if (cargo.seasonalModifiers[season] !== undefined && cargo.seasonalModifiers[season] < 0) {
+                        result.valid = false;
+                        result.errors.push(`Cargo ${index} (${cargo.name || 'unnamed'}): SeasonalModifiers.${season} must be non-negative`);
+                    }
+                });
             }
 
             // Validate encumbrance

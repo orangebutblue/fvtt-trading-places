@@ -103,7 +103,8 @@ class PriceCalculator {
                 cargoType,
                 season,
                 quality,
-                basePrices: cargo.basePrices,
+                basePrice: cargo.basePrice,
+                seasonalModifiers: cargo.seasonalModifiers,
                 qualityTiers: cargo.qualityTiers
             },
             basePrice,
@@ -262,7 +263,8 @@ class PriceCalculator {
                 cargoType,
                 season,
                 quality,
-                basePrices: cargo.basePrices
+                basePrice: cargo.basePrice,
+                seasonalModifiers: cargo.seasonalModifiers
             },
             basePrice,
             `Base price for ${cargoType} in ${season} (${quality} quality): ${basePrice} GC per 10 EP`
