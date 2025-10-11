@@ -1,3 +1,5 @@
+import { resolveCurrencyContext, enrichPricing } from '../currency-display.js';
+
 console.log('Trading Places | Loading BuyingFlow.js');
 
 export class BuyingFlow {
@@ -7,12 +9,17 @@ export class BuyingFlow {
         this.tradingEngine = app.tradingEngine;
     }
 
+    _getCurrencyContext() {
+        return resolveCurrencyContext(this.dataManager);
+    }
+
     _logInfo(category, message, data) {
         if (this.app.debugLogger && this.app.debugLogger.log) {
             this.app.debugLogger.log('INFO', category, message, data, 'INFO');
         } else {
             console.log(`Trading Places | ${category}: ${message}`, data);
         }
+
     }
 
     _logError(category, message, data) {
@@ -122,6 +129,7 @@ export class BuyingFlow {
 
                 const slotOutcomes = [];
                 const slotDisplayEntries = [];
+                const currencyContext = this._getCurrencyContext();
 
                 for (const slot of pipelineResult.slots) {
                     // Use the same roll function as the pipeline for consistency
@@ -152,9 +160,8 @@ export class BuyingFlow {
                     };
 
                     if (!slotSuccessful) {
-                        console.log(`❌ Slot ${slot.slotNumber} failed availability (${slotRoll} > ${finalChance}). Displaying as unavailable.`);
                         slotDisplayEntries.push({
-                            slotNumber: slot.slotNumber,
+                            ...baseEntry,
                             isSlotAvailable: false,
                             availability: {
                                 roll: slotRoll,
@@ -204,12 +211,13 @@ export class BuyingFlow {
                         };
                     }
 
+                    const enrichedPricing = enrichPricing(slot.pricing, slot.amount.totalEP, currencyContext);
                     const successfulEntry = {
                         ...baseEntry,
                         name: slot.cargo.name,
                         category: slot.cargo.category,
-                        basePrice: slot.pricing.basePricePerEP,
-                        currentPrice: slot.pricing.finalPricePerEP,
+                        basePrice: enrichedPricing.basePricePerEP,
+                        currentPrice: enrichedPricing.finalPricePerEP,
                         quantity: slot.amount.totalEP,
                         totalEP: slot.amount.totalEP,
                         quality: slot.quality.tier,
@@ -220,12 +228,28 @@ export class BuyingFlow {
                             balance: slot.balance,
                             amount: slot.amount,
                             quality: slot.quality,
-                            pricing: slot.pricing,
+                            pricing: enrichedPricing,
                             contraband: slot.contraband,
                             merchant: slot.merchant,
                             desperationUsed: false
                         }
                     };
+
+                    if (typeof enrichedPricing.basePricePerEPCanonical === 'number') {
+                        successfulEntry.basePriceCanonical = enrichedPricing.basePricePerEPCanonical;
+                    }
+                    if (typeof enrichedPricing.finalPricePerEPCanonical === 'number') {
+                        successfulEntry.currentPriceCanonical = enrichedPricing.finalPricePerEPCanonical;
+                    }
+                    if (typeof enrichedPricing.totalValueCanonical === 'number') {
+                        successfulEntry.totalValueCanonical = enrichedPricing.totalValueCanonical;
+                    }
+                    if (enrichedPricing.formattedFinalPricePerEP) {
+                        successfulEntry.formattedPricePerEP = enrichedPricing.formattedFinalPricePerEP;
+                    }
+                    if (enrichedPricing.formattedTotalValue) {
+                        successfulEntry.formattedTotalValue = enrichedPricing.formattedTotalValue;
+                    }
 
                     slotDisplayEntries.push(successfulEntry);
                     successfulCargo.push(successfulEntry);

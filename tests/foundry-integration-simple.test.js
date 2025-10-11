@@ -59,7 +59,8 @@ global.Hooks = {
 };
 
 global.CONST = {
-    CHAT_MESSAGE_TYPES: { OTHER: 0, ROLL: 5 }
+    CHAT_MESSAGE_TYPES: { OTHER: 0, ROLL: 5 },
+    CHAT_MESSAGE_STYLES: { OTHER: 0 }
 };
 
 // Import modules
@@ -401,19 +402,17 @@ describe('FoundryVTT Integration - Core Features', () => {
             // Requirements: 8.7, 8.8
             
             // Test with null data manager
-            const failingEngine = new TradingEngine(null);
-            
-            expect(() => {
-                failingEngine.calculateAvailabilityChance({});
-            }).toThrow();
+            expect(() => new TradingEngine(null)).toThrow('TradingEngine requires a DataManager instance');
             
             // Test invalid configuration
             const invalidAdapter = new SystemAdapter({
-                currency: { field: '' }
+                currency: { field: null, fields: {} },
+                inventory: { field: '' }
             });
             
             const validation = invalidAdapter.validateSystemCompatibility();
             expect(validation.compatible).toBe(false);
+            expect(validation.errors.length).toBeGreaterThan(0);
         });
     });
 

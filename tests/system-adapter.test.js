@@ -9,7 +9,7 @@ class MockActor {
         this.name = data.name || 'Test Actor';
         this.type = data.type || 'character';
         this.system = data.system || {
-            money: { gc: 100 }
+            money: { gc: 0, ss: 0, bp: 0 }
         };
         this.items = new MockCollection(data.items || []);
         this.updateData = null;
@@ -115,10 +115,14 @@ function runSystemAdapterConfigTests() {
     const config = adapter.getDefaultConfig();
     
     console.log(`Currency field: ${config.currency.field} (expected: system.money.gc)`);
+    console.log(`Currency field map: ${JSON.stringify(config.currency.fields)} (expected GC/SS/BP paths)`);
     console.log(`Inventory field: ${config.inventory.field} (expected: items)`);
     console.log(`Inventory method: ${config.inventory.method} (expected: createEmbeddedDocuments)`);
     
     console.assert(config.currency.field === 'system.money.gc', 'Default currency field should be system.money.gc');
+    console.assert(config.currency.fields.GC === 'system.money.gc', 'Default GC field should be system.money.gc');
+    console.assert(config.currency.fields.SS === 'system.money.ss', 'Default SS field should be system.money.ss');
+    console.assert(config.currency.fields.BP === 'system.money.bp', 'Default BP field should be system.money.bp');
     console.assert(config.inventory.field === 'items', 'Default inventory field should be items');
     console.assert(config.inventory.method === 'createEmbeddedDocuments', 'Default inventory method should be createEmbeddedDocuments');
 
@@ -131,6 +135,11 @@ function runSystemAdapterConfigTests() {
     const customConfig = {
         currency: {
             field: 'system.currency.gold',
+            fields: {
+                GC: 'system.currency.gold',
+                SS: 'system.currency.silver',
+                BP: 'system.currency.copper'
+            },
             type: 'number',
             label: 'Gold Pieces'
         },
@@ -143,9 +152,12 @@ function runSystemAdapterConfigTests() {
 
     const customAdapter = new SystemAdapter(customConfig);
     console.log(`Custom currency field: ${customAdapter.config.currency.field} (expected: system.currency.gold)`);
+    console.log(`Custom currency field map: ${JSON.stringify(customAdapter.config.currency.fields)} (expected custom denominations)`);
     console.log(`Custom inventory method: ${customAdapter.config.inventory.method} (expected: addItem)`);
     
     console.assert(customAdapter.config.currency.field === 'system.currency.gold', 'Should use custom currency field');
+    console.assert(customAdapter.config.currency.fields.SS === 'system.currency.silver', 'Should use custom SS field');
+    console.assert(customAdapter.config.currency.fields.BP === 'system.currency.copper', 'Should use custom BP field');
     console.assert(customAdapter.config.inventory.method === 'addItem', 'Should use custom inventory method');
 
     console.log('✓ Custom configuration working correctly\n');
@@ -192,11 +204,11 @@ function runCurrencyOperationTests() {
     console.log('==========================');
 
     const actor = new MockActor({
-        system: { money: { gc: 150 } }
+        system: { money: { gc: 0, ss: 12, bp: 6 } }
     });
 
     const currencyValue = adapter.getCurrencyValue(actor);
-    console.log(`Currency value: ${currencyValue} GC (expected: 150 GC)`);
+    console.log(`Currency value: ${currencyValue} BP (expected: 150 BP)`);
     console.assert(currencyValue === 150, 'Should get correct currency value');
 
     // Test with missing currency field
@@ -318,7 +330,7 @@ function runInventoryOperationTests() {
     console.log('==============================');
 
     const actor = new MockActor({
-        system: { money: { gc: 500 } }
+        system: { money: { gc: 0, ss: 0, bp: 500 } }
     });
 
     adapter.addCargoToInventory(actor, 'Grain', 50, cargoData, purchaseInfo).then(result => {
@@ -437,7 +449,7 @@ function runInventoryOperationTests() {
 
     const summary = adapter.getInventorySummary(actor);
     console.log(`Total cargo items: ${summary.totalItems}`);
-    console.log(`Currency: ${summary.currency} (expected: 500)`);
+        console.log(`Currency: ${summary.currency} BP (expected: 500 BP)`);
     console.log(`Cargo items array length: ${summary.cargoItems.length}`);
     
     console.assert(summary.currency === 500, 'Should include currency in summary');
@@ -465,7 +477,7 @@ function runTransactionValidationTests() {
     console.log('========================');
 
     const validActor = new MockActor({
-        system: { money: { gc: 200 } }
+        system: { money: { gc: 0, ss: 0, bp: 200 } }
     });
 
     const actorValidation = adapter.validateActor(validActor);

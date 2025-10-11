@@ -5,6 +5,7 @@
 // Import required modules
 const DataManager = require('./data-manager.js');
 const SystemAdapter = require('./system-adapter.js');
+const CurrencyUtils = require('./currency-utils.js');
 
 // Mock FoundryVTT environment
 global.game = {
@@ -18,7 +19,7 @@ class MockActor {
         this.name = 'Test Character';
         this.type = 'character';
         this.system = {
-            money: { gc: 500 }
+            money: { gc: 500, ss: 0, bp: 0 }
         };
         this.items = new MockCollection();
         this.updateData = null;
@@ -103,9 +104,21 @@ async function testSystemAdapterIntegration() {
             ],
             config: {
                 currency: {
-                    field: 'system.money.gc',
-                    type: 'number',
-                    label: 'Gold Crowns'
+                    canonicalUnit: {
+                        name: 'Brass Penny',
+                        abbreviation: 'BP',
+                        value: 1
+                    },
+                    denominations: [
+                        { name: 'Gold Crown', abbreviation: 'GC', value: 240 },
+                        { name: 'Silver Shilling', abbreviation: 'SS', value: 12 },
+                        { name: 'Brass Penny', abbreviation: 'BP', value: 1 }
+                    ],
+                    display: {
+                        order: ['GC', 'SS', 'BP'],
+                        includeZeroDenominations: false,
+                        separator: ' '
+                    }
                 },
                 inventory: {
                     field: 'items',
@@ -146,7 +159,9 @@ async function testSystemAdapterIntegration() {
 
         // Create test actor
         const actor = new MockActor();
-        console.log(`✓ Created test actor with ${systemAdapter.getCurrencyValue(actor)} GC`);
+    const initialCanonical = systemAdapter.getCurrencyValue(actor);
+    const initialFormatted = CurrencyUtils.formatCurrency(initialCanonical, systemAdapter.getCurrencySchema());
+    console.log(`✓ Created test actor with ${initialCanonical} BP (canonical) -> ${initialFormatted}`);
 
         // Validate actor
         const actorValidation = systemAdapter.validateActor(actor);
@@ -178,7 +193,8 @@ async function testSystemAdapterIntegration() {
             // Deduct currency
             const currencyResult = await systemAdapter.deductCurrency(actor, purchaseData.totalPrice, 'Wine purchase');
             console.log(`Currency deduction: ${currencyResult.success}`);
-            console.log(`New balance: ${currencyResult.newAmount} GC`);
+            const formattedBalance = CurrencyUtils.formatCurrency(currencyResult.newAmount, systemAdapter.getCurrencySchema());
+            console.log(`New balance: ${currencyResult.newAmount} BP -> ${formattedBalance}`);
 
             // Add cargo to inventory
             const cargoData = dataManager.cargoTypes.find(c => c.name === purchaseData.cargoName);
@@ -227,7 +243,8 @@ async function testSystemAdapterIntegration() {
                 const salePrice = 180; // 10 × 18 GC (example sale price)
                 const currencyResult = await systemAdapter.addCurrency(actor, salePrice, 'Wine sale');
                 console.log(`Currency addition: ${currencyResult.success}`);
-                console.log(`New balance: ${currencyResult.newAmount} GC`);
+                const formattedBalance = CurrencyUtils.formatCurrency(currencyResult.newAmount, systemAdapter.getCurrencySchema());
+                console.log(`New balance: ${currencyResult.newAmount} BP -> ${formattedBalance}`);
             }
         }
 

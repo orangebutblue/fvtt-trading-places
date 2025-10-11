@@ -3,6 +3,30 @@
  * Centralized data access and management with validation
  */
 
+console.log('🔧 Loading data-manager.js...');
+
+let CurrencyUtils = null;
+try {
+    CurrencyUtils = require('./currency-utils');
+} catch (error) {
+    // Ignore require failures in browser context; window fallback below.
+}
+
+console.log('🔍 Checking for window.TradingPlacesCurrencyUtils...', !!window?.TradingPlacesCurrencyUtils);
+if (typeof window !== 'undefined' && window.TradingPlacesCurrencyUtils) {
+    CurrencyUtils = window.TradingPlacesCurrencyUtils;
+    console.log('✅ CurrencyUtils loaded from window');
+} else {
+    console.error('❌ window.TradingPlacesCurrencyUtils not found at data-manager load time');
+}
+
+const SETTLEMENT_FILES = [
+    'Averland.json', 'Hochland.json', 'Middenland.json', 'Moot.json',
+    'Nordland.json', 'Ostermark.json', 'Ostland.json', 'Reikland.json',
+    'Stirland.json', 'Sudenland.json', 'Sylvania.json', 'Talabecland.json',
+    'Wasteland.json', 'Wissenland.json'
+];
+
 /**
  * Data Manager class for handling settlement and cargo data
  */
@@ -15,10 +39,45 @@ class DataManager {
         this.currentSeason = null;
         this.logger = null; // Will be set by integration
         this.moduleId = 'trading-places';
-        this.activeDatasetName = 'active';
-        this.dataPath = `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
+        this.activeDatasetName = null;
+        this.dataPath = null;
+        this.datasetPointer = null;
+        this.datasetPointerPath = `modules/${this.moduleId}/datasets/system-pointer.json`;
         this.sourceFlags = {};
         this.tradingConfig = {};
+        this.normalizedCurrencyConfig = null;
+        this.currencyContextCache = null;
+    }
+
+    normalizeDatasetName(datasetName, pointer = null) {
+        if (!datasetName) {
+            return { folderName: null, entry: null };
+        }
+
+        const pointerData = pointer || this.datasetPointer;
+        const systems = Array.isArray(pointerData?.systems) ? pointerData.systems : [];
+
+        const findEntry = (identifier) => systems.find(system =>
+            system.id === identifier ||
+            system.path === identifier ||
+            system.name === identifier ||
+            system.label === identifier
+        ) || null;
+
+        let entry = findEntry(datasetName);
+
+        if (!entry && typeof datasetName === 'string' && datasetName.endsWith('-default')) {
+            entry = findEntry(datasetName.replace(/-default$/, ''));
+        }
+
+        const folderName = entry?.path || entry?.id || (typeof datasetName === 'string' && datasetName.endsWith('-default')
+            ? datasetName.replace(/-default$/, '')
+            : datasetName);
+
+        return {
+            folderName,
+            entry
+        };
     }
 
     setModuleId(moduleId) {
@@ -27,7 +86,10 @@ class DataManager {
         }
 
         this.moduleId = moduleId;
-        this.dataPath = `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
+        this.datasetPointerPath = `modules/${this.moduleId}/datasets/system-pointer.json`;
+        if (this.activeDatasetName) {
+            this.dataPath = `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
+        }
     }
 
     /**
@@ -53,6 +115,95 @@ class DataManager {
             logCalculation: () => {},
             logDecision: () => {}
         };
+    }
+
+    async loadDatasetPointer() {
+        if (this.datasetPointer) {
+            return this.datasetPointer;
+        }
+
+        try {
+            if (typeof fetch !== 'undefined') {
+                const response = await fetch(this.datasetPointerPath, { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(`Failed to load dataset pointer: ${response.status} ${response.statusText}`);
+                }
+                this.datasetPointer = await response.json();
+            } else {
+                // Node/testing environment fallback
+                // eslint-disable-next-line global-require, import/no-dynamic-require
+                this.datasetPointer = require('../datasets/system-pointer.json');
+            }
+        } catch (error) {
+            // Fallback to default WFRP4e dataset if pointer missing
+            this.datasetPointer = {
+                activeSystem: 'wfrp4e',
+                systems: [
+                    {
+                        id: 'wfrp4e',
+                        path: 'wfrp4e',
+                        label: 'Warhammer Fantasy Roleplay 4th Edition'
+                    }
+                ],
+                error
+            };
+        }
+
+        return this.datasetPointer;
+    }
+
+    async resolveActiveDatasetName() {
+        if (this.activeDatasetName) {
+            return this.activeDatasetName;
+        }
+
+        let datasetFromSettings = null;
+        try {
+            if (typeof game !== 'undefined' && game.settings) {
+                datasetFromSettings = await game.settings.get(this.moduleId, 'activeDataset');
+            }
+        } catch (error) {
+            // Ignore settings access issues (likely outside Foundry)
+        }
+
+        const pointer = await this.loadDatasetPointer();
+
+        if (datasetFromSettings) {
+            const { folderName } = this.normalizeDatasetName(datasetFromSettings, pointer);
+            this.activeDatasetName = folderName;
+            this.dataPath = folderName
+                ? `modules/${this.moduleId}/datasets/${folderName}`
+                : null;
+            return this.activeDatasetName;
+        }
+
+        const pointerDataset = pointer?.activeSystem || pointer?.activeDataset || pointer?.active || 'wfrp4e';
+        const { folderName } = this.normalizeDatasetName(pointerDataset, pointer);
+        this.activeDatasetName = folderName || 'wfrp4e';
+        this.dataPath = `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
+        return this.activeDatasetName;
+    }
+
+    async ensureDatasetPath() {
+        if (this.dataPath) {
+            return this.dataPath;
+        }
+
+        const datasetName = await this.resolveActiveDatasetName();
+        this.dataPath = `modules/${this.moduleId}/datasets/${datasetName}`;
+        return this.dataPath;
+    }
+
+    getDatasetPath() {
+        if (this.dataPath) {
+            return this.dataPath;
+        }
+
+        if (this.activeDatasetName) {
+            return `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
+        }
+
+        return `modules/${this.moduleId}/datasets/wfrp4e`;
     }
 
     /**
@@ -312,9 +463,15 @@ class DataManager {
 
             // Validate currency config
             if (dataset.config.currency) {
-                if (!dataset.config.currency.field || typeof dataset.config.currency.field !== 'string') {
+                const currencyConfig = dataset.config.currency;
+                if (!currencyConfig.canonicalUnit || typeof currencyConfig.canonicalUnit.value !== 'number') {
                     result.valid = false;
-                    result.errors.push('Config currency.field must be a non-empty string');
+                    result.errors.push('Config currency.canonicalUnit must define a numeric value');
+                }
+
+                if (!Array.isArray(currencyConfig.denominations) || currencyConfig.denominations.length === 0) {
+                    result.valid = false;
+                    result.errors.push('Config currency.denominations must be a non-empty array');
                 }
             }
 
@@ -783,67 +940,79 @@ class DataManager {
         return [1, 2, 3, 4, 5];
     }
 
+    async _loadDatasetFromPath(datasetPath) {
+        if (typeof fetch === 'undefined') {
+            throw new Error('Dataset loading requires FoundryVTT environment with fetch support');
+        }
+
+        const [cargoResponse, configResponse] = await Promise.all([
+            fetch(`${datasetPath}/cargo-types.json`, { cache: 'no-store' }),
+            fetch(`${datasetPath}/config.json`, { cache: 'no-store' })
+        ]);
+
+        if (!cargoResponse.ok) {
+            throw new Error(`Failed to load cargo types (${cargoResponse.status} ${cargoResponse.statusText})`);
+        }
+
+        if (!configResponse.ok) {
+            throw new Error(`Failed to load dataset config (${configResponse.status} ${configResponse.statusText})`);
+        }
+
+        const cargoData = await cargoResponse.json();
+        const configData = await configResponse.json();
+
+        const settlementPromises = SETTLEMENT_FILES.map(file =>
+            fetch(`${datasetPath}/settlements/${file}`, { cache: 'no-store' })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    console.warn(`Failed to load settlement file ${file}:`, error);
+                    return [];
+                })
+        );
+
+        const settlementDataArray = await Promise.all(settlementPromises);
+
+        this.settlements = [];
+        settlementDataArray.forEach(data => {
+            if (Array.isArray(data)) {
+                this.settlements.push(...data);
+            }
+        });
+
+        this.cargoTypes = cargoData.cargoTypes || [];
+        this.config = configData;
+        this.normalizedCurrencyConfig = null;
+    this.currencyContextCache = null;
+
+        const dataset = {
+            name: this.activeDatasetName,
+            settlements: this.settlements,
+            cargoTypes: this.cargoTypes,
+            config: this.config
+        };
+
+        const validation = this.validateDatasetCompleteness(dataset);
+        if (!validation.valid) {
+            throw new Error(`Dataset validation failed: ${validation.errors.join(', ')}`);
+        }
+
+        console.log(`Loaded ${this.settlements.length} settlements and ${this.cargoTypes.length} cargo types from ${datasetPath}`);
+        return dataset;
+    }
+
     /**
-     * Load active dataset from the datasets/active directory
+     * Load active dataset based on pointer/settings
      * @returns {Promise<Object>} - Loaded dataset object
      */
     async loadActiveDataset() {
         try {
-            if (typeof fetch === 'undefined') {
-                throw new Error('loadActiveDataset requires FoundryVTT environment');
-            }
-
-            this.activeDatasetName = 'active';
-            this.dataPath = `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
-
-            const [cargoResponse, configResponse] = await Promise.all([
-                fetch(`${this.dataPath}/cargo-types.json`),
-                fetch(`${this.dataPath}/config.json`)
-            ]);
-
-            const cargoData = await cargoResponse.json();
-            const configData = await configResponse.json();
-
-            const settlementFiles = [
-                'Averland.json', 'Hochland.json', 'Middenland.json', 'Moot.json',
-                'Nordland.json', 'Ostermark.json', 'Ostland.json', 'Reikland.json',
-                'Stirland.json', 'Sudenland.json', 'Sylvania.json', 'Talabecland.json',
-                'Wasteland.json', 'Wissenland.json'
-            ];
-
-            const settlementPromises = settlementFiles.map(file =>
-                fetch(`${this.dataPath}/settlements/${file}`)
-                    .then(response => response.json())
-                    .catch(error => {
-                        console.warn(`Failed to load settlement file ${file}:`, error);
-                        return [];
-                    })
-            );
-
-            const settlementDataArray = await Promise.all(settlementPromises);
-
-            this.settlements = [];
-            settlementDataArray.forEach(data => {
-                if (Array.isArray(data)) {
-                    this.settlements.push(...data);
-                }
-            });
-
-            this.cargoTypes = cargoData.cargoTypes || [];
-            this.config = configData;
-
-            const dataset = {
-                settlements: this.settlements,
-                config: this.config
-            };
-
-            const validation = this.validateDatasetCompleteness(dataset);
-            if (!validation.valid) {
-                throw new Error(`Dataset validation failed: ${validation.errors.join(', ')}`);
-            }
-
-            console.log(`Loaded ${this.settlements.length} settlements and ${this.cargoTypes.length} cargo types`);
-            return dataset;
+            const datasetPath = await this.ensureDatasetPath();
+            return await this._loadDatasetFromPath(datasetPath);
         } catch (error) {
             console.error('Failed to load active dataset:', error);
             throw error;
@@ -857,64 +1026,21 @@ class DataManager {
      */
     async switchDataset(datasetName) {
         try {
-            if (typeof fetch === 'undefined') {
-                throw new Error('switchDataset requires FoundryVTT environment');
+            if (!datasetName) {
+                throw new Error('Dataset name is required');
             }
 
             this.activeDatasetName = datasetName;
             this.dataPath = `modules/${this.moduleId}/datasets/${datasetName}`;
+            this.normalizedCurrencyConfig = null;
+            this.currencyContextCache = null;
 
-            const [cargoResponse, configResponse] = await Promise.all([
-                fetch(`${this.dataPath}/cargo-types.json`),
-                fetch(`${this.dataPath}/config.json`)
-            ]);
-
-            const cargoData = await cargoResponse.json();
-            const configData = await configResponse.json();
-
-            const settlementFiles = [
-                'Averland.json', 'Hochland.json', 'Middenland.json', 'Moot.json',
-                'Nordland.json', 'Ostermark.json', 'Ostland.json', 'Reikland.json',
-                'Stirland.json', 'Sudenland.json', 'Sylvania.json', 'Talabecland.json',
-                'Wasteland.json', 'Wissenland.json'
-            ];
-
-            const settlementPromises = settlementFiles.map(file =>
-                fetch(`${this.dataPath}/settlements/${file}`)
-                    .then(response => response.json())
-                    .catch(error => {
-                        console.warn(`Failed to load settlement file ${file}:`, error);
-                        return [];
-                    })
-            );
-
-            const settlementDataArray = await Promise.all(settlementPromises);
-
-            this.settlements = [];
-            settlementDataArray.forEach(data => {
-                if (Array.isArray(data)) {
-                    this.settlements.push(...data);
-                }
-            });
-
-            this.cargoTypes = cargoData.cargoTypes || [];
-            this.config = configData;
-
-            const dataset = {
-                settlements: this.settlements,
-                config: this.config
-            };
-
-            const validation = this.validateDatasetCompleteness(dataset);
-            if (!validation.valid) {
-                throw new Error(`Dataset validation failed: ${validation.errors.join(', ')}`);
-            }
+            const dataset = await this._loadDatasetFromPath(this.dataPath);
 
             if (typeof game !== 'undefined' && game.settings) {
-                await game.settings.set(this.moduleId, "activeDataset", datasetName);
+                await game.settings.set(this.moduleId, 'activeDataset', datasetName);
             }
 
-            console.log(`Switched to dataset '${datasetName}': ${this.settlements.length} settlements and ${this.cargoTypes.length} cargo types`);
             return dataset;
         } catch (error) {
             console.error(`Failed to switch to dataset '${datasetName}':`, error);
@@ -1214,8 +1340,45 @@ class DataManager {
      * @returns {Object} - Currency configuration object
      */
     getCurrencyConfig() {
-        return this.config?.currency || {};
+        if (this.config?.currency) {
+            return this.config.currency;
+        }
+
+        return {
+            canonicalUnit: {
+                name: 'Brass Penny',
+                pluralName: 'Brass Pennies',
+                abbreviation: 'BP',
+                value: 1
+            },
+            denominations: [
+                {
+                    name: 'Gold Crown',
+                    pluralName: 'Gold Crowns',
+                    abbreviation: 'GC',
+                    value: 240
+                },
+                {
+                    name: 'Silver Shilling',
+                    pluralName: 'Silver Shillings',
+                    abbreviation: 'SS',
+                    value: 12
+                },
+                {
+                    name: 'Brass Penny',
+                    pluralName: 'Brass Pennies',
+                    abbreviation: 'BP',
+                    value: 1
+                }
+            ],
+            display: {
+                order: ['GC', 'SS', 'BP'],
+                includeZeroDenominations: false,
+                separator: ' '
+            }
+        };
     }
+
 
     /**
      * Get inventory configuration
@@ -1851,11 +2014,96 @@ class DataManager {
     }
 
     getCurrencyConfig() {
-        return this.config?.currency || {
-            field: 'system.money.gc',
-            name: 'Gold Crowns',
-            abbreviation: 'GC'
+        if (this.config?.currency) {
+            return this.config.currency;
+        }
+
+        return {
+            canonicalUnit: {
+                name: 'Brass Penny',
+                pluralName: 'Brass Pennies',
+                abbreviation: 'BP',
+                value: 1
+            },
+            denominations: [
+                {
+                    name: 'Gold Crown',
+                    pluralName: 'Gold Crowns',
+                    abbreviation: 'GC',
+                    value: 240
+                },
+                {
+                    name: 'Silver Shilling',
+                    pluralName: 'Silver Shillings',
+                    abbreviation: 'SS',
+                    value: 12
+                },
+                {
+                    name: 'Brass Penny',
+                    pluralName: 'Brass Pennies',
+                    abbreviation: 'BP',
+                    value: 1
+                }
+            ],
+            display: {
+                order: ['GC', 'SS', 'BP'],
+                includeZeroDenominations: false,
+                separator: ' '
+            }
         };
+    }
+
+    getNormalizedCurrencyConfig() {
+        if (!CurrencyUtils) {
+            throw new Error('Currency utilities are not available');
+        }
+
+        if (!this.normalizedCurrencyConfig) {
+            const rawConfig = this.getCurrencyConfig();
+            this.normalizedCurrencyConfig = CurrencyUtils.normalizeConfig(rawConfig);
+            this.currencyContextCache = null;
+        }
+
+        return this.normalizedCurrencyConfig;
+    }
+
+    getCurrencyContext() {
+        if (!CurrencyUtils) {
+            throw new Error('CURRENCY UTILS NOT LOADED! window.TradingPlacesCurrencyUtils is undefined');
+        }
+
+        if (!this.currencyContextCache) {
+            const config = this.getCurrencyConfig();
+            console.log('🔧 Building currency context from config:', config);
+            
+            const normalized = this.getNormalizedCurrencyConfig();
+            console.log('🔧 Normalized config:', normalized);
+            
+            const primaryDenomination = CurrencyUtils.getPrimaryDenomination(normalized);
+            console.log('🔧 Primary denomination:', primaryDenomination);
+            
+            if (!primaryDenomination) {
+                throw new Error('PRIMARY DENOMINATION IS NULL! Normalized config: ' + JSON.stringify(normalized));
+            }
+            
+            const denominationKey = primaryDenomination?.abbreviation ||
+                primaryDenomination?.name ||
+                normalized.canonicalUnit.abbreviation ||
+                normalized.canonicalUnit.name;
+            
+            console.log('🔧 Denomination key:', denominationKey);
+
+            this.currencyContextCache = {
+                config,
+                normalized,
+                primaryDenomination,
+                denominationKey,
+            };
+            
+            console.log('✅ Currency context built successfully:', this.currencyContextCache);
+        }
+
+        return this.currencyContextCache;
     }
 
     getInventoryConfig() {

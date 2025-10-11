@@ -4,6 +4,16 @@ console.log('Trading Places | Loading sale-mechanics.js');
  * Trading Places Module - Sale Mechanics
  * Handles all sale-related calculations and validations
  */
+let CurrencyUtils = null;
+try {
+    CurrencyUtils = require('./currency-utils');
+} catch (error) {
+    // Ignore require failures; browser global fallback below.
+}
+
+if (typeof window !== 'undefined' && window.TradingPlacesCurrencyUtils) {
+    CurrencyUtils = window.TradingPlacesCurrencyUtils;
+}
 
 class SaleMechanics {
     constructor(dataManager, tradingEngine) {
@@ -37,6 +47,14 @@ class SaleMechanics {
             logAlgorithmStep: () => {},
             logSystem: () => {}
         };
+    }
+
+    getCurrencyContext() {
+        if (!CurrencyUtils || !this.dataManager || typeof this.dataManager.getCurrencyContext !== 'function') {
+            return null;
+        }
+
+        return this.dataManager.getCurrencyContext();
     }
 
     /**
@@ -227,6 +245,30 @@ class SaleMechanics {
         // Calculate total price
         const totalPrice = finalPricePerUnit * quantity;
 
+        const currencyContext = this.getCurrencyContext();
+        let basePricePerUnitCanonical = null;
+        let wealthAdjustedPriceCanonical = null;
+        let finalPricePerUnitCanonical = null;
+        let totalPriceCanonical = null;
+        let formattedBasePricePerUnit = null;
+        let formattedFinalPricePerUnit = null;
+        let formattedTotalPrice = null;
+
+        if (currencyContext && currencyContext.denominationKey && CurrencyUtils) {
+            const { denominationKey, config } = currencyContext;
+            try {
+                basePricePerUnitCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: basePricePerUnit }, config);
+                wealthAdjustedPriceCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: wealthAdjustedPrice }, config);
+                finalPricePerUnitCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: finalPricePerUnit }, config);
+                totalPriceCanonical = Math.round(finalPricePerUnitCanonical * quantity);
+                formattedBasePricePerUnit = CurrencyUtils.formatCurrency(basePricePerUnitCanonical, config);
+                formattedFinalPricePerUnit = CurrencyUtils.formatCurrency(finalPricePerUnitCanonical, config);
+                formattedTotalPrice = CurrencyUtils.formatCurrency(totalPriceCanonical, config);
+            } catch (error) {
+                console.error('SaleMechanics: Currency conversion failed', error);
+            }
+        }
+
         return {
             cargoName: cargoName,
             quantity: quantity,
@@ -237,7 +279,17 @@ class SaleMechanics {
             finalPricePerUnit: finalPricePerUnit,
             totalPrice: totalPrice,
             modifiers: modifiers,
-            wealthModifier: wealthModifier
+            wealthModifier: wealthModifier,
+            wealthAdjustedPrice,
+            basePricePerUnitCanonical,
+            wealthAdjustedPriceCanonical,
+            finalPricePerUnitCanonical,
+            totalPriceCanonical,
+            formattedBasePricePerUnit,
+            formattedFinalPricePerUnit,
+            formattedTotalPrice,
+            currencyDenomination: currencyContext?.primaryDenomination || null,
+            currencyDenominationKey: currencyContext?.denominationKey || null
         };
     }
 
@@ -271,9 +323,9 @@ class SaleMechanics {
 
         return {
             type: 'haggle',
-            description: description,
-            amount: amount,
-            percentage: percentage
+            description,
+            amount,
+            percentage
         };
     }
 

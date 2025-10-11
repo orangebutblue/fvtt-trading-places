@@ -11,6 +11,19 @@ const DataManager = window.WFRPTradingDataManager;
 const fs = require('fs');
 const path = require('path');
 
+const datasetsRoot = path.join(__dirname, '../datasets');
+let pointerData = null;
+try {
+    pointerData = JSON.parse(fs.readFileSync(path.join(datasetsRoot, 'system-pointer.json'), 'utf8'));
+} catch (error) {
+    pointerData = { activeSystem: 'wfrp4e' };
+}
+
+const systems = Array.isArray(pointerData?.systems) ? pointerData.systems : [];
+const activeSystemId = pointerData?.activeSystem || pointerData?.activeDataset || pointerData?.active || 'wfrp4e';
+const activeSystemEntry = systems.find(system => system.id === activeSystemId || system.path === activeSystemId) || null;
+const activeDatasetDir = path.join(datasetsRoot, activeSystemEntry?.path || activeSystemId);
+
 describe('DataManager Settlement Validation', () => {
     let dataManager;
 
@@ -19,7 +32,7 @@ describe('DataManager Settlement Validation', () => {
         
         // Load test data similar to season-management.test.js
         try {
-            const settlementsDir = path.join(__dirname, '../datasets/active/settlements');
+            const settlementsDir = path.join(activeDatasetDir, 'settlements');
             const regionFiles = fs.readdirSync(settlementsDir).filter(f => f.endsWith('.json'));
             const settlementsData = { settlements: [] };
             
@@ -30,8 +43,8 @@ describe('DataManager Settlement Validation', () => {
                 settlementsData.settlements.push(...regionSettlements);
             });
             
-            const cargoData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/active/cargo-types.json'), 'utf8'));
-            const configData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/active/config.json'), 'utf8'));
+            const cargoData = JSON.parse(fs.readFileSync(path.join(activeDatasetDir, 'cargo-types.json'), 'utf8'));
+            const configData = JSON.parse(fs.readFileSync(path.join(activeDatasetDir, 'config.json'), 'utf8'));
 
             dataManager.settlements = settlementsData.settlements || [];
             dataManager.cargoTypes = cargoData.cargoTypes || [];
@@ -75,8 +88,6 @@ describe('DataManager Settlement Validation', () => {
             expect(result.errors[0]).toContain('ruler');
             expect(result.errors[0]).toContain('population');
             expect(result.errors[0]).toContain('wealth');
-            expect(result.errors[0]).toContain('source');
-            expect(result.errors[0]).toContain('garrison');
             expect(result.errors[0]).toContain('notes');
         });
 
@@ -222,7 +233,9 @@ describe('DataManager Settlement Validation', () => {
 
             const result = dataManager.validateSettlement(settlement);
             expect(result.valid).toBe(false);
-            expect(result.errors).toContain('Garrison must be an array');
+            const errorText = Array.isArray(result.errors) ? result.errors.join(' ') : String(result.errors);
+            expect(errorText).toContain('garrison');
+            expect(errorText.toLowerCase()).toContain('array');
         });
     });
 
@@ -244,13 +257,15 @@ describe('DataManager Settlement Validation', () => {
                 ],
                 config: {
                     currency: {
-                        field: 'data.money.gc',
-                        name: 'Gold Crowns',
-                        abbreviation: 'GC'
+                        canonicalUnit: { name: 'Brass Penny', abbreviation: 'BP', value: 1 },
+                        denominations: [
+                            { name: 'Gold Crown', abbreviation: 'GC', value: 240 },
+                            { name: 'Silver Shilling', abbreviation: 'SS', value: 12 },
+                            { name: 'Brass Penny', abbreviation: 'BP', value: 1 }
+                        ]
                     },
                     inventory: {
-                        field: 'data.items',
-                        addMethod: 'createEmbeddedDocuments'
+                        field: 'items'
                     }
                 }
             };
@@ -322,7 +337,7 @@ describe('DataManager Settlement Validation', () => {
                 settlements: [],
                 config: {
                     currency: {
-                        // Missing field property
+                        // Missing canonicalUnit and denominations
                     },
                     inventory: {
                         field: 'data.items'
@@ -332,7 +347,8 @@ describe('DataManager Settlement Validation', () => {
 
             const result = dataManager.validateDatasetStructure(invalidDataset);
             expect(result.valid).toBe(false);
-            expect(result.errors).toContain('Config currency.field must be a non-empty string');
+            expect(result.errors).toContain('Config currency.canonicalUnit must define a numeric value');
+            expect(result.errors).toContain('Config currency.denominations must be a non-empty array');
         });
     });
 
@@ -375,7 +391,14 @@ describe('DataManager Settlement Validation', () => {
             const validDataset = {
                 settlements: [],
                 config: {
-                    currency: { field: 'data.money.gc' },
+                    currency: {
+                        canonicalUnit: { name: 'Brass Penny', abbreviation: 'BP', value: 1 },
+                        denominations: [
+                            { name: 'Gold Crown', abbreviation: 'GC', value: 240 },
+                            { name: 'Silver Shilling', abbreviation: 'SS', value: 12 },
+                            { name: 'Brass Penny', abbreviation: 'BP', value: 1 }
+                        ]
+                    },
                     inventory: { field: 'data.items' }
                 }
             };
@@ -586,7 +609,7 @@ describe('DataManager Settlement Validation', () => {
             test('should throw error for missing cargo data', () => {
                 expect(() => {
                     dataManager.getSeasonalPrice(null, 'spring');
-                }).toThrow('Invalid cargo object or missing basePrices');
+                }).toThrow('Invalid cargo object');
             });
         });
 

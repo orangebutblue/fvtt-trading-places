@@ -2,6 +2,13 @@ console.log('Trading Places | Loading trading-application-v2.js');
 
 import { TradingUIEventHandlers } from './ui/TradingUIEventHandlers.js';
 import TradingUIRenderer from './ui/TradingUIRenderer.js';
+import {
+    resolveCurrencyContext,
+    augmentTransaction,
+    formatDenominationValue,
+    formatCanonicalValue,
+    convertDenominationToCanonical
+} from './currency-display.js';
 
 /**
  * Trading Places Module - V2 Application Framework
@@ -199,6 +206,140 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         }
     }
 
+    _getCurrencyContext() {
+        if (!this.dataManager) {
+            console.warn('💰 _getCurrencyContext: dataManager not available');
+            return null;
+        }
+        const context = resolveCurrencyContext(this.dataManager);
+        if (!context) {
+            console.warn('💰 _getCurrencyContext: Failed to resolve currency context');
+        }
+        return context;
+    }
+
+    _formatCurrencyFromDenomination(value, defaultText = 'N/A') {
+        const context = this._getCurrencyContext();
+        return formatDenominationValue(value, context, { defaultText });
+    }
+
+    _formatCurrencyFromCanonical(value, defaultText = 'N/A') {
+        const context = this._getCurrencyContext();
+        return formatCanonicalValue(value, context, { defaultText });
+    }
+
+    _convertDenominationToCanonical(value) {
+        const context = this._getCurrencyContext();
+        return convertDenominationToCanonical(value, context);
+    }
+
+    _coerceNumber(value) {
+        if (typeof value === 'number') {
+            return Number.isFinite(value) ? value : null;
+        }
+        if (typeof value === 'string') {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : null;
+        }
+        return null;
+    }
+
+    _prepareCurrencyRecord(record, { deriveTotalFromQuantity = false } = {}) {
+        if (!record || typeof record !== 'object') {
+            return record;
+        }
+
+        const context = this._getCurrencyContext();
+        console.log('💱 _prepareCurrencyRecord called', {
+            hasCargo: !!record.cargo,
+            hasContext: !!context,
+            pricePerEP: record.pricePerEP,
+            totalCost: record.totalCost,
+            alreadyFormatted: {
+                price: !!record.formattedPricePerEP,
+                total: !!record.formattedTotalCost
+            }
+        });
+        const normalized = { ...record };
+
+        const quantity = this._coerceNumber(normalized.quantity);
+        if (quantity !== null) {
+            normalized.quantity = quantity;
+        }
+
+        const pricePerEP = this._coerceNumber(normalized.pricePerEP);
+        if (pricePerEP !== null) {
+            normalized.pricePerEP = pricePerEP;
+        }
+
+        const totalCost = this._coerceNumber(normalized.totalCost);
+        if (totalCost !== null) {
+            normalized.totalCost = totalCost;
+        } else if (deriveTotalFromQuantity && pricePerEP !== null && quantity !== null) {
+            normalized.totalCost = pricePerEP * quantity;
+        }
+
+        if (context) {
+            if (typeof normalized.pricePerEPCanonical !== 'number' && pricePerEP !== null) {
+                const canonicalPrice = this._convertDenominationToCanonical(pricePerEP);
+                if (typeof canonicalPrice === 'number') {
+                    normalized.pricePerEPCanonical = canonicalPrice;
+                }
+            }
+
+            if (typeof normalized.totalCostCanonical !== 'number' && typeof normalized.totalCost === 'number') {
+                const canonicalTotal = this._convertDenominationToCanonical(normalized.totalCost);
+                if (typeof canonicalTotal === 'number') {
+                    normalized.totalCostCanonical = canonicalTotal;
+                }
+            }
+
+            augmentTransaction(normalized, context);
+
+            if (typeof normalized.formattedPricePerEP !== 'string') {
+                if (typeof normalized.pricePerEPCanonical === 'number') {
+                    normalized.formattedPricePerEP = this._formatCurrencyFromCanonical(normalized.pricePerEPCanonical);
+                } else if (typeof normalized.pricePerEP === 'number') {
+                    normalized.formattedPricePerEP = this._formatCurrencyFromDenomination(normalized.pricePerEP);
+                }
+            }
+
+            if (typeof normalized.formattedTotalCost !== 'string' && typeof normalized.totalCost === 'number') {
+                if (typeof normalized.totalCostCanonical === 'number') {
+                    normalized.formattedTotalCost = this._formatCurrencyFromCanonical(normalized.totalCostCanonical);
+                } else {
+                    normalized.formattedTotalCost = this._formatCurrencyFromDenomination(normalized.totalCost);
+                }
+            }
+        }
+
+        console.log('💱 _prepareCurrencyRecord result', {
+            cargo: normalized.cargo,
+            formattedPricePerEP: normalized.formattedPricePerEP,
+            formattedTotalCost: normalized.formattedTotalCost,
+            pricePerEP: normalized.pricePerEP,
+            totalCost: normalized.totalCost
+        });
+
+        return normalized;
+    }
+
+    _prepareTransactionHistory(history = []) {
+        if (!Array.isArray(history)) {
+            return [];
+        }
+
+        return history.map(entry => this._prepareCurrencyRecord(entry, { deriveTotalFromQuantity: true }));
+    }
+
+    _prepareCurrentCargoList(cargoList = []) {
+        if (!Array.isArray(cargoList)) {
+            return [];
+        }
+
+        return cargoList.map(cargo => this._prepareCurrencyRecord(cargo, { deriveTotalFromQuantity: true }));
+    }
+
     /**
      * Log debug message with consistent format
      * @param {string} category - Log category
@@ -350,6 +491,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
     context.availableCargo = availableCargo;
     context.successfulCargo = successfulCargo;
     context.slotAvailabilityResults = availableCargo;
+        this.transactionHistory = this._prepareTransactionHistory(this.transactionHistory || []);
         context.transactionHistory = this.transactionHistory;
         console.log('🎨 Template context - transactionHistory:', {
             length: this.transactionHistory?.length || 0,
@@ -361,6 +503,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         // Cargo data for the cargo tab - ensure we use the most current data
         // Check if currentCargo exists on the app instance first, otherwise load from settings
         if (this.currentCargo && Array.isArray(this.currentCargo) && this.currentCargo.length > 0) {
+            this.currentCargo = this._prepareCurrentCargoList(this.currentCargo);
             context.currentCargo = this.currentCargo;
             console.log('🚛 CARGO DEBUG: Using currentCargo from app instance', {
                 length: this.currentCargo.length
@@ -511,11 +654,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 data: currentCargo
             });
             
-            // Add formatted date and ensure all required fields exist
-            const processedCargo = currentCargo.map(cargo => ({
-                ...cargo,
-                // Fix: Don't add formatDate as a function in the data, handle it in template helper instead
-            }));
+            const processedCargo = this._prepareCurrentCargoList(currentCargo);
             
             console.log('🚛 CARGO DEBUG: Processed cargo data', {
                 length: processedCargo.length,
@@ -692,8 +831,8 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             // Load saved transaction history
             const savedTransactionHistory = await game.settings.get("trading-places", "transactionHistory");
             if (savedTransactionHistory && Array.isArray(savedTransactionHistory)) {
-                this.transactionHistory = savedTransactionHistory;
-                this._logDebug('Saved Selections', 'Loaded saved transaction history', { transactionCount: savedTransactionHistory.length });
+                this.transactionHistory = this._prepareTransactionHistory(savedTransactionHistory);
+                this._logDebug('Saved Selections', 'Loaded saved transaction history', { transactionCount: this.transactionHistory.length });
             } else {
                 this.transactionHistory = [];
                 this._logDebug('Saved Selections', 'No saved transaction history found, initialized empty array');
@@ -1034,7 +1173,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             const desiredTab = focusTab || this.renderer.getActiveTabName();
 
             this.currentCargo = await this._getCurrentCargoData();
-            this.transactionHistory = await game.settings.get("trading-places", "transactionHistory") || [];
+            this.transactionHistory = this._prepareTransactionHistory(await game.settings.get("trading-places", "transactionHistory") || []);
             this.playerCargo = Array.isArray(this.currentCargo) ? [...this.currentCargo] : [];
 
             await this.render(false);

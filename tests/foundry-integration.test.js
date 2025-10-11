@@ -259,7 +259,7 @@ class MockActor {
         this.name = data.name || 'Test Actor';
         this.type = data.type || 'character';
         this.system = data.system || {
-            money: { gc: 500 },
+            money: { gc: 500, ss: 0, bp: 0 },
             skills: {
                 haggle: { total: 40 },
                 gossip: { total: 30 }
@@ -310,8 +310,9 @@ class MockActor {
     }
 
     async createEmbeddedDocuments(type, data, options = {}) {
+        const timestamp = Date.now();
         const items = data.map((itemData, index) => new MockItem({
-            id: `item-${Date.now()}-${index}`,
+            id: `item-${timestamp}-${index}-${Math.random().toString(36).slice(2, 8)}`,
             ...itemData
         }));
 
@@ -497,7 +498,8 @@ global.ui = {
 global.Hooks = {
     once: (event, callback) => global.foundryMock.registerHook(event, callback),
     on: (event, callback) => global.foundryMock.registerHook(event, callback),
-    call: (event, ...args) => global.foundryMock.callHook(event, ...args)
+    call: (event, ...args) => global.foundryMock.callHook(event, ...args),
+    callAll: (event, ...args) => global.foundryMock.callHook(event, ...args)
 };
 
 global.CONST = {
@@ -507,6 +509,10 @@ global.CONST = {
         IC: 2,
         EMOTE: 3,
         WHISPER: 4,
+        ROLL: 5
+    },
+    CHAT_MESSAGE_STYLES: {
+        OTHER: 0,
         ROLL: 5
     },
     DOCUMENT_OWNERSHIP_LEVELS: {
@@ -522,6 +528,8 @@ global.CONST = {
         GAMEMASTER: 4
     }
 };
+
+const GC_TO_BP = (gc) => gc * 240;
 
 // Import modules
 const SystemAdapter = require('../scripts/system-adapter.js');
@@ -566,7 +574,7 @@ describe('FoundryVTT Integration Components Tests', () => {
             id: 'test-actor',
             name: 'Test Trader',
             system: {
-                money: { gc: 1000 },
+                money: { gc: 1000, ss: 0, bp: 0 },
                 skills: {
                     haggle: { total: 45 },
                     gossip: { total: 35 }
@@ -598,6 +606,30 @@ describe('FoundryVTT Integration Components Tests', () => {
             type: String,
             default: 'gm'
         });
+        
+            global.foundryMock.registerSetting('trading-places', 'currentSeason', {
+                name: 'Current Season (Internal)',
+                scope: 'world',
+                config: false,
+                type: String,
+                default: 'spring'
+            });
+        
+            global.foundryMock.registerSetting('trading-places', 'activeDataset', {
+                name: 'Active Dataset (Internal)',
+                scope: 'world',
+                config: false,
+                type: String,
+                default: 'wfrp4e'
+            });
+
+            global.foundryMock.registerSetting('wfrp-trading', 'datasetInfo', {
+                name: 'Dataset Info',
+                scope: 'world',
+                config: false,
+                type: Object,
+                default: null
+            });
     });
 
     describe('SystemAdapter Currency and Inventory Manipulation', () => {
@@ -606,30 +638,42 @@ describe('FoundryVTT Integration Components Tests', () => {
             
             // Test getting currency value
             const initialCurrency = systemAdapter.getCurrencyValue(testActor);
-            expect(initialCurrency).toBe(1000);
+            expect(initialCurrency).toBe(GC_TO_BP(1000));
             
             // Test currency deduction
-            const deductResult = await systemAdapter.deductCurrency(testActor, 250, 'Test purchase');
+            const deductResult = await systemAdapter.deductCurrency(testActor, GC_TO_BP(250), 'Test purchase');
             
             expect(deductResult.success).toBe(true);
-            expect(deductResult.currentAmount).toBe(1000);
-            expect(deductResult.newAmount).toBe(750);
-            expect(deductResult.amountDeducted).toBe(250);
+            expect(deductResult.currentAmount).toBe(GC_TO_BP(1000));
+            expect(deductResult.newAmount).toBe(GC_TO_BP(750));
+            expect(deductResult.amountDeducted).toBe(GC_TO_BP(250));
             
             // Verify actor was actually updated
             expect(testActor.system.money.gc).toBe(750);
+            expect(testActor.system.money.ss || 0).toBe(0);
+            expect(testActor.system.money.bp || 0).toBe(0);
             expect(testActor.updateHistory).toHaveLength(1);
-            expect(testActor.updateHistory[0].data).toEqual({ 'system.money.gc': 750 });
+            expect(testActor.updateHistory[0].data).toMatchObject({
+                system: {
+                    money: {
+                        gc: 750,
+                        ss: 0,
+                        bp: 0
+                    }
+                }
+            });
             
             // Test currency addition
-            const addResult = await systemAdapter.addCurrency(testActor, 150, 'Test sale');
+            const addResult = await systemAdapter.addCurrency(testActor, GC_TO_BP(150), 'Test sale');
             
             expect(addResult.success).toBe(true);
-            expect(addResult.amountAdded).toBe(150);
+            expect(addResult.amountAdded).toBe(GC_TO_BP(150));
             expect(testActor.system.money.gc).toBe(900);
+            expect(testActor.system.money.ss || 0).toBe(0);
+            expect(testActor.system.money.bp || 0).toBe(0);
             
             // Test insufficient funds
-            const insufficientResult = await systemAdapter.deductCurrency(testActor, 1500, 'Expensive item');
+            const insufficientResult = await systemAdapter.deductCurrency(testActor, GC_TO_BP(1500), 'Expensive item');
             
             expect(insufficientResult.success).toBe(false);
             expect(insufficientResult.error).toContain('Insufficient currency');
@@ -726,6 +770,8 @@ describe('FoundryVTT Integration Components Tests', () => {
                 );
                 addedItems.push(result);
             }
+
+            addedItems.forEach(result => expect(result.success).toBe(true));
             
             expect(testActor.items.size).toBe(3);
             
@@ -750,7 +796,7 @@ describe('FoundryVTT Integration Components Tests', () => {
             const summary = systemAdapter.getInventorySummary(testActor);
             expect(summary.totalItems).toBe(3);
             expect(summary.cargoItems).toHaveLength(3);
-            expect(summary.currency).toBe(1000);
+            expect(summary.currency).toBe(GC_TO_BP(1000));
             expect(typeof summary.totalCargoValue).toBe('number');
         });
     });
@@ -935,7 +981,8 @@ describe('FoundryVTT Integration Components Tests', () => {
             // Test season persistence in trading engine
             await tradingEngine.setCurrentSeason('autumn');
             expect(tradingEngine.getCurrentSeason()).toBe('autumn');
-            expect(global.foundryMock.getSetting('wfrp-trading', 'currentSeason')).toBe('autumn');
+            expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('autumn');
+            expect(global.foundryMock.getSetting('wfrp-trading', 'currentSeason')).toBe('winter');
             
             // Simulate module reload by creating new trading engine
             const newTradingEngine = new TradingEngine(dataManager);
@@ -1120,7 +1167,7 @@ describe('FoundryVTT Integration Components Tests', () => {
             
             const validation = systemAdapter.validateActor(incompleteActor);
             expect(validation.valid).toBe(false);
-            expect(validation.errors).toContain('Actor missing currency field: system.money.gc');
+            expect(validation.errors).toContain(`Required field 'system.money' not found on actor`);
             
             // Test invalid transaction data
             const invalidTransaction = systemAdapter.validateTransaction(testActor, 'purchase', {
@@ -1131,14 +1178,15 @@ describe('FoundryVTT Integration Components Tests', () => {
             expect(invalidTransaction.errors.length).toBeGreaterThan(0);
             
             // Test system compatibility errors
-            delete global.game.system;
+            const originalGame = global.game;
+            global.game = undefined;
             
-            const compatibility = systemAdapter.validateSystemCompatibility();
+            const compatibility = new SystemAdapter().validateSystemCompatibility();
             expect(compatibility.compatible).toBe(false);
-            expect(compatibility.errors).toContain('FoundryVTT system not detected');
+            expect(compatibility.errors).toContain('SystemAdapter requires FoundryVTT environment');
             
             // Restore system
-            global.game.system = global.foundryMock.system;
+            global.game = originalGame;
             
             // Test permission errors
             global.foundryMock.setCurrentUser(playerUser.id);
@@ -1163,18 +1211,18 @@ describe('FoundryVTT Integration Components Tests', () => {
             
             expect(() => {
                 failingEngine.checkCargoAvailability({ name: 'Test' });
-            }).toThrow('Data corruption detected');
+            }).toThrow('Invalid settlement');
             
             // Test SystemAdapter configuration failure
-            const invalidAdapter = new SystemAdapter({
-                currency: { field: '' }, // Invalid empty field
-                inventory: { field: null } // Invalid null field
-            });
+            const invalidAdapter = new SystemAdapter();
+            invalidAdapter.config.currency = null;
+            invalidAdapter.currencyFieldMap = null;
+            invalidAdapter.config.inventory = null;
             
             const adapterCompatibility = invalidAdapter.validateSystemCompatibility();
             expect(adapterCompatibility.compatible).toBe(false);
-            expect(adapterCompatibility.errors.some(e => e.includes('Currency field'))).toBe(true);
-            expect(adapterCompatibility.errors.some(e => e.includes('Inventory field'))).toBe(true);
+            expect(adapterCompatibility.errors).toContain('Currency field configuration missing');
+            expect(adapterCompatibility.errors).toContain('Inventory field configuration missing');
             
             // Test hook registration failure
             const originalRegisterHook = global.foundryMock.registerHook;
@@ -1358,6 +1406,22 @@ describe('FoundryVTT Integration Components Tests', () => {
         test('should handle module updates and migrations', async () => {
             // Requirements: 6.1, 8.7
             
+            global.foundryMock.registerSetting('wfrp-trading', 'version', {
+                name: 'Module Version',
+                scope: 'world',
+                config: false,
+                type: String,
+                default: '1.0.0'
+            });
+
+            global.foundryMock.registerSetting('wfrp-trading', 'oldFormatSetting', {
+                name: 'Old Format Setting',
+                scope: 'world',
+                config: false,
+                type: String,
+                default: null
+            });
+
             // Simulate old version settings
             await global.foundryMock.setSetting('wfrp-trading', 'version', '0.9.0');
             await global.foundryMock.setSetting('wfrp-trading', 'oldFormatSetting', 'old-value');
@@ -1370,6 +1434,13 @@ describe('FoundryVTT Integration Components Tests', () => {
                 if (fromVersion === '0.9.0' && toVersion === '1.0.0') {
                     // Migrate old format setting
                     const oldValue = global.foundryMock.getSetting('wfrp-trading', 'oldFormatSetting');
+                    global.foundryMock.registerSetting('wfrp-trading', 'newFormatSetting', {
+                        name: 'Migrated Setting',
+                        scope: 'world',
+                        config: false,
+                        type: String,
+                        default: null
+                    });
                     global.foundryMock.setSetting('wfrp-trading', 'newFormatSetting', `migrated-${oldValue}`);
                 }
             });

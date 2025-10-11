@@ -381,7 +381,7 @@ Slot Calculation:
                                 </div>
                                 <div class="transaction-summary">
                                     <div class="quantity-display">{{quantity}} EP</div>
-                                    <div class="cost-display">{{#if totalCost}}{{totalCost}} GC{{else}}? GC{{/if}}</div>
+                                    <div class="cost-display">{{#if formattedTotalCost}}{{formattedTotalCost}}{{else if totalCost}}{{totalCost}} GC{{else}}?{{/if}}</div>
                                 </div>
                                 <div class="transaction-actions">
                                     <button class="sell-cargo-btn" data-cargo-id="{{id}}" title="Sell cargo">
@@ -394,7 +394,7 @@ Slot Calculation:
                             </div>
                             <div class="transaction-body">
                                 <div class="transaction-details">
-                                    <span class="detail-compact">{{quantity}} EP × {{#if pricePerEP}}{{pricePerEP}} GC{{else}}? GC{{/if}}</span>
+                                    <span class="detail-compact">{{quantity}} EP × {{#if formattedPricePerEP}}{{formattedPricePerEP}}{{else if pricePerEP}}{{pricePerEP}} GC{{else}}?{{/if}}</span>
                                 </div>
                                 <div class="transaction-meta">
                                     <span class="meta-compact">
@@ -485,7 +485,7 @@ Slot Calculation:
                             </div>
                             <div class="transaction-summary">
                                 <div class="quantity-display">{{quantity}} EP</div>
-                                <div class="cost-display">{{#if totalCost}}{{totalCost}} GC{{else}}? GC{{/if}}</div>
+                                <div class="cost-display">{{#if formattedTotalCost}}{{formattedTotalCost}}{{else if totalCost}}{{totalCost}} GC{{else}}?{{/if}}</div>
                             </div>
                             <div class="transaction-actions">
                                 <button class="delete-transaction-btn" data-transaction-index="{{@index}}" title="Delete transaction">
@@ -495,7 +495,7 @@ Slot Calculation:
                         </div>
                         <div class="transaction-body">
                             <div class="transaction-details">
-                                <span class="detail-compact">{{quantity}} EP × {{#if pricePerEP}}{{pricePerEP}} GC{{else}}? GC{{/if}}</span>
+                                <span class="detail-compact">{{quantity}} EP × {{#if formattedPricePerEP}}{{formattedPricePerEP}}{{else if pricePerEP}}{{pricePerEP}} GC{{else}}?{{/if}}</span>
                                 {{#if discountPercent}}
                                 <span class="detail-discount">{{#if (gt discountPercent 0)}}+{{/if}}{{discountPercent}}%</span>
                                 {{/if}}

@@ -9,12 +9,16 @@ console.log('Trading Places | Loading fallback-dialogs-v2.js');
  * Simple fallback dialog for when main trading interface fails
  */
 // Check if ApplicationV2 is available before defining the class
-if (typeof foundry?.applications?.api?.ApplicationV2 === 'undefined') {
-    console.warn('Trading Places | ApplicationV2 not available, WFRPFallbackDialog will not be loaded');
+if (typeof foundry?.applications?.api?.ApplicationV2 === 'undefined' ||
+    typeof foundry?.applications?.api?.HandlebarsApplicationMixin === 'undefined') {
+    console.warn('Trading Places | ApplicationV2 Handlebars mixin not available, fallback dialogs will not be loaded');
 } else {
     console.log('Trading Places | ApplicationV2 available, defining WFRPFallbackDialog');
 
-class WFRPFallbackDialog extends foundry.applications.api.ApplicationV2 {
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+const HandlebarsApplication = HandlebarsApplicationMixin(ApplicationV2);
+
+class WFRPFallbackDialog extends HandlebarsApplication {
     
     static DEFAULT_OPTIONS = {
         id: "wfrp-fallback-dialog",
@@ -60,7 +64,7 @@ class WFRPFallbackDialog extends foundry.applications.api.ApplicationV2 {
 /**
  * Configuration error dialog for startup validation failures
  */
-class WFRPConfigErrorDialog extends foundry.applications.api.ApplicationV2 {
+class WFRPConfigErrorDialog extends HandlebarsApplication {
     
     static DEFAULT_OPTIONS = {
         id: "wfrp-config-error-dialog",
@@ -130,7 +134,7 @@ class WFRPConfigErrorDialog extends foundry.applications.api.ApplicationV2 {
 /**
  * Simple season selection dialog
  */
-class WFRPSeasonSelectionDialog extends foundry.applications.api.ApplicationV2 {
+class WFRPSeasonSelectionDialog extends HandlebarsApplication {
     
     static DEFAULT_OPTIONS = {
         id: "wfrp-season-selection-dialog",
@@ -197,7 +201,7 @@ class WFRPSeasonSelectionDialog extends foundry.applications.api.ApplicationV2 {
 /**
  * Simple test dialog for development
  */
-class WFRPTestDialog extends foundry.applications.api.ApplicationV2 {
+class WFRPTestDialog extends HandlebarsApplication {
     
     static DEFAULT_OPTIONS = {
         id: "wfrp-test-dialog",

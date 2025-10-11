@@ -1,5 +1,16 @@
 console.log('Trading Places | Loading purchase-price-calculator.js');
 
+let CurrencyUtils = null;
+try {
+    CurrencyUtils = require('./currency-utils');
+} catch (error) {
+    // Ignore require failures outside Node contexts.
+}
+
+if (typeof window !== 'undefined' && window.TradingPlacesCurrencyUtils) {
+    CurrencyUtils = window.TradingPlacesCurrencyUtils;
+}
+
 /**
  * Trading Places Module - Purchase Price Calculator
  * Handles all purchase price calculations and validations
@@ -37,6 +48,14 @@ class PurchasePriceCalculator {
             logAlgorithmStep: () => {},
             logSystem: () => {}
         };
+    }
+
+    getCurrencyContext() {
+        if (!CurrencyUtils || !this.dataManager || typeof this.dataManager.getCurrencyContext !== 'function') {
+            return null;
+        }
+
+        return this.dataManager.getCurrencyContext();
     }
 
     /**
@@ -123,6 +142,28 @@ class PurchasePriceCalculator {
         // Calculate total price
         const totalPrice = finalPricePerUnit * quantity;
 
+        const currencyContext = this.getCurrencyContext();
+        let basePricePerUnitCanonical = null;
+        let finalPricePerUnitCanonical = null;
+        let totalPriceCanonical = null;
+        let formattedBasePricePerUnit = null;
+        let formattedFinalPricePerUnit = null;
+        let formattedTotalPrice = null;
+
+        if (currencyContext && currencyContext.denominationKey && CurrencyUtils) {
+            const { denominationKey, config } = currencyContext;
+            try {
+                basePricePerUnitCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: basePricePerUnit }, config);
+                finalPricePerUnitCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: finalPricePerUnit }, config);
+                totalPriceCanonical = Math.round(finalPricePerUnitCanonical * quantity);
+                formattedBasePricePerUnit = CurrencyUtils.formatCurrency(basePricePerUnitCanonical, config);
+                formattedFinalPricePerUnit = CurrencyUtils.formatCurrency(finalPricePerUnitCanonical, config);
+                formattedTotalPrice = CurrencyUtils.formatCurrency(totalPriceCanonical, config);
+            } catch (error) {
+                console.error('PurchasePriceCalculator: Currency conversion failed', error);
+            }
+        }
+
         return {
             cargoName: cargoName,
             quantity: quantity,
@@ -132,7 +173,15 @@ class PurchasePriceCalculator {
             finalPricePerUnit: finalPricePerUnit,
             totalPrice: totalPrice,
             modifiers: modifiers,
-            encumbrancePerUnit: cargo.encumbrancePerUnit
+            basePricePerUnitCanonical,
+            finalPricePerUnitCanonical,
+            totalPriceCanonical,
+            formattedBasePricePerUnit,
+            formattedFinalPricePerUnit,
+            formattedTotalPrice,
+            currencyDenomination: currencyContext?.primaryDenomination || null,
+            currencyDenominationKey: currencyContext?.denominationKey || null,
+            encumbrancePerUnit: cargo.encumbrancePerUnit || 10
         };
     }
 
@@ -204,6 +253,22 @@ class PurchasePriceCalculator {
         const qualityMultiplier = cargo.qualityTiers[quality];
         const finalPrice = baseSeasonalPrice * qualityMultiplier;
 
+        const currencyContext = this.getCurrencyContext();
+        let baseSeasonalPriceCanonical = null;
+        let finalPriceCanonical = null;
+        let formattedFinalPrice = null;
+
+        if (currencyContext && currencyContext.denominationKey && CurrencyUtils) {
+            const { denominationKey, config } = currencyContext;
+            try {
+                baseSeasonalPriceCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: baseSeasonalPrice }, config);
+                finalPriceCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: finalPrice }, config);
+                formattedFinalPrice = CurrencyUtils.formatCurrency(finalPriceCanonical, config);
+            } catch (error) {
+                console.error('PurchasePriceCalculator: Quality pricing currency conversion failed', error);
+            }
+        }
+
         return {
             cargoName: cargoName,
             season: currentSeason,
@@ -211,7 +276,12 @@ class PurchasePriceCalculator {
             baseSeasonalPrice: baseSeasonalPrice,
             qualityMultiplier: qualityMultiplier,
             finalPrice: finalPrice,
-            availableQualities: Object.keys(cargo.qualityTiers)
+            availableQualities: Object.keys(cargo.qualityTiers),
+            baseSeasonalPriceCanonical,
+            finalPriceCanonical,
+            formattedFinalPrice,
+            currencyDenomination: currencyContext?.primaryDenomination || null,
+            currencyDenominationKey: currencyContext?.denominationKey || null
         };
     }
 

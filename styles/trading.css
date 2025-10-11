@@ -708,7 +708,7 @@
     justify-content: flex-start;
     gap: 4px;
     justify-self: end;
-    width: var(--purchase-col-width, 180px);
+    width: var(--purchase-col-width, 240px);
 }
 
 .wfrp-trading .total-price-display {
@@ -731,7 +731,7 @@
     background: rgba(76, 175, 80, 0.12);
     padding: 2px 6px;
     border-radius: var(--radius-sm);
-    min-width: 72px;
+    min-width: 140px;
     text-align: center;
 }
 
@@ -935,8 +935,8 @@
     align-items: flex-end;
     gap: 4px;
     justify-self: end;
-    width: var(--purchase-col-width, 140px);
-    max-width: var(--purchase-col-width, 140px);
+    width: var(--purchase-col-width, 240px);
+    max-width: var(--purchase-col-width, 240px);
     min-width: 0;
     box-sizing: border-box;
 }
@@ -947,9 +947,6 @@
     gap: 4px;
     margin-top: 2px;
     white-space: nowrap;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 /* Legacy trading-app selectors removed - all styles unified under .wfrp-trading */
 
@@ -1882,7 +1879,7 @@
     font-size: 16px;
     font-weight: 700;
     color: var(--text-primary);
-    min-width: 80px;
+    min-width: 140px;
     text-align: right;
 }
 
@@ -2340,7 +2337,7 @@
     background: rgba(76, 175, 80, 0.1);
     padding: 4px 8px;
     border-radius: 4px;
-    min-width: 60px;
+    min-width: 140px;
     text-align: center;
 }
 

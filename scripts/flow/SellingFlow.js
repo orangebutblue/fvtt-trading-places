@@ -1,10 +1,36 @@
 
 console.log('Trading Places | Loading SellingFlow.js');
 
+import {
+    formatDenominationValue,
+    formatCanonicalValue,
+    convertDenominationToCanonical,
+    resolveCurrencyContext
+} from '../currency-display.js';
+
 export class SellingFlow {
     constructor(app) {
         this.app = app;
         this.dataManager = app.dataManager;
+    }
+
+    _getCurrencyContext() {
+        return resolveCurrencyContext(this.dataManager);
+    }
+
+    _formatCurrencyFromDenomination(value, defaultText = 'N/A') {
+        const context = this._getCurrencyContext();
+        return formatDenominationValue(value, context, { defaultText });
+    }
+
+    _formatCurrencyFromCanonical(value, defaultText = 'N/A') {
+        const context = this._getCurrencyContext();
+        return formatCanonicalValue(value, context, { defaultText });
+    }
+
+    _convertDenominationToCanonical(value) {
+        const context = this._getCurrencyContext();
+        return convertDenominationToCanonical(value, context);
     }
 
     _logInfo(category, message, data) {
@@ -282,11 +308,11 @@ export class SellingFlow {
                 </div>
                 <div class="price-info">
                     <span class="price-label">Price per EP:</span>
-                    <span class="price-value">${offer.offerPricePerEP.toFixed(2)} GC</span>
+                    <span class="price-value">${this._formatCurrencyFromDenomination(offer.offerPricePerEP)}</span>
                 </div>
                 <div class="price-info">
                     <span class="price-label">Total Price:</span>
-                    <span class="price-value">${(offer.maxEP * offer.offerPricePerEP).toFixed(2)} GC</span>
+                    <span class="price-value">${this._formatCurrencyFromDenomination(offer.maxEP * offer.offerPricePerEP)}</span>
                 </div>`;
 
         // Add contraband warning if applicable
@@ -345,7 +371,7 @@ export class SellingFlow {
                         </button>
                         <div class="total-price-display">
                             <span class="total-price-label">Total Revenue:</span>
-                            <span class="total-price-value">${(Math.min(offer.maxEP, offer.cargo.quantity) * offer.offerPricePerEP).toFixed(2)} GC</span>
+                            <span class="total-price-value">${this._formatCurrencyFromDenomination(Math.min(offer.maxEP, offer.cargo.quantity) * offer.offerPricePerEP)}</span>
                         </div>
                     </div>
                 </div>
@@ -403,7 +429,7 @@ export class SellingFlow {
             const discountMultiplier = 1 + (discountPercent / 100);
             const adjustedPricePerEP = pricePerEP * discountMultiplier;
             const totalPrice = quantity * adjustedPricePerEP;
-            totalPriceValue.textContent = totalPrice.toFixed(2) + ' GC';
+            totalPriceValue.textContent = this._formatCurrencyFromDenomination(totalPrice);
         };
 
         // Function to update the discount display
@@ -504,6 +530,14 @@ export class SellingFlow {
                 isSale: true,
                 contraband: offer.cargo.contraband || false
             };
+            
+            // Add formatted currency fields
+            transaction.formattedPricePerEP = this._formatCurrencyFromDenomination(transaction.pricePerEP);
+            transaction.formattedTotalCost = this._formatCurrencyFromDenomination(transaction.totalCost);
+            const priceCanonical = this._convertDenominationToCanonical(transaction.pricePerEP);
+            const totalCanonical = this._convertDenominationToCanonical(transaction.totalCost);
+            if (priceCanonical !== null) transaction.pricePerEPCanonical = priceCanonical;
+            if (totalCanonical !== null) transaction.totalCostCanonical = totalCanonical;
 
             const transactionHistory = await game.settings.get("trading-places", "transactionHistory") || [];
             transactionHistory.unshift(transaction);
@@ -526,7 +560,7 @@ export class SellingFlow {
             }
 
             // Show success message
-            ui.notifications.success(`Sold ${quantity} EP of ${offer.cargo.cargo} for ${finalPrice.toFixed(2)} GC`);
+            ui.notifications.success(`Sold ${quantity} EP of ${offer.cargo.cargo} for ${this._formatCurrencyFromDenomination(finalPrice)}`);
 
             // Update the buyer's "wants to buy" amount
             offer.maxEP -= quantity;
@@ -573,7 +607,7 @@ export class SellingFlow {
         // Update total price
         const totalPriceElement = card.querySelectorAll('.price-info .price-value')[2]; // Third price-info is total price
         if (totalPriceElement) {
-            totalPriceElement.textContent = `${(offer.maxEP * offer.offerPricePerEP).toFixed(2)} GC`;
+            totalPriceElement.textContent = this._formatCurrencyFromDenomination(offer.maxEP * offer.offerPricePerEP);
         }
 
         // If maxEP is 0, deactivate the card (make it look like a failed slot)
@@ -600,7 +634,7 @@ export class SellingFlow {
             // Update the total price display
             const totalPriceValue = card.querySelector('.total-price-value');
             if (totalPriceValue) {
-                totalPriceValue.textContent = '0.00 GC';
+                totalPriceValue.textContent = this._formatCurrencyFromDenomination(0);
             }
         } else {
             // Update quantity controls max values
@@ -629,7 +663,7 @@ export class SellingFlow {
             
             const totalPriceValue = card.querySelector('.total-price-value');
             if (totalPriceValue) {
-                totalPriceValue.textContent = totalPrice.toFixed(2) + ' GC';
+                totalPriceValue.textContent = this._formatCurrencyFromDenomination(totalPrice);
             }
         }
     }

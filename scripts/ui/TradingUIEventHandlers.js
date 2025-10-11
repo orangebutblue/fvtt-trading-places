@@ -3,12 +3,51 @@ console.log('Trading Places | Loading TradingUIEventHandlers.js');
 
 import { BuyingFlow } from '../flow/BuyingFlow.js';
 import { SellingFlow } from '../flow/SellingFlow.js';
+import {
+    resolveCurrencyContext,
+    formatDenominationValue,
+    formatCanonicalValue,
+    augmentTransaction,
+    convertDenominationToCanonical,
+    getCurrencyLabel
+} from '../currency-display.js';
 
 export class TradingUIEventHandlers {
     constructor(app) {
         this.app = app;
         this.buyingFlow = new BuyingFlow(app);
         this.sellingFlow = new SellingFlow(app);
+    }
+
+    _getCurrencyContext() {
+        return resolveCurrencyContext(this.app?.dataManager);
+    }
+
+    _formatCurrencyFromDenomination(value, defaultText = '--') {
+        const context = this._getCurrencyContext();
+        return formatDenominationValue(value, context, { defaultText });
+    }
+
+    _formatCurrencyFromCanonical(value, defaultText = '--') {
+        const context = this._getCurrencyContext();
+        return formatCanonicalValue(value, context, { defaultText });
+    }
+
+    _convertDenominationToCanonical(value) {
+        const context = this._getCurrencyContext();
+        return convertDenominationToCanonical(value, context);
+    }
+
+    _augmentTransaction(transaction) {
+        if (!transaction) {
+            return transaction;
+        }
+        augmentTransaction(transaction, this._getCurrencyContext());
+        return transaction;
+    }
+
+    _getCurrencyLabel() {
+        return getCurrencyLabel(this._getCurrencyContext());
     }
 
     _logDebug(category, message, data) {
@@ -644,8 +683,9 @@ export class TradingUIEventHandlers {
                 await this._updateCargoAvailabilityAfterPurchase(cargo, quantity);
 
                 // Show success message
+                const formattedTotalCost = this._formatCurrencyFromDenomination(totalCost, `${totalCost} ${this._getCurrencyLabel()}`);
                 const discountText = discountPercent !== 0 ? ` (${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment)` : '';
-                ui.notifications.success(`Successfully purchased ${quantity} EP of ${cargo.name} for ${totalCost.toFixed(2)} GC${discountText}`);
+                ui.notifications.success(`Successfully purchased ${quantity} EP of ${cargo.name} for ${formattedTotalCost}${discountText}`);
 
                 // Update the cargo card to reflect reduced availability
                 this._updateBuyingCargoCard(cargo, quantity);
@@ -787,10 +827,10 @@ export class TradingUIEventHandlers {
         
         const quantity = parseFloat(quantityInput.value);
         const totalCost = parseFloat(costInput.value);
-        
-        if (quantity > 0 && totalCost >= 0) {
-            const pricePerEP = (totalCost / quantity).toFixed(2);
-            pricePreview.textContent = `${pricePerEP} GC`;
+
+        if (Number.isFinite(quantity) && quantity > 0 && Number.isFinite(totalCost) && totalCost >= 0) {
+            const pricePerEP = totalCost / quantity;
+            pricePreview.textContent = this._formatCurrencyFromDenomination(pricePerEP, '--');
         } else {
             pricePreview.textContent = '--';
         }
@@ -825,16 +865,20 @@ export class TradingUIEventHandlers {
                 return;
             }
             
-            // Calculate price per EP
+            // Calculate price per EP and canonical totals
             const pricePerEP = totalCost / quantity;
-            
+            const pricePerEPCanonical = this._convertDenominationToCanonical(pricePerEP);
+            const totalCostCanonical = this._convertDenominationToCanonical(totalCost);
+
             // Create transaction object
-            const transaction = {
+            const transaction = this._augmentTransaction({
                 cargo: cargoName,
                 category: category,
                 quantity: quantity,
-                pricePerEP: parseFloat(pricePerEP.toFixed(2)),
-                totalCost: parseFloat(totalCost.toFixed(2)),
+                pricePerEP: Number.isFinite(pricePerEP) ? pricePerEP : 0,
+                pricePerEPCanonical: typeof pricePerEPCanonical === 'number' ? pricePerEPCanonical : null,
+                totalCost: Number.isFinite(totalCost) ? totalCost : 0,
+                totalCostCanonical: typeof totalCostCanonical === 'number' ? totalCostCanonical : null,
                 settlement: settlement,
                 season: season,
                 date: new Date().toISOString(),
@@ -842,7 +886,7 @@ export class TradingUIEventHandlers {
                 isSale: transactionType === 'sale',
                 contraband: isContraband,
                 isManualEntry: true
-            };
+            });
             
             // Add to transaction history (at the beginning so newest appears on top)
             if (!this.app.transactionHistory) {
@@ -868,7 +912,9 @@ export class TradingUIEventHandlers {
             await this.app.refreshUI({ focusTab: 'history' });
             
             // Show success message
-            ui.notifications.success(`Added: ${quantity} EP of ${cargoName} for ${totalCost} GC`);
+            const formattedTotalCost = transaction.formattedTotalCost
+                || this._formatCurrencyFromDenomination(totalCost, `${totalCost} ${this._getCurrencyLabel()}`);
+            ui.notifications.success(`Added: ${quantity} EP of ${cargoName} for ${formattedTotalCost}`);
             
             this._logInfo('Manual Transaction', 'Manual transaction added', {
                 cargo: cargoName, quantity, totalCost, settlement, season
@@ -1277,6 +1323,14 @@ export class TradingUIEventHandlers {
             existingCargo.totalCost = totalCost;
             existingCargo.pricePerEP = totalCost / totalQuantity;
             existingCargo.date = transaction.date; // Update to latest purchase date
+            
+            // Add formatted currency fields
+            existingCargo.formattedPricePerEP = this._formatCurrencyFromDenomination(existingCargo.pricePerEP);
+            existingCargo.formattedTotalCost = this._formatCurrencyFromDenomination(existingCargo.totalCost);
+            const priceCanonical = this._convertDenominationToCanonical(existingCargo.pricePerEP);
+            const totalCanonical = this._convertDenominationToCanonical(existingCargo.totalCost);
+            if (priceCanonical !== null) existingCargo.pricePerEPCanonical = priceCanonical;
+            if (totalCanonical !== null) existingCargo.totalCostCanonical = totalCanonical;
         } else {
             // Add as new cargo
             const newCargo = {
@@ -1289,7 +1343,12 @@ export class TradingUIEventHandlers {
                 settlement: transaction.settlement,
                 season: transaction.season,
                 date: transaction.date,
-                contraband: transaction.contraband || false
+                contraband: transaction.contraband || false,
+                // Copy formatted fields from transaction
+                formattedPricePerEP: transaction.formattedPricePerEP || this._formatCurrencyFromDenomination(transaction.pricePerEP),
+                formattedTotalCost: transaction.formattedTotalCost || this._formatCurrencyFromDenomination(transaction.totalCost),
+                pricePerEPCanonical: transaction.pricePerEPCanonical,
+                totalCostCanonical: transaction.totalCostCanonical
             };
             
             currentCargo.push(newCargo);
@@ -1347,7 +1406,37 @@ export class TradingUIEventHandlers {
      * @private
      */
     async _getCurrentCargo() {
-        return await game.settings.get("trading-places", "currentCargo") || [];
+        const rawCargo = await game.settings.get("trading-places", "currentCargo") || [];
+        console.log('🚛 _getCurrentCargo: Loading cargo', { count: rawCargo.length, firstItem: rawCargo[0] });
+        // Normalize cargo with formatted currency fields
+        return rawCargo.map(cargo => {
+            if (!cargo.formattedPricePerEP && typeof cargo.pricePerEP === 'number') {
+                cargo.formattedPricePerEP = this._formatCurrencyFromDenomination(cargo.pricePerEP);
+            }
+            if (!cargo.formattedTotalCost && typeof cargo.totalCost === 'number') {
+                cargo.formattedTotalCost = this._formatCurrencyFromDenomination(cargo.totalCost);
+            }
+            if (!cargo.pricePerEPCanonical && typeof cargo.pricePerEP === 'number') {
+                const canonical = this._convertDenominationToCanonical(cargo.pricePerEP);
+                if (canonical !== null) cargo.pricePerEPCanonical = canonical;
+            }
+            if (!cargo.totalCostCanonical && typeof cargo.totalCost === 'number') {
+                const canonical = this._convertDenominationToCanonical(cargo.totalCost);
+                if (canonical !== null) cargo.totalCostCanonical = canonical;
+            }
+            console.log('🚛 _getCurrentCargo: Normalized cargo item', {
+                cargo: cargo.cargo,
+                hasFormatted: {
+                    price: !!cargo.formattedPricePerEP,
+                    total: !!cargo.formattedTotalCost
+                },
+                values: {
+                    formattedPrice: cargo.formattedPricePerEP,
+                    formattedTotal: cargo.formattedTotalCost
+                }
+            });
+            return cargo;
+        });
     }
 
     /**
@@ -1547,9 +1636,9 @@ export class TradingUIEventHandlers {
         const quantity = parseFloat(quantityInput.value);
         const totalPrice = parseFloat(totalPriceInput.value);
         
-        if (quantity > 0 && !isNaN(totalPrice) && totalPrice > 0) {
-            const pricePerEP = (totalPrice / quantity).toFixed(2);
-            pricePreview.textContent = `${pricePerEP} GC`;
+        if (Number.isFinite(quantity) && quantity > 0 && Number.isFinite(totalPrice) && totalPrice > 0) {
+            const pricePerEP = totalPrice / quantity;
+            pricePreview.textContent = this._formatCurrencyFromDenomination(pricePerEP, '--');
         } else if (quantity > 0 && (isNaN(totalPrice) || totalPrice === 0)) {
             pricePreview.textContent = '?';
         } else {
@@ -1701,26 +1790,31 @@ export class TradingUIEventHandlers {
             // Calculate pricePerEP and totalCost based on total price input
             let pricePerEP = 0;
             let totalCost = 0;
-            
-            if (!isNaN(totalPrice) && totalPrice > 0) {
+
+            if (Number.isFinite(totalPrice) && totalPrice > 0) {
                 totalCost = totalPrice;
                 pricePerEP = totalPrice / quantity;
             }
             // If totalPrice is NaN or 0, both totalCost and pricePerEP remain 0
-            
+
+            const pricePerEPCanonical = this._convertDenominationToCanonical(pricePerEP);
+            const totalCostCanonical = this._convertDenominationToCanonical(totalCost);
+
             // Create cargo object
-            const cargoItem = {
+            const cargoItem = this._augmentTransaction({
                 id: foundry.utils.randomID(),
                 cargo: cargoName,
                 category: category,
                 quantity: quantity,
-                pricePerEP: parseFloat(pricePerEP.toFixed(2)),
-                totalCost: parseFloat(totalCost.toFixed(2)),
+                pricePerEP: Number.isFinite(pricePerEP) ? pricePerEP : 0,
+                pricePerEPCanonical: typeof pricePerEPCanonical === 'number' ? pricePerEPCanonical : null,
+                totalCost: Number.isFinite(totalCost) ? totalCost : 0,
+                totalCostCanonical: typeof totalCostCanonical === 'number' ? totalCostCanonical : null,
                 settlement: settlement,
                 season: season,
                 date: new Date().toISOString(),
                 contraband: false // TODO: Add contraband detection
-            };
+            });
             
             // Add to current cargo - ensure it's properly initialized
             if (!this.app.currentCargo || !Array.isArray(this.app.currentCargo)) {
@@ -1729,12 +1823,14 @@ export class TradingUIEventHandlers {
             this.app.currentCargo.push(cargoItem);
             
             // Create corresponding transaction for history
-            const transaction = {
+            const transaction = this._augmentTransaction({
                 cargo: cargoName,
                 category: category,
                 quantity: quantity,
-                pricePerEP: parseFloat(pricePerEP.toFixed(2)),
-                totalCost: parseFloat(totalCost.toFixed(2)),
+                pricePerEP: Number.isFinite(pricePerEP) ? pricePerEP : 0,
+                pricePerEPCanonical: typeof pricePerEPCanonical === 'number' ? pricePerEPCanonical : null,
+                totalCost: Number.isFinite(totalCost) ? totalCost : 0,
+                totalCostCanonical: typeof totalCostCanonical === 'number' ? totalCostCanonical : null,
                 settlement: settlement,
                 season: season,
                 date: new Date().toISOString(),
@@ -1742,7 +1838,7 @@ export class TradingUIEventHandlers {
                 isSale: false,
                 contraband: false,
                 isManualAddition: true
-            };
+            });
             
             // Add to transaction history
             if (!this.app.transactionHistory) {
@@ -1766,8 +1862,13 @@ export class TradingUIEventHandlers {
             await this.app.refreshUI({ focusTab: 'cargo' });
             
             // Show success message
-            const costText = totalCost > 0 ? ` for ${totalCost.toFixed(2)} GC` : '';
-            ui.notifications.success(`Added ${quantity} EP of ${cargoName}${costText}`);
+            const formattedPricePerEP = transaction.formattedPricePerEP
+                || (Number.isFinite(pricePerEP) ? this._formatCurrencyFromDenomination(pricePerEP) : null);
+            const formattedTotalCost = transaction.formattedTotalCost
+                || (Number.isFinite(totalCost) ? this._formatCurrencyFromDenomination(totalCost) : null);
+            const priceText = formattedPricePerEP ? ` at ${formattedPricePerEP}/EP` : '';
+            const totalText = formattedTotalCost ? ` (total ${formattedTotalCost})` : '';
+            ui.notifications.success(`Added ${quantity} EP of ${cargoName}${priceText}${totalText}`);
             
             this._logInfo('Add Cargo', 'Cargo added successfully', {
                 cargo: cargoName, quantity, totalCost, settlement, season
@@ -1853,7 +1954,8 @@ export class TradingUIEventHandlers {
         const totalPriceElements = card.querySelectorAll('.price-info .price-value');
         if (totalPriceElements.length >= 3) {
             const totalPriceElement = totalPriceElements[2]; // Third price-info is total price
-            totalPriceElement.textContent = `${(cargo.quantity * cargo.pricePerEP).toFixed(2)} GC`;
+            const aggregatePrice = (Number.isFinite(cargo.quantity) ? cargo.quantity : 0) * (Number.isFinite(cargo.pricePerEP) ? cargo.pricePerEP : 0);
+            totalPriceElement.textContent = this._formatCurrencyFromDenomination(aggregatePrice, '--');
         }
 
         // If quantity is 0, deactivate the card (make it look like a failed slot)
@@ -1880,7 +1982,7 @@ export class TradingUIEventHandlers {
             // Update the total price display
             const totalPriceValue = card.querySelector('.total-price-value');
             if (totalPriceValue) {
-                totalPriceValue.textContent = '0.00 GC';
+                totalPriceValue.textContent = this._formatCurrencyFromDenomination(0, '0');
             }
         } else {
             // Update quantity controls max values
@@ -1909,7 +2011,7 @@ export class TradingUIEventHandlers {
             
             const totalPriceValue = card.querySelector('.total-price-value');
             if (totalPriceValue) {
-                totalPriceValue.textContent = totalPrice.toFixed(2) + ' GC';
+                totalPriceValue.textContent = this._formatCurrencyFromDenomination(totalPrice, '--');
             }
         }
     }

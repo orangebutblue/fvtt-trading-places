@@ -19,6 +19,8 @@
     "scripts/debug-ui.js",
     "scripts/error-handler.js",
     "scripts/config-validator.js",
+    "scripts/currency-utils.js",
+    "scripts/currency-display.js",
     "scripts/equilibrium-calculator.js",
     "scripts/merchant-generator.js",
     "scripts/cargo-availability-pipeline.js",

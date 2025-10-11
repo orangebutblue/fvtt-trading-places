@@ -3,22 +3,63 @@
  * Configuration-driven adapter for currency and inventory management across different game systems
  */
 
+let CurrencyUtils = null;
+try {
+    CurrencyUtils = require('./currency-utils');
+} catch (error) {
+    // Ignore require failures for browser context; fallback provided below.
+}
+
+if (typeof window !== 'undefined' && window.TradingPlacesCurrencyUtils) {
+    CurrencyUtils = window.TradingPlacesCurrencyUtils;
+}
+
 /**
  * SystemAdapter class for handling currency and inventory operations
  * Uses configuration-driven field paths to work with different game systems
  */
 class SystemAdapter {
     constructor(config = null) {
-        this.config = config || this.getDefaultConfig();
+        this.config = this.mergeSystemConfig(config);
         this.systemId = (typeof game !== 'undefined' && game?.system?.id) || 'unknown';
         this.isFoundryEnvironment = typeof game !== 'undefined';
         this.debugMode = false;
         this.errorHandler = null;
+        this.currencySchema = null;
+        this.normalizedCurrencySchema = null;
+    this.currencyFieldMap = null;
         
         // Try to get error handler from global scope
         if (typeof window !== 'undefined' && window.WFRPRiverTrading?.getErrorHandler) {
             this.errorHandler = window.WFRPRiverTrading.getErrorHandler();
         }
+    }
+
+    mergeSystemConfig(overrides = null) {
+        const defaultConfig = this.getDefaultConfig();
+
+        if (!overrides || typeof overrides !== 'object') {
+            return defaultConfig;
+        }
+
+        const mergedCurrency = {
+            ...defaultConfig.currency,
+            ...(overrides.currency || {})
+        };
+
+        if (overrides.currency && overrides.currency.field === undefined && defaultConfig.currency.field) {
+            mergedCurrency.field = defaultConfig.currency.field;
+        }
+
+        if (overrides.currency && overrides.currency.fields === undefined && defaultConfig.currency.fields) {
+            mergedCurrency.fields = { ...defaultConfig.currency.fields };
+        }
+
+        return {
+            ...defaultConfig,
+            ...overrides,
+            currency: mergedCurrency
+        };
     }
 
     /**
@@ -28,8 +69,13 @@ class SystemAdapter {
     getDefaultConfig() {
         return {
             currency: {
-                field: 'system.money.gc', // Default WFRP4e path
-                type: 'number',
+                field: 'system.money.gc', // Legacy single-value path
+                fields: {
+                    GC: 'system.money.gc',
+                    SS: 'system.money.ss',
+                    BP: 'system.money.bp'
+                },
+                type: 'denomination',
                 label: 'Gold Crowns'
             },
             inventory: {
@@ -45,17 +91,85 @@ class SystemAdapter {
         };
     }
 
+    getFallbackCurrencySchema() {
+        return {
+            canonicalUnit: {
+                name: 'Brass Penny',
+                pluralName: 'Brass Pennies',
+                abbreviation: 'BP',
+                value: 1
+            },
+            denominations: [
+                {
+                    name: 'Gold Crown',
+                    pluralName: 'Gold Crowns',
+                    abbreviation: 'GC',
+                    value: 240
+                },
+                {
+                    name: 'Silver Shilling',
+                    pluralName: 'Silver Shillings',
+                    abbreviation: 'SS',
+                    value: 12
+                },
+                {
+                    name: 'Brass Penny',
+                    pluralName: 'Brass Pennies',
+                    abbreviation: 'BP',
+                    value: 1
+                }
+            ],
+            display: {
+                order: ['GC', 'SS', 'BP'],
+                includeZeroDenominations: false,
+                separator: ' '
+            }
+        };
+    }
+
     /**
      * Load configuration from DataManager or use defaults
      * @param {Object} dataManager - DataManager instance with config
      */
     loadConfiguration(dataManager) {
-        if (dataManager && dataManager.config) {
-            // Merge with defaults, prioritizing loaded config
-            this.config = {
-                ...this.getDefaultConfig(),
-                ...dataManager.config
+        const defaultConfig = this.getDefaultConfig();
+        const datasetConfig = dataManager?.config || {};
+
+        const overrides = { ...datasetConfig };
+        if (datasetConfig.currency) {
+            overrides.currency = {
+                ...defaultConfig.currency,
+                ...datasetConfig.currency
             };
+        }
+
+        this.config = this.mergeSystemConfig(overrides);
+        this.currencyFieldMap = null;
+
+        if (dataManager && typeof dataManager.getCurrencyConfig === 'function') {
+            this.currencySchema = dataManager.getCurrencyConfig();
+        } else if (datasetConfig.currency) {
+            this.currencySchema = datasetConfig.currency;
+        } else {
+            this.currencySchema = this.getFallbackCurrencySchema();
+        }
+
+        if (dataManager && typeof dataManager.getNormalizedCurrencyConfig === 'function') {
+            try {
+                this.normalizedCurrencySchema = dataManager.getNormalizedCurrencyConfig();
+            } catch (error) {
+                this.normalizedCurrencySchema = null;
+            }
+        } else {
+            this.normalizedCurrencySchema = null;
+        }
+
+        if (!this.normalizedCurrencySchema && CurrencyUtils && this.currencySchema) {
+            try {
+                this.normalizedCurrencySchema = CurrencyUtils.normalizeConfig(this.currencySchema);
+            } catch (error) {
+                this.normalizedCurrencySchema = null;
+            }
         }
     }
 
@@ -86,7 +200,8 @@ class SystemAdapter {
         }
 
         // Validate currency configuration
-        if (!this.config.currency || !this.config.currency.field) {
+        const fieldMap = this.getCurrencyFieldMap();
+        if (!this.config.currency || Object.keys(fieldMap).length === 0) {
             result.compatible = false;
             result.errors.push('Currency field configuration missing');
         }
@@ -98,12 +213,7 @@ class SystemAdapter {
         }
 
         // System-specific validation
-        if (this.systemId === 'wfrp4e') {
-            // WFRP4e specific checks
-            if (this.config.currency.field !== 'system.money.gc') {
-                result.warnings.push('Currency field may not match WFRP4e standard (system.money.gc)');
-            }
-        } else {
+        if (this.systemId !== 'wfrp4e') {
             result.warnings.push(`System '${this.systemId}' may not be fully supported. Configuration may need adjustment.`);
         }
 
@@ -146,10 +256,23 @@ class SystemAdapter {
         }
 
         // Check currency field specifically
+        const fieldMap = this.getCurrencyFieldMap();
+        const missingPaths = [];
+        Object.values(fieldMap).forEach((path) => {
+            if (this.getNestedProperty(actor, path) === undefined) {
+                missingPaths.push(path);
+            }
+        });
+
+        if (missingPaths.length > 0) {
+            result.valid = false;
+            result.errors.push(`Currency field paths not accessible on actor: ${missingPaths.join(', ')}`);
+        }
+
         const currencyValue = this.getCurrencyValue(actor);
         if (currencyValue === null || currencyValue === undefined) {
             result.valid = false;
-            result.errors.push(`Currency field '${this.config.currency.field}' not accessible on actor`);
+            result.errors.push('Currency value could not be determined for actor');
         }
 
         return result;
@@ -183,6 +306,106 @@ class SystemAdapter {
         target[lastKey] = value;
     }
 
+    getCurrencySchema() {
+        if (!this.currencySchema) {
+            this.currencySchema = this.getFallbackCurrencySchema();
+        }
+        return this.currencySchema;
+    }
+
+    getNormalizedCurrencySchema() {
+        if (!CurrencyUtils) {
+            throw new Error('Currency utilities are not available');
+        }
+
+        if (!this.normalizedCurrencySchema) {
+            this.normalizedCurrencySchema = CurrencyUtils.normalizeConfig(this.getCurrencySchema());
+        }
+
+        return this.normalizedCurrencySchema;
+    }
+
+    getCurrencyFieldMap() {
+        if (this.currencyFieldMap) {
+            return this.currencyFieldMap;
+        }
+
+        const map = {};
+        const fieldConfig = this.config?.currency || {};
+        const normalized = (() => {
+            try {
+                return this.getNormalizedCurrencySchema();
+            } catch (error) {
+                return null;
+            }
+        })();
+
+        if (fieldConfig.fields) {
+            Object.entries(fieldConfig.fields).forEach(([key, path]) => {
+                if (typeof path === 'string') {
+                    map[key.toLowerCase()] = path;
+                }
+            });
+        }
+
+        const canonicalKey = normalized
+            ? (normalized.canonicalUnit.abbreviation || normalized.canonicalUnit.name || 'canonical').toLowerCase()
+            : 'canonical';
+
+        if (!map[canonicalKey] && typeof fieldConfig.field === 'string') {
+            map[canonicalKey] = fieldConfig.field;
+        }
+
+        this.currencyFieldMap = map;
+        return this.currencyFieldMap;
+    }
+
+    buildCurrencyUpdate(targetCanonicalValue) {
+        if (!CurrencyUtils) {
+            const updateData = {};
+            const field = this.config?.currency?.field;
+            if (typeof field === 'string') {
+                this.setNestedProperty(updateData, field, targetCanonicalValue);
+            }
+            return updateData;
+        }
+
+        const normalized = this.getNormalizedCurrencySchema();
+        const schema = this.getCurrencySchema();
+        const fieldMap = this.getCurrencyFieldMap();
+        const canonicalKey = (normalized.canonicalUnit.abbreviation || normalized.canonicalUnit.name || 'canonical').toLowerCase();
+        const mapKeys = Object.keys(fieldMap);
+
+        // If only canonical path is available, update it directly
+        if (mapKeys.length === 1 && fieldMap[canonicalKey]) {
+            const updateData = {};
+            this.setNestedProperty(updateData, fieldMap[canonicalKey], Math.round(targetCanonicalValue));
+            return updateData;
+        }
+
+        const breakdown = CurrencyUtils.convertFromCanonical(Math.round(targetCanonicalValue), schema, { includeZero: true });
+        const updateData = {};
+        let unmatchedCanonical = 0;
+
+        breakdown.forEach(({ denomination, quantity }) => {
+            const key = (denomination.abbreviation || denomination.name || '').toLowerCase();
+            const path = fieldMap[key];
+
+            if (path) {
+                this.setNestedProperty(updateData, path, quantity);
+            } else {
+                unmatchedCanonical += quantity * denomination.value;
+            }
+        });
+
+        if (unmatchedCanonical !== 0 && fieldMap[canonicalKey]) {
+            const existing = this.getNestedProperty(updateData, fieldMap[canonicalKey]) || 0;
+            this.setNestedProperty(updateData, fieldMap[canonicalKey], existing + unmatchedCanonical);
+        }
+
+        return updateData;
+    }
+
     // ===== CURRENCY OPERATIONS =====
 
     /**
@@ -194,8 +417,43 @@ class SystemAdapter {
         if (!actor) return null;
         
         try {
-            const value = this.getNestedProperty(actor, this.config.currency.field);
-            return typeof value === 'number' ? value : null;
+            if (!CurrencyUtils) {
+                const legacyField = this.config?.currency?.field;
+                const legacyValue = legacyField ? this.getNestedProperty(actor, legacyField) : null;
+                return typeof legacyValue === 'number' ? Math.round(legacyValue) : null;
+            }
+
+            const schema = this.getCurrencySchema();
+            const normalized = this.getNormalizedCurrencySchema();
+            const fieldMap = this.getCurrencyFieldMap();
+            const canonicalKey = (normalized.canonicalUnit.abbreviation || normalized.canonicalUnit.name || 'canonical').toLowerCase();
+            const mapKeys = Object.keys(fieldMap);
+
+            if (mapKeys.length === 1 && fieldMap[canonicalKey]) {
+                const value = this.getNestedProperty(actor, fieldMap[canonicalKey]);
+                return typeof value === 'number' ? Math.round(value) : null;
+            }
+
+            const breakdown = {};
+            normalized.denominations.forEach((denomination) => {
+                const key = (denomination.abbreviation || denomination.name || '').toLowerCase();
+                const path = fieldMap[key];
+                if (!path) {
+                    return;
+                }
+                const value = this.getNestedProperty(actor, path);
+                if (typeof value === 'number' && Number.isFinite(value)) {
+                    breakdown[denomination.abbreviation || denomination.name || key] = value;
+                }
+            });
+
+            if (Object.keys(breakdown).length === 0) {
+                const fallbackField = fieldMap[canonicalKey] || this.config?.currency?.field;
+                const fallbackValue = fallbackField ? this.getNestedProperty(actor, fallbackField) : null;
+                return typeof fallbackValue === 'number' ? Math.round(fallbackValue) : null;
+            }
+
+            return CurrencyUtils.convertToCanonical(breakdown, schema);
         } catch (error) {
             console.error('SystemAdapter: Error getting currency value:', error);
             return null;
@@ -253,14 +511,14 @@ class SystemAdapter {
         if (currentAmount === null) {
             const result = {
                 success: false,
-                error: `Cannot access currency field '${this.config.currency.field}'`,
+                error: 'Cannot access actor currency values',
                 currentAmount: null,
                 newAmount: null
             };
             
             this.logError('Currency field access failed', {
                 actorId: actor.id,
-                currencyField: this.config.currency.field,
+                currencyFields: this.getCurrencyFieldMap(),
                 amount: amount
             });
             
@@ -285,8 +543,7 @@ class SystemAdapter {
 
         try {
             const newAmount = currentAmount - amount;
-            const updateData = {};
-            this.setNestedProperty(updateData, this.config.currency.field, newAmount);
+            const updateData = this.buildCurrencyUpdate(newAmount);
             
             await actor.update(updateData);
 
@@ -340,7 +597,7 @@ class SystemAdapter {
         if (currentAmount === null) {
             return {
                 success: false,
-                error: `Cannot access currency field '${this.config.currency.field}'`,
+                error: 'Cannot access actor currency values',
                 currentAmount: null,
                 newAmount: null
             };
@@ -348,8 +605,7 @@ class SystemAdapter {
 
         try {
             const newAmount = currentAmount + amount;
-            const updateData = {};
-            this.setNestedProperty(updateData, this.config.currency.field, newAmount);
+            const updateData = this.buildCurrencyUpdate(newAmount);
             
             await actor.update(updateData);
 

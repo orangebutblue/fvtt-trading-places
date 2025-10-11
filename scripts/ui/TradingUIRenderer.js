@@ -1,3 +1,13 @@
+import {
+    resolveCurrencyContext,
+    formatDenominationValue,
+    formatCanonicalValue,
+    enrichPricing,
+    augmentTransaction,
+    convertDenominationToCanonical,
+    getCurrencyLabel
+} from '../currency-display.js';
+
 console.log('Trading Places | Loading TradingUIRenderer.js');
 
 export default class TradingUIRenderer {
@@ -23,6 +33,75 @@ export default class TradingUIRenderer {
     this._currentTooltip = null;
     this._currentTrigger = null;
     this._handleGlobalPointerDown = this._handleGlobalPointerDown.bind(this);
+    }
+
+    _getCurrencyContext() {
+        return resolveCurrencyContext(this.dataManager);
+    }
+
+    _convertDenominationToCanonical(value) {
+        const context = this._getCurrencyContext();
+        return convertDenominationToCanonical(value, context);
+    }
+
+    _formatCurrencyFromDenomination(value, defaultText = 'N/A') {
+        const context = this._getCurrencyContext();
+        if (!context) {
+            throw new Error('CURRENCY CONTEXT IS NULL in TradingUIRenderer! Cannot format: ' + value);
+        }
+        return formatDenominationValue(value, context, { defaultText });
+    }
+
+    _formatCurrencyFromCanonical(value, defaultText = 'N/A') {
+        const context = this._getCurrencyContext();
+        return formatCanonicalValue(value, context, { defaultText });
+    }
+
+    _ensurePricingCurrency(pricing, quantity) {
+        if (!pricing) {
+            return null;
+        }
+        const context = this._getCurrencyContext();
+        return enrichPricing(pricing, quantity, context);
+    }
+
+    _ensureCargoCurrency(cargo) {
+        if (!cargo) {
+            return;
+        }
+
+        const quantity = cargo.slotInfo?.amount?.totalEP ?? cargo.totalEP ?? cargo.quantity ?? 0;
+        if (cargo.slotInfo?.pricing) {
+            const enriched = this._ensurePricingCurrency(cargo.slotInfo.pricing, quantity);
+            if (enriched) {
+                cargo.slotInfo.pricing = enriched;
+                if (enriched.formattedFinalPricePerEP) {
+                    cargo.formattedPricePerEP = enriched.formattedFinalPricePerEP;
+                }
+                if (enriched.formattedTotalValue) {
+                    cargo.formattedTotalValue = enriched.formattedTotalValue;
+                }
+                if (typeof enriched.finalPricePerEPCanonical === 'number') {
+                    cargo.currentPriceCanonical = enriched.finalPricePerEPCanonical;
+                }
+                if (typeof enriched.totalValueCanonical === 'number') {
+                    cargo.totalValueCanonical = enriched.totalValueCanonical;
+                }
+            }
+        }
+    }
+
+    _augmentTransaction(transaction) {
+        if (!transaction) {
+            return transaction;
+        }
+
+        augmentTransaction(transaction, this._getCurrencyContext());
+        return transaction;
+    }
+
+    _getCurrencyLabel() {
+        return getCurrencyLabel(this._getCurrencyContext());
     }
 
     _logDebug(category, message, data) {
@@ -213,8 +292,32 @@ export default class TradingUIRenderer {
                 }
 
                 if (slot.pricing) {
-                    const pricing = slot.pricing;
-                    details += `\n• Pricing: ${pricing.basePricePerEP?.toFixed(2) || 'N/A'} → ${pricing.finalPricePerEP?.toFixed(2) || 'N/A'} GC/EP`;
+                    const quantityForPricing = slot.amount?.totalEP ?? slot.pricing?.quantity;
+                    const resolvedPricing = this._ensurePricingCurrency(slot.pricing, quantityForPricing) || slot.pricing;
+                    const baseFormatted = resolvedPricing?.formattedBasePricePerEP
+                        || (typeof resolvedPricing?.basePricePerEP === 'number'
+                            ? this._formatCurrencyFromDenomination(resolvedPricing.basePricePerEP)
+                            : null);
+                    const finalFormatted = resolvedPricing?.formattedFinalPricePerEP
+                        || (typeof resolvedPricing?.finalPricePerEP === 'number'
+                            ? this._formatCurrencyFromDenomination(resolvedPricing.finalPricePerEP)
+                            : null);
+                    const totalFormatted = resolvedPricing?.formattedTotalValue
+                        || (typeof resolvedPricing?.totalValue === 'number'
+                            ? this._formatCurrencyFromDenomination(resolvedPricing.totalValue)
+                            : null);
+
+                    const baseText = baseFormatted && baseFormatted !== 'N/A'
+                        ? `${baseFormatted} per EP`
+                        : 'N/A';
+                    const finalText = finalFormatted && finalFormatted !== 'N/A'
+                        ? `${finalFormatted} per EP`
+                        : 'N/A';
+                    const totalText = totalFormatted && totalFormatted !== 'N/A'
+                        ? totalFormatted
+                        : 'N/A';
+
+                    details += `\n• Pricing: base ${baseText} → final ${finalText} (total ${totalText})`;
                 }
 
                 return details;
@@ -443,17 +546,30 @@ export default class TradingUIRenderer {
      */
     _renderFinalPricing(slot) {
         const pricing = slot.pricing || {};
+        const resolvedPricing = this._ensurePricingCurrency(pricing, slot.amount?.totalEP ?? pricing.quantity) || pricing;
+        const baseFormatted = resolvedPricing?.formattedBasePricePerEP
+            || (typeof resolvedPricing?.basePricePerEP === 'number'
+                ? this._formatCurrencyFromDenomination(resolvedPricing.basePricePerEP)
+                : 'N/A');
+        const finalFormatted = resolvedPricing?.formattedFinalPricePerEP
+            || (typeof resolvedPricing?.finalPricePerEP === 'number'
+                ? this._formatCurrencyFromDenomination(resolvedPricing.finalPricePerEP)
+                : 'N/A');
+        const totalFormatted = resolvedPricing?.formattedTotalValue
+            || (typeof resolvedPricing?.totalValue === 'number'
+                ? this._formatCurrencyFromDenomination(resolvedPricing.totalValue)
+                : 'N/A');
 
         return `
             <div class="pipeline-detail">
-                <p><strong>Base Price per EP:</strong> ${pricing.basePricePerEP?.toFixed(2) || 'N/A'} GC</p>
-                <p><strong>Final Price per EP:</strong> ${pricing.finalPricePerEP?.toFixed(2) || 'N/A'} GC</p>
-                <p><strong>Available Quantity:</strong> ${pricing.quantity || 0} EP</p>
-                <p><strong>Total Value:</strong> ${pricing.totalValue?.toFixed(2) || 'N/A'} GC</p>
-                ${pricing.steps && pricing.steps.length > 0 ? `
+                <p><strong>Base Price per EP:</strong> ${baseFormatted !== 'N/A' ? `${baseFormatted} per EP` : 'N/A'}</p>
+                <p><strong>Final Price per EP:</strong> ${finalFormatted !== 'N/A' ? `${finalFormatted} per EP` : 'N/A'}</p>
+                <p><strong>Available Quantity:</strong> ${resolvedPricing.quantity ?? pricing.quantity ?? 0} EP</p>
+                <p><strong>Total Value:</strong> ${totalFormatted}</p>
+                ${resolvedPricing.steps && resolvedPricing.steps.length > 0 ? `
                     <p><strong>Price Adjustments:</strong></p>
                     <ul>
-                        ${pricing.steps.map(step => `<li>${step.label}</li>`).join('')}
+                        ${resolvedPricing.steps.map(step => `<li>${step.label}</li>`).join('')}
                     </ul>
                 ` : ''}
             </div>
@@ -472,6 +588,14 @@ export default class TradingUIRenderer {
         const merchantName = cargo.merchant?.name || 'Unknown Merchant';
         const merchantSkill = cargo.merchant?.skillDescription || 'Unknown';
 
+        const pricePerTenEp = cargo.currentPrice ?? cargo.basePrice;
+        const formattedPerTenEp = typeof pricePerTenEp === 'number'
+            ? this._formatCurrencyFromDenomination(pricePerTenEp)
+            : null;
+        const priceDescriptor = formattedPerTenEp && formattedPerTenEp !== 'N/A'
+            ? ` @ ${formattedPerTenEp} / 10 EP`
+            : '';
+
         return `
             <div class="slot-card slot-success">
                 <div class="slot-header">
@@ -484,7 +608,7 @@ export default class TradingUIRenderer {
                     <div class="slot-result">
                         <div class="result-header">
                             <span class="result-label">Result:</span>
-                            <span class="result-value">${cargo.name} (${cargo.category}) - ${totalEp} EP @ ${cargo.currentPrice || cargo.basePrice} GC/10EP</span>
+                                <span class="result-value">${cargo.name} (${cargo.category}) - ${totalEp} EP${priceDescriptor}</span>
                         </div>
                         <div class="merchant-info">
                             <span class="merchant-label">Merchant:</span>
@@ -570,10 +694,12 @@ export default class TradingUIRenderer {
      * @private
      */
     _createSuccessfulCargoCard(cargo) {
+    this._ensureCargoCurrency(cargo);
     const card = document.createElement('div');
 
     const availableEp = Math.max(0, cargo.totalEP ?? cargo.quantity ?? 0);
     const isSoldOut = availableEp <= 0;
+    const defaultTotalPriceDisplay = this._formatCurrencyFromDenomination(0, '0');
 
     // Check if cargo is contraband
     const isContraband = cargo.slotInfo?.contraband?.contraband === true;
@@ -597,11 +723,11 @@ export default class TradingUIRenderer {
                 </div>
                 <div class="price-info">
                     <span class="price-label">Price per EP:</span>
-                    <span class="price-value">${this._formatPricePerEP(cargo)} GC</span>
+                    <span class="price-value">${this._formatPricePerEP(cargo)}</span>
                 </div>
                 <div class="price-info">
                     <span class="price-label">Total Price:</span>
-                    <span class="price-value">${this._formatTotalPrice(cargo)} GC</span>
+                    <span class="price-value">${this._formatTotalPrice(cargo)}</span>
                 </div>
                 <div class="price-info">
                     <span class="price-label">Quality:</span>
@@ -675,7 +801,7 @@ export default class TradingUIRenderer {
                         </button>
                         <div class="total-price-display">
                             <span class="total-price-label">Total Cost:</span>
-                            <span class="total-price-value">0.00 GC</span>
+                            <span class="total-price-value">${defaultTotalPriceDisplay}</span>
                         </div>
                     </div>
                 </div>
@@ -718,7 +844,14 @@ export default class TradingUIRenderer {
             const discountMultiplier = 1 + (discountPercent / 100);
             const adjustedPricePerEP = pricePerEP * discountMultiplier;
             const totalPrice = quantity * adjustedPricePerEP;
-            totalPriceValue.textContent = totalPrice.toFixed(2) + ' GC';
+            const formattedTotal = this._formatCurrencyFromDenomination(totalPrice, this._formatCurrencyFromDenomination(0, '0'));
+            totalPriceValue.textContent = formattedTotal;
+            const canonicalTotal = this._convertDenominationToCanonical(totalPrice);
+            if (canonicalTotal !== null && totalPriceValue.dataset) {
+                totalPriceValue.dataset.canonicalValue = String(canonicalTotal);
+            } else if (totalPriceValue.dataset && totalPriceValue.dataset.canonicalValue) {
+                delete totalPriceValue.dataset.canonicalValue;
+            }
             
             // Enable/disable purchase button based on quantity
             purchaseBtn.disabled = quantity <= 0;
@@ -769,7 +902,7 @@ export default class TradingUIRenderer {
             purchaseBtn.innerHTML = '<i class="fas fa-times"></i> Sold Out';
             purchaseBtn.classList.remove('btn-success');
             purchaseBtn.classList.add('btn-secondary');
-            totalPriceValue.textContent = '0.00 GC';
+            totalPriceValue.textContent = this._formatCurrencyFromDenomination(0, '0');
             return;
         }
 
@@ -851,7 +984,7 @@ export default class TradingUIRenderer {
         const roundedTotalCost = parseFloat(totalCost.toFixed(2));
         
         // Add transaction to history
-        const transaction = {
+        const transaction = this._augmentTransaction({
             cargo: cargo.name,
             category: cargo.category || 'Goods',
             quantity: purchaseQuantity,
@@ -864,7 +997,7 @@ export default class TradingUIRenderer {
             isSale: false,
             contraband: cargo.slotInfo?.contraband?.contraband || false,
             isManualEntry: false
-        };
+        });
         
         // Add to transaction history
         if (!this.app.transactionHistory) {
@@ -894,10 +1027,11 @@ export default class TradingUIRenderer {
         }
         
         // Show success notification
+        const formattedTotalCost = transaction.formattedTotalCost || `${roundedTotalCost.toFixed(2)} ${this._getCurrencyLabel()}`;
         if (ui && ui.notifications) {
-            ui.notifications.success(`Purchased ${purchaseQuantity} EP of ${cargo.name} for ${roundedTotalCost.toFixed(2)} GC${discountPercent !== 0 ? ` (${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment)` : ''}`);
+            ui.notifications.success(`Purchased ${purchaseQuantity} EP of ${cargo.name} for ${formattedTotalCost}${discountPercent !== 0 ? ` (${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment)` : ''}`);
         } else {
-            console.log(`✅ Purchase successful: ${purchaseQuantity} EP of ${cargo.name} for ${roundedTotalCost.toFixed(2)} GC`);
+            console.log(`✅ Purchase successful: ${purchaseQuantity} EP of ${cargo.name} for ${formattedTotalCost}`);
         }
         
         this._applyPurchaseToAvailability(cargo, purchaseQuantity, pricePerEP);
@@ -966,6 +1100,8 @@ export default class TradingUIRenderer {
             if (entry.isSoldOut) {
                 entry.soldOutMessage = entry.soldOutMessage || 'Merchant sold out';
             }
+
+            this._ensureCargoCurrency(entry);
         };
 
         const slotNumber = cargo.slotInfo?.slotNumber ?? cargo.slotNumber ?? null;
@@ -1007,6 +1143,7 @@ export default class TradingUIRenderer {
                 if (pipelineSlot.pricing) {
                     pipelineSlot.pricing.quantity = remainingEp;
                     pipelineSlot.pricing.totalValue = parseFloat((remainingEp * pricePerEP).toFixed(2));
+                    pipelineSlot.pricing = this._ensurePricingCurrency(pipelineSlot.pricing, remainingEp) || pipelineSlot.pricing;
                 }
                 pipelineSlot.merchant = pipelineSlot.merchant || {};
                 pipelineSlot.merchant.available = remainingEp > 0;
@@ -1028,6 +1165,8 @@ export default class TradingUIRenderer {
             cargo.soldOutMessage = cargo.soldOutMessage || 'Merchant sold out';
         }
         cargo.totalValue = parseFloat((remainingEp * pricePerEP).toFixed(2));
+
+        this._ensureCargoCurrency(cargo);
     }
 
     /**
@@ -1112,23 +1251,70 @@ export default class TradingUIRenderer {
     }
 
     _formatPricePerEP(cargo) {
-        const price = cargo.currentPrice ?? cargo.basePrice ?? cargo.slotInfo?.pricing?.finalPricePerEP;
-        if (typeof price === 'number') {
-            return price.toFixed(2);
+        if (!cargo) {
+            return 'N/A';
         }
+
+        this._ensureCargoCurrency(cargo);
+
+        if (typeof cargo.formattedPricePerEP === 'string') {
+            return cargo.formattedPricePerEP;
+        }
+
+        const pricing = cargo.slotInfo?.pricing;
+        if (pricing?.formattedFinalPricePerEP) {
+            return pricing.formattedFinalPricePerEP;
+        }
+
+        if (typeof cargo.currentPriceCanonical === 'number') {
+            return this._formatCurrencyFromCanonical(cargo.currentPriceCanonical);
+        }
+
+        if (pricing && typeof pricing.finalPricePerEPCanonical === 'number') {
+            return this._formatCurrencyFromCanonical(pricing.finalPricePerEPCanonical);
+        }
+
+        const price = pricing?.finalPricePerEP ?? cargo.currentPrice ?? cargo.basePrice;
+        if (typeof price === 'number') {
+            return this._formatCurrencyFromDenomination(price);
+        }
+
         return 'N/A';
     }
 
     _formatTotalPrice(cargo) {
-        const totalValue = cargo.slotInfo?.pricing?.totalValue ?? cargo.totalValue;
-        if (typeof totalValue === 'number') {
-            return totalValue.toFixed(2);
+        if (!cargo) {
+            return 'N/A';
         }
 
-        const pricePerEp = cargo.currentPrice ?? cargo.basePrice ?? cargo.slotInfo?.pricing?.finalPricePerEP;
-        const availableEp = cargo.totalEP ?? cargo.quantity ?? cargo.slotInfo?.amount?.totalEP;
+        this._ensureCargoCurrency(cargo);
+
+        if (typeof cargo.formattedTotalValue === 'string') {
+            return cargo.formattedTotalValue;
+        }
+
+        const pricing = cargo.slotInfo?.pricing;
+        if (pricing?.formattedTotalValue) {
+            return pricing.formattedTotalValue;
+        }
+
+        if (typeof cargo.totalValueCanonical === 'number') {
+            return this._formatCurrencyFromCanonical(cargo.totalValueCanonical);
+        }
+
+        if (pricing && typeof pricing.totalValueCanonical === 'number') {
+            return this._formatCurrencyFromCanonical(pricing.totalValueCanonical);
+        }
+
+        const totalValue = pricing?.totalValue ?? cargo.totalValue;
+        if (typeof totalValue === 'number') {
+            return this._formatCurrencyFromDenomination(totalValue);
+        }
+
+        const pricePerEp = pricing?.finalPricePerEP ?? cargo.currentPrice ?? cargo.basePrice;
+        const availableEp = cargo.totalEP ?? cargo.quantity ?? pricing?.quantity ?? cargo.slotInfo?.amount?.totalEP;
         if (typeof pricePerEp === 'number' && typeof availableEp === 'number') {
-            return (pricePerEp * availableEp).toFixed(2);
+            return this._formatCurrencyFromDenomination(pricePerEp * availableEp);
         }
 
         return 'N/A';

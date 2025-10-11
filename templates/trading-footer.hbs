@@ -11,11 +11,11 @@
                         <div class="transaction-item">
                             <div class="transaction-info">
                                 <span class="transaction-type">{{type}}</span>
-                                <span class="transaction-cargo">{{cargoType}} ({{quantity}} EP)</span>
-                                <span class="transaction-price">{{price}} GC</span>
+                                <span class="transaction-cargo">{{cargo}} ({{quantity}} EP)</span>
+                                <span class="transaction-price">{{formattedTotalCost}}</span>
                                 <span class="transaction-settlement">{{settlement}}</span>
                             </div>
-                            <div class="transaction-timestamp">{{timestamp}}</div>
+                            <div class="transaction-timestamp">{{date}}</div>
                         </div>
                     {{/each}}
                 {{else}}

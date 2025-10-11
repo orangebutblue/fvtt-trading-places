@@ -16,6 +16,109 @@ class ConfigValidator {
         };
         this.isFoundryEnvironment = typeof game !== 'undefined';
         this.moduleId = "trading-places";
+        this.datasetPointer = null;
+        this.datasetPointerPath = `modules/${this.moduleId}/datasets/system-pointer.json`;
+    }
+
+    static get SETTLEMENT_FILES() {
+        return [
+            'Averland.json', 'Hochland.json', 'Middenland.json', 'Moot.json',
+            'Nordland.json', 'Ostermark.json', 'Ostland.json', 'Reikland.json',
+            'Stirland.json', 'Sudenland.json', 'Sylvania.json', 'Talabecland.json',
+            'Wasteland.json', 'Wissenland.json'
+        ];
+    }
+
+    async loadDatasetPointer() {
+        if (this.datasetPointer) {
+            return this.datasetPointer;
+        }
+
+        try {
+            if (typeof fetch !== 'undefined') {
+                const response = await fetch(this.datasetPointerPath, { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(`Failed to load dataset pointer: ${response.status} ${response.statusText}`);
+                }
+                this.datasetPointer = await response.json();
+            } else {
+                // eslint-disable-next-line global-require, import/no-dynamic-require
+                this.datasetPointer = require('../datasets/system-pointer.json');
+            }
+        } catch (error) {
+            this.datasetPointer = {
+                activeSystem: 'wfrp4e',
+                systems: [
+                    {
+                        id: 'wfrp4e',
+                        path: 'wfrp4e',
+                        label: 'Warhammer Fantasy Roleplay 4th Edition'
+                    }
+                ],
+                error
+            };
+        }
+
+        return this.datasetPointer;
+    }
+
+    getDatasetEntry(pointer, datasetId) {
+        if (!pointer) {
+            return null;
+        }
+
+        const systems = Array.isArray(pointer.systems) ? pointer.systems : [];
+        const directMatch = systems.find(system =>
+            system.id === datasetId ||
+            system.path === datasetId ||
+            system.name === datasetId ||
+            system.label === datasetId
+        );
+
+        if (directMatch) {
+            return directMatch;
+        }
+
+        if (typeof datasetId === 'string' && datasetId.endsWith('-default')) {
+            const normalizedId = datasetId.replace(/-default$/, '');
+            return systems.find(system =>
+                system.id === normalizedId ||
+                system.path === normalizedId ||
+                system.name === normalizedId ||
+                system.label === normalizedId
+            ) || null;
+        }
+
+        return null;
+    }
+
+    async resolveActiveDatasetId() {
+        let datasetFromSettings = null;
+
+        if (this.isFoundryEnvironment && game?.settings) {
+            try {
+                datasetFromSettings = await game.settings.get(this.moduleId, 'activeDataset');
+            } catch (error) {
+                // Ignore settings access issues outside Foundry or when setting missing.
+            }
+        }
+
+        if (datasetFromSettings) {
+            return datasetFromSettings;
+        }
+
+        const pointer = await this.loadDatasetPointer();
+        return pointer?.activeSystem || pointer?.activeDataset || pointer?.active || 'wfrp4e';
+    }
+
+    async getDatasetBasePath(datasetId) {
+        const pointer = await this.loadDatasetPointer();
+        const entry = this.getDatasetEntry(pointer, datasetId);
+        const normalizedId = typeof datasetId === 'string' && datasetId.endsWith('-default')
+            ? datasetId.replace(/-default$/, '')
+            : datasetId;
+        const folderName = entry?.path || entry?.id || normalizedId || 'wfrp4e';
+        return `modules/${this.moduleId}/datasets/${folderName}`;
     }
 
     /**
@@ -167,36 +270,120 @@ class ConfigValidator {
             files: {}
         };
 
+        const pointer = await this.loadDatasetPointer();
+        const activeDatasetId = await this.resolveActiveDatasetId();
+        const activeBasePath = await this.getDatasetBasePath(activeDatasetId);
+
         const requiredFiles = [
             {
-                path: 'modules/trading-places/datasets/active/config.json',
-                name: 'Active Dataset Config',
-                required: true
+                path: this.datasetPointerPath,
+                name: 'Dataset Pointer',
+                required: true,
+                type: 'file'
             },
             {
-                path: 'modules/trading-places/datasets/active/settlements.json',
-                name: 'Active Dataset Settlements',
-                required: true
+                path: `${activeBasePath}/config.json`,
+                name: `Active Dataset (${activeDatasetId}) Config`,
+                required: true,
+                type: 'file'
             },
             {
-                path: 'modules/trading-places/datasets/active/cargo-types.json',
-                name: 'Active Dataset Cargo Types',
-                required: true
+                basePath: activeBasePath,
+                name: `Active Dataset (${activeDatasetId}) Settlements`,
+                required: true,
+                type: 'settlements-directory'
             },
             {
-                path: 'modules/trading-places/datasets/wfrp4e-default/config.json',
-                name: 'Default Dataset Config',
-                required: false
+                path: `${activeBasePath}/cargo-types.json`,
+                name: `Active Dataset (${activeDatasetId}) Cargo Types`,
+                required: true,
+                type: 'file'
             },
             {
-                path: 'modules/trading-places/lang/en.json',
+                path: `modules/${this.moduleId}/lang/en.json`,
                 name: 'Language File',
-                required: false
+                required: false,
+                type: 'file'
             }
         ];
 
+        const pointerSystems = Array.isArray(pointer?.systems) ? pointer.systems : [];
+        pointerSystems
+            .filter(system => (system?.id || system?.path) && (system?.id !== activeDatasetId && system?.path !== activeDatasetId))
+            .forEach(system => {
+                const datasetId = system.id || system.path;
+                if (!datasetId) {
+                    return;
+                }
+                const basePath = `modules/${this.moduleId}/datasets/${system.path || system.id}`;
+                const label = system.label || datasetId;
+
+                requiredFiles.push(
+                    {
+                        path: `${basePath}/config.json`,
+                        name: `${label} Dataset Config`,
+                        required: false,
+                        type: 'file'
+                    },
+                    {
+                        basePath: basePath,
+                        name: `${label} Dataset Settlements`,
+                        required: false,
+                        type: 'settlements-directory'
+                    },
+                    {
+                        path: `${basePath}/cargo-types.json`,
+                        name: `${label} Dataset Cargo Types`,
+                        required: false,
+                        type: 'file'
+                    }
+                );
+            });
+
         for (const file of requiredFiles) {
             try {
+                if (file.type === 'settlements-directory') {
+                    const settlementsResult = await this.loadSettlementsDirectory(file.basePath, { required: file.required });
+                    result.files[file.name] = settlementsResult;
+
+                    if (!settlementsResult.accessible) {
+                        const message = `Settlement data not accessible: ${file.name} (${file.basePath}/settlements/*.json)`;
+                        if (file.required) {
+                            result.valid = false;
+                            result.errors.push(`Required configuration data not accessible: ${file.name}`);
+                        } else {
+                            result.warnings.push(message);
+                        }
+                    }
+
+                    if (!settlementsResult.validJSON) {
+                        const errorMessage = settlementsResult.parseError || 'Unknown settlements parse error';
+                        if (file.required) {
+                            result.valid = false;
+                            result.errors.push(`Configuration settlements parse error: ${file.name} - ${errorMessage}`);
+                        } else {
+                            result.warnings.push(`Optional settlements parse issue: ${file.name} - ${errorMessage}`);
+                        }
+                    }
+
+                    if (settlementsResult.missingFiles.length > 0 && file.required) {
+                        result.errors.push(`Missing settlement files: ${settlementsResult.missingFiles.join(', ')}`);
+                    } else if (settlementsResult.missingFiles.length > 0) {
+                        result.warnings.push(`Optional settlement files missing: ${settlementsResult.missingFiles.join(', ')}`);
+                    }
+
+                    if (settlementsResult.invalidFiles.length > 0) {
+                        const message = `Invalid settlement files: ${settlementsResult.invalidFiles.join(', ')}`;
+                        if (file.required) {
+                            result.errors.push(message);
+                        } else {
+                            result.warnings.push(message);
+                        }
+                    }
+
+                    continue;
+                }
+
                 const fileResult = await this.validateConfigFile(file.path, file.name);
                 result.files[file.name] = fileResult;
 
@@ -271,6 +458,96 @@ class ConfigValidator {
         }
 
         return result;
+    }
+
+    async loadSettlementsDirectory(basePath, { required = true } = {}) {
+        const directoryResult = {
+            accessible: false,
+            validJSON: false,
+            parseError: null,
+            content: { settlements: [] },
+            size: 0,
+            files: {},
+            missingFiles: [],
+            invalidFiles: []
+        };
+
+        let firstError = null;
+
+        for (const fileName of ConfigValidator.SETTLEMENT_FILES) {
+            const settlementPath = `${basePath}/settlements/${fileName}`;
+            const fileResult = await this.validateConfigFile(settlementPath, fileName);
+            directoryResult.files[fileName] = fileResult;
+
+            if (!fileResult.accessible) {
+                directoryResult.missingFiles.push(fileName);
+                if (!firstError && fileResult.parseError) {
+                    firstError = `${fileName}: ${fileResult.parseError}`;
+                }
+                continue;
+            }
+
+            directoryResult.accessible = true;
+            directoryResult.size += fileResult.size;
+
+            if (!fileResult.validJSON) {
+                directoryResult.invalidFiles.push(`${fileName}${fileResult.parseError ? `: ${fileResult.parseError}` : ''}`.trim());
+                if (!firstError && fileResult.parseError) {
+                    firstError = `${fileName}: ${fileResult.parseError}`;
+                }
+                continue;
+            }
+
+            if (!Array.isArray(fileResult.content)) {
+                directoryResult.invalidFiles.push(`${fileName}: Expected an array of settlements`);
+                if (!firstError) {
+                    firstError = `${fileName}: Expected an array of settlements`;
+                }
+                continue;
+            }
+
+            directoryResult.validJSON = true;
+            directoryResult.content.settlements.push(...fileResult.content);
+        }
+
+        if (!directoryResult.validJSON) {
+            const aggregatedPath = `${basePath}/settlements.json`;
+            const aggregatedResult = await this.validateConfigFile(aggregatedPath, 'aggregated-settlements');
+
+            if (aggregatedResult.accessible && aggregatedResult.validJSON) {
+                const aggregatedContent = Array.isArray(aggregatedResult.content)
+                    ? { settlements: aggregatedResult.content }
+                    : aggregatedResult.content;
+
+                if (Array.isArray(aggregatedContent?.settlements)) {
+                    directoryResult.accessible = true;
+                    directoryResult.validJSON = true;
+                    directoryResult.parseError = null;
+                    directoryResult.content = {
+                        settlements: [...aggregatedContent.settlements]
+                    };
+                    directoryResult.missingFiles = [];
+                    directoryResult.invalidFiles = [];
+                    directoryResult.files = {
+                        aggregated: aggregatedResult
+                    };
+                }
+            }
+        }
+
+        if (!directoryResult.validJSON) {
+            if (firstError) {
+                directoryResult.parseError = firstError;
+            } else if (required) {
+                directoryResult.parseError = 'No settlement files could be loaded';
+            }
+        }
+
+        if (!directoryResult.accessible && !directoryResult.parseError && required) {
+            directoryResult.parseError = 'Settlement directory not accessible';
+        }
+
+        return directoryResult;
     }
 
     /**
@@ -408,31 +685,58 @@ class ConfigValidator {
         };
 
         try {
-            // Get active dataset name
-            const activeDataset = this.isFoundryEnvironment ? 
-                game.settings.get(this.moduleId, "activeDataset") : 
-                "wfrp4e-default";
-
-            // Validate active dataset
-            const activeValidation = await this.validateSingleDataset(activeDataset);
-            result.datasets[activeDataset] = activeValidation;
-
-            if (!activeValidation.valid) {
-                result.valid = false;
-                result.errors.push(`Active dataset '${activeDataset}' validation failed:`);
-                result.errors.push(...activeValidation.errors.map(err => `  - ${err}`));
+            const pointer = await this.loadDatasetPointer();
+            const activeDatasetId = await this.resolveActiveDatasetId();
+            const pointerSystems = Array.isArray(pointer?.systems) ? pointer.systems : [];
+            if (pointer && pointer.error) {
+                const pointerError = pointer.error?.message || pointer.error?.toString?.() || 'Unknown error';
+                result.warnings.push(`Dataset pointer load encountered an issue: ${pointerError}. Falling back to default dataset configuration.`);
             }
-            result.warnings.push(...activeValidation.warnings);
+            const activeEntry = this.getDatasetEntry(pointer, activeDatasetId) || {
+                id: activeDatasetId,
+                path: activeDatasetId,
+                label: activeDatasetId
+            };
 
-            // Validate default dataset if different from active
-            if (activeDataset !== "wfrp4e-default") {
-                const defaultValidation = await this.validateSingleDataset("wfrp4e-default");
-                result.datasets["wfrp4e-default"] = defaultValidation;
+            const datasetsToValidate = [activeEntry];
 
-                if (!defaultValidation.valid) {
-                    result.warnings.push(`Default dataset 'wfrp4e-default' validation failed:`);
-                    result.warnings.push(...defaultValidation.errors.map(err => `  - ${err}`));
+            pointerSystems.forEach(system => {
+                const identifier = system.id || system.path;
+                if (!identifier) {
+                    return;
                 }
+
+                const alreadyIncluded = datasetsToValidate.some(existing => {
+                    const existingId = existing.id || existing.path;
+                    return existingId === identifier;
+                });
+
+                if (!alreadyIncluded) {
+                    datasetsToValidate.push(system);
+                }
+            });
+
+            for (const dataset of datasetsToValidate) {
+                const datasetId = dataset.id || dataset.path;
+                const datasetLabel = dataset.label || datasetId;
+                const basePath = `modules/${this.moduleId}/datasets/${dataset.path || datasetId}`;
+                const validation = await this.validateSingleDataset(datasetId, basePath);
+
+                result.datasets[datasetLabel] = validation;
+
+                if (!validation.valid) {
+                    const prefix = datasetId === activeDatasetId ? 'Active' : 'Additional';
+                    const collection = datasetId === activeDatasetId ? result.errors : result.warnings;
+
+                    if (datasetId === activeDatasetId) {
+                        result.valid = false;
+                    }
+
+                    collection.push(`${prefix} dataset '${datasetLabel}' validation failed:`);
+                    collection.push(...validation.errors.map(err => `  - ${err}`));
+                }
+
+                result.warnings.push(...validation.warnings);
             }
 
         } catch (error) {
@@ -448,7 +752,7 @@ class ConfigValidator {
      * @param {string} datasetName - Name of the dataset to validate
      * @returns {Promise<Object>} - Dataset validation result
      */
-    async validateSingleDataset(datasetName) {
+    async validateSingleDataset(datasetName, basePathOverride = null) {
         const result = {
             valid: true,
             errors: [],
@@ -458,12 +762,12 @@ class ConfigValidator {
         };
 
         try {
-            const basePath = `modules/trading-places/datasets/${datasetName}`;
-            
+            const basePath = basePathOverride || `modules/${this.moduleId}/datasets/${datasetName}`;
+
             // Load dataset files
             const files = {
                 config: await this.validateConfigFile(`${basePath}/config.json`, 'config'),
-                settlements: await this.validateConfigFile(`${basePath}/settlements.json`, 'settlements'),
+                settlements: await this.loadSettlementsDirectory(basePath, { required: true }),
                 cargoTypes: await this.validateConfigFile(`${basePath}/cargo-types.json`, 'cargo-types')
             };
 
@@ -471,13 +775,24 @@ class ConfigValidator {
 
             // Check file accessibility
             for (const [fileName, fileResult] of Object.entries(files)) {
+                const label = fileName === 'settlements' ? 'settlements directory' : `${fileName}.json`;
                 if (!fileResult.accessible) {
                     result.valid = false;
-                    result.errors.push(`Dataset file not accessible: ${fileName}.json`);
+                    result.errors.push(`Dataset file not accessible: ${label}`);
                 } else if (!fileResult.validJSON) {
                     result.valid = false;
-                    result.errors.push(`Dataset file invalid JSON: ${fileName}.json - ${fileResult.parseError}`);
+                    result.errors.push(`Dataset file invalid JSON: ${label} - ${fileResult.parseError}`);
                 }
+            }
+
+            if (files.settlements?.missingFiles?.length) {
+                result.valid = false;
+                result.errors.push(`Missing settlement files: ${files.settlements.missingFiles.join(', ')}`);
+            }
+
+            if (files.settlements?.invalidFiles?.length) {
+                result.valid = false;
+                result.errors.push(`Invalid settlement files: ${files.settlements.invalidFiles.join(', ')}`);
             }
 
             // If files are accessible, validate content structure
@@ -589,9 +904,15 @@ class ConfigValidator {
 
         // Validate currency config
         if (config.currency) {
-            if (!config.currency.field || typeof config.currency.field !== 'string') {
+            const currency = config.currency;
+            if (!currency.canonicalUnit || typeof currency.canonicalUnit.value !== 'number') {
                 result.valid = false;
-                result.errors.push('Config currency.field must be a non-empty string');
+                result.errors.push('Config currency.canonicalUnit.value must be numeric');
+            }
+
+            if (!Array.isArray(currency.denominations) || currency.denominations.length === 0) {
+                result.valid = false;
+                result.errors.push('Config currency.denominations must be a non-empty array');
             }
         }
 
@@ -626,7 +947,7 @@ class ConfigValidator {
         }
 
         const regionSet = new Set();
-        const requiredFields = ['region', 'name', 'size', 'ruler', 'population', 'wealth', 'source', 'garrison', 'notes'];
+    const requiredFields = ['region', 'name', 'size', 'ruler', 'population', 'wealth', 'garrison', 'notes'];
 
         settlements.settlements.forEach((settlement, index) => {
             // Check required fields
@@ -655,9 +976,13 @@ class ConfigValidator {
                 result.errors.push(`Settlement ${index} (${settlement.name || 'unnamed'}): Wealth must be a number between 1-5`);
             }
 
-            if (settlement.source !== undefined && !Array.isArray(settlement.source)) {
+            const productionList = settlement.source ?? settlement.produces;
+            if (productionList === undefined) {
                 result.valid = false;
-                result.errors.push(`Settlement ${index} (${settlement.name || 'unnamed'}): Source must be an array`);
+                result.errors.push(`Settlement ${index} (${settlement.name || 'unnamed'}): Missing produces/source array`);
+            } else if (!Array.isArray(productionList)) {
+                result.valid = false;
+                result.errors.push(`Settlement ${index} (${settlement.name || 'unnamed'}): Production list must be an array`);
             }
         });
 

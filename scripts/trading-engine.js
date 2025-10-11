@@ -14,6 +14,23 @@ function safeRequire(path) {
     return null;
 }
 
+let CachedHagglingMechanicsClass = null;
+
+function resolveHagglingMechanicsClass() {
+    if (typeof window !== 'undefined' && window.HagglingMechanics) {
+        return window.HagglingMechanics;
+    }
+
+    if (!CachedHagglingMechanicsClass) {
+        const module = safeRequire('./haggling-mechanics.js');
+        if (module) {
+            CachedHagglingMechanicsClass = module.HagglingMechanics || module.default || module;
+        }
+    }
+
+    return CachedHagglingMechanicsClass;
+}
+
 /**
  * Trading Places Module - Trading Engine
  * Pure business logic implementation of WFRP trading algorithms
@@ -89,6 +106,46 @@ class TradingEngine {
             logAlgorithmStep: () => {},
             logSystem: () => {}
         };
+    }
+
+    getHagglingMechanics(options = {}) {
+        if (this.hagglingMechanics) {
+            return this.hagglingMechanics;
+        }
+
+        const HagglingMechanicsClass = resolveHagglingMechanicsClass();
+        if (!HagglingMechanicsClass) {
+            throw new Error('Haggling mechanics module not available');
+        }
+
+        const tradingConfig = options.tradingConfig || this.dataManager?.tradingConfig || this.dataManager?.config || {};
+        this.hagglingMechanics = new HagglingMechanicsClass(this.dataManager, tradingConfig);
+
+        if (this.logger && typeof this.hagglingMechanics.setLogger === 'function') {
+            this.hagglingMechanics.setLogger(this.logger);
+        }
+
+        return this.hagglingMechanics;
+    }
+
+    async performHaggleTest(playerSkill, merchantSkill, hasDealmakerTalent = false, options = {}, rollFunction = null) {
+        const mechanics = this.getHagglingMechanics(options);
+        return mechanics.performHaggleTest(playerSkill, merchantSkill, hasDealmakerTalent, options, rollFunction);
+    }
+
+    async performGossipTest(playerSkill, options = {}, rollFunction = null) {
+        const mechanics = this.getHagglingMechanics(options);
+        return mechanics.performGossipTest(playerSkill, options, rollFunction);
+    }
+
+    generateHaggleTestMessage(haggleResult, options = {}) {
+        const mechanics = this.getHagglingMechanics(options);
+        return mechanics.generateHaggleTestMessage(haggleResult);
+    }
+
+    generateSkillTestMessage(testResult, options = {}) {
+        const mechanics = this.getHagglingMechanics(options);
+        return mechanics.generateSkillTestMessage(testResult);
     }
 
     _normalizeSeason(season) {
@@ -1686,6 +1743,11 @@ class TradingEngine {
 // Export for use in other modules
 console.log('DEBUG: About to export TradingEngine, type:', typeof TradingEngine);
 export { TradingEngine };
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = TradingEngine;
+    module.exports.TradingEngine = TradingEngine;
+}
 
 // Global registration for FoundryVTT
 if (typeof window !== 'undefined') {

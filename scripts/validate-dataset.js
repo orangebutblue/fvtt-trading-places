@@ -263,8 +263,13 @@ class DatasetValidator {
 
             // Validate currency configuration
             if (config.currency) {
-                if (!config.currency.field) {
-                    this.errors.push('config.json: Currency field path not specified');
+                const currency = config.currency;
+                if (!currency.canonicalUnit || typeof currency.canonicalUnit.value !== 'number') {
+                    this.errors.push('config.json: currency.canonicalUnit.value must be numeric');
+                }
+
+                if (!Array.isArray(currency.denominations) || currency.denominations.length === 0) {
+                    this.errors.push('config.json: currency.denominations must be a non-empty array');
                 }
             }
 
