@@ -4,85 +4,134 @@
       "name": "Grain",
       "category": "Bulk Goods",
       "description": "A collective term for all kinds of agricultural products (fish, barley, wheat, legumes, root vegetables, dried meat). The price is lowest at harvest time.",
+      "basePrices": {
+        "spring": 1,
+        "summer": 0.5,
+        "autumn": 0.25,
+        "winter": 0.5
+      },
       "basePrice": 1,
       "seasonalModifiers": {
         "spring": 1,
         "summer": 0.5,
         "autumn": 0.25,
         "winter": 0.5
-      }
+      },
+      "encumbrancePerUnit": 10
     },
     {
       "name": "Armaments",
       "category": "Military",
       "description": "Finished weapons and armor for militias or standing armies (typically hand weapons, leather armor, bolts).",
+      "basePrices": {
+        "spring": 12,
+        "summer": 9.96,
+        "autumn": 8.04,
+        "winter": 9.96
+      },
       "basePrice": 12,
       "seasonalModifiers": {
         "spring": 1,
         "summer": 0.83,
         "autumn": 0.67,
         "winter": 0.83
-      }
+      },
+      "encumbrancePerUnit": 10
     },
     {
       "name": "Luxuries",
       "category": "Luxury Goods",
       "description": "A collective term for locally produced (textiles, pottery, glass, bricks) or imported luxury goods (spices, silks).",
+      "basePrices": {
+        "spring": 50,
+        "summer": 50,
+        "autumn": 50,
+        "winter": 50
+      },
       "basePrice": 50,
       "seasonalModifiers": {
         "spring": 1,
         "summer": 1,
         "autumn": 1,
         "winter": 1
-      }
+      },
+      "encumbrancePerUnit": 10
     },
     {
       "name": "Metal",
       "category": "Raw Materials",
       "description": "Valuable ore or processed bars (copper, iron, steel). The price is generally stable throughout the year.",
+      "basePrices": {
+        "spring": 8,
+        "summer": 8,
+        "autumn": 8,
+        "winter": 8
+      },
       "basePrice": 8,
       "seasonalModifiers": {
         "spring": 1,
         "summer": 1,
         "autumn": 1,
         "winter": 1
-      }
+      },
+      "encumbrancePerUnit": 10
     },
     {
       "name": "Timber",
       "category": "Raw Materials",
       "description": "Building materials from the great forests of the Empire.",
+      "basePrices": {
+        "spring": 3,
+        "summer": 1.5,
+        "autumn": 2.01,
+        "winter": 3.51
+      },
       "basePrice": 3,
       "seasonalModifiers": {
         "spring": 1,
         "summer": 0.5,
         "autumn": 0.67,
         "winter": 1.17
-      }
+      },
+      "encumbrancePerUnit": 10
     },
     {
       "name": "Wine/Brandy",
       "category": "Luxury Goods",
       "description": "Products with widely varying quality and reputation. The price is determined by separate quality tiers.",
+      "basePrices": {
+        "spring": 3,
+        "summer": 3,
+        "autumn": 3,
+        "winter": 3
+      },
       "basePrice": 3,
       "seasonalModifiers": {
         "spring": 1,
         "summer": 1,
         "autumn": 1,
         "winter": 1
-      }
+      },
+      "encumbrancePerUnit": 10
     },
     {
       "name": "Trade Goods",
       "category": "Trade",
       "description": "Generic trade goods available at trade settlements, including spices, silks, and other imported luxury items.",
+      "basePrices": {
+        "spring": 25,
+        "summer": 25,
+        "autumn": 25,
+        "winter": 25
+      },
       "basePrice": 25,
       "seasonalModifiers": {
         "spring": 1,
         "summer": 1,
         "autumn": 1,
         "winter": 1
-      }
+      },
+      "encumbrancePerUnit": 10
     }
   ]
 }

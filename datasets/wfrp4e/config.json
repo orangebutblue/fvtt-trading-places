@@ -1,0 +1,48 @@
+{
+  "systemName": "wfrp4e",
+  "minimumSystemVersion": "7.0.0",
+  "currency": {
+    "canonicalUnit": {
+      "name": "Brass Penny",
+      "abbreviation": "BP",
+      "value": 1
+    },
+    "denominations": [
+      {
+        "name": "Gold Crown",
+        "pluralName": "Gold Crowns",
+        "abbreviation": "GC",
+        "value": 240
+      },
+      {
+        "name": "Silver Shilling",
+        "pluralName": "Silver Shillings",
+        "abbreviation": "SS",
+        "value": 12
+      },
+      {
+        "name": "Brass Penny",
+        "pluralName": "Brass Pennies",
+        "abbreviation": "BP",
+        "value": 1
+      }
+    ],
+    "rounding": "nearest",
+    "display": {
+      "order": ["GC", "SS", "BP"],
+      "includeZeroDenominations": false,
+      "separator": " "
+    }
+  },
+  "inventory": {
+    "field": "items",
+    "addMethod": "createEmbeddedDocuments"
+  },
+  "skills": {
+    "haggle": "system.skills.haggle.total",
+    "gossip": "system.skills.gossip.total"
+  },
+  "talents": {
+    "dealmaker": "system.talents.dealmaker"
+  }
+}
