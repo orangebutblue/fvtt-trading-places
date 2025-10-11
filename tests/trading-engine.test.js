@@ -120,7 +120,7 @@ class MockDataManager {
 let TradingEngine;
 if (typeof require !== 'undefined') {
     try {
-        TradingEngine = require('../scripts/trading-engine.js');
+        TradingEngine = require('../scripts/trading-engine.js').TradingEngine;
         console.log('TradingEngine loaded successfully');
     } catch (error) {
         console.error('Failed to load TradingEngine:', error.message);

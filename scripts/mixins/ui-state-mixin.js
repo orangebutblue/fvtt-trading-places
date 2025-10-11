@@ -152,6 +152,14 @@ const UIStateMixin = {
                 });
             }
 
+            if (Array.isArray(this.sellerOffers) && this.eventHandlers?.sellingFlow) {
+                try {
+                    await this.eventHandlers.sellingFlow._displaySellerResults(this.sellerOffers, { notify: false });
+                } catch (error) {
+                    console.warn('Trading Places | Failed to restore seller results:', error);
+                }
+            }
+
             // Update UI state
             this._updateUIState();
 

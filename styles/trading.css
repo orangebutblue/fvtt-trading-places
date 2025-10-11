@@ -2556,3 +2556,50 @@
     transform: translateY(0);
 }
 
+/* Minimal cargo list for selling tab */
+.wfrp-trading .cargo-minimal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.wfrp-trading .cargo-minimal-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.wfrp-trading .cargo-minimal-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.wfrp-trading .cargo-minimal-quantity {
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* Selling interface styling */
+.wfrp-trading .cargo-selling-interface {
+    margin-top: 16px;
+}
+
+.wfrp-trading .selling-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Make selling tab current cargo header smaller */
+.wfrp-trading #selling-tab .current-cargo-section h6 {
+    font-size: 0.9em !important;
+    margin: 4px 0 !important;
+    font-weight: 400 !important;
+}
+

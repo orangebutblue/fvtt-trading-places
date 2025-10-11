@@ -60,7 +60,9 @@ export default class TradingUIRenderer {
 
         // Attach tooltip handlers for settlement info
         this._attachSettlementInfoTooltips();
-    }    /**
+    }
+
+    /**
      * Update transaction button states based on current context
      * @private
      */
@@ -136,8 +138,7 @@ export default class TradingUIRenderer {
         console.log('🔍 DEBUG: Found info indicators:', infoIndicators.length);
 
         infoIndicators.forEach((indicator, index) => {
-            // Remove existing listeners to avoid duplicates
-            indicator.removeEventListener('click', this._handleInfoIndicatorClick);
+            // Remove existing listeners to avoid duplicates is unnecessary for inline handlers
             // Add the click handler with proper binding
             indicator.addEventListener('click', (event) => {
                 console.log('🔍 DEBUG: Info indicator clicked:', index, event.target.dataset.infoTooltip);
@@ -150,70 +151,6 @@ export default class TradingUIRenderer {
         });
     }
 
-    /**
-     * Get tooltip text for transaction buttons
-     * @param {string} buttonType - Type of button
-     * @param {boolean} hasSettlement - Whether settlement is selected
-     * @param {boolean} hasCargo - Whether cargo is available
-     * @param {boolean} hasSeason - Whether season is set
-     * @param {boolean} isTradeSettlement - Whether settlement is a trade center
-     * @returns {string} - Tooltip text
-     * @private
-     */
-    _getButtonTooltip(buttonType, hasSettlement, hasTradableCargo, hasSeason, isTradeSettlement = false) {
-        if (!hasSeason) {
-            return 'Please set the current season first';
-        }
-        if (!hasSettlement) {
-            return 'Please select a settlement first';
-        }
-
-        switch (buttonType) {
-            case 'haggle':
-                return hasTradableCargo ? 'Attempt to negotiate better prices' : 'Check cargo availability first';
-            case 'sale':
-                return 'Sell cargo from inventory';
-            case 'desperate_sale':
-                return isTradeSettlement
-                    ? 'Sell at 50% price (Trade settlements only)'
-                    : 'Only available at Trade settlements';
-            case 'rumor_sale':
-                return 'Attempt to find premium buyers (requires Gossip test)';
-            default:
-                return '';
-        }
-    }
-
-    /**
-     * Create an info indicator HTML element
-     * @param {string} tooltip - The tooltip text to display
-     * @param {string} extraClass - Additional CSS classes (optional)
-     * @returns {string} - HTML string for the info indicator
-     * @private
-     */
-        _createInfoIndicator(tooltip, classes = 'info-indicator') {
-        return `<span class="${classes}" data-info-tooltip="${tooltip.replace(/"/g, '&quot;')}">?</span>`;
-    }
-
-    /**
-     * Create a tooltip-enabled element
-     * @param {string} text - The display text
-     * @param {string} tooltip - The tooltip text
-     * @param {string} tag - The HTML tag to use (default: 'span')
-     * @param {string} className - Additional CSS classes
-     * @returns {string} - HTML string for the tooltip element
-     */
-    createTooltipElement(text, tooltip, tag = 'span', className = '') {
-        const classes = `tooltip ${className}`.trim();
-        return `<${tag} class="${classes}" data-tooltip="${tooltip}">${text}</${tag}>`;
-    }
-
-    /**
-     * Show detailed availability check results with slot-based organization
-     * @param {Object} completeResult - Complete availability check result
-     * @param {Array} availableCargo - Available cargo for display (empty on failure)
-     * @private
-     */
     _showAvailabilityResults({ availabilityResult, availableCargo = [], pipelineResult = null } = {}) {
         if (!availabilityResult) {
             this._logError('Availability Display', 'No availability result provided');
@@ -236,55 +173,45 @@ export default class TradingUIRenderer {
             buyingTab.appendChild(resultsContainer);
         }
 
-        // Create status banner
         const statusEmoji = this.ICONS.cargo;
-        const statusText = 'Merchants are offering cargo';
+        const statusText = isSuccess ? 'Merchants are offering cargo' : 'No cargo available';
         const statusBanner = `<div class="availability-status-banner">${statusEmoji} ${statusText}</div>`;
 
-        // Market check section (settlement info and overall roll)
         const availabilityCheck = completeResult.availabilityCheck || {};
         const slotOutcomes = Array.isArray(availabilityCheck.rolls) ? availabilityCheck.rolls : [];
         const successfulSlots = slotOutcomes.filter(outcome => outcome.success).length;
         const totalSlots = slotOutcomes.length;
 
-        // Get slot information from pipeline result if available
         let slotExplanation = '';
-        if (pipelineResult && pipelineResult.slots && pipelineResult.slots.length > 0) {
-            // Filter to only successful slots
+        if (pipelineResult && Array.isArray(pipelineResult.slots) && pipelineResult.slots.length > 0) {
             const successfulSlotsData = pipelineResult.slots.filter(slot => slot.merchant?.available !== false);
             const slotDetails = successfulSlotsData.map((slot, index) => {
-                const slotNum = index + 1;
+                const slotNum = slot.slotNumber ?? index + 1;
                 let details = `Slot ${slotNum}: ${slot.cargo?.name || 'Unknown'} (${slot.cargo?.category || 'Unknown'})`;
 
-                // Add merchant availability roll
                 if (slot.merchant?.roll !== undefined && slot.merchant?.target !== undefined) {
                     details += `\n• Merchant Roll: ${slot.merchant.roll} ≤ ${slot.merchant.target} (${slot.merchant.roll <= slot.merchant.target ? 'SUCCESS' : 'FAILED'})`;
                 }
 
-                // Add cargo selection details
                 if (slot.cargo?.roll !== undefined && slot.cargo?.target !== undefined) {
                     details += `\n• Cargo Selection: ${slot.cargo.roll} ≤ ${slot.cargo.target} (${slot.cargo.name})`;
                 }
 
-                // Add amount calculation
                 if (slot.amount) {
                     const amount = slot.amount;
                     details += `\n• Amount: ${amount.roll || 'N/A'} (base) × ${amount.sizeModifier?.toFixed(2) || 'N/A'} (size) × ${amount.wealthModifier?.toFixed(2) || 'N/A'} (wealth) × ${amount.supplyModifier?.toFixed(2) || 'N/A'} (supply) = ${amount.totalEP || 0} EP`;
                 }
 
-                // Add quality calculation
                 if (slot.quality) {
                     const quality = slot.quality;
                     details += `\n• Quality: ${quality.tier || 'Unknown'} (score: ${quality.score?.toFixed(2) || 'N/A'})`;
                 }
 
-                // Add contraband check
                 if (slot.contraband) {
                     const contraband = slot.contraband;
                     details += `\n• Contraband: ${contraband.roll || 'N/A'} ≤ ${contraband.chance?.toFixed(1) || 'N/A'}% (${contraband.contraband ? 'YES' : 'NO'})`;
                 }
 
-                // Add pricing
                 if (slot.pricing) {
                     const pricing = slot.pricing;
                     details += `\n• Pricing: ${pricing.basePricePerEP?.toFixed(2) || 'N/A'} → ${pricing.finalPricePerEP?.toFixed(2) || 'N/A'} GC/EP`;
@@ -293,11 +220,7 @@ export default class TradingUIRenderer {
                 return details;
             }).join('\n\n');
 
-            const tooltipContent = `Availability Check: ${totalSlots} slots rolled, ${successfulSlots} successful
-
-Detailed Slot Results:
-${slotDetails}
-            `.trim();
+            const tooltipContent = `Availability Check: ${totalSlots} slots rolled, ${successfulSlots} successful\n\nDetailed Slot Results:\n${slotDetails}`.trim();
             slotExplanation = `<div class="slot-info">
                 <strong>Successful Slots:</strong>
                 <span class="slot-value">${successfulSlots}/${totalSlots} ${this._createInfoIndicator(tooltipContent)}</span>
@@ -313,11 +236,6 @@ ${slotDetails}
             </section>
         `;
 
-        // Slot-based cargo display - DISABLED since cargo cards are now collapsible
-        let cargoSlotsHtml = '';
-        // The detailed slot information is now shown in the collapsible cargo cards
-        // instead of a separate slot breakdown section
-
         resultsContainer.innerHTML = `
             ${statusBanner}
             ${marketCheckHtml}
@@ -325,12 +243,10 @@ ${slotDetails}
 
         resultsContainer.style.display = 'block';
 
-        // Add click handlers for info indicators in the market check section
         const infoIndicators = resultsContainer.querySelectorAll('.info-indicator');
         infoIndicators.forEach(indicator => {
             indicator.addEventListener('click', (event) => {
                 event.stopPropagation();
-                
                 const tooltip = indicator.dataset.infoTooltip;
                 if (tooltip) {
                     this._showInfoTooltip(tooltip, indicator);
@@ -339,100 +255,13 @@ ${slotDetails}
         });
     }
 
-    /**
-     * Render a detailed slot card with complete pipeline information
-     * @param {Object} slot - Slot data from pipeline
-     * @param {number} slotNumber - Slot number for display
-     * @returns {string} - HTML for the slot card
-     * @private
-     */
-    _renderSlotCard(slot, slotNumber) {
-        const merchant = slot.merchant || {};
-        const cargo = slot.cargo || {};
-        const balance = slot.balance || {};
-        const amount = slot.amount || {};
-        const quality = slot.quality || {};
-        const contraband = slot.contraband || {};
-        const pricing = slot.pricing || {};
-
-        const isSuccessful = merchant.available !== false; // Since merchants are always available now
-        const statusIcon = isSuccessful ? this.ICONS.success : this.ICONS.failure;
-        const statusClass = isSuccessful ? 'slot-success' : 'slot-failure';
-        const statusText = isSuccessful ? 'Active Merchant' : 'No Merchant';
-
-        let slotContent = '';
-
-        if (isSuccessful) {
-            // Successful slot - show complete pipeline
-            const cargoTypeInfo = this._renderCargoTypeSelection(slot);
-            const balanceInfo = this._renderSupplyDemandBalance(slot);
-            const amountInfo = this._renderAmountCalculation(slot);
-            const qualityInfo = this._renderQualityDetermination(slot);
-            const contrabandInfo = this._renderContrabandCheck(slot);
-            const pricingInfo = this._renderFinalPricing(slot);
-
-            slotContent = `
-                <div class="slot-pipeline">
-                    <div class="pipeline-step">
-                        <h6>${this.ICONS.cargo} Cargo Type Selection</h6>
-                        ${cargoTypeInfo}
-                    </div>
-                    <div class="pipeline-step">
-                        <h6>${this.ICONS.calculation} Supply/Demand Balance</h6>
-                        ${balanceInfo}
-                    </div>
-                    <div class="pipeline-step">
-                        <h6>${this.ICONS.quantity} Amount Calculation</h6>
-                        ${amountInfo}
-                    </div>
-                    <div class="pipeline-step">
-                        <h6>${this.ICONS.quality} Quality Determination</h6>
-                        ${qualityInfo}
-                    </div>
-                    <div class="pipeline-step">
-                        <h6>${this.ICONS.risk} Contraband Check</h6>
-                        ${contrabandInfo}
-                    </div>
-                    <div class="pipeline-step">
-                        <h6>${this.ICONS.value} Final Pricing</h6>
-                        ${pricingInfo}
-                    </div>
-                </div>
-                <div class="slot-result">
-                    <div class="result-header">
-                        <span class="result-label">Result:</span>
-                        <span class="result-value">${cargo.name} (${cargo.category}) - ${amount.totalEP} EP @ ${pricing.finalPricePerEP?.toFixed(2)} GC/EP</span>
-                    </div>
-                    <div class="merchant-info">
-                        <span class="merchant-label">Merchant:</span>
-                        <span class="merchant-value">Available (skill level determined by settlement)</span>
-                    </div>
-                </div>
-            `;
-        } else {
-            // Failed slot - show why it failed
-            slotContent = `
-                <div class="slot-failure-reason">
-                    <p><strong>Merchant Availability:</strong> ${merchant.roll || 'N/A'} > ${merchant.target || 'N/A'} target</p>
-                    <p><em>This slot could not attract a merchant. The market conditions or settlement characteristics made trading unattractive.</em></p>
-                    ${merchant.notes ? `<ul>${merchant.notes.map(note => `<li>${note}</li>`).join('')}</ul>` : ''}
-                </div>
-            `;
+    _createInfoIndicator(tooltip, classes = 'info-indicator') {
+        if (!tooltip) {
+            return '';
         }
 
-        return `
-            <div class="slot-card ${statusClass}">
-                <div class="slot-header">
-                    <div class="slot-title">
-                        <span class="slot-number">Slot ${slotNumber}</span>
-                        <span class="slot-status">${statusIcon} ${statusText}</span>
-                    </div>
-                </div>
-                <div class="slot-content">
-                    ${slotContent}
-                </div>
-            </div>
-        `;
+        const safeTooltip = tooltip.replace(/"/g, '&quot;');
+        return `<span class="${classes}" data-info-tooltip="${safeTooltip}">?</span>`;
     }
 
     /**
@@ -741,13 +570,17 @@ ${slotDetails}
      * @private
      */
     _createSuccessfulCargoCard(cargo) {
-        const card = document.createElement('div');
-        
-        // Check if cargo is contraband
-        const isContraband = cargo.slotInfo?.contraband?.contraband === true;
-        const contrabandClass = isContraband ? 'contraband' : '';
-        
-        card.className = `cargo-card slot-success ${contrabandClass}`;
+    const card = document.createElement('div');
+
+    const availableEp = Math.max(0, cargo.totalEP ?? cargo.quantity ?? 0);
+    const isSoldOut = availableEp <= 0;
+
+    // Check if cargo is contraband
+    const isContraband = cargo.slotInfo?.contraband?.contraband === true;
+    const contrabandClass = isContraband ? 'contraband' : '';
+
+    const statusClass = isSoldOut ? 'slot-failure sold-out' : 'slot-success';
+    card.className = `cargo-card ${statusClass} ${contrabandClass}`.trim();
 
         // Basic info (always visible) - matches original layout
         let basicInfo = `
@@ -760,7 +593,7 @@ ${slotDetails}
         basicInfo += `
                 <div class="price-info">
                     <span class="price-label">Available:</span>
-                    <span class="price-value">${cargo.totalEP ?? cargo.quantity} EP</span>
+                    <span class="price-value">${availableEp} EP</span>
                 </div>
                 <div class="price-info">
                     <span class="price-label">Price per EP:</span>
@@ -775,12 +608,20 @@ ${slotDetails}
                     <span class="price-value">${cargo.quality || 'Average'}</span>
                 </div>`;
 
-        // Add contraband warning if applicable
         if (isContraband) {
             basicInfo += `
                 <div class="contraband-warning">
                     <span class="contraband-icon">🏴‍☠️</span>
                     <span class="contraband-text">Contraband - Illegal to transport</span>
+                </div>`;
+        }
+
+        if (isSoldOut) {
+            const soldOutMessage = cargo.soldOutMessage || 'Merchant sold out';
+            basicInfo += `
+                <div class="sold-out-message">
+                    <span class="sold-out-icon">${this.ICONS.failure}</span>
+                    <span class="sold-out-text">${soldOutMessage}</span>
                 </div>`;
         }
 
@@ -799,17 +640,17 @@ ${slotDetails}
                     <div class="control-block quantity-controls">
                         <span class="control-label">Purchase (EP)</span>
                         <div class="control-body">
-                            <input type="number" 
+                <input type="number" 
                                    class="quantity-input" 
                                    min="0" 
-                                   max="${cargo.totalEP ?? cargo.quantity ?? 0}" 
+                    max="${availableEp}" 
                                    value="0" 
                                    step="1"
                                    data-cargo-id="${cargo.id || cargo.name}">
                             <input type="range" 
                                    class="quantity-slider" 
                                    min="0" 
-                                   max="${cargo.totalEP ?? cargo.quantity ?? 0}" 
+                    max="${availableEp}" 
                                    value="0" 
                                    step="1">
                         </div>
@@ -915,6 +756,23 @@ ${slotDetails}
             updateTotalPrice(quantity, value);
         };
 
+        if (maxQuantity <= 0) {
+            updateTotalPrice(0, 0);
+            quantityInput.value = 0;
+            quantityInput.disabled = true;
+            quantitySlider.value = 0;
+            quantitySlider.disabled = true;
+            discountSlider.value = 0;
+            discountSlider.disabled = true;
+            updateDiscountDisplay(0);
+            purchaseBtn.disabled = true;
+            purchaseBtn.innerHTML = '<i class="fas fa-times"></i> Sold Out';
+            purchaseBtn.classList.remove('btn-success');
+            purchaseBtn.classList.add('btn-secondary');
+            totalPriceValue.textContent = '0.00 GC';
+            return;
+        }
+
         // Quantity event listeners
         quantityInput.addEventListener('input', (e) => {
             syncQuantityValues(e.target, quantitySlider);
@@ -937,11 +795,18 @@ ${slotDetails}
         });
 
         // Purchase button click handler
-        purchaseBtn.addEventListener('click', (e) => {
+        purchaseBtn.addEventListener('click', async (e) => {
             const quantity = parseInt(quantityInput.value) || 0;
             const discountPercent = parseFloat(discountSlider.value) || 0;
             if (quantity > 0) {
-                this._handlePurchase(cargo, quantity, discountPercent);
+                try {
+                    await this._handlePurchase(cargo, quantity, discountPercent);
+                } catch (error) {
+                    console.error('Failed to complete purchase:', error);
+                    if (ui?.notifications) {
+                        ui.notifications.error(`Purchase failed: ${error.message}`);
+                    }
+                }
             }
         });
 
@@ -967,22 +832,31 @@ ${slotDetails}
      * @param {number} discountPercent - Discount percentage (-20 to +20)
      * @private
      */
-    _handlePurchase(cargo, quantity, discountPercent = 0) {
-        console.log(`🛒 PURCHASING: ${quantity} EP of ${cargo.name} with ${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment`);
-        
-        // Calculate adjusted price
+    async _handlePurchase(cargo, quantity, discountPercent = 0) {
+        const availableEp = Math.max(0, cargo.totalEP ?? cargo.quantity ?? 0);
+        const purchaseQuantity = Math.min(quantity, availableEp);
+
+        if (purchaseQuantity <= 0) {
+            console.warn('Attempted to purchase zero or negative quantity; ignoring.');
+            return;
+        }
+
+        console.log(`🛒 PURCHASING: ${purchaseQuantity} EP of ${cargo.name} with ${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment`);
+
         const pricePerEP = this._getPricePerEP(cargo);
         const discountMultiplier = 1 + (discountPercent / 100);
         const adjustedPricePerEP = pricePerEP * discountMultiplier;
-        const totalCost = quantity * adjustedPricePerEP;
+        const totalCost = purchaseQuantity * adjustedPricePerEP;
+        const roundedPricePerEP = parseFloat(adjustedPricePerEP.toFixed(2));
+        const roundedTotalCost = parseFloat(totalCost.toFixed(2));
         
         // Add transaction to history
         const transaction = {
             cargo: cargo.name,
             category: cargo.category || 'Goods',
-            quantity: quantity,
-            pricePerEP: parseFloat(adjustedPricePerEP.toFixed(2)),
-            totalCost: parseFloat(totalCost.toFixed(2)),
+            quantity: purchaseQuantity,
+            pricePerEP: roundedPricePerEP,
+            totalCost: roundedTotalCost,
             settlement: this.app.selectedSettlement?.name || 'Unknown',
             season: this.app.currentSeason || 'Unknown',
             date: new Date().toISOString(),
@@ -1000,9 +874,11 @@ ${slotDetails}
         
         // Update cargo inventory - call the event handler method
         if (this.app.eventHandlers && this.app.eventHandlers._addCargoToInventory) {
-            this.app.eventHandlers._addCargoToInventory(transaction).catch(error => {
+            try {
+                await this.app.eventHandlers._addCargoToInventory(transaction);
+            } catch (error) {
                 console.error('Failed to update cargo inventory:', error);
-            });
+            }
         }
         
         console.log('💰 Transaction created:', transaction);
@@ -1010,29 +886,148 @@ ${slotDetails}
         console.log('💰 First transaction:', this.app.transactionHistory[0]);
         
         // Save transaction history to Foundry settings for persistence
-        game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory)
-            .then(() => {
-                console.log('💰 Transaction history saved successfully');
-            })
-            .catch(error => {
-                console.error('💰 Failed to save transaction history:', error);
-            });
+        try {
+            await game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory);
+            console.log('💰 Transaction history saved successfully');
+        } catch (error) {
+            console.error('💰 Failed to save transaction history:', error);
+        }
         
         // Show success notification
         if (ui && ui.notifications) {
-            ui.notifications.success(`Purchased ${quantity} EP of ${cargo.name} for ${totalCost.toFixed(2)} GC${discountPercent !== 0 ? ` (${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment)` : ''}`);
+            ui.notifications.success(`Purchased ${purchaseQuantity} EP of ${cargo.name} for ${roundedTotalCost.toFixed(2)} GC${discountPercent !== 0 ? ` (${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment)` : ''}`);
         } else {
-            console.log(`✅ Purchase successful: ${quantity} EP of ${cargo.name} for ${totalCost.toFixed(2)} GC`);
+            console.log(`✅ Purchase successful: ${purchaseQuantity} EP of ${cargo.name} for ${roundedTotalCost.toFixed(2)} GC`);
         }
         
+        this._applyPurchaseToAvailability(cargo, purchaseQuantity, pricePerEP);
+
+        const availableList = Array.isArray(this.app.availableCargo) ? this.app.availableCargo : [];
+        this._updateCargoDisplay(availableList);
+        this._updateTransactionButtons();
+
+        if (typeof this.app._saveCargoAvailability === 'function') {
+            try {
+                await this.app._saveCargoAvailability(
+                    availableList,
+                    Array.isArray(this.app.successfulCargo) ? this.app.successfulCargo : [],
+                    this.app.lastPipelineResult || null,
+                    this.app.lastAvailabilityResult || null
+                );
+            } catch (error) {
+                console.error('Failed to persist cargo availability after purchase:', error);
+            }
+        }
+
+        if (this.app.lastAvailabilityResult) {
+            const remainingSuccessful = Array.isArray(this.app.successfulCargo) ? this.app.successfulCargo.length : 0;
+            const availabilityCheck = this.app.lastAvailabilityResult.availabilityCheck || {};
+            availabilityCheck.successfulSlots = remainingSuccessful;
+            this.app.lastAvailabilityResult.availabilityCheck = availabilityCheck;
+            const hasCargo = remainingSuccessful > 0;
+            this.app.lastAvailabilityResult.available = hasCargo;
+            this.app.lastAvailabilityResult.isAvailable = hasCargo;
+        }
+
         // Re-render to update all tabs with the new transaction
         this.app.render(false).then(() => {
-            // After successful purchase and re-render, switch to cargo tab to show the purchased item
             setTimeout(() => {
                 this._switchToCargoTab();
                 console.log('🛒 Automatically switched to cargo tab after purchase');
-            }, 100); // Small delay to ensure render is complete
+            }, 100);
         });
+    }
+
+    _applyPurchaseToAvailability(cargo, purchaseQuantity, pricePerEP) {
+        const currentEp = Math.max(0, cargo.totalEP ?? cargo.quantity ?? 0);
+        const remainingEp = Math.max(0, currentEp - purchaseQuantity);
+
+        const updateEntry = (entry) => {
+            if (!entry) {
+                return;
+            }
+
+            entry.totalEP = remainingEp;
+            entry.quantity = remainingEp;
+
+            const slotInfo = entry.slotInfo || {};
+            if (slotInfo.amount) {
+                slotInfo.amount.totalEP = remainingEp;
+                slotInfo.amount.remainingEP = remainingEp;
+            }
+            if (slotInfo.pricing) {
+                slotInfo.pricing.quantity = remainingEp;
+                slotInfo.pricing.totalValue = parseFloat((remainingEp * pricePerEP).toFixed(2));
+            }
+
+            entry.totalValue = parseFloat((remainingEp * pricePerEP).toFixed(2));
+
+            entry.isSoldOut = remainingEp <= 0;
+            if (entry.isSoldOut) {
+                entry.soldOutMessage = entry.soldOutMessage || 'Merchant sold out';
+            }
+        };
+
+        const slotNumber = cargo.slotInfo?.slotNumber ?? cargo.slotNumber ?? null;
+        const matchEntry = (entry) => {
+            if (!entry) return false;
+            if (entry === cargo) return true;
+            if (entry.slotInfo?.slotNumber && slotNumber) {
+                return entry.slotInfo.slotNumber === slotNumber;
+            }
+            if (slotNumber === null) {
+                return entry.name === cargo.name;
+            }
+            return false;
+        };
+
+        const lists = [this.app.availableCargo, this.app.successfulCargo];
+        lists.forEach(list => {
+            if (!Array.isArray(list)) {
+                return;
+            }
+            list.forEach(entry => {
+                if (matchEntry(entry)) {
+                    updateEntry(entry);
+                }
+            });
+        });
+
+        if (Array.isArray(this.app.successfulCargo)) {
+            this.app.successfulCargo = this.app.successfulCargo.filter(entry => (entry.totalEP ?? entry.quantity ?? 0) > 0);
+        }
+
+        if (this.app.lastPipelineResult?.slots && slotNumber !== null) {
+            const pipelineSlot = this.app.lastPipelineResult.slots.find(slot => slot.slotNumber === slotNumber);
+            if (pipelineSlot) {
+                if (pipelineSlot.amount) {
+                    pipelineSlot.amount.totalEP = remainingEp;
+                    pipelineSlot.amount.remainingEP = remainingEp;
+                }
+                if (pipelineSlot.pricing) {
+                    pipelineSlot.pricing.quantity = remainingEp;
+                    pipelineSlot.pricing.totalValue = parseFloat((remainingEp * pricePerEP).toFixed(2));
+                }
+                pipelineSlot.merchant = pipelineSlot.merchant || {};
+                pipelineSlot.merchant.available = remainingEp > 0;
+            }
+        }
+
+        cargo.totalEP = remainingEp;
+        cargo.quantity = remainingEp;
+        if (cargo.slotInfo?.amount) {
+            cargo.slotInfo.amount.totalEP = remainingEp;
+            cargo.slotInfo.amount.remainingEP = remainingEp;
+        }
+        if (cargo.slotInfo?.pricing) {
+            cargo.slotInfo.pricing.quantity = remainingEp;
+            cargo.slotInfo.pricing.totalValue = parseFloat((remainingEp * pricePerEP).toFixed(2));
+        }
+        cargo.isSoldOut = remainingEp <= 0;
+        if (cargo.isSoldOut) {
+            cargo.soldOutMessage = cargo.soldOutMessage || 'Merchant sold out';
+        }
+        cargo.totalValue = parseFloat((remainingEp * pricePerEP).toFixed(2));
     }
 
     /**
@@ -1318,29 +1313,68 @@ ${slotDetails}
      */
     _updateSellingTab() {
         this._logDebug('UI State', 'Updating selling tab');
+
+        const sellingTab = this.app.element.querySelector('#selling-tab');
+        if (!sellingTab) return;
+
+        // Show/hide empty state based on settlement selection
+        const emptyState = sellingTab.querySelector('#selling-empty-state');
+        const resourceSelection = sellingTab.querySelector('.resource-selection');
+
+        if (this.app.selectedSettlement) {
+            // Settlement selected - show resource selection
+            if (emptyState) emptyState.style.display = 'none';
+            if (resourceSelection) {
+                resourceSelection.style.display = 'block';
+                this._populateSellingResources();
+            }
+        } else {
+            // No settlement selected - show empty state
+            if (emptyState) emptyState.style.display = 'block';
+            if (resourceSelection) resourceSelection.style.display = 'none';
+        }
     }
 
     _switchToCargoTab() {
         console.log('🔄 Switching to cargo tab');
-        
-        // Remove active class from all tabs and content
-        this.app.element.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        this.app.element.querySelectorAll('.tab-content').forEach(content => {
+        this.setActiveTab('cargo');
+    }
+
+    /**
+     * Update current cargo display in selling tab
+     * @private
+     */
+
+    /**
+     * Refresh cargo tab display
+     * @private
+     */
+    getActiveTabName() {
+        const activeTab = this.app.element?.querySelector('.tab.active');
+        return activeTab?.dataset.tab || null;
+    }
+
+    setActiveTab(tabName) {
+        if (!tabName || !this.app.element) {
+            return;
+        }
+
+        const tabs = this.app.element.querySelectorAll('.tab');
+        const tabContents = this.app.element.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => tab.classList.remove('active'));
+        tabContents.forEach(content => {
             content.classList.remove('active');
             content.style.display = 'none';
         });
-        
-        // Add active class to cargo tab
-        const cargoTab = this.app.element.querySelector('.tab[data-tab="cargo"]');
-        const cargoContent = this.app.element.querySelector('#cargo-tab');
-        
-        if (cargoTab && cargoContent) {
-            cargoTab.classList.add('active');
-            cargoContent.classList.add('active');
-            cargoContent.style.display = 'block';
-            console.log('🔄 Cargo tab activated successfully');
-        } else {
-            console.error('🔄 Failed to find cargo tab elements');
+
+        const targetTab = this.app.element.querySelector(`.tab[data-tab="${tabName}"]`);
+        const targetContent = this.app.element.querySelector(`#${tabName}-tab`);
+
+        if (targetTab && targetContent) {
+            targetTab.classList.add('active');
+            targetContent.classList.add('active');
+            targetContent.style.display = 'block';
         }
     }
 }

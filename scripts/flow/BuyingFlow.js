@@ -316,6 +316,9 @@ export class BuyingFlow {
                 // Store available cargo
                 this.app.availableCargo = availableCargo;
                 this.app.successfulCargo = successfulCargo;
+
+                this.app.lastPipelineResult = pipelineResult;
+                this.app.lastAvailabilityResult = availabilityResult;
                 
                 // Save cargo availability data for persistence
                 await this.app._saveCargoAvailability(availableCargo, successfulCargo, pipelineResult, availabilityResult);
@@ -391,6 +394,9 @@ export class BuyingFlow {
                     ui.notifications.info(`No cargo available in ${this.app.selectedSettlement.name} (chance ${rollDetails?.chance || 'N/A'}%)`);
                 }
             }
+
+            this.app.lastPipelineResult = pipelineResult;
+            this.app.lastAvailabilityResult = availabilityResult;
             
             // Restore button
             button.textContent = originalText;

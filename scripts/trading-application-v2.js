@@ -68,6 +68,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
         this.successfulCargo = [];
         this.transactionHistory = [];
         this.playerCargo = [];
+    this.sellerOffers = null;
 
         // Get module components with validation
         this.dataManager = window.WFRPRiverTrading?.getDataManager();
@@ -731,6 +732,9 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 this.availableCargo = cargoData.availableCargo || [];
                 this.successfulCargo = cargoData.successfulCargo || [];
 
+                this.lastPipelineResult = cargoData.pipelineResult || null;
+                this.lastAvailabilityResult = cargoData.availabilityResult || null;
+
                 this._logInfo('Cargo Persistence', 'Restored cargo availability data', {
                     settlement: cargoData.settlement,
                     season: cargoData.season,
@@ -749,6 +753,8 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
                 // Clear any existing cargo data if no valid saved data
                 this.availableCargo = [];
                 this.successfulCargo = [];
+                this.lastPipelineResult = null;
+                this.lastAvailabilityResult = null;
             }
 
         } catch (error) {
@@ -756,6 +762,8 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             this._logError('Cargo Persistence', 'Failed to load and restore cargo availability', { error: error.message });
             this.availableCargo = [];
             this.successfulCargo = [];
+            this.lastPipelineResult = null;
+            this.lastAvailabilityResult = null;
         }
     }
 
@@ -1018,6 +1026,25 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 
         } catch (error) {
             this._logError('Chat Integration', 'Failed to post season change to chat', { error: error.message });
+        }
+    }
+
+    async refreshUI({ focusTab = null } = {}) {
+        try {
+            const desiredTab = focusTab || this.renderer.getActiveTabName();
+
+            this.currentCargo = await this._getCurrentCargoData();
+            this.transactionHistory = await game.settings.get("trading-places", "transactionHistory") || [];
+            this.playerCargo = Array.isArray(this.currentCargo) ? [...this.currentCargo] : [];
+
+            await this.render(false);
+
+            const tabToActivate = desiredTab || 'buying';
+            if (tabToActivate) {
+                setTimeout(() => this.renderer.setActiveTab(tabToActivate), 0);
+            }
+        } catch (error) {
+            this._logError('UI Refresh', 'Failed to refresh UI', { error: error.message });
         }
     }
 

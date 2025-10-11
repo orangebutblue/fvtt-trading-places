@@ -191,10 +191,21 @@ export class TradingUIEventHandlers {
             cargoCapacityInput.addEventListener('input', this._onCargoCapacityChange.bind(this));
         }
 
-        // Cargo action buttons
+        // Cargo action buttons - use event delegation for dynamically added buttons
         const sellCargoButtons = html.querySelectorAll('.sell-cargo-btn');
+        console.log('Found sell cargo buttons:', sellCargoButtons.length);
         sellCargoButtons.forEach(btn => {
+            console.log('Attaching click listener to sell button:', btn);
             btn.addEventListener('click', this._onSellCargo.bind(this));
+        });
+        
+        // Also add event delegation to catch dynamically added buttons
+        html.addEventListener('click', (e) => {
+            if (e.target.classList.contains('sell-cargo-btn') || e.target.closest('.sell-cargo-btn')) {
+                console.log('Sell button clicked via delegation!');
+                const button = e.target.classList.contains('sell-cargo-btn') ? e.target : e.target.closest('.sell-cargo-btn');
+                this._onSellCargo({ currentTarget: button, preventDefault: () => {} });
+            }
         });
 
         // Edit functionality removed
@@ -529,51 +540,7 @@ export class TradingUIEventHandlers {
     }
 
     /**
-     * Handle selling resource selection
-     * @param {string} resourceName - Name of selected resource
-     * @private
-     */
-    _onSellingResourceSelect(resourceName) {
-        console.log(`🎯 SELECTED RESOURCE FOR SELLING: ${resourceName}`);
-        
-        // Remove selection from other buttons
-        this.app.element.querySelectorAll('.resource-btn').forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        
-        // Add selection to clicked button
-        const selectedButton = this.app.element.querySelector(`[data-resource="${resourceName}"]`);
-        if (selectedButton) {
-            selectedButton.classList.add('selected');
-        }
-        
-        // Store selected resource
-        this.app.selectedResource = resourceName;
-        
-        // Show selling interface
-        const sellingInterface = this.app.element.querySelector('#selling-interface');
-        if (sellingInterface) {
-            sellingInterface.style.display = 'block';
-        }
-        
-        // Enable selling buttons
-        const lookForSellersBtn = this.app.element.querySelector('#look-for-sellers');
-        const negotiateBtn = this.app.element.querySelector('#negotiate-sell');
-        const desperateSaleBtn = this.app.element.querySelector('#desperate-sale');
-        
-        if (lookForSellersBtn) {
-            lookForSellersBtn.style.display = 'flex';
-            // Add event listener for look for sellers
-            lookForSellersBtn.onclick = (event) => this._onLookForSellers(event);
-        }
-        if (negotiateBtn) negotiateBtn.style.display = 'flex';
-        if (desperateSaleBtn) desperateSaleBtn.style.display = 'flex';
-        
-        console.log(`✅ Selling interface enabled for ${resourceName}`);
-    }
-
-    /**
-     * Handle "Look for Sellers" button click - implements WFRP Selling Algorithm Step 2
+     * Handle "Look for Sellers" button click - implements WFRP Selling Algorithm Step 3
      * @param {Event} event - Click event
      * @private
      */
@@ -680,8 +647,14 @@ export class TradingUIEventHandlers {
                 const discountText = discountPercent !== 0 ? ` (${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment)` : '';
                 ui.notifications.success(`Successfully purchased ${quantity} EP of ${cargo.name} for ${totalCost.toFixed(2)} GC${discountText}`);
 
-                // Re-render to update the UI
-                await this.app.render(false);
+                // Update the cargo card to reflect reduced availability
+                this._updateBuyingCargoCard(cargo, quantity);
+                
+                // Just update the app's cargo data and let it re-render naturally
+                const updatedCargo = await game.settings.get("trading-places", "currentCargo") || [];
+                this.app.currentCargo = updatedCargo;
+
+                await this.app.refreshUI({ focusTab: 'buying' });
 
                 this._logInfo('Purchase Success', 'Cargo purchased successfully', {
                     cargo: cargo.name,
@@ -891,8 +864,8 @@ export class TradingUIEventHandlers {
             this._clearManualTransactionForm();
             this._collapseManualEntry();
             
-            // Re-render to show the new transaction (keeping history tab active)
-            await this._rerenderWithHistoryTabActive();
+            // Refresh UI to show the new transaction while keeping the history tab active
+            await this.app.refreshUI({ focusTab: 'history' });
             
             // Show success message
             ui.notifications.success(`Added: ${quantity} EP of ${cargoName} for ${totalCost} GC`);
@@ -1069,89 +1042,6 @@ export class TradingUIEventHandlers {
     }
 
     /**
-     * Re-render while keeping history tab active
-     * @private
-     */
-    async _rerenderWithHistoryTabActive() {
-        await this.app.render(false);
-        
-        setTimeout(() => {
-            const tabs = this.app.element.querySelectorAll('.tab');
-            const tabContents = this.app.element.querySelectorAll('.tab-content');
-            
-            tabs.forEach(t => t.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            const historyTab = this.app.element.querySelector('.tab[data-tab="history"]');
-            const historyContent = this.app.element.querySelector('#history-tab');
-            
-            if (historyTab && historyContent) {
-                historyTab.classList.add('active');
-                historyContent.classList.add('active');
-            }
-        }, 50);
-    }
-
-    /**
-     * Re-render while keeping cargo tab active
-     * @private
-     */
-    async _rerenderWithCargoTabActive() {
-        // Ensure we reload cargo data before re-rendering
-        try {
-            const savedCargo = await game.settings.get("trading-places", "currentCargo");
-            if (savedCargo && Array.isArray(savedCargo)) {
-                this.app.currentCargo = savedCargo;
-                this._logDebug('Cargo Tab Rerender', 'Reloaded cargo data', {
-                    cargoCount: savedCargo.length
-                });
-            } else {
-                // Initialize empty cargo array if none exists
-                this.app.currentCargo = [];
-                this._logDebug('Cargo Tab Rerender', 'Initialized empty cargo array');
-            }
-        } catch (error) {
-            this._logError('Cargo Tab Rerender', 'Failed to reload cargo data', { error: error.message });
-            this.app.currentCargo = []; // Fallback to empty array
-        }
-        
-        // Force re-render with updated cargo data
-        await this.app.render(true); // Force re-render to pick up cargo data
-        
-        // Use a longer timeout to ensure rendering is complete
-        setTimeout(() => {
-            const tabs = this.app.element?.querySelectorAll('.tab');
-            const tabContents = this.app.element?.querySelectorAll('.tab-content');
-            
-            if (tabs && tabContents) {
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(content => {
-                    content.classList.remove('active');
-                    content.style.display = 'none';
-                });
-                
-                const cargoTab = this.app.element.querySelector('.tab[data-tab="cargo"]');
-                const cargoContent = this.app.element.querySelector('#cargo-tab');
-                
-                if (cargoTab && cargoContent) {
-                    cargoTab.classList.add('active');
-                    cargoContent.classList.add('active');
-                    cargoContent.style.display = 'block';
-                }
-                
-                this._logDebug('Cargo Tab Rerender', 'Switched to cargo tab', {
-                    currentCargoLength: this.app.currentCargo ? this.app.currentCargo.length : 0,
-                    tabsFound: tabs.length,
-                    cargoTabFound: !!cargoTab,
-                    cargoContentFound: !!cargoContent
-                });
-            } else {
-                this._logError('Cargo Tab Rerender', 'Could not find tab elements after render');
-            }
-        }, 100); // Increased timeout for better reliability
-    }
-
-    /**
      * Handle delete transaction button click
      * @param {Event} event - Click event
      * @private
@@ -1190,31 +1080,7 @@ export class TradingUIEventHandlers {
                 // Save updated transaction history
                 await game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory);
                 
-                // Store the current active tab before re-rendering
-                const currentActiveTab = this.app.element.querySelector('.tab.active');
-                const activeTabId = currentActiveTab ? currentActiveTab.getAttribute('data-tab') : 'history';
-                
-                // Re-render the application to update the history tab
-                await this.app.render(false);
-                
-                // Restore the active tab after re-rendering
-                setTimeout(() => {
-                    const tabs = this.app.element.querySelectorAll('.tab');
-                    const tabContents = this.app.element.querySelectorAll('.tab-content');
-                    
-                    // Remove active class from all tabs and content
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
-                    
-                    // Activate the history tab
-                    const historyTab = this.app.element.querySelector('.tab[data-tab="history"]');
-                    const historyContent = this.app.element.querySelector('#history-tab');
-                    
-                    if (historyTab && historyContent) {
-                        historyTab.classList.add('active');
-                        historyContent.classList.add('active');
-                    }
-                }, 50);
+                await this.app.refreshUI({ focusTab: 'history' });
                 
                 this._logDebug('Delete Transaction', 'Transaction deleted successfully', { 
                     remainingTransactions: this.app.transactionHistory.length 
@@ -1262,26 +1128,78 @@ export class TradingUIEventHandlers {
      * @private
      */
     async _onSellCargo(event) {
+        console.log('Sell cargo button clicked!');
         event.preventDefault();
         const cargoId = event.currentTarget.dataset.cargoId;
         
-        if (!cargoId) return;
+        console.log('Cargo ID:', cargoId);
         
-        // Find the cargo in current inventory
-        const currentCargo = await this._getCurrentCargo();
-        const cargoIndex = currentCargo.findIndex(cargo => cargo.id === cargoId);
-        
-        if (cargoIndex === -1) {
-            ui.notifications.error("Cargo not found in inventory");
+        if (!cargoId) {
+            console.error('No cargo ID found');
             return;
         }
         
-        const cargo = currentCargo[cargoIndex];
+        try {
+            // Find the cargo in current inventory
+            const currentCargo = await this._getCurrentCargo();
+            console.log('Current cargo:', currentCargo);
+            console.log('Looking for cargo ID:', cargoId);
+            console.log('First cargo object keys:', currentCargo.length > 0 ? Object.keys(currentCargo[0]) : 'No cargo');
+            
+            const cargoIndex = currentCargo.findIndex(cargo => cargo.id === cargoId);
+            
+            if (cargoIndex === -1) {
+                console.error('Cargo not found in inventory');
+                ui.notifications.error("Cargo not found in inventory");
+                return;
+            }
+            
+            const cargo = currentCargo[cargoIndex];
+            console.log('Found cargo:', cargo);
+            
+            // Switch to selling tab and pre-populate with this cargo
+            console.log('About to call _switchToSellingTab with cargo:', cargo);
+            this._switchToSellingTab(cargo);
+            console.log('Called _switchToSellingTab');
+            
+            this._logDebug('Cargo Management', 'Switched to selling tab for cargo', { cargo: cargo.cargo });
+        } catch (error) {
+            console.error('Error in _onSellCargo:', error);
+        }
+    }
+
+    /**
+     * Switch to selling tab - using EXACT same code as working tab switching
+     * @param {Object} cargo - Optional cargo to pre-populate for selling
+     * @private
+     */
+    _switchToSellingTab(cargo = null) {
+        console.log('🔄 Switching to selling tab');
         
-        // Switch to selling tab and pre-populate with this cargo
-        this._switchToSellingTab(cargo);
+        // Remove active class from all tabs and content
+        this.app.element.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.app.element.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+            content.style.display = 'none';
+        });
         
-        this._logDebug('Cargo Management', 'Switched to selling tab for cargo', { cargo: cargo.cargo });
+        // Add active class to selling tab
+        const sellingTab = this.app.element.querySelector('.tab[data-tab="selling"]');
+        const sellingContent = this.app.element.querySelector('#selling-tab');
+        
+        if (sellingTab && sellingContent) {
+            sellingTab.classList.add('active');
+            sellingContent.classList.add('active');
+            sellingContent.style.display = 'block';
+            console.log('🔄 Selling tab activated successfully');
+        } else {
+            console.error('🔄 Failed to find selling tab elements');
+        }
+        
+        // If cargo provided, show notification
+        if (cargo) {
+            ui.notifications.info(`Ready to sell ${cargo.cargo} (${cargo.quantity} EP)`);
+        }
     }
 
     /**
@@ -1318,13 +1236,11 @@ export class TradingUIEventHandlers {
         
         // Remove from inventory
         currentCargo.splice(cargoIndex, 1);
-        await game.settings.set("trading-places", "currentCargo", currentCargo);
-        
-        // Re-render and stay in cargo tab
-        await this.app.render(false);
-        setTimeout(() => {
-            this._switchToCargoTab();
-        }, 50);
+    await game.settings.set("trading-places", "currentCargo", currentCargo);
+    this.app.currentCargo = currentCargo;
+        this.app.currentCargo = currentCargo;
+
+        await this.app.refreshUI({ focusTab: 'cargo' });
         
         ui.notifications.info(`Removed ${cargo.quantity} EP of ${cargo.cargo} from cargo`);
         
@@ -1415,6 +1331,7 @@ export class TradingUIEventHandlers {
             }
             
             await game.settings.set("trading-places", "currentCargo", currentCargo);
+            this.app.currentCargo = currentCargo;
             
             this._logDebug('Cargo Management', 'Cargo removed from inventory', {
                 cargo: transaction.cargo,
@@ -1472,30 +1389,6 @@ export class TradingUIEventHandlers {
         });
     }
 
-    /**
-     * Switch to selling tab with pre-populated cargo
-     * @param {Object} cargo - Cargo to pre-populate
-     * @private
-     */
-    _switchToSellingTab(cargo) {
-        // Remove active class from all tabs and content
-        this.app.element.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        this.app.element.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        
-        // Activate selling tab
-        const sellingTab = this.app.element.querySelector('.tab[data-tab="selling"]');
-        const sellingContent = this.app.element.querySelector('#selling-tab');
-        
-        if (sellingTab && sellingContent) {
-            sellingTab.classList.add('active');
-            sellingContent.classList.add('active');
-        }
-        
-        // Pre-populate selling form if available
-        // This would need to be implemented in the selling tab logic
-        
-        this._logDebug('Cargo Management', 'Switched to selling tab');
-    }
 
     /**
      * Switch to cargo tab
@@ -1523,30 +1416,6 @@ export class TradingUIEventHandlers {
     }
 
     /**
-     * Re-render while keeping cargo tab active
-     * @private
-     */
-    async _rerenderWithCargoTabActive() {
-        await this.app.render(false);
-        
-        setTimeout(() => {
-            const tabs = this.app.element.querySelectorAll('.tab');
-            const tabContents = this.app.element.querySelectorAll('.tab-content');
-            
-            tabs.forEach(t => t.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            const cargoTab = this.app.element.querySelector('.tab[data-tab="cargo"]');
-            const cargoContent = this.app.element.querySelector('#cargo-tab');
-            
-            if (cargoTab && cargoContent) {
-                cargoTab.classList.add('active');
-                cargoContent.classList.add('active');
-            }
-        }, 50);
-    }
-
-    /**
      * Add test cargo to inventory (for debugging/testing purposes)
      * @private
      */
@@ -1569,7 +1438,7 @@ export class TradingUIEventHandlers {
         await game.settings.set("trading-places", "currentCargo", currentCargo);
         
         ui.notifications.info("Added test cargo: 50 EP of Grain");
-        await this._rerenderWithCargoTabActive();
+        await this.app.refreshUI({ focusTab: 'cargo' });
         
         this._logDebug('Test', 'Test cargo added to inventory');
     }
@@ -1581,7 +1450,7 @@ export class TradingUIEventHandlers {
     async _clearAllCargo() {
         await game.settings.set("trading-places", "currentCargo", []);
         ui.notifications.info("Cleared all cargo from inventory");
-        await this._rerenderWithCargoTabActive();
+        await this.app.refreshUI({ focusTab: 'cargo' });
         
         this._logDebug('Test', 'All cargo cleared from inventory');
     }
@@ -1894,33 +1763,7 @@ export class TradingUIEventHandlers {
             this._clearAddCargoForm();
             this._collapseAddCargo();
             
-            // Re-render and switch to cargo tab to show the new cargo
-            await this.app.render(false);
-            
-            // After a short delay, switch to cargo tab
-            setTimeout(() => {
-                const tabs = this.app.element?.querySelectorAll('.tab');
-                const tabContents = this.app.element?.querySelectorAll('.tab-content');
-                
-                if (tabs && tabContents) {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(content => {
-                        content.classList.remove('active');
-                        content.style.display = 'none';
-                    });
-                    
-                    const cargoTab = this.app.element.querySelector('.tab[data-tab="cargo"]');
-                    const cargoContent = this.app.element.querySelector('#cargo-tab');
-                    
-                    if (cargoTab && cargoContent) {
-                        cargoTab.classList.add('active');
-                        cargoContent.classList.add('active');
-                        cargoContent.style.display = 'block';
-                        
-                        this._logDebug('Add Cargo', 'Switched to cargo tab after adding cargo');
-                    }
-                }
-            }, 100);
+            await this.app.refreshUI({ focusTab: 'cargo' });
             
             // Show success message
             const costText = totalCost > 0 ? ` for ${totalCost.toFixed(2)} GC` : '';
@@ -1989,4 +1832,85 @@ export class TradingUIEventHandlers {
      * @param {Event} event - Click event
      * @private
      */
+
+    /**
+     * Update buying cargo card after a purchase
+     * @param {Object} cargo - Cargo data with updated availability
+     * @param {number} purchasedQuantity - Amount that was purchased
+     * @private
+     */
+    _updateBuyingCargoCard(cargo, purchasedQuantity) {
+        const card = this.app.element.querySelector(`#buying-tab .cargo-card[data-slot="${cargo.slotNumber}"]`);
+        if (!card) return;
+
+        // Update "Available" amount
+        const availableElement = card.querySelector('.price-info .price-value');
+        if (availableElement) {
+            availableElement.textContent = `${cargo.quantity} EP`;
+        }
+
+        // Update total price (quantity * price per EP)
+        const totalPriceElements = card.querySelectorAll('.price-info .price-value');
+        if (totalPriceElements.length >= 3) {
+            const totalPriceElement = totalPriceElements[2]; // Third price-info is total price
+            totalPriceElement.textContent = `${(cargo.quantity * cargo.pricePerEP).toFixed(2)} GC`;
+        }
+
+        // If quantity is 0, deactivate the card (make it look like a failed slot)
+        if (cargo.quantity <= 0) {
+            card.classList.remove('slot-success');
+            card.classList.add('slot-failure');
+            
+            // Disable all controls
+            const quantityInput = card.querySelector('.quantity-input');
+            const quantitySlider = card.querySelector('.quantity-slider');
+            const discountSlider = card.querySelector('.discount-slider');
+            const buyBtn = card.querySelector('.buy-btn');
+            
+            if (quantityInput) quantityInput.disabled = true;
+            if (quantitySlider) quantitySlider.disabled = true;
+            if (discountSlider) discountSlider.disabled = true;
+            if (buyBtn) {
+                buyBtn.disabled = true;
+                buyBtn.innerHTML = '<i class="fas fa-times"></i> Sold Out';
+                buyBtn.classList.remove('btn-success');
+                buyBtn.classList.add('btn-secondary');
+            }
+            
+            // Update the total price display
+            const totalPriceValue = card.querySelector('.total-price-value');
+            if (totalPriceValue) {
+                totalPriceValue.textContent = '0.00 GC';
+            }
+        } else {
+            // Update quantity controls max values
+            const quantityInput = card.querySelector('.quantity-input');
+            const quantitySlider = card.querySelector('.quantity-slider');
+            
+            if (quantityInput) {
+                quantityInput.max = cargo.quantity;
+                if (parseInt(quantityInput.value) > cargo.quantity) {
+                    quantityInput.value = cargo.quantity;
+                }
+            }
+            if (quantitySlider) {
+                quantitySlider.max = cargo.quantity;
+                if (parseInt(quantitySlider.value) > cargo.quantity) {
+                    quantitySlider.value = cargo.quantity;
+                }
+            }
+            
+            // Recalculate total price with new quantity
+            const quantity = Math.min(parseInt(quantityInput?.value) || 1, cargo.quantity);
+            const discountPercent = parseFloat(card.querySelector('.discount-slider')?.value) || 0;
+            const discountMultiplier = 1 + (discountPercent / 100);
+            const adjustedPricePerEP = cargo.pricePerEP * discountMultiplier;
+            const totalPrice = quantity * adjustedPricePerEP;
+            
+            const totalPriceValue = card.querySelector('.total-price-value');
+            if (totalPriceValue) {
+                totalPriceValue.textContent = totalPrice.toFixed(2) + ' GC';
+            }
+        }
+    }
 }

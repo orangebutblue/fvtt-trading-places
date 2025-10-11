@@ -208,47 +208,91 @@ Slot Calculation:
                     <span id="selling-error-message"></span>
                 </div>
 
-                <!-- Resource Selection -->
-                <div class="resource-selection">
-                    <h3>Select Resource to Sell</h3>
-                    <div class="resource-buttons" id="resource-buttons">
-                        <!-- Resource buttons will be populated by JavaScript -->
+                {{#if selectedSettlement}}
+                <!-- Settlement Information Section -->
+                <div class="settlement-info">
+                    <section class="settlement-info-section">
+                        <h5><i class="fas fa-info-circle"></i> Settlement Information</h5>
+                                                <div class="calculation-breakdown">
+                            {{#if selectedSettlement.flags}}
+                            <div class="settlement-flags">
+                                <strong>Settlement Characteristics:</strong>
+                                <ul class="characteristics-list">
+                                    {{#each selectedSettlement.flags}}
+                                    <li>{{this}} <span class="info-indicator" data-info-tooltip="{{getFlagDescription this}}">?</span></li>
+                                    {{/each}}
+                                </ul>
+                            </div>
+                            {{/if}}
+                            <div class="slot-info">
+                                <strong>Available Slots:</strong>
+                                <span class="slot-value">{{calculateCargoSlots selectedSettlement currentSeason}} <span class="info-indicator" data-info-tooltip="Settlement Size: {{getSizeDescription selectedSettlement.size}} ({{getSizeRating selectedSettlement.size}})
+Settlement Wealth: {{selectedSettlement.wealth}}
+{{#if selectedSettlement.population}}Population: {{formatNumber selectedSettlement.population}}
+{{/if}}
+Season: {{currentSeason}}
+
+Slot Calculation:
+{{#each (getCargoSlotsCalculationBreakdown selectedSettlement currentSeason)}}• {{this.label}} (current: {{this.current}})
+{{/each}}">?</span></span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                {{/if}}
+
+                <!-- Current Cargo Display - Minimal -->
+                <div class="current-cargo-section">
+                    <h6><i class="fas fa-boxes"></i> Current Cargo</h6>
+                    {{#if currentCargo.length}}
+                    <div class="cargo-minimal-list">
+                        {{#each currentCargo}}
+                        <div class="cargo-minimal-item">
+                            <span class="cargo-minimal-name">{{cargo}}</span>
+                            <span class="cargo-minimal-quantity">{{quantity}} EP</span>
+                        </div>
+                        {{/each}}
+                    </div>
+                    {{else}}
+                    <div class="empty-cargo-notice">
+                        <i class="fas fa-box-open"></i>
+                        <p>No cargo available to sell</p>
+                        <div class="sub-text">Purchase cargo from the buying tab first</div>
+                    </div>
+                    {{/if}}
+                </div>
+
+                <!-- Look for Sellers Button -->
+                <div class="look-for-sellers-section">
+                    <button class="btn btn-primary look-for-sellers" id="look-for-sellers" style="width: 100%; margin: 24px 0;" {{#unless (and selectedSettlement currentCargo.length)}}disabled{{/unless}}>
+                        <i class="fas fa-search"></i>
+                        Look for Sellers
+                    </button>
+                </div>
+
+                <!-- Seller Results Section -->
+                <div class="seller-results-section">
+                    <div class="seller-results" id="seller-results" style="display: none;">
+                        <!-- Seller offer cards will be populated by JavaScript -->
                     </div>
                 </div>
 
-                <!-- Selling Interface -->
-                <div class="selling-interface" id="selling-interface" style="display: none;">
-                    <div class="quantity-section">
-                        <label class="form-label">Quantity to Sell (EP)</label>
-                        <input type="number" class="form-input" id="sell-quantity" min="1" placeholder="Enter quantity...">
-                    </div>
-                    <div class="selling-actions">
-                        <button class="btn btn-primary" id="look-for-sellers" style="display: none;">
-                            <i class="fas fa-search"></i>
-                            Look for Sellers
-                        </button>
-                        <button class="btn btn-success" id="negotiate-sell" style="display: none;">
-                            <i class="fas fa-handshake"></i>
-                            Negotiate
-                        </button>
-                        <button class="btn btn-warning" id="desperate-sale" style="display: none;">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Desperate Sale
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Selling Results -->
-                <div class="selling-results" id="selling-results" style="display: none;">
-                    <!-- Selling results will be populated by JavaScript -->
+                <!-- Negotiate Button -->
+                <div class="selling-actions" {{#unless selectedSettlement}}style="display: none;"{{/unless}}>
+                    <button class="btn btn-success" id="negotiate-sell" style="display: none;">
+                        <i class="fas fa-handshake"></i>
+                        Negotiate Sale
+                    </button>
                 </div>
 
                 <!-- Empty State -->
+                {{#unless selectedSettlement}}
                 <div class="empty-state" id="selling-empty-state">
-                    <i class="fas fa-box-open"></i>
-                    <p>Select a settlement to see selling options</p>
-                    <div class="sub-text">Choose resources to sell based on settlement demand</div>
+                    <i class="fas fa-map-marker-alt"></i>
+                    <p>Select a settlement to start selling</p>
+                    <div class="sub-text">Choose a settlement to find buyers for your cargo</div>
                 </div>
+                {{/unless}}
             </div>
 
             <!-- Cargo Tab -->
