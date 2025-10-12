@@ -816,9 +816,6 @@ export class SellingFlow {
                 this.app.sellerOffers = savedOffers;
                 await this._displaySellerResults(savedOffers, { notify: false });
                 
-                // Show restoration notification
-                ui.notifications.info(`Restored ${savedOffers.length} seller offer${savedOffers.length > 1 ? 's' : ''} for ${this.app.selectedSettlement.name}`);
-                
                 console.log('🔄 SELLER PERSISTENCE: Seller offers restored successfully');
                 return true;
             }

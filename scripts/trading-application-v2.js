@@ -3,6 +3,7 @@ console.log('Trading Places | Loading trading-application-v2.js');
 import { TradingUIEventHandlers } from './ui/TradingUIEventHandlers.js';
 import TradingUIRenderer from './ui/TradingUIRenderer.js';
 import { CargoDistributionCharts } from './cargo-distribution-charts.js';
+import { TradingPlacesSettings } from './module-settings.js';
 import {
     resolveCurrencyContext,
     augmentTransaction,
@@ -33,24 +34,39 @@ if (typeof foundry?.applications?.api?.ApplicationV2 === 'undefined') {
 class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
 
     /** @override */
-    static DEFAULT_OPTIONS = {
-        id: "trading-places",
-        tag: "div",
-        window: {
-            title: "Trading Places",
-            icon: "fas fa-coins",
-            resizable: true,
-            minimizable: true,
-            maximizable: true
-        },
-        position: {
-            width: 1200,
-            height: 800,
-            top: 50,
-            left: 50
-        },
-        classes: ["trading-places", "application-v2", "modern-trading"]
-    };
+    static get DEFAULT_OPTIONS() {
+        const baseClasses = ["trading-places", "application-v2", "modern-trading"];
+        let compactMode = false;
+        
+        // Add compact mode class if enabled
+        try {
+            compactMode = TradingPlacesSettings.getSetting('compactMode');
+            if (compactMode) {
+                baseClasses.push("compact-mode");
+            }
+        } catch (error) {
+            // Settings not available yet, skip compact mode
+        }
+        
+        return {
+            id: "trading-places",
+            tag: "div",
+            window: {
+                title: "Trading Places",
+                icon: "fas fa-coins",
+                resizable: true,
+                minimizable: true,
+                maximizable: true
+            },
+            position: {
+                width: compactMode ? 1000 : 1200,
+                height: compactMode ? 600 : 800,
+                top: 50,
+                left: 50
+            },
+            classes: baseClasses
+        };
+    }
 
     /** @override */
     static PARTS = {
@@ -950,11 +966,6 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                     cargoCount: this.successfulCargo.length
                 });
 
-                // Show notification that cargo was restored
-                if (this.successfulCargo.length > 0) {
-                    const cargoNames = this.successfulCargo.map(c => c.name).join(', ');
-                    ui.notifications.info(`Restored ${this.successfulCargo.length} cargo item(s) for ${cargoData.settlement}: ${cargoNames}`);
-                }
 
                 // Note: UI renderer will be updated in _initializeApplicationState after DOM is ready
             } else {
