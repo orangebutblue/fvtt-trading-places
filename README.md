@@ -1,8 +1,8 @@
 # Trading Places
 
-![Trading Places Logo](trading-places.png)
+<img src="trading-places.png" alt="Trading Places Logo" width="300" />
 
-A comprehensive FoundryVTT module implementing the full WFRP4e trading rules with the orange-realism overhaul, featuring modern UI, advanced merchant systems, and dynamic market mechanics.
+A comprehensive FoundryVTT for river trading, featuring modern UI, advanced merchant systems, and dynamic market mechanics.
 
 ## Features
 
@@ -40,9 +40,11 @@ A comprehensive FoundryVTT module implementing the full WFRP4e trading rules wit
 - **Chat Visibility**: Configure who sees trading results and dice rolls
 - **Merchant Settings**: Adjust generation parameters and personality traits
 
-## Upcoming Features
+## Planned Features
 
-<!-- Add planned features here -->
+- Settlement Management UI
+- Cargo Type Management UI
+- Mission System / Rumors
 
 ## Requirements
 
