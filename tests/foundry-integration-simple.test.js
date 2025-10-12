@@ -265,7 +265,7 @@ describe('FoundryVTT Integration - Core Features', () => {
             
             const gmOnlyMessage = await ChatMessage.create({
                 content: 'GM Only Message',
-                whisper: game.settings.get('wfrp-trading', 'chatVisibility') === 'gm' ? ['gm-user'] : []
+                whisper: game.settings.get('trading-places', 'chatVisibility') === 'gm' ? ['gm-user'] : []
             });
             
             expect(ChatMessage.create).toHaveBeenCalledWith({
@@ -277,7 +277,7 @@ describe('FoundryVTT Integration - Core Features', () => {
             
             const publicMessage = await ChatMessage.create({
                 content: 'Public Message',
-                whisper: game.settings.get('wfrp-trading', 'chatVisibility') === 'gm' ? ['gm-user'] : []
+                whisper: game.settings.get('trading-places', 'chatVisibility') === 'gm' ? ['gm-user'] : []
             });
             
             expect(ChatMessage.create).toHaveBeenCalledWith({

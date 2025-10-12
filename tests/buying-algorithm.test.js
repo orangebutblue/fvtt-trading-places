@@ -1,5 +1,5 @@
 /**
- * Trading Places Module - WFRP Buying Algorithm Tests
+ * Trading Places Module - Buying Algorithm Tests
  * Comprehensive tests for the buying algorithm implementation
  */
 

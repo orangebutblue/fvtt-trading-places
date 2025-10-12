@@ -157,7 +157,7 @@ async function testSeasonManagement() {
         await dataManager.setCurrentSeason('winter');
         console.log(`✓ Set season to winter`);
         
-        const persistedSeason = await global.game.settings.get('wfrp-trading', 'currentSeason');
+        const persistedSeason = await global.game.settings.get('trading-places', 'currentSeason');
         console.log(`✓ Persisted season: ${persistedSeason}`);
         
         const retrievedSeason = await dataManager.getCurrentSeason();

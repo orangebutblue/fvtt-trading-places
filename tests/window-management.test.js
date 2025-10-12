@@ -125,15 +125,15 @@ describe('Window Management', () => {
         // Set up global window object for the class
         global.window = {
             ...global.window,
-            WFRPTradingApplication: undefined
+            TradingPlacesApplication: undefined
         };
 
         // Load the application class
         require('../scripts/trading-application-v2.js');
         
         // Get the class from global window
-        const WFRPTradingApplication = global.window.WFRPTradingApplication;
-        application = new WFRPTradingApplication();
+        const TradingPlacesApplication = global.window.TradingPlacesApplication;
+        application = new TradingPlacesApplication();
     });
 
     afterEach(() => {
@@ -154,11 +154,11 @@ describe('Window Management', () => {
         });
 
         test('should be resizable', () => {
-            expect(WFRPTradingApplication.DEFAULT_OPTIONS.window.resizable).toBe(true);
+            expect(TradingPlacesApplication.DEFAULT_OPTIONS.window.resizable).toBe(true);
         });
 
         test('should be minimizable', () => {
-            expect(WFRPTradingApplication.DEFAULT_OPTIONS.window.minimizable).toBe(true);
+            expect(TradingPlacesApplication.DEFAULT_OPTIONS.window.minimizable).toBe(true);
         });
     });
 

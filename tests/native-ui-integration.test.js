@@ -18,7 +18,7 @@ describe('WFRPNativeUIIntegration', () => {
         };
 
         // Clear any existing trading applications
-        global.WFRPTradingApplication = undefined;
+        global.TradingPlacesApplication = undefined;
         global.WFRPSimpleTradingApplication = undefined;
 
         global.console = {
@@ -31,7 +31,7 @@ describe('WFRPNativeUIIntegration', () => {
         };
 
         global.game = {
-            wfrpTrading: {},
+            tradingPlaces: {},
             settings: {
                 get: jest.fn(),
                 set: jest.fn()
@@ -120,10 +120,10 @@ describe('WFRPNativeUIIntegration', () => {
 
             expect(controls).toHaveLength(1);
             expect(controls[0]).toMatchObject({
-                name: 'wfrp-trading',
+                name: 'trading-places',
                 title: 'Trading Places',
                 icon: 'fas fa-coins',
-                layer: 'WFRPTradingLayer'
+                layer: 'TradingPlacesLayer'
             });
             expect(controls[0].tools).toHaveLength(2);
             expect(controls[0].tools[0].name).toBe('open-trading');
@@ -153,13 +153,13 @@ describe('WFRPNativeUIIntegration', () => {
         test('should initialize global API methods', () => {
             nativeUI.initializeGlobalAPI();
 
-            expect(global.game.wfrpTrading.openTrading).toBeDefined();
-            expect(global.game.wfrpTrading.openQuickTrade).toBeDefined();
-            expect(global.game.wfrpTrading.openSimpleTrading).toBeDefined();
-            expect(global.game.wfrpTrading.getCurrentSeason).toBeDefined();
-            expect(global.game.wfrpTrading.setSeason).toBeDefined();
-            expect(global.game.wfrpTrading.enableDebugLogging).toBeDefined();
-            expect(global.game.wfrpTrading.disableDebugLogging).toBeDefined();
+            expect(global.game.tradingPlaces.openTrading).toBeDefined();
+            expect(global.game.tradingPlaces.openQuickTrade).toBeDefined();
+            expect(global.game.tradingPlaces.openSimpleTrading).toBeDefined();
+            expect(global.game.tradingPlaces.getCurrentSeason).toBeDefined();
+            expect(global.game.tradingPlaces.setSeason).toBeDefined();
+            expect(global.game.tradingPlaces.enableDebugLogging).toBeDefined();
+            expect(global.game.tradingPlaces.disableDebugLogging).toBeDefined();
         });
 
         test('getCurrentSeason should return current season', () => {
@@ -168,7 +168,7 @@ describe('WFRPNativeUIIntegration', () => {
             };
 
             nativeUI.initializeGlobalAPI();
-            const season = global.game.wfrpTrading.getCurrentSeason();
+            const season = global.game.tradingPlaces.getCurrentSeason();
 
             expect(season).toBe('summer');
             expect(global.game.settings.get).toHaveBeenCalledWith('trading-places', 'currentSeason');
@@ -180,7 +180,7 @@ describe('WFRPNativeUIIntegration', () => {
             };
 
             nativeUI.initializeGlobalAPI();
-            await global.game.wfrpTrading.setSeason('winter');
+            await global.game.tradingPlaces.setSeason('winter');
 
             expect(global.game.settings.set).toHaveBeenCalledWith('trading-places', 'currentSeason', 'winter');
             expect(global.ui.notifications.info).toHaveBeenCalledWith('Trading season changed to winter');
@@ -189,22 +189,22 @@ describe('WFRPNativeUIIntegration', () => {
         test('setSeason should reject invalid seasons', async () => {
             nativeUI.initializeGlobalAPI();
 
-            await expect(global.game.wfrpTrading.setSeason('invalid')).rejects.toThrow('Invalid season: invalid');
+            await expect(global.game.tradingPlaces.setSeason('invalid')).rejects.toThrow('Invalid season: invalid');
         });
     });
 
     describe('openTradingInterface', () => {
-        test('should open WFRPTradingApplication if available', async () => {
+        test('should open TradingPlacesApplication if available', async () => {
             const mockApp = {
                 render: jest.fn().mockResolvedValue(true)
             };
-            global.WFRPTradingApplication = jest.fn(() => mockApp);
+            global.TradingPlacesApplication = jest.fn(() => mockApp);
 
             await nativeUI.openTradingInterface();
 
-            expect(global.WFRPTradingApplication).toHaveBeenCalled();
+            expect(global.TradingPlacesApplication).toHaveBeenCalled();
             expect(mockApp.render).toHaveBeenCalledWith(true);
-            expect(mockLogger.log).toHaveBeenCalledWith('UI Integration', 'Using WFRPTradingApplication (V2)', null);
+            expect(mockLogger.log).toHaveBeenCalledWith('UI Integration', 'Using TradingPlacesApplication (V2)', null);
         });
 
         test('should fallback to WFRPSimpleTradingApplication', async () => {

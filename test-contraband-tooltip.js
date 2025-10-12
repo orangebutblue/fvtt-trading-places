@@ -18,7 +18,7 @@ await import('./scripts/data-manager.js');
 await import('./scripts/cargo-availability-pipeline.js');
 await import('./scripts/ui/TradingUIRenderer.js');
 
-const DataManager = window.WFRPTradingDataManager;
+const DataManager = window.TradingPlacesDataManager;
 const CargoAvailabilityPipeline = window.CargoAvailabilityPipeline;
 const TradingUIRenderer = (await import('./scripts/ui/TradingUIRenderer.js')).default;
 

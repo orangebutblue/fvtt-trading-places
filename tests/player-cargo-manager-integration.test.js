@@ -160,7 +160,7 @@ describe('PlayerCargoManager Integration', () => {
             
             // Verify session storage was called
             expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-                'wfrp-trading-cargo-session',
+                'trading-places-cargo-session',
                 expect.stringContaining('playerCargo')
             );
         });

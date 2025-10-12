@@ -1,15 +1,13 @@
 console.log('Trading Places | Loading buying-algorithm.js');
 
 /**
- * Trading Places Module - WFRP Buying Algorithm Implementation
- * Implements the complete WFRP buying algorithm from official-algorithm.md
+ * Trading Places Module - Buying Algorithm Implementation
  */
 
 /**
- * WFRP Buying Algorithm class implementing the official Death on the Reik Companion rules
- * Follows the German algorithm specification from official-algorithm.md
+ * Buying Algorithm class implementing the official Death on the Reik Companion rules
  */
-class WFRPBuyingAlgorithm {
+class TPBuyingAlgorithm {
     constructor(dataManager, tradingEngine) {
         this.dataManager = dataManager;
         this.tradingEngine = tradingEngine;
@@ -82,7 +80,7 @@ class WFRPBuyingAlgorithm {
         }
 
         logger.logAlgorithmStep(
-            'WFRP Buying Algorithm',
+            'Buying Algorithm',
             'Step 0',
             'Settlement Information Extraction',
             { settlementName: settlement.name, settlementRegion: settlement.region },
@@ -136,7 +134,7 @@ class WFRPBuyingAlgorithm {
         const logger = this.getLogger();
         
         logger.logAlgorithmStep(
-            'WFRP Buying Algorithm',
+            'Buying Algorithm',
             'Step 1',
             'Cargo Availability Check',
             { settlementName: settlement.name },
@@ -230,7 +228,7 @@ class WFRPBuyingAlgorithm {
         const logger = this.getLogger();
         
         logger.logAlgorithmStep(
-            'WFRP Buying Algorithm',
+            'Buying Algorithm',
             'Step 2A',
             'Cargo Type Determination',
             { settlementName: settlement.name, season: season },
@@ -426,7 +424,7 @@ class WFRPBuyingAlgorithm {
         const logger = this.getLogger();
         
         logger.logAlgorithmStep(
-            'WFRP Buying Algorithm',
+            'Buying Algorithm',
             'Step 2B',
             'Cargo Size Calculation',
             { settlementName: settlement.name },
@@ -588,7 +586,7 @@ class WFRPBuyingAlgorithm {
         const logger = this.getLogger();
         
         logger.logAlgorithmStep(
-            'WFRP Buying Algorithm',
+            'Buying Algorithm',
             'Step 3',
             'Price Calculation and Negotiation',
             { cargoType: cargoType, season: season, quantity: quantity },
@@ -623,7 +621,6 @@ class WFRPBuyingAlgorithm {
             `Base price for ${cargoType} in ${season} (${quality} quality)`
         );
 
-        // Calculate price per 10 EP (standard WFRP unit)
         const pricePerTenEP = basePrice;
         let finalPricePerTenEP = pricePerTenEP;
         const modifiers = [];
@@ -698,7 +695,7 @@ class WFRPBuyingAlgorithm {
         }
 
         logger.logAlgorithmStep(
-            'WFRP Buying Algorithm',
+            'Buying Algorithm',
             'Step 3 - Haggling',
             'Price Negotiation',
             { 
@@ -787,7 +784,7 @@ class WFRPBuyingAlgorithm {
 
     /**
      * Complete buying algorithm workflow
-     * Executes all steps of the WFRP buying algorithm in sequence
+     * Executes all steps of the buying algorithm in sequence
      * @param {Object} settlement - Settlement object
      * @param {string} season - Current season
      * @param {Object} options - Algorithm options
@@ -797,7 +794,7 @@ class WFRPBuyingAlgorithm {
         const logger = this.getLogger();
         
         logger.logAlgorithmStep(
-            'WFRP Buying Algorithm',
+            'Buying Algorithm',
             'Complete Workflow',
             'Execute Full Buying Algorithm',
             { 
@@ -944,10 +941,10 @@ class WFRPBuyingAlgorithm {
 
 // Make the class available globally
 if (typeof window !== 'undefined') {
-    window.WFRPBuyingAlgorithm = WFRPBuyingAlgorithm;
+    window.TPBuyingAlgorithm = TPBuyingAlgorithm;
 }
 
 // Export for module systems
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = WFRPBuyingAlgorithm;
+    module.exports = TPBuyingAlgorithm;
 }

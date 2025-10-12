@@ -583,7 +583,7 @@ describe('FoundryVTT Integration Components Tests', () => {
         });
         
         // Register module settings
-        global.foundryMock.registerSetting('wfrp-trading', 'activeDataset', {
+        global.foundryMock.registerSetting('trading-places', 'activeDataset', {
             name: 'Active Dataset',
             scope: 'world',
             config: true,
@@ -591,7 +591,7 @@ describe('FoundryVTT Integration Components Tests', () => {
             default: 'wfrp4e-default'
         });
         
-        global.foundryMock.registerSetting('wfrp-trading', 'currentSeason', {
+        global.foundryMock.registerSetting('trading-places', 'currentSeason', {
             name: 'Current Season',
             scope: 'world',
             config: true,
@@ -599,7 +599,7 @@ describe('FoundryVTT Integration Components Tests', () => {
             default: 'spring'
         });
         
-        global.foundryMock.registerSetting('wfrp-trading', 'chatVisibility', {
+        global.foundryMock.registerSetting('trading-places', 'chatVisibility', {
             name: 'Chat Visibility',
             scope: 'world',
             config: true,
@@ -623,7 +623,7 @@ describe('FoundryVTT Integration Components Tests', () => {
                 default: 'wfrp4e'
             });
 
-            global.foundryMock.registerSetting('wfrp-trading', 'datasetInfo', {
+            global.foundryMock.registerSetting('trading-places', 'datasetInfo', {
                 name: 'Dataset Info',
                 scope: 'world',
                 config: false,
@@ -855,28 +855,28 @@ describe('FoundryVTT Integration Components Tests', () => {
             // Requirements: 6.5, 6.8, 6.9
             
             // Test GM-only visibility
-            await global.foundryMock.setSetting('wfrp-trading', 'chatVisibility', 'gm');
+            await global.foundryMock.setSetting('trading-places', 'chatVisibility', 'gm');
             
             const gmOnlyRoll = new Roll('1d100');
             await gmOnlyRoll.evaluate();
             
             const gmMessage = await gmOnlyRoll.toMessage({
                 flavor: 'GM Only Roll',
-                whisper: global.foundryMock.getSetting('wfrp-trading', 'chatVisibility') === 'gm' ? [gmUser.id] : null
+                whisper: global.foundryMock.getSetting('trading-places', 'chatVisibility') === 'gm' ? [gmUser.id] : null
             });
             
             expect(gmMessage.whisper).toContain(gmUser.id);
             expect(gmMessage.whisper).toHaveLength(1);
             
             // Test public visibility
-            await global.foundryMock.setSetting('wfrp-trading', 'chatVisibility', 'all');
+            await global.foundryMock.setSetting('trading-places', 'chatVisibility', 'all');
             
             const publicRoll = new Roll('1d100');
             await publicRoll.evaluate();
             
             const publicMessage = await publicRoll.toMessage({
                 flavor: 'Public Roll',
-                whisper: global.foundryMock.getSetting('wfrp-trading', 'chatVisibility') === 'gm' ? [gmUser.id] : null
+                whisper: global.foundryMock.getSetting('trading-places', 'chatVisibility') === 'gm' ? [gmUser.id] : null
             });
             
             expect(publicMessage.whisper).toHaveLength(0);
@@ -892,7 +892,7 @@ describe('FoundryVTT Integration Components Tests', () => {
                     </div>
                 `,
                 type: CONST.CHAT_MESSAGE_STYLES.OTHER,
-                whisper: global.foundryMock.getSetting('wfrp-trading', 'chatVisibility') === 'gm' ? [gmUser.id] : []
+                whisper: global.foundryMock.getSetting('trading-places', 'chatVisibility') === 'gm' ? [gmUser.id] : []
             });
             
             expect(transactionMessage.content).toContain('Trade Completed');
@@ -964,25 +964,25 @@ describe('FoundryVTT Integration Components Tests', () => {
             // Requirements: 6.1, 5.1, 5.2
             
             // Test initial default values
-            expect(global.foundryMock.getSetting('wfrp-trading', 'activeDataset')).toBe('wfrp4e-default');
-            expect(global.foundryMock.getSetting('wfrp-trading', 'currentSeason')).toBe('spring');
-            expect(global.foundryMock.getSetting('wfrp-trading', 'chatVisibility')).toBe('gm');
+            expect(global.foundryMock.getSetting('trading-places', 'activeDataset')).toBe('wfrp4e-default');
+            expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('spring');
+            expect(global.foundryMock.getSetting('trading-places', 'chatVisibility')).toBe('gm');
             
             // Test setting updates
-            await global.foundryMock.setSetting('wfrp-trading', 'currentSeason', 'winter');
-            expect(global.foundryMock.getSetting('wfrp-trading', 'currentSeason')).toBe('winter');
+            await global.foundryMock.setSetting('trading-places', 'currentSeason', 'winter');
+            expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('winter');
             
-            await global.foundryMock.setSetting('wfrp-trading', 'chatVisibility', 'all');
-            expect(global.foundryMock.getSetting('wfrp-trading', 'chatVisibility')).toBe('all');
+            await global.foundryMock.setSetting('trading-places', 'chatVisibility', 'all');
+            expect(global.foundryMock.getSetting('trading-places', 'chatVisibility')).toBe('all');
             
-            await global.foundryMock.setSetting('wfrp-trading', 'activeDataset', 'custom-dataset');
-            expect(global.foundryMock.getSetting('wfrp-trading', 'activeDataset')).toBe('custom-dataset');
+            await global.foundryMock.setSetting('trading-places', 'activeDataset', 'custom-dataset');
+            expect(global.foundryMock.getSetting('trading-places', 'activeDataset')).toBe('custom-dataset');
             
             // Test season persistence in trading engine
             await tradingEngine.setCurrentSeason('autumn');
             expect(tradingEngine.getCurrentSeason()).toBe('autumn');
             expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('autumn');
-            expect(global.foundryMock.getSetting('wfrp-trading', 'currentSeason')).toBe('winter');
+            expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('winter');
             
             // Simulate module reload by creating new trading engine
             const newTradingEngine = new TradingEngine(dataManager);
@@ -1012,18 +1012,18 @@ describe('FoundryVTT Integration Components Tests', () => {
             });
             
             // Change season setting
-            await global.foundryMock.setSetting('wfrp-trading', 'currentSeason', 'summer');
+            await global.foundryMock.setSetting('trading-places', 'currentSeason', 'summer');
             
             expect(changeNotifications).toHaveLength(1);
-            expect(changeNotifications[0].settingKey).toBe('wfrp-trading.currentSeason');
+            expect(changeNotifications[0].settingKey).toBe('trading-places.currentSeason');
             expect(changeNotifications[0].newValue).toBe('summer');
             expect(changeNotifications[0].oldValue).toBe('spring');
             
             // Change chat visibility
-            await global.foundryMock.setSetting('wfrp-trading', 'chatVisibility', 'all');
+            await global.foundryMock.setSetting('trading-places', 'chatVisibility', 'all');
             
             expect(changeNotifications).toHaveLength(2);
-            expect(changeNotifications[1].settingKey).toBe('wfrp-trading.chatVisibility');
+            expect(changeNotifications[1].settingKey).toBe('trading-places.chatVisibility');
             expect(changeNotifications[1].newValue).toBe('all');
             expect(changeNotifications[1].oldValue).toBe('gm');
             
@@ -1046,7 +1046,7 @@ describe('FoundryVTT Integration Components Tests', () => {
             // Requirements: 6.1, 8.7, 8.8
             
             // Test setting with invalid value
-            const invalidSetting = await global.foundryMock.setSetting('wfrp-trading', 'currentSeason', 'invalid');
+            const invalidSetting = await global.foundryMock.setSetting('trading-places', 'currentSeason', 'invalid');
             expect(invalidSetting).toBe(true); // Setting was stored
             
             // But validation should catch it
@@ -1055,14 +1055,14 @@ describe('FoundryVTT Integration Components Tests', () => {
             }).toThrow('Invalid season: invalid');
             
             // Test setting migration (simulate old format)
-            await global.foundryMock.setSetting('wfrp-trading', 'currentSeason', 'Spring'); // Capitalized
+            await global.foundryMock.setSetting('trading-places', 'currentSeason', 'Spring'); // Capitalized
             
             // Migration should normalize it
             const normalizedSeason = tradingEngine.normalizeSeason('Spring');
             expect(normalizedSeason).toBe('spring');
             
             // Test missing setting handling
-            const missingSetting = global.foundryMock.getSetting('wfrp-trading', 'nonexistent');
+            const missingSetting = global.foundryMock.getSetting('trading-places', 'nonexistent');
             expect(missingSetting).toBeNull();
             
             // Test setting with complex object value
@@ -1072,8 +1072,8 @@ describe('FoundryVTT Integration Components Tests', () => {
                 lastModified: Date.now()
             };
             
-            await global.foundryMock.setSetting('wfrp-trading', 'datasetInfo', complexSetting);
-            const retrievedSetting = global.foundryMock.getSetting('wfrp-trading', 'datasetInfo');
+            await global.foundryMock.setSetting('trading-places', 'datasetInfo', complexSetting);
+            const retrievedSetting = global.foundryMock.getSetting('trading-places', 'datasetInfo');
             
             expect(retrievedSetting).toEqual(complexSetting);
             expect(retrievedSetting.dataset).toBe('custom');
@@ -1310,7 +1310,7 @@ describe('FoundryVTT Integration Components Tests', () => {
             // Requirements: 6.5, 6.8
             
             // Test GM-only messages
-            await global.foundryMock.setSetting('wfrp-trading', 'chatVisibility', 'gm');
+            await global.foundryMock.setSetting('trading-places', 'chatVisibility', 'gm');
             
             const gmOnlyMessage = await ChatMessage.create({
                 content: 'GM Only Trading Information',
@@ -1321,7 +1321,7 @@ describe('FoundryVTT Integration Components Tests', () => {
             expect(gmOnlyMessage.whisper).not.toContain(playerUser.id);
             
             // Test public messages
-            await global.foundryMock.setSetting('wfrp-trading', 'chatVisibility', 'all');
+            await global.foundryMock.setSetting('trading-places', 'chatVisibility', 'all');
             
             const publicMessage = await ChatMessage.create({
                 content: 'Public Trading Information',
@@ -1354,7 +1354,7 @@ describe('FoundryVTT Integration Components Tests', () => {
                 initHookCalled = true;
                 
                 // Register settings during init
-                global.foundryMock.registerSetting('wfrp-trading', 'testSetting', {
+                global.foundryMock.registerSetting('trading-places', 'testSetting', {
                     name: 'Test Setting',
                     scope: 'world',
                     config: true,
@@ -1375,7 +1375,7 @@ describe('FoundryVTT Integration Components Tests', () => {
             // Simulate FoundryVTT initialization
             global.foundryMock.callHook('init');
             expect(initHookCalled).toBe(true);
-            expect(global.foundryMock.getSetting('wfrp-trading', 'testSetting')).toBe('test');
+            expect(global.foundryMock.getSetting('trading-places', 'testSetting')).toBe('test');
             
             global.foundryMock.callHook('ready');
             expect(readyHookCalled).toBe(true);
@@ -1384,13 +1384,13 @@ describe('FoundryVTT Integration Components Tests', () => {
             let tradeHookCalled = false;
             let tradeData = null;
             
-            global.foundryMock.registerHook('wfrp-trading.tradeCompleted', (data) => {
+            global.foundryMock.registerHook('trading-places.tradeCompleted', (data) => {
                 tradeHookCalled = true;
                 tradeData = data;
             });
             
             // Simulate trade completion
-            global.foundryMock.callHook('wfrp-trading.tradeCompleted', {
+            global.foundryMock.callHook('trading-places.tradeCompleted', {
                 actor: testActor.id,
                 cargo: 'Wine',
                 quantity: 20,
@@ -1406,7 +1406,7 @@ describe('FoundryVTT Integration Components Tests', () => {
         test('should handle module updates and migrations', async () => {
             // Requirements: 6.1, 8.7
             
-            global.foundryMock.registerSetting('wfrp-trading', 'version', {
+            global.foundryMock.registerSetting('trading-places', 'version', {
                 name: 'Module Version',
                 scope: 'world',
                 config: false,
@@ -1414,7 +1414,7 @@ describe('FoundryVTT Integration Components Tests', () => {
                 default: '1.0.0'
             });
 
-            global.foundryMock.registerSetting('wfrp-trading', 'oldFormatSetting', {
+            global.foundryMock.registerSetting('trading-places', 'oldFormatSetting', {
                 name: 'Old Format Setting',
                 scope: 'world',
                 config: false,
@@ -1423,37 +1423,37 @@ describe('FoundryVTT Integration Components Tests', () => {
             });
 
             // Simulate old version settings
-            await global.foundryMock.setSetting('wfrp-trading', 'version', '0.9.0');
-            await global.foundryMock.setSetting('wfrp-trading', 'oldFormatSetting', 'old-value');
+            await global.foundryMock.setSetting('trading-places', 'version', '0.9.0');
+            await global.foundryMock.setSetting('trading-places', 'oldFormatSetting', 'old-value');
             
             // Register migration hook
             let migrationRan = false;
-            global.foundryMock.registerHook('wfrp-trading.migrate', (fromVersion, toVersion) => {
+            global.foundryMock.registerHook('trading-places.migrate', (fromVersion, toVersion) => {
                 migrationRan = true;
                 
                 if (fromVersion === '0.9.0' && toVersion === '1.0.0') {
                     // Migrate old format setting
-                    const oldValue = global.foundryMock.getSetting('wfrp-trading', 'oldFormatSetting');
-                    global.foundryMock.registerSetting('wfrp-trading', 'newFormatSetting', {
+                    const oldValue = global.foundryMock.getSetting('trading-places', 'oldFormatSetting');
+                    global.foundryMock.registerSetting('trading-places', 'newFormatSetting', {
                         name: 'Migrated Setting',
                         scope: 'world',
                         config: false,
                         type: String,
                         default: null
                     });
-                    global.foundryMock.setSetting('wfrp-trading', 'newFormatSetting', `migrated-${oldValue}`);
+                    global.foundryMock.setSetting('trading-places', 'newFormatSetting', `migrated-${oldValue}`);
                 }
             });
             
             // Simulate module update
-            global.foundryMock.callHook('wfrp-trading.migrate', '0.9.0', '1.0.0');
+            global.foundryMock.callHook('trading-places.migrate', '0.9.0', '1.0.0');
             
             expect(migrationRan).toBe(true);
-            expect(global.foundryMock.getSetting('wfrp-trading', 'newFormatSetting')).toBe('migrated-old-value');
+            expect(global.foundryMock.getSetting('trading-places', 'newFormatSetting')).toBe('migrated-old-value');
             
             // Update version
-            await global.foundryMock.setSetting('wfrp-trading', 'version', '1.0.0');
-            expect(global.foundryMock.getSetting('wfrp-trading', 'version')).toBe('1.0.0');
+            await global.foundryMock.setSetting('trading-places', 'version', '1.0.0');
+            expect(global.foundryMock.getSetting('trading-places', 'version')).toBe('1.0.0');
         });
     });
 });

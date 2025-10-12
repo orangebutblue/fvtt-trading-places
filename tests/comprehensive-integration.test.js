@@ -198,7 +198,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             global.foundryMock.reset();
             
             // Register settings
-            global.foundryMock.registerSetting('wfrp-trading', 'currentSeason', {
+            global.foundryMock.registerSetting('trading-places', 'currentSeason', {
                 name: 'Current Season',
                 scope: 'world',
                 config: true,
@@ -206,7 +206,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 default: 'spring'
             });
             
-            global.foundryMock.registerSetting('wfrp-trading', 'chatVisibility', {
+            global.foundryMock.registerSetting('trading-places', 'chatVisibility', {
                 name: 'Chat Visibility',
                 scope: 'world',
                 config: true,
@@ -214,7 +214,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 default: 'gm'
             });
             
-            global.foundryMock.registerSetting('wfrp-trading', 'activeDataset', {
+            global.foundryMock.registerSetting('trading-places', 'activeDataset', {
                 name: 'Active Dataset',
                 scope: 'world',
                 config: true,
@@ -438,13 +438,13 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             // Requirements: 5.1, 5.2, 5.3, 5.4, 5.5
             
             // Test initial season
-            expect(global.foundryMock.getSetting('wfrp-trading', 'currentSeason')).toBe('spring');
+            expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('spring');
             
             // Test season change through trading engine
             await tradingEngine.setCurrentSeason('winter');
             
             expect(tradingEngine.getCurrentSeason()).toBe('winter');
-            expect(global.foundryMock.getSetting('wfrp-trading', 'currentSeason')).toBe('winter');
+            expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('winter');
             
             // Test season change notifications
             const initialNotificationCount = global.foundryMock.notifications.length;
@@ -687,7 +687,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                     </div>
                 `,
                 type: CONST.CHAT_MESSAGE_STYLES.OTHER,
-                whisper: global.foundryMock.getSetting('wfrp-trading', 'chatVisibility') === 'gm' ? ['gm-user'] : []
+                whisper: global.foundryMock.getSetting('trading-places', 'chatVisibility') === 'gm' ? ['gm-user'] : []
             });
             
             expect(transactionMessage.content).toContain('Purchase Completed');

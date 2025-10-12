@@ -2475,7 +2475,7 @@ class DataManager {
 
 // Export for use in other modules
 if (typeof window !== 'undefined') {
-    window.WFRPTradingDataManager = DataManager;
+    window.TradingPlacesDataManager = DataManager;
     window.DataManager = DataManager;
 }
 

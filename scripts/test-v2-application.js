@@ -9,14 +9,14 @@ function testV2ApplicationFramework() {
     
     try {
         // Check if the class is available
-        if (typeof WFRPTradingApplication === 'undefined') {
-            throw new Error('WFRPTradingApplication class not found');
+        if (typeof TradingPlacesApplication === 'undefined') {
+            throw new Error('TradingPlacesApplication class not found');
         }
         
-        console.log('✓ WFRPTradingApplication class is available');
+        console.log('✓ TradingPlacesApplication class is available');
         
         // Check DEFAULT_OPTIONS structure
-        const defaultOptions = WFRPTradingApplication.DEFAULT_OPTIONS;
+        const defaultOptions = TradingPlacesApplication.DEFAULT_OPTIONS;
         if (!defaultOptions) {
             throw new Error('DEFAULT_OPTIONS not defined');
         }
@@ -24,7 +24,7 @@ function testV2ApplicationFramework() {
         console.log('✓ DEFAULT_OPTIONS defined:', defaultOptions);
         
         // Check PARTS structure
-        const parts = WFRPTradingApplication.PARTS;
+        const parts = TradingPlacesApplication.PARTS;
         if (!parts || !parts.header || !parts.content || !parts.footer) {
             throw new Error('PARTS structure incomplete');
         }
@@ -32,8 +32,8 @@ function testV2ApplicationFramework() {
         console.log('✓ PARTS structure complete:', Object.keys(parts));
         
         // Check if it extends ApplicationV2
-        if (!WFRPTradingApplication.prototype instanceof foundry.applications.api.ApplicationV2) {
-            throw new Error('WFRPTradingApplication does not extend ApplicationV2');
+        if (!TradingPlacesApplication.prototype instanceof foundry.applications.api.ApplicationV2) {
+            throw new Error('TradingPlacesApplication does not extend ApplicationV2');
         }
         
         console.log('✓ Properly extends ApplicationV2');
@@ -41,19 +41,19 @@ function testV2ApplicationFramework() {
         // Test instantiation (without rendering)
         const mockOptions = {};
         
-        // Check if WFRPRiverTrading is available, if not mock it for testing
-        if (!window.WFRPRiverTrading) {
-            window.WFRPRiverTrading = {
+        // Check if TradingPlaces is available, if not mock it for testing
+        if (!window.TradingPlaces) {
+            window.TradingPlaces = {
                 getDataManager: () => ({ getAllSettlements: () => [] }),
                 getTradingEngine: () => ({ getCurrentSeason: () => 'spring' }),
                 getSystemAdapter: () => ({})
             };
-            console.log('✓ Mocked WFRPRiverTrading for testing');
+            console.log('✓ Mocked TradingPlaces for testing');
         } else {
-            console.log('✓ WFRPRiverTrading already available');
+            console.log('✓ TradingPlaces already available');
         }
         
-        const app = new WFRPTradingApplication(mockOptions);
+        const app = new TradingPlacesApplication(mockOptions);
         
         console.log('✓ Application instantiated successfully');
         

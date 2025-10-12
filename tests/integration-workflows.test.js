@@ -783,7 +783,7 @@ describe('Complete Trading Workflows Integration Tests', () => {
             
             // Clear current season
             tradingEngine.currentSeason = null;
-            global.foundryMock.setSetting('wfrp-trading', 'currentSeason', null);
+            global.foundryMock.setSetting('trading-places', 'currentSeason', null);
             
             // Attempt trading operation without season set
             expect(() => {

@@ -44,7 +44,7 @@ describe('Cargo Persistence Fix', () => {
 
     test('should save and load cargo availability data correctly', async () => {
         // Import the trading application
-        const { WFRPTradingApplication } = require('../scripts/trading-application-v2.js');
+        const { TradingPlacesApplication } = require('../scripts/trading-application-v2.js');
 
         // Create a mock data manager
         const mockDataManager = {
@@ -85,7 +85,7 @@ describe('Cargo Persistence Fix', () => {
         };
 
         // Create application instance
-        const app = new WFRPTradingApplication({
+        const app = new TradingPlacesApplication({
             dataManager: mockDataManager,
             tradingEngine: mockTradingEngine
         });

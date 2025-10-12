@@ -31,15 +31,7 @@ function resolveHagglingMechanicsClass() {
     return CachedHagglingMechanicsClass;
 }
 
-/**
- * Trading Places Module - Trading Engine
- * Pure business logic implementation of WFRP trading algorithms
- */
 
-/**
- * Trading Engine class implementing the complete WFRP trading algorithm
- * This class contains pure business logic with no FoundryVTT dependencies
- */
 class TradingEngine {
     constructor(dataManager, options = {}) {
         if (!dataManager) {
@@ -229,7 +221,7 @@ class TradingEngine {
 
             if (!persisted) {
                 if (typeof globalThis !== 'undefined' && globalThis.foundryMock?.setSetting) {
-                    await globalThis.foundryMock.setSetting('wfrp-trading', 'currentSeason', normalizedSeason);
+                    await globalThis.foundryMock.setSetting('trading-places', 'currentSeason', normalizedSeason);
                     persisted = true;
                 } else if (typeof game !== 'undefined' && game.settings && game.settings.set) {
                     await game.settings.set('trading-places', 'currentSeason', normalizedSeason);
@@ -372,7 +364,7 @@ class TradingEngine {
         };
 
         logger.logAlgorithmStep(
-            'WFRP Buying Algorithm',
+            'Buying Algorithm',
             'Step 1',
             'Cargo Availability Check',
             { settlementName: settlement.name, settlementRegion: settlement.region },
@@ -441,7 +433,7 @@ class TradingEngine {
         const logger = this.getLogger();
 
         logger.logAlgorithmStep(
-            'WFRP Buying Algorithm',
+            'Buying Algorithm',
             'Step 1',
             'Cargo Availability Check',
             { settlementName: settlement.name, settlementRegion: settlement.region },

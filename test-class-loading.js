@@ -5,9 +5,6 @@
 
 console.log('=== Class Loading Test ===');
 
-// Check if class is defined
-console.log('typeof WFRPNativeUIIntegration:', typeof WFRPNativeUIIntegration);
-console.log('window.WFRPNativeUIIntegration:', typeof window.WFRPNativeUIIntegration);
 
 // Try to create an instance
 try {

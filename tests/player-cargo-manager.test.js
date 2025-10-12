@@ -96,7 +96,7 @@ describe('PlayerCargoManager', () => {
             cargoManager.saveSessionData();
             
             expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-                'wfrp-trading-cargo-session',
+                'trading-places-cargo-session',
                 expect.stringContaining('playerCargo')
             );
         });
@@ -109,7 +109,7 @@ describe('PlayerCargoManager', () => {
                 ],
                 sessionData: { sessionId: 'test-session' }
             };
-            mockSessionStorage.setItem('wfrp-trading-cargo-session', JSON.stringify(existingData));
+            mockSessionStorage.setItem('trading-places-cargo-session', JSON.stringify(existingData));
 
             // Create new manager instance
             const newManager = new PlayerCargoManager(mockDebugLogger, mockDataManager, mockSessionStorage);
@@ -121,7 +121,7 @@ describe('PlayerCargoManager', () => {
         test('should handle corrupted session data gracefully', () => {
             // Clear existing session first
             mockSessionStorage.clear();
-            mockSessionStorage.setItem('wfrp-trading-cargo-session', 'invalid-json');
+            mockSessionStorage.setItem('trading-places-cargo-session', 'invalid-json');
             
             const newManager = new PlayerCargoManager(mockDebugLogger, mockDataManager, mockSessionStorage);
             

@@ -48,14 +48,14 @@ Hooks.once('init', () => {
         }
         
         // Check if our control already exists
-        const existingControl = controls.find(c => c.name === 'wfrp-trading');
+        const existingControl = controls.find(c => c.name === 'trading-places');
         if (existingControl) {
             console.log('Trading Places | Trading control already exists, skipping');
             return;
         }
         
         const tradingControls = {
-            name: 'wfrp-trading',
+            name: 'trading-places',
             title: 'Trading Places Places',
             icon: 'fas fa-coins',
             visible: true,
@@ -71,7 +71,7 @@ Hooks.once('init', () => {
                     // Try to open the enhanced trading interface
                     try {
                         // Check if EnhancedTradingDialog is available
-                        if (window.WFRPTradingEnhancedDialog) {
+                        if (window.TradingPlacesEnhancedDialog) {
                             // Get the current controlled actor
                             const controlledTokens = canvas.tokens.controlled;
                             let selectedActor = null;
@@ -86,18 +86,18 @@ Hooks.once('init', () => {
                             
                             if (selectedActor) {
                                 // Open enhanced trading dialog for the selected actor
-                                const dialog = new window.WFRPTradingEnhancedDialog(selectedActor, null);
+                                const dialog = new window.TradingPlacesEnhancedDialog(selectedActor, null);
                                 dialog.render(true);
                                 console.log('Trading Places | Opened EnhancedTradingDialog');
                             } else {
                                 ui.notifications.warn('Please select a token or assign a character to use the trading interface.');
                                 console.log('Trading Places | No actor selected for trading');
                             }
-                        } else if (window.WFRPTradingApplication) {
+                        } else if (window.TradingPlacesApplication) {
                             // Fallback to old application
-                            const app = new window.WFRPTradingApplication();
+                            const app = new window.TradingPlacesApplication();
                             app.render(true);
-                            console.log('Trading Places | Opened WFRPTradingApplication (fallback)');
+                            console.log('Trading Places | Opened TradingPlacesApplication (fallback)');
                         } else {
                             ui.notifications.info('Trading interface not yet available. Please wait for the module to finish loading.');
                             console.log('Trading Places | Trading applications not yet available');
@@ -128,7 +128,7 @@ Hooks.once('ready', async () => {
         // Initialize debug logger first
         if (typeof WFRPDebugLogger !== 'undefined') {
             debugLogger = new WFRPDebugLogger();
-            window.wfrpLogger = debugLogger;
+            window.TPMLogger = debugLogger;
             console.log('Trading Places | Debug logger initialized');
         } else {
             console.warn('Trading Places | WFRPDebugLogger class not available, debug logging disabled');
@@ -214,11 +214,11 @@ Hooks.once('ready', async () => {
         }
         
         // Initialize logger integration with core components
-        if (typeof WFRPLoggerIntegration !== 'undefined') {
-            WFRPLoggerIntegration.initializeIntegration(tradingEngine, dataManager);
+        if (typeof TPMLoggerIntegration !== 'undefined') {
+            TPMLoggerIntegration.initializeIntegration(tradingEngine, dataManager);
             console.log('Trading Places | Logger integration initialized');
         } else {
-            console.warn('Trading Places | WFRPLoggerIntegration class not available');
+            console.warn('Trading Places | TPMLoggerIntegration class not available');
         }
         
         // Set logger on trading engine and data manager
@@ -388,7 +388,7 @@ function registerHandlebarsHelpers() {
     Handlebars.registerHelper('getFlagDescription', function(flag) {
         try {
             // Get the dataManager from the global scope
-            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            const dataManager = window.TradingPlaces?.getDataManager?.();
             if (!dataManager || !dataManager.sourceFlags) {
                 return `${flag} settlement`;
             }
@@ -529,7 +529,7 @@ function registerHandlebarsHelpers() {
     Handlebars.registerHelper('calculateCargoSlots', function(settlement, season) {
         try {
             // Get the dataManager from the global scope
-            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            const dataManager = window.TradingPlaces?.getDataManager?.();
             if (!dataManager) {
                 return 0;
             }
@@ -545,7 +545,7 @@ function registerHandlebarsHelpers() {
     Handlebars.registerHelper('getCargoSlotsBase', function(size) {
         const sizeRating = Handlebars.helpers.getSizeRating(size);
         try {
-            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            const dataManager = window.TradingPlaces?.getDataManager?.();
             if (dataManager && dataManager.tradingConfig?.cargoSlots?.basePerSize) {
                 return dataManager.tradingConfig.cargoSlots.basePerSize[sizeRating] || sizeRating;
             }
@@ -558,7 +558,7 @@ function registerHandlebarsHelpers() {
     // Get cargo slots population contribution helper
     Handlebars.registerHelper('getCargoSlotsPopulation', function(settlement) {
         try {
-            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            const dataManager = window.TradingPlaces?.getDataManager?.();
             if (dataManager && dataManager.tradingConfig?.cargoSlots?.populationMultiplier && settlement?.population) {
                 return Math.round(settlement.population * dataManager.tradingConfig.cargoSlots.populationMultiplier * 100) / 100;
             }
@@ -571,7 +571,7 @@ function registerHandlebarsHelpers() {
     // Get cargo slots size bonus helper
     Handlebars.registerHelper('getCargoSlotsSizeBonus', function(settlement) {
         try {
-            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            const dataManager = window.TradingPlaces?.getDataManager?.();
             if (dataManager && dataManager.tradingConfig?.cargoSlots?.sizeMultiplier) {
                 const sizeRating = Handlebars.helpers.getSizeRating(settlement?.size);
                 return Math.round(sizeRating * dataManager.tradingConfig.cargoSlots.sizeMultiplier * 100) / 100;
@@ -585,7 +585,7 @@ function registerHandlebarsHelpers() {
     // Get cargo slots flag multipliers helper
     Handlebars.registerHelper('getCargoSlotsFlagMultipliers', function(settlement, season) {
         try {
-            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            const dataManager = window.TradingPlaces?.getDataManager?.();
             if (!dataManager || !dataManager.tradingConfig?.cargoSlots?.flagMultipliers) {
                 return [];
             }
@@ -613,7 +613,7 @@ function registerHandlebarsHelpers() {
     // Get cargo slots calculation breakdown with running totals helper
     Handlebars.registerHelper('getCargoSlotsCalculationBreakdown', function(settlement, season) {
         try {
-            const dataManager = window.WFRPRiverTrading?.getDataManager?.();
+            const dataManager = window.TradingPlaces?.getDataManager?.();
             if (!dataManager || !dataManager.tradingConfig?.cargoSlots) {
                 return [];
             }
@@ -711,10 +711,10 @@ function registerModuleSettings() {
         config: true,
         type: String,
         choices: {
-            "spring": "WFRP-TRADING.Seasons.Spring",
-            "summer": "WFRP-TRADING.Seasons.Summer",
-            "autumn": "WFRP-TRADING.Seasons.Autumn",
-            "winter": "WFRP-TRADING.Seasons.Winter"
+            "spring": "TRADING-PLACES.Seasons.Spring",
+            "summer": "TRADING-PLACES.Seasons.Summer",
+            "autumn": "TRADING-PLACES.Seasons.Autumn",
+            "winter": "TRADING-PLACES.Seasons.Winter"
         },
         default: "spring",
         onChange: onCurrentSeasonChange
@@ -728,8 +728,8 @@ function registerModuleSettings() {
         config: true,
         type: String,
         choices: {
-            "gm": "WFRP-TRADING.Settings.ChatVisibility.GM",
-            "all": "WFRP-TRADING.Settings.ChatVisibility.All"
+            "gm": "TRADING-PLACES.Settings.ChatVisibility.GM",
+            "all": "TRADING-PLACES.Settings.ChatVisibility.All"
         },
         default: "gm",
         onChange: onChatVisibilityChange
@@ -951,8 +951,8 @@ async function onDebugLoggingChange(newValue) {
     }
     
     // Update global logger if it exists
-    if (window.wfrpLogger) {
-        window.wfrpLogger.setEnabled(newValue);
+    if (window.TPMLogger) {
+        window.TPMLogger.setEnabled(newValue);
     }
 
     if (newValue) {
@@ -1293,14 +1293,14 @@ async function initializeBasicSceneControls() {
             console.log('Trading Places | getSceneControlButtons hook fired - adding trading controls');
             
             // Check if our control already exists to prevent duplicates
-            const existingControl = controls.find(c => c.name === 'wfrp-trading');
+            const existingControl = controls.find(c => c.name === 'trading-places');
             if (existingControl) {
                 console.log('Trading Places | Trading control already exists, skipping duplicate');
                 return;
             }
             
             const tradingControls = {
-                name: 'wfrp-trading',
+                name: 'trading-places',
                 title: 'Trading Places Places',
                 icon: 'fas fa-coins',
                 visible: true,
@@ -1315,7 +1315,7 @@ async function initializeBasicSceneControls() {
                         
                         // Try to open the trading interface
                         try {
-                            if (window.WFRPTradingEnhancedDialog) {
+                            if (window.TradingPlacesEnhancedDialog) {
                                 // Get the current controlled actor
                                 const controlledTokens = canvas.tokens.controlled;
                                 let selectedActor = null;
@@ -1327,17 +1327,17 @@ async function initializeBasicSceneControls() {
                                 }
                                 
                                 if (selectedActor) {
-                                    const dialog = new window.WFRPTradingEnhancedDialog(selectedActor, null);
+                                    const dialog = new window.TradingPlacesEnhancedDialog(selectedActor, null);
                                     dialog.render(true);
                                     console.log('Trading Places | Opened EnhancedTradingDialog');
                                 } else {
                                     ui.notifications.warn('Please select a token or assign a character to use the trading interface.');
                                     console.log('Trading Places | No actor selected for trading');
                                 }
-                            } else if (window.WFRPTradingApplication) {
-                                const app = new window.WFRPTradingApplication();
+                            } else if (window.TradingPlacesApplication) {
+                                const app = new window.TradingPlacesApplication();
                                 app.render(true);
-                                console.log('Trading Places | Opened WFRPTradingApplication (fallback)');
+                                console.log('Trading Places | Opened TradingPlacesApplication (fallback)');
                             } else if (window.WFRPSimpleTradingV2) {
                                 window.WFRPSimpleTradingV2.openDialog();
                                 console.log('Trading Places | Opened WFRPSimpleTradingV2');
@@ -1369,7 +1369,7 @@ async function initializeBasicSceneControls() {
  */
 function openTradingInterface() {
     try {
-        if (typeof window.WFRPTradingEnhancedDialog !== 'undefined') {
+        if (typeof window.TradingPlacesEnhancedDialog !== 'undefined') {
             // Get the current controlled actor
             const controlledTokens = canvas.tokens.controlled;
             let selectedActor = null;
@@ -1381,13 +1381,13 @@ function openTradingInterface() {
             }
             
             if (selectedActor) {
-                const dialog = new window.WFRPTradingEnhancedDialog(selectedActor, null);
+                const dialog = new window.TradingPlacesEnhancedDialog(selectedActor, null);
                 dialog.render(true);
             } else {
                 ui.notifications.warn('Please select a token or assign a character to use the trading interface.');
             }
-        } else if (typeof WFRPTradingApplication !== 'undefined') {
-            const app = new WFRPTradingApplication();
+        } else if (typeof TradingPlacesApplication !== 'undefined') {
+            const app = new TradingPlacesApplication();
             app.render(true);
         } else if (typeof WFRPSimpleTradingApplication !== 'undefined') {
             WFRPSimpleTradingApplication.create();
@@ -1403,7 +1403,7 @@ function openTradingInterface() {
 /**
  * Export clean module API
  */
-window.WFRPRiverTrading = {
+window.TradingPlaces = {
     getDataManager: () => dataManager,
     getTradingEngine: () => tradingEngine,
     getSystemAdapter: () => systemAdapter,
@@ -1436,7 +1436,7 @@ window.WFRPRiverTrading = {
         
         // Re-render any open trading applications
         for (let app of Object.values(ui.windows)) {
-            if (app.constructor.name === 'WFRPTradingApplication') {
+            if (app.constructor.name === 'TradingPlacesApplication') {
                 app.render(false);
             }
         }
@@ -1451,7 +1451,7 @@ window.WFRPRiverTrading = {
         
         // Re-render any open trading applications
         for (let app of Object.values(ui.windows)) {
-            if (app.constructor.name === 'WFRPTradingApplication') {
+            if (app.constructor.name === 'TradingPlacesApplication') {
                 app.render(false);
             }
         }

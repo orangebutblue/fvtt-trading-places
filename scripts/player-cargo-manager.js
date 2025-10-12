@@ -53,7 +53,7 @@ class PlayerCargoManager {
         }
         
         try {
-            const sessionKey = 'wfrp-trading-cargo-session';
+            const sessionKey = 'trading-places-cargo-session';
             const storedData = this.storage.getItem(sessionKey);
             
             if (storedData) {
@@ -85,7 +85,7 @@ class PlayerCargoManager {
         }
         
         try {
-            const sessionKey = 'wfrp-trading-cargo-session';
+            const sessionKey = 'trading-places-cargo-session';
             const dataToSave = {
                 playerCargo: this.playerCargo,
                 sessionData: {

@@ -99,7 +99,7 @@ describe('Season Management', () => {
         test('should persist season to settings', async () => {
             await dataManager.setCurrentSeason('autumn');
             
-            const settingValue = await global.game.settings.get('wfrp-trading', 'currentSeason');
+            const settingValue = await global.game.settings.get('trading-places', 'currentSeason');
             expect(settingValue).toBe('autumn');
         });
 

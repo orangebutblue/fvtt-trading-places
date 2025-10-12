@@ -44,10 +44,10 @@ class WFRPNativeUIIntegration {
 
         Hooks.on('getSceneControlButtons', (controls) => {
             controls.push({
-                name: 'wfrp-trading',
+                name: 'trading-places',
                 title: 'Trading Places',
                 icon: 'fas fa-coins',
-                layer: 'WFRPTradingLayer',
+                layer: 'TradingPlacesLayer',
                 tools: [
                     {
                         name: 'open-trading',
@@ -96,17 +96,17 @@ class WFRPNativeUIIntegration {
      * Initialize global API methods
      */
     initializeGlobalAPI() {
-        if (!game.wfrpTrading) {
-            game.wfrpTrading = {};
+        if (!game.tradingPlaces) {
+            game.tradingPlaces = {};
         }
 
-        game.wfrpTrading.openTrading = () => this.openTradingInterface();
-        game.wfrpTrading.openQuickTrade = () => this.openQuickTrade();
-        game.wfrpTrading.openSimpleTrading = () => this.openSimpleTrading();
-        game.wfrpTrading.getCurrentSeason = () => this.getCurrentSeason();
-        game.wfrpTrading.setSeason = (season) => this.setSeason(season);
-        game.wfrpTrading.enableDebugLogging = () => this.enableDebugLogging();
-        game.wfrpTrading.disableDebugLogging = () => this.disableDebugLogging();
+        game.tradingPlaces.openTrading = () => this.openTradingInterface();
+        game.tradingPlaces.openQuickTrade = () => this.openQuickTrade();
+        game.tradingPlaces.openSimpleTrading = () => this.openSimpleTrading();
+        game.tradingPlaces.getCurrentSeason = () => this.getCurrentSeason();
+        game.tradingPlaces.setSeason = (season) => this.setSeason(season);
+        game.tradingPlaces.enableDebugLogging = () => this.enableDebugLogging();
+        game.tradingPlaces.disableDebugLogging = () => this.disableDebugLogging();
 
         this.log('Global API methods initialized', null);
     }
@@ -136,10 +136,10 @@ class WFRPNativeUIIntegration {
      * Open trading interface
      */
     async openTradingInterface() {
-        if (global.WFRPTradingApplication) {
-            const app = new WFRPTradingApplication();
+        if (global.TradingPlacesApplication) {
+            const app = new TradingPlacesApplication();
             await app.render(true);
-            this.log('Using WFRPTradingApplication (V2)', null);
+            this.log('Using TradingPlacesApplication (V2)', null);
         } else if (global.WFRPSimpleTradingApplication) {
             await WFRPSimpleTradingApplication.create();
             this.log('Fallback to WFRPSimpleTradingApplication', null);

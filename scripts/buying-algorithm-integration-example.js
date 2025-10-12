@@ -1,10 +1,10 @@
 /**
  * Trading Places Module - Buying Algorithm Integration Example
- * Shows how to integrate the WFRPBuyingAlgorithm with the existing system
+ * Shows how to integrate the TPBuyingAlgorithm with the existing system
  */
 
 /**
- * Example integration of the WFRP Buying Algorithm with the main trading system
+ * Example integration of the Buying Algorithm with the main trading system
  * This demonstrates how the buying algorithm would be used in the V2 Application
  */
 class BuyingAlgorithmIntegrationExample {
@@ -28,7 +28,7 @@ class BuyingAlgorithmIntegrationExample {
         this.logger.setEnabled(true);
 
         // Initialize buying algorithm
-        this.buyingAlgorithm = new WFRPBuyingAlgorithm(this.dataManager, null);
+        this.buyingAlgorithm = new TPBuyingAlgorithm(this.dataManager, null);
         this.buyingAlgorithm.setLogger(this.logger);
         
         // Load random cargo tables
@@ -52,7 +52,7 @@ class BuyingAlgorithmIntegrationExample {
                 throw new Error(`Settlement not found: ${settlementName}`);
             }
 
-            console.log(`\n=== WFRP Buying Workflow: ${settlementName} (${season}) ===`);
+            console.log(`\n=== Buying Workflow: ${settlementName} (${season}) ===`);
 
             // Execute the complete buying algorithm
             const result = await this.buyingAlgorithm.executeBuyingAlgorithm(settlement, season, options);

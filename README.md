@@ -148,7 +148,7 @@ See [Phase 4 Summary](PHASE4_SUMMARY.md) for complete implementation details.
 
 1. In FoundryVTT, go to the Add-on Modules tab
 2. Click "Install Module"
-3. Paste the manifest URL: `https://github.com/foundry-modules/trading-places/releases/latest/download/module.json`
+3. Paste the manifest URL: `https://github.com/orangebutblue/trading-places/releases/latest/download/module.json`
 4. Click "Install"
 
 ## Usage

@@ -1,14 +1,6 @@
 console.log('Trading Places | Loading trading-engine.js');
 
-/**
- * Trading Places Module - Trading Engine
- * Pure business logic implementation of WFRP trading algorithms
- */
 
-/**
- * Trading Engine class implementing the complete WFRP trading algorithm
- * This class contains pure business logic with no FoundryVTT dependencies
- */
 class TradingEngine {
     constructor(dataManager) {
         this.dataManager = dataManager;
@@ -63,7 +55,7 @@ class TradingEngine {
 
         // Persist to settings if available (FoundryVTT or mock)
         if (typeof global !== 'undefined' && global.foundryMock && global.foundryMock.setSetting) {
-            await global.foundryMock.setSetting('wfrp-trading', 'currentSeason', season);
+            await global.foundryMock.setSetting('trading-places', 'currentSeason', season);
         } else if (typeof game !== 'undefined' && game.settings && game.settings.set) {
             await game.settings.set('trading-places', 'currentSeason', season);
         }

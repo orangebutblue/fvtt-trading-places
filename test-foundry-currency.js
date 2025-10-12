@@ -5,7 +5,7 @@
     console.log('=== Testing Currency Formatting ===\n');
     
     // Check if modules are loaded
-    const dataManager = window.WFRPRiverTrading?.getDataManager();
+    const dataManager = window.TradingPlaces?.getDataManager();
     const currencyUtils = window.TradingPlacesCurrencyUtils;
     
     console.log('1. Module Availability:');

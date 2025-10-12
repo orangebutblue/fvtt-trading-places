@@ -169,7 +169,7 @@ describe('WFRPDebugLogger', () => {
             const stepData = { settlement: 'Altdorf', chance: 60 };
             
             logger.logAlgorithmStep(
-                'WFRP Buying Algorithm',
+                'Buying Algorithm',
                 'Step 1',
                 'Availability Check',
                 stepData,
@@ -178,7 +178,7 @@ describe('WFRPDebugLogger', () => {
             
             const entry = logger.logHistory[0];
             expect(entry.category).toBe('ALGORITHM');
-            expect(entry.data.algorithm).toBe('WFRP Buying Algorithm');
+            expect(entry.data.algorithm).toBe('Buying Algorithm');
             expect(entry.data.step).toBe('Step 1');
             expect(entry.data.description).toBe('Availability Check');
             expect(entry.data.data).toEqual(stepData);

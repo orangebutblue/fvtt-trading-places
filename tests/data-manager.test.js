@@ -7,7 +7,7 @@ global.window = global.window || {};
 
 // Import the DataManager
 require('../scripts/data-manager.js');
-const DataManager = window.WFRPTradingDataManager;
+const DataManager = window.TradingPlacesDataManager;
 const fs = require('fs');
 const path = require('path');
 

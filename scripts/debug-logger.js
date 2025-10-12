@@ -225,7 +225,7 @@ class WFRPDebugLogger {
 
     /**
      * Log algorithm step with official rule references
-     * @param {string} algorithm - Algorithm name (e.g., "WFRP Buying Algorithm")
+     * @param {string} algorithm - Algorithm name (e.g., "Buying Algorithm")
      * @param {string} step - Step identifier (e.g., "Step 1", "Step 2A")
      * @param {string} description - Step description
      * @param {Object} data - Step data and calculations
@@ -385,7 +385,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
  * Utility functions for common logging patterns
  */
-class WFRPLoggingUtils {
+class TPMLoggingUtils {
     /**
      * Log WFRP dice roll with automatic success/failure determination
      * @param {Object} logger - Logger instance
@@ -538,7 +538,7 @@ class WFRPLoggingUtils {
 /**
  * Integration helper for existing trading engine
  */
-class WFRPLoggerIntegration {
+class TPMLoggerIntegration {
     /**
      * Initialize logger integration with existing systems
      * @param {Object} tradingEngine - Trading engine instance
@@ -546,27 +546,27 @@ class WFRPLoggerIntegration {
      */
     static initializeIntegration(tradingEngine, dataManager) {
         // Create global logger instance
-        if (!window.wfrpLogger) {
-            window.wfrpLogger = new WFRPDebugLogger();
+        if (!window.TPMLogger) {
+            window.TPMLogger = new WFRPDebugLogger();
         }
         
         // Add logger to trading engine if it exists
         if (tradingEngine && typeof tradingEngine === 'object') {
-            tradingEngine.logger = window.wfrpLogger;
+            tradingEngine.logger = window.TPMLogger;
         }
         
         // Add logger to data manager if it exists
         if (dataManager && typeof dataManager === 'object') {
-            dataManager.logger = window.wfrpLogger;
+            dataManager.logger = window.TPMLogger;
         }
         
         // Log integration completion
-        window.wfrpLogger.logSystem('Integration', 'Logger integration completed', {
+        window.TPMLogger.logSystem('Integration', 'Logger integration completed', {
             tradingEngineIntegrated: !!tradingEngine,
             dataManagerIntegrated: !!dataManager
         });
         
-        return window.wfrpLogger;
+        return window.TPMLogger;
     }
 
     /**
@@ -582,7 +582,7 @@ class WFRPLoggerIntegration {
         }
         
         const originalFunction = targetObject[functionName];
-        const logger = window.wfrpLogger;
+        const logger = window.TPMLogger;
         
         targetObject[functionName] = function(...args) {
             logger.logSystem('Function Call', `${operationName} started`, {
@@ -631,6 +631,6 @@ class WFRPLoggerIntegration {
 
 // Make utilities available globally
 if (typeof window !== 'undefined') {
-    window.WFRPLoggingUtils = WFRPLoggingUtils;
-    window.WFRPLoggerIntegration = WFRPLoggerIntegration;
+    window.TPMLoggingUtils = TPMLoggingUtils;
+    window.TPMLoggerIntegration = TPMLoggerIntegration;
 }

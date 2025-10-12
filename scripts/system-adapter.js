@@ -30,8 +30,8 @@ class SystemAdapter {
     this.currencyFieldMap = null;
         
         // Try to get error handler from global scope
-        if (typeof window !== 'undefined' && window.WFRPRiverTrading?.getErrorHandler) {
-            this.errorHandler = window.WFRPRiverTrading.getErrorHandler();
+        if (typeof window !== 'undefined' && window.TradingPlaces?.getErrorHandler) {
+            this.errorHandler = window.TradingPlaces.getErrorHandler();
         }
     }
 

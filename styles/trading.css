@@ -1,7 +1,7 @@
 /* WFRP Trading Places - Modern Unified UI Styles */
 @import url('./availability-status-banner.css');
 
-.wfrp-trading {
+.trading-places {
     /* Modern color palette - CSS Variables */
     --bg-primary: #1a1d23;
     --bg-secondary: #252932;
@@ -32,11 +32,11 @@
 }
 
 /* Ensure variables are accessible to all child elements */
-.wfrp-trading * {
+.trading-places * {
     box-sizing: border-box;
 }
 
-.wfrp-trading .trading-app {
+.trading-places .trading-app {
     font-family: var(--font-primary);
     background: var(--bg-secondary);
     color: var(--text-primary);
@@ -49,7 +49,7 @@
 }
 
 /* Header */
-.wfrp-trading .app-header {
+.trading-places .app-header {
     background: linear-gradient(135deg, var(--accent-primary), #ff8f00);
     padding: 24px 32px;
     display: flex;
@@ -59,25 +59,25 @@
     gap: 16px;
 }
 
-.wfrp-trading .app-title {
+.trading-places .app-title {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.wfrp-trading .app-title h1 {
+.trading-places .app-title h1 {
     color: white;
     font-size: 28px;
     font-weight: 700;
     margin: 0;
 }
 
-.wfrp-trading .app-title i {
+.trading-places .app-title i {
     font-size: 32px;
     color: white;
 }
 
-.wfrp-trading .season-control {
+.trading-places .season-control {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -87,13 +87,13 @@
     backdrop-filter: blur(10px);
 }
 
-.wfrp-trading .season-control label {
+.trading-places .season-control label {
     color: white;
     font-weight: 600;
     font-size: 14px;
 }
 
-.wfrp-trading .season-control select {
+.trading-places .season-control select {
     background: rgba(255, 255, 255, 0.9);
     border: none;
     padding: 8px 12px;
@@ -104,7 +104,7 @@
 }
 
 /* Debug Toggle Styles */
-.wfrp-trading .debug-toggle {
+.trading-places .debug-toggle {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -114,7 +114,7 @@
     backdrop-filter: blur(10px);
 }
 
-.wfrp-trading .debug-toggle label {
+.trading-places .debug-toggle label {
     color: white;
     font-weight: 600;
     font-size: 14px;
@@ -124,14 +124,14 @@
     gap: 8px;
 }
 
-.wfrp-trading .debug-toggle input[type="checkbox"] {
+.trading-places .debug-toggle input[type="checkbox"] {
     width: 16px;
     height: 16px;
     cursor: pointer;
 }
 
 /* Error Display Styles */
-.wfrp-trading .error-display {
+.trading-places .error-display {
     background: var(--accent-warning);
     color: white;
     padding: 12px 16px;
@@ -142,16 +142,16 @@
     gap: 8px;
 }
 
-.wfrp-trading .error-display.show {
+.trading-places .error-display.show {
     display: flex;
 }
 
-.wfrp-trading .error-display i {
+.trading-places .error-display i {
     font-size: 18px;
 }
 
 /* Main Content */
-.wfrp-trading .app-content {
+.trading-places .app-content {
     display: grid;
     grid-template-columns: 1fr 2fr;
     flex: 1;
@@ -159,22 +159,22 @@
 }
 
 /* Sidebar */
-.wfrp-trading .sidebar {
+.trading-places .sidebar {
     background: var(--bg-tertiary);
     padding: 32px;
     border-right: 1px solid var(--border-light);
     overflow-y: auto;
 }
 
-.wfrp-trading .section {
+.trading-places .section {
     margin-bottom: 32px;
 }
 
-.wfrp-trading .section:last-child {
+.trading-places .section:last-child {
     margin-bottom: 0;
 }
 
-.wfrp-trading .section-title {
+.trading-places .section-title {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -184,21 +184,21 @@
     margin-bottom: 16px;
 }
 
-.wfrp-trading .section-title i {
+.trading-places .section-title i {
     color: var(--accent-primary);
     width: 20px;
 }
 
 /* Form Controls */
-.wfrp-trading .form-group {
+.trading-places .form-group {
     margin-bottom: 20px;
 }
 
-.wfrp-trading .form-group:last-child {
+.trading-places .form-group:last-child {
     margin-bottom: 0;
 }
 
-.wfrp-trading .form-label {
+.trading-places .form-label {
     display: block;
     color: var(--text-secondary);
     font-weight: 500;
@@ -206,7 +206,7 @@
     font-size: 14px;
 }
 
-.wfrp-trading .form-select, .wfrp-trading .form-input {
+.trading-places .form-select, .trading-places .form-input {
     width: 100%;
     height: auto;
     background: var(--bg-accent);
@@ -218,19 +218,19 @@
     transition: all 0.2s ease;
 }
 
-.wfrp-trading .form-select:focus, .wfrp-trading .form-input:focus {
+.trading-places .form-select:focus, .trading-places .form-input:focus {
     outline: none;
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.1);
 }
 
-.wfrp-trading .form-select:disabled {
+.trading-places .form-select:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
 /* Settlement Info */
-.wfrp-trading .settlement-display {
+.trading-places .settlement-display {
     background: var(--bg-accent);
     padding: 20px;
     border-radius: var(--radius-md);
@@ -238,18 +238,18 @@
     margin-bottom: 24px;
 }
 
-.wfrp-trading .settlement-display h3 {
+.trading-places .settlement-display h3 {
     color: var(--text-primary);
     margin-bottom: 16px;
     font-size: 20px;
 }
 
-.wfrp-trading .info-grid {
+.trading-places .info-grid {
     display: grid;
     gap: 12px;
 }
 
-.wfrp-trading .info-item {
+.trading-places .info-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -257,21 +257,21 @@
     border-bottom: 1px solid var(--border-light);
 }
 
-.wfrp-trading .info-item:last-child {
+.trading-places .info-item:last-child {
     border-bottom: none;
 }
 
-.wfrp-trading .info-label {
+.trading-places .info-label {
     color: var(--text-muted);
     font-weight: 500;
 }
 
-.wfrp-trading .info-value {
+.trading-places .info-value {
     color: var(--text-primary);
     font-weight: 600;
 }
 
-.wfrp-trading .info-value.highlight {
+.trading-places .info-value.highlight {
     color: var(--accent-primary);
     font-weight: 700;
     background: rgba(255, 167, 38, 0.1);
@@ -279,7 +279,7 @@
     border-radius: var(--radius-sm);
 }
 
-.wfrp-trading .trade-badge {
+.trading-places .trade-badge {
     display: inline-block;
     background: var(--accent-secondary);
     color: white;
@@ -291,7 +291,7 @@
 }
 
 /* Buttons */
-.wfrp-trading .btn {
+.trading-places .btn {
     background: var(--bg-accent);
     border: 2px solid var(--border-medium);
     color: var(--text-primary);
@@ -307,7 +307,7 @@
     text-decoration: none;
 }
 
-.wfrp-trading .btn:hover:not(:disabled) {
+.trading-places .btn:hover:not(:disabled) {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
     color: white;
@@ -315,47 +315,47 @@
     box-shadow: var(--shadow-md);
 }
 
-.wfrp-trading .btn:disabled {
+.trading-places .btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     transform: none;
 }
 
-.wfrp-trading .btn-primary {
+.trading-places .btn-primary {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
     color: white;
 }
 
-.wfrp-trading .btn-primary:hover:not(:disabled) {
+.trading-places .btn-primary:hover:not(:disabled) {
     background: #ff8f00;
     border-color: #ff8f00;
 }
 
-.wfrp-trading .btn-success {
+.trading-places .btn-success {
     background: var(--accent-secondary);
     border-color: var(--accent-secondary);
     color: white;
 }
 
-.wfrp-trading .btn-success:hover:not(:disabled) {
+.trading-places .btn-success:hover:not(:disabled) {
     background: #4caf50;
     border-color: #4caf50;
 }
 
-.wfrp-trading .btn-warning {
+.trading-places .btn-warning {
     background: var(--accent-warning);
     border-color: var(--accent-warning);
     color: white;
 }
 
-.wfrp-trading .btn-warning:hover:not(:disabled) {
+.trading-places .btn-warning:hover:not(:disabled) {
     background: #d32f2f;
     border-color: #d32f2f;
 }
 
 /* Main Panel */
-.wfrp-trading .main-panel {
+.trading-places .main-panel {
     padding: 32px;
     background: var(--bg-secondary);
     overflow-y: auto;
@@ -363,7 +363,7 @@
     flex-direction: column;
 }
 
-.wfrp-trading .tabs {
+.trading-places .tabs {
     display: flex;
     gap: 4px;
     margin-bottom: 32px;
@@ -372,7 +372,7 @@
     border-radius: var(--radius-md);
 }
 
-.wfrp-trading .tab {
+.trading-places .tab {
     flex: 1;
     padding: 12px 20px;
     background: transparent;
@@ -388,30 +388,30 @@
     gap: 8px;
 }
 
-.wfrp-trading .tab.active {
+.trading-places .tab.active {
     background: var(--accent-primary);
     color: white;
 }
 
-.wfrp-trading .tab:hover:not(.active) {
+.trading-places .tab:hover:not(.active) {
     background: var(--bg-accent);
     color: var(--text-primary);
 }
 
 /* Tab Content */
-.wfrp-trading .tab-content {
+.trading-places .tab-content {
     display: none;
     flex: 1;
     overflow-y: auto;
 }
 
-.wfrp-trading .tab-content.active {
+.trading-places .tab-content.active {
     display: flex;
     flex-direction: column;
 }
 
 /* Collapsible Cargo Cards */
-.wfrp-trading .cargo-card.collapsible {
+.trading-places .cargo-card.collapsible {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -421,7 +421,7 @@
     position: relative;
 }
 
-.wfrp-trading .cargo-card.slot-success {
+.trading-places .cargo-card.slot-success {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -430,18 +430,18 @@
     transition: all 0.2s ease;
 }
 
-.wfrp-trading .cargo-card.contraband {
+.trading-places .cargo-card.contraband {
     border: 2px solid rgba(239, 83, 80, 0.4);
     position: relative;
 }
 
-.wfrp-trading .cargo-card.contraband .cargo-name {
+.trading-places .cargo-card.contraband .cargo-name {
     color: var(--accent-warning);
     font-weight: 600;
 }
 
 /* Contraband Warning */
-.wfrp-trading .contraband-warning {
+.trading-places .contraband-warning {
     background: rgba(239, 83, 80, 0.1);
     border: 1px solid rgba(239, 83, 80, 0.3);
     border-radius: var(--radius-sm);
@@ -454,15 +454,15 @@
     color: var(--accent-warning);
 }
 
-.wfrp-trading .contraband-icon {
+.trading-places .contraband-icon {
     font-size: 16px;
 }
 
-.wfrp-trading .contraband-text {
+.trading-places .contraband-text {
     font-size: 14px;
 }
 
-.wfrp-trading .cargo-card.slot-failure {
+.trading-places .cargo-card.slot-failure {
     background: rgba(239, 83, 80, 0.1);
     border: 1px solid rgba(239, 83, 80, 0.35);
     border-left: 4px solid var(--accent-warning);
@@ -474,7 +474,7 @@
     gap: 8px;
 }
 
-.wfrp-trading .cargo-card.slot-failure .failed-slot-header {
+.trading-places .cargo-card.slot-failure .failed-slot-header {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -484,40 +484,40 @@
     letter-spacing: 0.05em;
 }
 
-.wfrp-trading .cargo-card.slot-failure .failed-slot-icon {
+.trading-places .cargo-card.slot-failure .failed-slot-icon {
     font-size: 22px;
 }
 
-.wfrp-trading .cargo-card.slot-failure .failed-slot-title {
+.trading-places .cargo-card.slot-failure .failed-slot-title {
     font-size: 15px;
 }
 
-.wfrp-trading .cargo-card.slot-failure .failed-slot-details {
+.trading-places .cargo-card.slot-failure .failed-slot-details {
     color: var(--text-secondary);
     font-size: 13px;
     line-height: 1.5;
 }
 
-.wfrp-trading .cargo-card.slot-failure .failed-slot-roll {
+.trading-places .cargo-card.slot-failure .failed-slot-roll {
     font-weight: 600;
     color: var(--text-primary);
 }
 
-.wfrp-trading .cargo-card.slot-failure .failed-slot-message {
+.trading-places .cargo-card.slot-failure .failed-slot-message {
     margin-top: 4px;
 }
 
-.wfrp-trading .cargo-card.collapsible:hover {
+.trading-places .cargo-card.collapsible:hover {
     border-color: var(--accent-primary);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
-.wfrp-trading .cargo-card.collapsible.expanded {
+.trading-places .cargo-card.collapsible.expanded {
     box-shadow: var(--shadow-lg);
 }
 
-.wfrp-trading .cargo-header {
+.trading-places .cargo-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -526,28 +526,28 @@
 }
 
 /* Removed arrow pseudo-element that was causing weird arrow in cargo tab */
-.wfrp-trading .cargo-header::after {
+.trading-places .cargo-header::after {
     display: none !important;
 }
 
-.wfrp-trading .cargo-card.collapsible.expanded .cargo-header::after {
+.trading-places .cargo-card.collapsible.expanded .cargo-header::after {
     display: none !important;
 }
 
-.wfrp-trading .cargo-header {
+.trading-places .cargo-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
 }
 
-.wfrp-trading .cargo-name {
+.trading-places .cargo-name {
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
 }
 
-.wfrp-trading .cargo-price-highlight {
+.trading-places .cargo-price-highlight {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -555,17 +555,17 @@
     color: var(--text-secondary);
 }
 
-.wfrp-trading .cargo-price-highlight .price-per-ep {
+.trading-places .cargo-price-highlight .price-per-ep {
     font-weight: 600;
     color: var(--accent-secondary);
 }
 
-.wfrp-trading .cargo-price-highlight .price-total {
+.trading-places .cargo-price-highlight .price-total {
     font-weight: 600;
     color: var(--accent-primary);
 }
 
-.wfrp-trading .cargo-category {
+.trading-places .cargo-category {
     background: var(--accent-info);
     color: white;
     padding: 4px 8px;
@@ -574,35 +574,35 @@
     font-weight: 500;
 }
 
-.wfrp-trading .cargo-summary {
+.trading-places .cargo-summary {
     display: grid;
     gap: 12px;
     margin-bottom: 20px;
 }
 
-.wfrp-trading .price-info {
+.trading-places .price-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.wfrp-trading .price-info .price-value {
+.trading-places .price-info .price-value {
     margin-left: auto;
     margin-right: 8px;
 }
 
-.wfrp-trading .price-label {
+.trading-places .price-label {
     color: var(--text-muted);
     font-size: 14px;
 }
 
-.wfrp-trading .price-value {
+.trading-places .price-value {
     color: var(--accent-secondary);
     font-weight: 700;
     font-size: 16px;
 }
 
-.wfrp-trading .merchant-info {
+.trading-places .merchant-info {
     background: var(--bg-accent);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
@@ -610,20 +610,20 @@
     margin-top: 12px;
 }
 
-.wfrp-trading .merchant-header {
+.trading-places .merchant-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
 }
 
-.wfrp-trading .merchant-name {
+.trading-places .merchant-name {
     font-weight: 600;
     color: var(--text-primary);
     font-size: 14px;
 }
 
-.wfrp-trading .cargo-buying-interface {
+.trading-places .cargo-buying-interface {
     background: var(--bg-accent);
     border-top: 1px solid var(--border-light);
     padding: 10px 12px;
@@ -633,16 +633,16 @@
 /* Purchase Controls - Unified Grid Layout */
 
 /* Input Focus Styles */
-.wfrp-trading .quantity-input:focus,
-.wfrp-trading .discount-input:focus {
+.trading-places .quantity-input:focus,
+.trading-places .discount-input:focus {
     outline: none;
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.1);
 }
 
 /* Slider Base Styles */
-.wfrp-trading .quantity-slider,
-.wfrp-trading .discount-slider {
+.trading-places .quantity-slider,
+.trading-places .discount-slider {
     -webkit-appearance: none;
     appearance: none;
     height: 6px;
@@ -658,12 +658,12 @@
 }
 
 /* Discount slider specific styling */
-.wfrp-trading .discount-slider {
+.trading-places .discount-slider {
     background: linear-gradient(to right, #4caf50 0%, #4caf50 50%, #f44336 50%, #f44336 100%);
 }
 
-.wfrp-trading .quantity-slider::-webkit-slider-thumb,
-.wfrp-trading .discount-slider::-webkit-slider-thumb {
+.trading-places .quantity-slider::-webkit-slider-thumb,
+.trading-places .discount-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 18px;
@@ -676,14 +676,14 @@
     transform: translateY(-3px);
 }
 
-.wfrp-trading .quantity-slider::-webkit-slider-thumb:hover,
-.wfrp-trading .discount-slider::-webkit-slider-thumb:hover {
+.trading-places .quantity-slider::-webkit-slider-thumb:hover,
+.trading-places .discount-slider::-webkit-slider-thumb:hover {
     background: #ff8f00;
     transform: translateY(-3px) scale(1.05);
 }
 
-.wfrp-trading .quantity-slider::-moz-range-thumb,
-.wfrp-trading .discount-slider::-moz-range-thumb {
+.trading-places .quantity-slider::-moz-range-thumb,
+.trading-places .discount-slider::-moz-range-thumb {
     width: 18px;
     height: 18px;
     background: var(--accent-primary);
@@ -695,13 +695,13 @@
     transform: translateY(-3px);
 }
 
-.wfrp-trading .quantity-slider::-moz-range-thumb:hover,
-.wfrp-trading .discount-slider::-moz-range-thumb:hover {
+.trading-places .quantity-slider::-moz-range-thumb:hover,
+.trading-places .discount-slider::-moz-range-thumb:hover {
     background: #ff8f00;
     transform: translateY(-3px) scale(1.05);
 }
 
-.wfrp-trading .purchase-controls .price-calculation {
+.trading-places .purchase-controls .price-calculation {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -711,20 +711,20 @@
     width: var(--purchase-col-width, 240px);
 }
 
-.wfrp-trading .total-price-display {
+.trading-places .total-price-display {
     display: flex;
     align-items: center;
     gap: 6px;
     margin-top: 2px;
 }
 
-.wfrp-trading .total-price-label {
+.trading-places .total-price-label {
     color: var(--text-secondary);
     font-weight: 600;
     font-size: 12px;
 }
 
-.wfrp-trading .total-price-value {
+.trading-places .total-price-value {
     color: var(--accent-secondary);
     font-weight: 700;
     font-size: 13px;
@@ -738,14 +738,14 @@
 /* Purchase button styles defined in unified section below */
 
 /* Compact the header/footer spacing inside the buying interface */
-.wfrp-trading .purchase-controls .control-block .control-label { margin-bottom: 0; }
+.trading-places .purchase-controls .control-block .control-label { margin-bottom: 0; }
 
 /* Ensure grid children don’t force oversized columns */
-.wfrp-trading .purchase-controls > .control-block,
-.wfrp-trading .purchase-controls .price-calculation { min-width: 0; }
+.trading-places .purchase-controls > .control-block,
+.trading-places .purchase-controls .price-calculation { min-width: 0; }
 
 
-.wfrp-trading .cargo-details.expanded-content {
+.trading-places .cargo-details.expanded-content {
     display: none;
     margin-top: 16px;
     padding-top: 16px;
@@ -755,17 +755,17 @@
     border-left: 3px solid var(--accent-primary);
 }
 
-.wfrp-trading .cargo-card.collapsible.expanded .cargo-details.expanded-content {
+.trading-places .cargo-card.collapsible.expanded .cargo-details.expanded-content {
     display: block;
 }
 
-.wfrp-trading .pipeline-breakdown {
+.trading-places .pipeline-breakdown {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-.wfrp-trading .pipeline-breakdown h6 {
+.trading-places .pipeline-breakdown h6 {
     margin: 0 0 12px 0;
     color: var(--text-primary);
     font-size: 16px;
@@ -775,14 +775,14 @@
     gap: 8px;
 }
 
-.wfrp-trading .pipeline-section {
+.trading-places .pipeline-section {
     background: var(--bg-accent);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     padding: 12px;
 }
 
-.wfrp-trading .pipeline-section h7 {
+.trading-places .pipeline-section h7 {
     margin: 0 0 8px 0;
     color: var(--text-primary);
     font-size: 14px;
@@ -792,24 +792,24 @@
     gap: 6px;
 }
 
-.wfrp-trading .pipeline-section p {
+.trading-places .pipeline-section p {
     margin: 4px 0;
     color: var(--text-secondary);
     font-size: 13px;
 }
 
-.wfrp-trading .pipeline-section strong {
+.trading-places .pipeline-section strong {
     color: var(--text-primary);
 }
 
-.wfrp-trading .merchant-details {
+.trading-places .merchant-details {
     background: var(--bg-accent);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     padding: 12px;
 }
 
-.wfrp-trading .merchant-details h6 {
+.trading-places .merchant-details h6 {
     margin: 0 0 8px 0;
     color: var(--text-primary);
     font-size: 14px;
@@ -819,17 +819,17 @@
     gap: 6px;
 }
 
-.wfrp-trading .merchant-details p {
+.trading-places .merchant-details p {
     margin: 4px 0;
     color: var(--text-secondary);
     font-size: 13px;
 }
 
-.wfrp-trading .merchant-details strong {
+.trading-places .merchant-details strong {
     color: var(--text-primary);
 }
 
-.wfrp-trading .cargo-actions {
+.trading-places .cargo-actions {
     display: flex;
     gap: 12px;
     align-items: center;
@@ -838,7 +838,7 @@
 /* quantity-input styles now defined in unified section below */
 
 /* Unified Purchase Controls Layout */
-.wfrp-trading .cargo-buying-interface .purchase-controls {
+.trading-places .cargo-buying-interface .purchase-controls {
     display: grid;
     grid-template-columns: minmax(0, 4fr) minmax(0, 2fr) var(--purchase-col-width, 140px);
     align-items: center;
@@ -846,7 +846,7 @@
     row-gap: 4px;
 }
 
-.wfrp-trading .purchase-controls .control-block {
+.trading-places .purchase-controls .control-block {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -855,7 +855,7 @@
     width: 100%;
 }
 
-.wfrp-trading .purchase-controls .control-label {
+.trading-places .purchase-controls .control-label {
     color: var(--text-secondary);
     font-weight: 600;
     font-size: 12px;
@@ -864,11 +864,11 @@
     white-space: nowrap;
     margin: 0;
 }
-.wfrp-trading .control-block.discount-controls,
-.wfrp-trading .control-block.quantity-controls {
+.trading-places .control-block.discount-controls,
+.trading-places .control-block.quantity-controls {
     margin-top: -20px;
 }
-.wfrp-trading .purchase-controls .control-body {
+.trading-places .purchase-controls .control-body {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -879,7 +879,7 @@
 }
 
 /* Input and Display Elements */
-.wfrp-trading .quantity-input {
+.trading-places .quantity-input {
     width: 50px;
     min-width: 48px;
     background: var(--bg-primary);
@@ -893,7 +893,7 @@
     margin: 0;
 }
 
-.wfrp-trading .discount-display {
+.trading-places .discount-display {
     width: 60px;
     min-width: 48px;
     text-align: center;
@@ -908,7 +908,7 @@
 }
 
 /* Purchase Button */
-.wfrp-trading .purchase-btn {
+.trading-places .purchase-btn {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -919,20 +919,20 @@
     flex-shrink: 0;
 }
 
-.wfrp-trading .purchase-btn:disabled {
+.trading-places .purchase-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     background: var(--border-light) !important;
     color: var(--text-muted) !important;
 }
 
-.wfrp-trading .purchase-btn:not(:disabled):hover {
+.trading-places .purchase-btn:not(:disabled):hover {
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
 
 /* Price Calculation Section */
-.wfrp-trading .purchase-controls .price-calculation {
+.trading-places .purchase-controls .price-calculation {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -944,35 +944,35 @@
     box-sizing: border-box;
 }
 
-.wfrp-trading .total-price-display {
+.trading-places .total-price-display {
     display: flex;
     align-items: center;
     gap: 4px;
     margin-top: 2px;
     white-space: nowrap;
 }
-/* Legacy trading-app selectors removed - all styles unified under .wfrp-trading */
+/* Legacy trading-app selectors removed - all styles unified under .trading-places */
 
 /* Selling Tab Styles */
-.wfrp-trading .resource-selection {
+.trading-places .resource-selection {
     margin-bottom: 24px;
 }
 
-.wfrp-trading .resource-selection h3 {
+.trading-places .resource-selection h3 {
     color: var(--text-primary);
     margin-bottom: 16px;
     font-size: 18px;
     font-weight: 600;
 }
 
-.wfrp-trading .resource-buttons {
+.trading-places .resource-buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 20px;
 }
 
-.wfrp-trading .resource-btn {
+.trading-places .resource-btn {
     background: var(--bg-accent);
     border: 2px solid var(--border-medium);
     color: var(--text-primary);
@@ -988,7 +988,7 @@
     justify-content: center;
 }
 
-.wfrp-trading .resource-btn:hover:not(:disabled) {
+.trading-places .resource-btn:hover:not(:disabled) {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
     color: white;
@@ -996,20 +996,20 @@
     box-shadow: var(--shadow-md);
 }
 
-.wfrp-trading .resource-btn.selected {
+.trading-places .resource-btn.selected {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
     color: white;
     box-shadow: var(--shadow-md);
 }
 
-.wfrp-trading .resource-btn:disabled {
+.trading-places .resource-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     transform: none;
 }
 
-.wfrp-trading .selling-interface {
+.trading-places .selling-interface {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -1017,22 +1017,22 @@
     margin-bottom: 24px;
 }
 
-.wfrp-trading .quantity-section {
+.trading-places .quantity-section {
     margin-bottom: 20px;
 }
 
-.wfrp-trading .selling-actions {
+.trading-places .selling-actions {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
 }
 
-.wfrp-trading .selling-actions .btn {
+.trading-places .selling-actions .btn {
     flex: 1;
     min-width: 140px;
 }
 
-.wfrp-trading .selling-results {
+.trading-places .selling-results {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -1040,7 +1040,7 @@
     margin-bottom: 24px;
 }
 
-.wfrp-trading .selling-results h4 {
+.trading-places .selling-results h4 {
     color: var(--text-primary);
     margin-bottom: 12px;
     display: flex;
@@ -1048,15 +1048,15 @@
     gap: 8px;
 }
 
-.wfrp-trading .selling-results .success-icon {
+.trading-places .selling-results .success-icon {
     color: var(--accent-secondary);
 }
 
-.wfrp-trading .selling-results .warning-icon {
+.trading-places .selling-results .warning-icon {
     color: var(--accent-warning);
 }
 
-.wfrp-trading .sale-merchant-info {
+.trading-places .sale-merchant-info {
     background: var(--bg-accent);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
@@ -1064,20 +1064,20 @@
     margin-top: 12px;
 }
 
-.wfrp-trading .sale-merchant-header {
+.trading-places .sale-merchant-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
 }
 
-.wfrp-trading .sale-merchant-name {
+.trading-places .sale-merchant-name {
     font-weight: 600;
     color: var(--text-primary);
     font-size: 14px;
 }
 
-.wfrp-trading .sale-merchant-skill {
+.trading-places .sale-merchant-skill {
     background: var(--accent-primary);
     color: white;
     padding: 2px 6px;
@@ -1087,7 +1087,7 @@
     text-transform: uppercase;
 }
 
-.wfrp-trading .sale-merchant-description {
+.trading-places .sale-merchant-description {
     color: var(--text-secondary);
     font-size: 13px;
     line-height: 1.4;
@@ -1332,7 +1332,7 @@
 }
 
 /* Slot-based Availability Results */
-.wfrp-trading .availability-results {
+.trading-places .availability-results {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -1340,11 +1340,11 @@
     margin-top: 16px;
 }
 
-.wfrp-trading .availability-summary {
+.trading-places .availability-summary {
     margin-bottom: 24px;
 }
 
-.wfrp-trading .summary-header {
+.trading-places .summary-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1353,7 +1353,7 @@
     gap: 12px;
 }
 
-.wfrp-trading .summary-header h4 {
+.trading-places .summary-header h4 {
     color: var(--text-primary);
     margin: 0;
     display: flex;
@@ -1361,13 +1361,13 @@
     gap: 8px;
 }
 
-.wfrp-trading .summary-stats {
+.trading-places .summary-stats {
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
 }
 
-.wfrp-trading .stat-item {
+.trading-places .stat-item {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -1376,17 +1376,17 @@
     font-weight: 500;
 }
 
-.wfrp-trading .stat-item.contraband {
+.trading-places .stat-item.contraband {
     color: var(--accent-warning);
 }
 
-.wfrp-trading .slot-cards-container {
+.trading-places .slot-cards-container {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-.wfrp-trading .slot-card {
+.trading-places .slot-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -1394,47 +1394,47 @@
     transition: all 0.2s ease;
 }
 
-.wfrp-trading .slot-card:hover {
+.trading-places .slot-card:hover {
     border-color: var(--accent-primary);
     box-shadow: var(--shadow-md);
 }
 
-.wfrp-trading .slot-card.expanded {
+.trading-places .slot-card.expanded {
     box-shadow: var(--shadow-lg);
 }
 
-.wfrp-trading .slot-card.slot-success {
+.trading-places .slot-card.slot-success {
     border-left: 4px solid var(--accent-secondary);
 }
 
-.wfrp-trading .slot-card.slot-failure {
+.trading-places .slot-card.slot-failure {
     border-left: 4px solid var(--accent-warning);
 }
 
-.wfrp-trading .slot-header {
+.trading-places .slot-header {
     background: var(--bg-accent);
     padding: 16px 20px;
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
 
-.wfrp-trading .slot-header:hover {
+.trading-places .slot-header:hover {
     background: var(--bg-tertiary);
 }
 
-.wfrp-trading .slot-title {
+.trading-places .slot-title {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.wfrp-trading .slot-number {
+.trading-places .slot-number {
     font-weight: 600;
     color: var(--text-primary);
     font-size: 16px;
 }
 
-.wfrp-trading .slot-status {
+.trading-places .slot-status {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -1442,39 +1442,39 @@
     font-size: 14px;
 }
 
-.wfrp-trading .slot-card.slot-success .slot-status {
+.trading-places .slot-card.slot-success .slot-status {
     color: var(--accent-secondary);
 }
 
-.wfrp-trading .slot-card.slot-failure .slot-status {
+.trading-places .slot-card.slot-failure .slot-status {
     color: var(--accent-warning);
 }
 
-.wfrp-trading .slot-content {
+.trading-places .slot-content {
     display: none;
     padding: 20px;
     border-top: 1px solid var(--border-light);
 }
 
-.wfrp-trading .slot-card.expanded .slot-content {
+.trading-places .slot-card.expanded .slot-content {
     display: block;
 }
 
-.wfrp-trading .slot-pipeline {
+.trading-places .slot-pipeline {
     display: flex;
     flex-direction: column;
     gap: 16px;
     margin-bottom: 20px;
 }
 
-.wfrp-trading .pipeline-step {
+.trading-places .pipeline-step {
     background: var(--bg-accent);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     padding: 16px;
 }
 
-.wfrp-trading .pipeline-step h6 {
+.trading-places .pipeline-step h6 {
     margin: 0 0 12px 0;
     color: var(--text-primary);
     font-size: 14px;
@@ -1484,41 +1484,41 @@
     gap: 8px;
 }
 
-.wfrp-trading .pipeline-detail {
+.trading-places .pipeline-detail {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.wfrp-trading .pipeline-detail p {
+.trading-places .pipeline-detail p {
     margin: 0;
     color: var(--text-secondary);
     font-size: 14px;
 }
 
-.wfrp-trading .pipeline-detail strong {
+.trading-places .pipeline-detail strong {
     color: var(--text-primary);
 }
 
-.wfrp-trading .pipeline-detail ul {
+.trading-places .pipeline-detail ul {
     margin: 8px 0 0 0;
     padding-left: 20px;
     color: var(--text-secondary);
     font-size: 13px;
 }
 
-.wfrp-trading .pipeline-detail li {
+.trading-places .pipeline-detail li {
     margin-bottom: 4px;
 }
 
-.wfrp-trading .slot-result {
+.trading-places .slot-result {
     background: var(--bg-accent);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     padding: 16px;
 }
 
-.wfrp-trading .result-header {
+.trading-places .result-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1527,19 +1527,19 @@
     gap: 8px;
 }
 
-.wfrp-trading .result-label {
+.trading-places .result-label {
     color: var(--text-muted);
     font-weight: 500;
     font-size: 14px;
 }
 
-.wfrp-trading .result-value {
+.trading-places .result-value {
     color: var(--accent-secondary);
     font-weight: 600;
     font-size: 16px;
 }
 
-.wfrp-trading .merchant-info {
+.trading-places .merchant-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1547,48 +1547,48 @@
     gap: 8px;
 }
 
-.wfrp-trading .merchant-label {
+.trading-places .merchant-label {
     color: var(--text-muted);
     font-weight: 500;
     font-size: 14px;
 }
 
-.wfrp-trading .merchant-value {
+.trading-places .merchant-value {
     color: var(--text-secondary);
     font-size: 14px;
 }
 
-.wfrp-trading .slot-failure-reason {
+.trading-places .slot-failure-reason {
     background: rgba(239, 83, 80, 0.1);
     border: 1px solid var(--accent-warning);
     border-radius: var(--radius-sm);
     padding: 16px;
 }
 
-.wfrp-trading .slot-failure-reason p {
+.trading-places .slot-failure-reason p {
     margin: 0 0 8px 0;
     color: var(--accent-warning);
     font-size: 14px;
 }
 
-.wfrp-trading .slot-failure-reason ul {
+.trading-places .slot-failure-reason ul {
     margin: 8px 0 0 0;
     padding-left: 20px;
     color: var(--text-secondary);
     font-size: 13px;
 }
 
-.wfrp-trading .slot-failure-reason li {
+.trading-places .slot-failure-reason li {
     margin-bottom: 4px;
 }
 
 /* Transaction History - OLD STYLES (keeping for compatibility) */
-.wfrp-trading .legacy-transaction-list {
+.trading-places .legacy-transaction-list {
     max-height: 300px;
     overflow-y: auto;
 }
 
-.wfrp-trading .transaction-item {
+.trading-places .transaction-item {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -1599,76 +1599,76 @@
     align-items: center;
 }
 
-.wfrp-trading .transaction-info h4 {
+.trading-places .transaction-info h4 {
     color: var(--text-primary);
     margin-bottom: 4px;
 }
 
-.wfrp-trading .transaction-details {
+.trading-places .transaction-details {
     color: var(--text-muted);
     font-size: 14px;
 }
 
-.wfrp-trading .transaction-amount {
+.trading-places .transaction-amount {
     color: var(--accent-secondary);
     font-weight: 700;
     font-size: 16px;
 }
 
 /* Empty States */
-.wfrp-trading .empty-state {
+.trading-places .empty-state {
     text-align: center;
     padding: 60px 20px;
     color: var(--text-muted);
 }
 
-.wfrp-trading .empty-state i {
+.trading-places .empty-state i {
     font-size: 48px;
     margin-bottom: 16px;
     opacity: 0.5;
 }
 
-.wfrp-trading .empty-state p {
+.trading-places .empty-state p {
     font-size: 16px;
     margin-bottom: 8px;
 }
 
-.wfrp-trading .empty-state .sub-text {
+.trading-places .empty-state .sub-text {
     font-size: 14px;
     opacity: 0.7;
 }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-    .wfrp-trading .app-content {
+    .trading-places .app-content {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr;
     }
     
-    .wfrp-trading .sidebar {
+    .trading-places .sidebar {
         border-right: none;
         border-bottom: 1px solid var(--border-light);
         overflow-y: visible;
     }
     
-    .wfrp-trading .cargo-grid {
+    .trading-places .cargo-grid {
         grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 768px) {
-    .wfrp-trading .app-header {
+    .trading-places .app-header {
         padding: 20px;
         flex-direction: column;
         gap: 16px;
     }
     
-    .wfrp-trading .app-content {
+    .trading-places .app-content {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr;
     }
     
-    .wfrp-trading .sidebar {
+    .trading-places .sidebar {
         order: 1;
         border-right: none;
         border-bottom: 1px solid var(--border-light);
@@ -1676,12 +1676,12 @@
         overflow-y: visible;
     }
     
-    .wfrp-trading .main-panel {
+    .trading-places .main-panel {
         order: 2;
         padding: 20px;
     }
     
-    .wfrp-trading .tabs {
+    .trading-places .tabs {
         position: sticky;
         top: 0;
         z-index: 10;
@@ -1692,18 +1692,18 @@
         flex-shrink: 0;
     }
     
-    .wfrp-trading .tab-content {
+    .trading-places .tab-content {
         padding-top: 20px;
         flex: 1;
     }
 }
 
 /* FoundryVTT Application Window Overrides */
-.wfrp-trading.application-v2 {
+.trading-places.application-v2 {
     background: var(--bg-primary);
 }
 
-.wfrp-trading.application-v2 .window-content {
+.trading-places.application-v2 .window-content {
     padding: 0;
     background: var(--bg-primary);
     height: 100%;
@@ -1711,95 +1711,95 @@
     flex-direction: column;
 }
 
-.wfrp-trading.application-v2 .window-header {
+.trading-places.application-v2 .window-header {
     background: var(--bg-tertiary);
     border-bottom: 1px solid var(--border-light);
 }
 
-.wfrp-trading.application-v2 .window-title {
+.trading-places.application-v2 .window-title {
     color: var(--text-primary);
 }
 
 /* Ensure the trading app fills the entire window content */
-.wfrp-trading .trading-app {
+.trading-places .trading-app {
     border-radius: 0; /* Remove border radius when inside FoundryVTT window */
     box-shadow: none; /* Remove shadow when inside FoundryVTT window */
     margin: 0; /* Remove margin when inside FoundryVTT window */
 }
 
 /* Make sure the content area takes full height */
-.wfrp-trading .app-content {
+.trading-places .app-content {
     height: 100%;
 }
 
 /* Ensure proper scrolling behavior in FoundryVTT */
-.wfrp-trading .sidebar {
+.trading-places .sidebar {
     max-height: 100%;
 }
 
-.wfrp-trading .main-panel {
+.trading-places .main-panel {
     max-height: 100%;
 }
 
-.wfrp-trading .tab-content {
+.trading-places .tab-content {
     max-height: 100%;
 }
 
 /* Minimum window size constraints */
-.wfrp-trading.application-v2 {
+.trading-places.application-v2 {
     min-width: 800px;
     min-height: 600px;
 }
 
 /* Flexible cargo grid that adapts to container size */
-.wfrp-trading .cargo-grid {
+.trading-places .cargo-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
 }
 
 /* Ensure settlement display doesn't get too wide */
-.wfrp-trading .settlement-display {
+.trading-places .settlement-display {
     max-width: 100%;
 }
 
 /* Very small window handling */
 @media (max-width: 600px) {
-    .wfrp-trading .app-header {
+    .trading-places .app-header {
         padding: 12px 16px;
     }
     
-    .wfrp-trading .app-header .app-title h1 {
+    .trading-places .app-header .app-title h1 {
         font-size: 20px;
     }
     
-    .wfrp-trading .sidebar {
+    .trading-places .sidebar {
         padding: 16px;
     }
     
-    .wfrp-trading .main-panel {
+    .trading-places .main-panel {
         padding: 16px;
     }
     
-    .wfrp-trading .section-title {
+    .trading-places .section-title {
         font-size: 16px;
     }
     
-    .wfrp-trading .cargo-grid {
+    .trading-places .cargo-grid {
         grid-template-columns: 1fr;
     }
     
-    .wfrp-trading .selling-actions {
+    .trading-places .selling-actions {
         flex-direction: column;
     }
     
-    .wfrp-trading .selling-actions .btn {
+    .trading-places .selling-actions .btn {
         min-width: auto;
     }
 }
 
 /* Explanation text in pipeline details */
-.wfrp-trading .pipeline-section p.explanation {
+.trading-places .pipeline-section p.explanation {
     color: var(--text-muted);
     font-size: 12px;
     font-style: italic;
@@ -1812,7 +1812,7 @@
 }
 
 /* Pricing Breakdown Styles */
-.wfrp-trading .pricing-breakdown {
+.trading-places .pricing-breakdown {
     margin-top: 8px;
     padding: 8px;
     background: rgba(255, 255, 255, 0.05);
@@ -1820,12 +1820,12 @@
     border-left: 3px solid var(--accent-info);
 }
 
-.wfrp-trading .pricing-breakdown ul {
+.trading-places .pricing-breakdown ul {
     margin: 4px 0 0 0;
     padding-left: 16px;
 }
 
-.wfrp-trading .pricing-breakdown li {
+.trading-places .pricing-breakdown li {
     margin-bottom: 2px;
     color: var(--text-secondary);
     font-size: 12px;
@@ -1834,40 +1834,40 @@
 /* Transaction History Styles - ONLY APPLY TO HISTORY TAB */
 
 /* Transaction Cards with Buy/Sell Indicators */
-.wfrp-trading #history-tab .transaction-card {
+.trading-places #history-tab .transaction-card {
     border-left: 4px solid transparent;
     transition: border-color 0.2s ease;
 }
 
-.wfrp-trading #history-tab .transaction-card.purchase {
+.trading-places #history-tab .transaction-card.purchase {
     border-left-color: #f44336; /* Red for purchases */
 }
 
-.wfrp-trading #history-tab .transaction-card.sale {
+.trading-places #history-tab .transaction-card.sale {
     border-left-color: #4caf50; /* Green for sales */
 }
 
 /* Updated Transaction Header Layout */
-.wfrp-trading #history-tab .transaction-header {
+.trading-places #history-tab .transaction-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
 
-.wfrp-trading #history-tab .cargo-info {
+.trading-places #history-tab .cargo-info {
     flex: 1;
     min-width: 0; /* Allow text truncation */
 }
 
-.wfrp-trading #history-tab .transaction-summary {
+.trading-places #history-tab .transaction-summary {
     display: flex;
     align-items: center;
     gap: 16px;
     flex-shrink: 0;
 }
 
-.wfrp-trading #history-tab .quantity-display {
+.trading-places #history-tab .quantity-display {
     font-size: 16px;
     font-weight: 700;
     color: var(--accent-color);
@@ -1878,7 +1878,7 @@
     text-align: center;
 }
 
-.wfrp-trading #history-tab .cost-display {
+.trading-places #history-tab .cost-display {
     font-size: 16px;
     font-weight: 700;
     color: var(--text-primary);
@@ -1886,14 +1886,14 @@
     text-align: right;
 }
 
-.wfrp-trading #history-tab .transaction-actions {
+.trading-places #history-tab .transaction-actions {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
 }
 
-.wfrp-trading #history-tab .delete-transaction-btn {
+.trading-places #history-tab .delete-transaction-btn {
     background: none;
     border: none;
     color: var(--text-muted);
@@ -1908,22 +1908,22 @@
     height: 24px;
 }
 
-.wfrp-trading #history-tab .delete-transaction-btn:hover {
+.trading-places #history-tab .delete-transaction-btn:hover {
     background: rgba(244, 67, 54, 0.1);
     color: #f44336;
 }
 
-.wfrp-trading #history-tab .delete-transaction-btn i {
+.trading-places #history-tab .delete-transaction-btn i {
     font-size: 12px;
 }
 
-.wfrp-trading #history-tab .detail-compact {
+.trading-places #history-tab .detail-compact {
     color: var(--text-secondary);
     font-size: 12px;
     font-weight: 500;
 }
 
-.wfrp-trading #history-tab .detail-discount {
+.trading-places #history-tab .detail-discount {
     color: #4caf50;
     font-weight: 700;
     font-size: 12px;
@@ -1932,7 +1932,7 @@
     border-radius: 3px;
 }
 
-.wfrp-trading #history-tab .meta-compact {
+.trading-places #history-tab .meta-compact {
     display: flex;
     align-items: center;
     gap: 3px;
@@ -1941,20 +1941,20 @@
     white-space: nowrap;
 }
 
-.wfrp-trading #history-tab .meta-compact i {
+.trading-places #history-tab .meta-compact i {
     color: var(--accent-primary);
     width: 12px;
     font-size: 10px;
 }
 
 /* Error Message Styles */
-.wfrp-trading .pipeline-section p.error {
+.trading-places .pipeline-section p.error {
     color: var(--accent-warning);
     font-weight: 600;
     font-size: 12px;
 }
 
-.wfrp-trading .merchant-personality {
+.trading-places .merchant-personality {
     background: var(--accent-secondary);
     color: white;
     padding: 1px 4px;
@@ -1966,7 +1966,7 @@
 }
 
 /* Settlement Characteristics Styles */
-.wfrp-trading .settlement-flags {
+.trading-places .settlement-flags {
     margin-top: 12px;
     font-size: 14px;
     color: var(--text-secondary);
@@ -1975,14 +1975,14 @@
     gap: 16px;
 }
 
-.wfrp-trading .settlement-flags strong {
+.trading-places .settlement-flags strong {
     color: var(--text-primary);
     margin: 0;
     flex-shrink: 0;
     min-width: 140px;
 }
 
-.wfrp-trading .characteristics-list {
+.trading-places .characteristics-list {
     list-style: none;
     padding: 0;
     margin: 0;
@@ -1992,7 +1992,7 @@
     gap: 4px;
 }
 
-.wfrp-trading .characteristics-list li {
+.trading-places .characteristics-list li {
     padding: 4px 0;
     border-bottom: 1px solid var(--border-light);
     display: flex;
@@ -2001,12 +2001,12 @@
     gap: 8px;
 }
 
-.wfrp-trading .characteristics-list li:last-child {
+.trading-places .characteristics-list li:last-child {
     border-bottom: none;
 }
 
 /* Slot Information Styles */
-.wfrp-trading .slot-info {
+.trading-places .slot-info {
     margin-top: 12px;
     font-size: 14px;
     color: var(--text-secondary);
@@ -2015,14 +2015,14 @@
     gap: 16px;
 }
 
-.wfrp-trading .slot-info strong {
+.trading-places .slot-info strong {
     color: var(--text-primary);
     margin: 0;
     flex-shrink: 0;
     min-width: 140px;
 }
 
-.wfrp-trading .slot-value {
+.trading-places .slot-value {
     flex: 1;
     display: flex;
     justify-content: flex-end;
@@ -2031,7 +2031,7 @@
 }
 
 /* Settlement Information Styles */
-.wfrp-trading .settlement-info {
+.trading-places .settlement-info {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -2039,7 +2039,7 @@
     margin-bottom: 24px;
 }
 
-.wfrp-trading .settlement-info-section h5 {
+.trading-places .settlement-info-section h5 {
     color: var(--text-primary);
     margin-bottom: 16px;
     font-size: 18px;
@@ -2049,11 +2049,11 @@
     gap: 8px;
 }
 
-.wfrp-trading .settlement-info-section h5 i {
+.trading-places .settlement-info-section h5 i {
     color: var(--accent-primary);
 }
 
-.wfrp-trading .calculation-breakdown {
+.trading-places .calculation-breakdown {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -2063,11 +2063,11 @@
    MANUAL ENTRY - SIMPLE CLEAN DESIGN
    ============================================================================= */
 
-.wfrp-trading .manual-entry-section {
+.trading-places .manual-entry-section {
     margin-bottom: 20px;
 }
 
-.wfrp-trading .manual-entry-toggle {
+.trading-places .manual-entry-toggle {
     width: 100%;
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
@@ -2082,21 +2082,21 @@
     transition: all 0.2s ease;
 }
 
-.wfrp-trading .manual-entry-toggle:hover {
+.trading-places .manual-entry-toggle:hover {
     background: var(--bg-primary);
     border-color: var(--accent-color);
 }
 
-.wfrp-trading .manual-entry-toggle .toggle-icon {
+.trading-places .manual-entry-toggle .toggle-icon {
     margin-left: auto;
     transition: transform 0.2s ease;
 }
 
-.wfrp-trading .manual-entry-toggle.expanded .toggle-icon {
+.trading-places .manual-entry-toggle.expanded .toggle-icon {
     transform: rotate(180deg);
 }
 
-.wfrp-trading .manual-entry-form {
+.trading-places .manual-entry-form {
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
     border-top: none;
@@ -2106,26 +2106,26 @@
     transition: all 0.3s ease;
 }
 
-.wfrp-trading .manual-entry-form.collapsed {
+.trading-places .manual-entry-form.collapsed {
     max-height: 0;
     padding-top: 0;
     padding-bottom: 0;
     opacity: 0;
 }
 
-.wfrp-trading .manual-entry-form:not(.collapsed) {
+.trading-places .manual-entry-form:not(.collapsed) {
     max-height: 500px;
     opacity: 1;
 }
 
-.wfrp-trading .manual-entry-grid {
+.trading-places .manual-entry-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 15px;
 }
 
-.wfrp-trading .manual-entry-grid input,
-.wfrp-trading .manual-entry-grid select {
+.trading-places .manual-entry-grid input,
+.trading-places .manual-entry-grid select {
     padding: 10px;
     border: 1px solid var(--border-primary);
     border-radius: 4px;
@@ -2134,31 +2134,31 @@
     font-size: 14px;
 }
 
-.wfrp-trading .manual-entry-grid input:focus,
-.wfrp-trading .manual-entry-grid select:focus {
+.trading-places .manual-entry-grid input:focus,
+.trading-places .manual-entry-grid select:focus {
     outline: none;
     border-color: var(--accent-color);
 }
 
-.wfrp-trading .manual-entry-row {
+.trading-places .manual-entry-row {
     display: flex;
     gap: 10px;
     align-items: center;
 }
 
-.wfrp-trading .manual-entry-row input,
-.wfrp-trading .manual-entry-row select {
+.trading-places .manual-entry-row input,
+.trading-places .manual-entry-row select {
     flex: 1;
 }
 
-.wfrp-trading .manual-entry-actions {
+.trading-places .manual-entry-actions {
     margin-top: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.wfrp-trading .add-manual-transaction-btn {
+.trading-places .add-manual-transaction-btn {
     background: var(--accent-color);
     color: white;
     border: none;
@@ -2168,23 +2168,23 @@
     font-size: 14px;
 }
 
-.wfrp-trading .add-manual-transaction-btn:hover {
+.trading-places .add-manual-transaction-btn:hover {
     background: #45a049;
 }
 
 /* Cargo autocomplete styling */
-.wfrp-trading #manual-cargo {
+.trading-places #manual-cargo {
     position: relative;
 }
 
-.wfrp-trading #cargo-datalist {
+.trading-places #cargo-datalist {
     display: none; /* Datalist is handled by browser */
 }
 
 /* ================== CARGO TAB STYLES ================== */
 
 /* Cargo Header - Capacity Management */
-.wfrp-trading #cargo-tab .cargo-header {
+.trading-places #cargo-tab .cargo-header {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -2192,29 +2192,29 @@
     margin-bottom: 16px;
 }
 
-.wfrp-trading #cargo-tab .capacity-section {
+.trading-places #cargo-tab .capacity-section {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.wfrp-trading #cargo-tab .capacity-section::before,
-.wfrp-trading #cargo-tab .capacity-section::after {
+.trading-places #cargo-tab .capacity-section::before,
+.trading-places #cargo-tab .capacity-section::after {
     display: none !important; /* Remove any pseudo-element arrows */
 }
 
-.wfrp-trading #cargo-tab .capacity-controls {
+.trading-places #cargo-tab .capacity-controls {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.wfrp-trading #cargo-tab .capacity-controls label {
+.trading-places #cargo-tab .capacity-controls label {
     font-weight: 600;
     color: var(--text-primary);
 }
 
-.wfrp-trading #cargo-tab #cargo-capacity {
+.trading-places #cargo-tab #cargo-capacity {
     width: 100px;
     padding: 6px 8px;
     border: 1px solid var(--border-color);
@@ -2224,19 +2224,19 @@
     text-align: center;
 }
 
-.wfrp-trading #cargo-tab .capacity-unit {
+.trading-places #cargo-tab .capacity-unit {
     font-weight: 600;
     color: var(--text-secondary);
 }
 
 /* Capacity Bar */
-.wfrp-trading #cargo-tab .capacity-bar-container {
+.trading-places #cargo-tab .capacity-bar-container {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
-.wfrp-trading #cargo-tab .capacity-bar {
+.trading-places #cargo-tab .capacity-bar {
     height: 20px;
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
@@ -2245,7 +2245,7 @@
     position: relative;
 }
 
-.wfrp-trading #cargo-tab .capacity-used {
+.trading-places #cargo-tab .capacity-used {
     height: 100%;
     background: linear-gradient(90deg, #4caf50, #ffeb3b, #f44336);
     background-size: 100% 100%;
@@ -2253,11 +2253,11 @@
     border-radius: 10px;
 }
 
-.wfrp-trading #cargo-tab .capacity-used.over-capacity {
+.trading-places #cargo-tab .capacity-used.over-capacity {
     background: linear-gradient(90deg, #f44336, #d32f2f);
 }
 
-.wfrp-trading #cargo-tab .capacity-text {
+.trading-places #cargo-tab .capacity-text {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -2265,30 +2265,30 @@
     font-weight: 600;
 }
 
-.wfrp-trading #cargo-tab .current-load {
+.trading-places #cargo-tab .current-load {
     font-size: 18px;
     color: var(--accent-color);
 }
 
-.wfrp-trading #cargo-tab .current-load.over-capacity {
+.trading-places #cargo-tab .current-load.over-capacity {
     color: #f44336;
 }
 
-.wfrp-trading #cargo-tab .over-capacity-warning {
+.trading-places #cargo-tab .over-capacity-warning {
     color: #f44336;
     font-weight: 700;
     margin-left: 8px;
 }
 
 /* Cargo List - Now uses same styling as history tab */
-.wfrp-trading #cargo-tab .cargo-list {
+.trading-places #cargo-tab .cargo-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
 /* Apply the same transaction card styling to cargo tab */
-.wfrp-trading #cargo-tab .transaction-card {
+.trading-places #cargo-tab .transaction-card {
     border-left: 4px solid transparent;
     transition: border-color 0.2s ease;
     background: var(--bg-secondary);
@@ -2298,31 +2298,31 @@
     margin-bottom: 12px;
 }
 
-.wfrp-trading #cargo-tab .transaction-card.purchase {
+.trading-places #cargo-tab .transaction-card.purchase {
     border-left-color: #f44336; /* Red for purchases - same as history tab */
 }
 
 /* Updated Transaction Header Layout for cargo tab */
-.wfrp-trading #cargo-tab .transaction-header {
+.trading-places #cargo-tab .transaction-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
 
-.wfrp-trading #cargo-tab .cargo-info {
+.trading-places #cargo-tab .cargo-info {
     flex: 1;
     min-width: 0; /* Allow text truncation */
 }
 
-.wfrp-trading #cargo-tab .transaction-summary {
+.trading-places #cargo-tab .transaction-summary {
     display: flex;
     align-items: center;
     gap: 16px;
     flex-shrink: 0;
 }
 
-.wfrp-trading #cargo-tab .quantity-display {
+.trading-places #cargo-tab .quantity-display {
     font-size: 16px;
     font-weight: 700;
     color: var(--accent-color);
@@ -2333,7 +2333,7 @@
     text-align: center;
 }
 
-.wfrp-trading #cargo-tab .cost-display {
+.trading-places #cargo-tab .cost-display {
     font-size: 16px;
     font-weight: 700;
     color: var(--success-color);
@@ -2344,31 +2344,31 @@
     text-align: center;
 }
 
-.wfrp-trading #cargo-tab .transaction-actions {
+.trading-places #cargo-tab .transaction-actions {
     display: flex;
     gap: 8px;
     flex-shrink: 0;
 }
 
-.wfrp-trading #cargo-tab .detail-compact {
+.trading-places #cargo-tab .detail-compact {
     font-size: 14px;
     color: var(--text-secondary);
     margin-right: 12px;
 }
 
-.wfrp-trading #cargo-tab .meta-compact {
+.trading-places #cargo-tab .meta-compact {
     font-size: 12px;
     color: var(--text-secondary);
     margin-right: 12px;
 }
 
-.wfrp-trading #cargo-tab .meta-compact i {
+.trading-places #cargo-tab .meta-compact i {
     margin-right: 4px;
     opacity: 0.7;
 }
 
 /* Contraband badge styling for cargo tab */
-.wfrp-trading #cargo-tab .contraband-badge {
+.trading-places #cargo-tab .contraband-badge {
     font-size: 10px;
     color: #fff;
     background: #f44336;
@@ -2380,8 +2380,8 @@
 }
 
 /* Button styling for cargo actions */
-.wfrp-trading #cargo-tab .sell-cargo-btn,
-.wfrp-trading #cargo-tab .delete-cargo-btn {
+.trading-places #cargo-tab .sell-cargo-btn,
+.trading-places #cargo-tab .delete-cargo-btn {
     background: var(--button-bg);
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -2392,45 +2392,45 @@
     font-size: 12px;
 }
 
-.wfrp-trading #cargo-tab .sell-cargo-btn:hover {
+.trading-places #cargo-tab .sell-cargo-btn:hover {
     background: #4caf50;
     color: white;
 }
 
-.wfrp-trading #cargo-tab .delete-cargo-btn:hover {
+.trading-places #cargo-tab .delete-cargo-btn:hover {
     background: #f44336;
     color: white;
 }
 
 /* Empty State */
-.wfrp-trading #cargo-tab .empty-cargo {
+.trading-places #cargo-tab .empty-cargo {
     text-align: center;
     padding: 40px 20px;
     color: var(--text-secondary);
 }
 
-.wfrp-trading #cargo-tab .empty-cargo-icon {
+.trading-places #cargo-tab .empty-cargo-icon {
     font-size: 48px;
     margin-bottom: 16px;
 }
 
-.wfrp-trading #cargo-tab .empty-cargo-text {
+.trading-places #cargo-tab .empty-cargo-text {
     font-size: 18px;
     font-weight: 600;
     margin-bottom: 8px;
     color: var(--text-primary);
 }
 
-.wfrp-trading #cargo-tab .empty-cargo-subtitle {
+.trading-places #cargo-tab .empty-cargo-subtitle {
     font-size: 14px;
 }
 
 /* Add Cargo Section - Collapsible Form */
-.wfrp-trading #cargo-tab .add-cargo-section {
+.trading-places #cargo-tab .add-cargo-section {
     margin-bottom: 20px;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-toggle {
+.trading-places #cargo-tab .add-cargo-toggle {
     width: 100%;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
@@ -2446,31 +2446,31 @@
     font-weight: 600;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-toggle:hover {
+.trading-places #cargo-tab .add-cargo-toggle:hover {
     background: var(--accent-color);
     color: white;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-toggle.expanded {
+.trading-places #cargo-tab .add-cargo-toggle.expanded {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     background: var(--accent-color);
     color: white;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-toggle i:first-child {
+.trading-places #cargo-tab .add-cargo-toggle i:first-child {
     margin-right: 8px;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-toggle .toggle-icon {
+.trading-places #cargo-tab .add-cargo-toggle .toggle-icon {
     transition: transform 0.2s ease;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-toggle.expanded .toggle-icon {
+.trading-places #cargo-tab .add-cargo-toggle.expanded .toggle-icon {
     transform: rotate(180deg);
 }
 
-.wfrp-trading #cargo-tab .add-cargo-form {
+.trading-places #cargo-tab .add-cargo-form {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-top: none;
@@ -2481,25 +2481,25 @@
     transition: all 0.3s ease;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-form.collapsed {
+.trading-places #cargo-tab .add-cargo-form.collapsed {
     max-height: 0;
     padding: 0 16px;
     opacity: 0;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-grid {
+.trading-places #cargo-tab .add-cargo-grid {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-row {
+.trading-places #cargo-tab .add-cargo-row {
     display: flex;
     gap: 12px;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-row input,
-.wfrp-trading #cargo-tab .add-cargo-row select {
+.trading-places #cargo-tab .add-cargo-row input,
+.trading-places #cargo-tab .add-cargo-row select {
     flex: 1;
     padding: 8px 12px;
     border: 1px solid var(--border-color);
@@ -2509,14 +2509,14 @@
     font-size: 14px;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-row input:focus,
-.wfrp-trading #cargo-tab .add-cargo-row select:focus {
+.trading-places #cargo-tab .add-cargo-row input:focus,
+.trading-places #cargo-tab .add-cargo-row select:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
 }
 
-.wfrp-trading #cargo-tab .add-cargo-actions {
+.trading-places #cargo-tab .add-cargo-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -2525,17 +2525,17 @@
     border-top: 1px solid var(--border-color);
 }
 
-.wfrp-trading #cargo-tab .total-cost-preview {
+.trading-places #cargo-tab .total-cost-preview {
     font-size: 14px;
     color: var(--text-secondary);
 }
 
-.wfrp-trading #cargo-tab .total-cost-preview strong {
+.trading-places #cargo-tab .total-cost-preview strong {
     color: var(--text-primary);
     font-weight: 600;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-btn {
+.trading-places #cargo-tab .add-cargo-btn {
     background: var(--accent-color);
     color: white;
     border: none;
@@ -2547,24 +2547,24 @@
     transition: all 0.2s ease;
 }
 
-.wfrp-trading #cargo-tab .add-cargo-btn:hover {
+.trading-places #cargo-tab .add-cargo-btn:hover {
     background: var(--accent-color-dark, #1976d2);
     transform: translateY(-1px);
 }
 
-.wfrp-trading #cargo-tab .add-cargo-btn:active {
+.trading-places #cargo-tab .add-cargo-btn:active {
     transform: translateY(0);
 }
 
 /* Minimal cargo list for selling tab */
-.wfrp-trading .cargo-minimal-list {
+.trading-places .cargo-minimal-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
     margin-top: 12px;
 }
 
-.wfrp-trading .cargo-minimal-item {
+.trading-places .cargo-minimal-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -2575,29 +2575,29 @@
     font-size: 14px;
 }
 
-.wfrp-trading .cargo-minimal-name {
+.trading-places .cargo-minimal-name {
     font-weight: 500;
     color: var(--text-primary);
 }
 
-.wfrp-trading .cargo-minimal-quantity {
+.trading-places .cargo-minimal-quantity {
     color: var(--text-secondary);
     font-weight: 400;
 }
 
 /* Selling interface styling */
-.wfrp-trading .cargo-selling-interface {
+.trading-places .cargo-selling-interface {
     margin-top: 16px;
 }
 
-.wfrp-trading .selling-controls {
+.trading-places .selling-controls {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
 /* Make selling tab current cargo header smaller */
-.wfrp-trading #selling-tab .current-cargo-section h6 {
+.trading-places #selling-tab .current-cargo-section h6 {
     font-size: 0.9em !important;
     margin: 4px 0 !important;
     font-weight: 400 !important;

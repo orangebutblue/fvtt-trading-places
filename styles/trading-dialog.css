@@ -1,6 +1,6 @@
 /* Enhanced Trading Dialog Styles */
 
-.wfrp-trading-dialog.enhanced {
+.trading-places-dialog.enhanced {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -429,7 +429,7 @@
     align-items: center;
 }
 
-/* Legacy quantity-input removed - now defined in trading.css under .wfrp-trading */
+/* Legacy quantity-input removed - now defined in trading.css under .trading-places */
 
 .buy-partial-btn, .buy-all-btn, .sell-partial-btn, .sell-all-btn {
     padding: 6px 12px;

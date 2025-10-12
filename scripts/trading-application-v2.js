@@ -24,16 +24,16 @@ import {
 
 // Check if ApplicationV2 is available before defining the class
 if (typeof foundry?.applications?.api?.ApplicationV2 === 'undefined') {
-    console.warn('Trading Places | ApplicationV2 not available, WFRPTradingApplication will not be loaded');
+    console.warn('Trading Places | ApplicationV2 not available, TradingPlacesApplication will not be loaded');
     // Don't define the class if ApplicationV2 isn't available
 } else {
-    console.log('Trading Places | ApplicationV2 available, defining WFRPTradingApplication');
+    console.log('Trading Places | ApplicationV2 available, defining TradingPlacesApplication');
     
-class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
 
     /** @override */
     static DEFAULT_OPTIONS = {
-        id: "wfrp-trading",
+        id: "trading-places",
         tag: "div",
         window: {
             title: "Trading Places",
@@ -48,7 +48,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             top: 50,
             left: 50
         },
-        classes: ["wfrp-trading", "application-v2", "modern-trading"]
+        classes: ["trading-places", "application-v2", "modern-trading"]
     };
 
     /** @override */
@@ -59,7 +59,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
     };
 
     /**
-     * Constructor for WFRPTradingApplication
+     * Constructor for TradingPlacesApplication
      * @param {Object} options - Application options
      */
     constructor(options = {}) {
@@ -78,10 +78,10 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
     this.sellerOffers = null;
 
         // Get module components with validation
-        this.dataManager = window.WFRPRiverTrading?.getDataManager();
-        this.tradingEngine = window.WFRPRiverTrading?.getTradingEngine();
-        this.systemAdapter = window.WFRPRiverTrading?.getSystemAdapter();
-        this.debugLogger = window.wfrpLogger;
+        this.dataManager = window.TradingPlaces?.getDataManager();
+        this.tradingEngine = window.TradingPlaces?.getTradingEngine();
+        this.systemAdapter = window.TradingPlaces?.getSystemAdapter();
+        this.debugLogger = window.TPMLogger;
 
         this.cargoAvailabilityPipeline = null;
         if (this.dataManager && typeof this.dataManager.getCargoAvailabilityPipeline === 'function') {
@@ -117,7 +117,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
             this.settlementSelector = null;
         }
 
-        this._logInfo('Application Initialization', 'WFRPTradingApplication created successfully');
+        this._logInfo('Application Initialization', 'TradingPlacesApplication created successfully');
 
         // Initialize window management
         this._initializeWindowManagement();
@@ -128,25 +128,25 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
     // Apply mixins
     static {
         if (typeof window.WindowManagementMixin !== 'undefined') {
-            Object.assign(WFRPTradingApplication.prototype, window.WindowManagementMixin);
+            Object.assign(TradingPlacesApplication.prototype, window.WindowManagementMixin);
         }
         if (typeof window.LoggingMixin !== 'undefined') {
-            Object.assign(WFRPTradingApplication.prototype, window.LoggingMixin);
+            Object.assign(TradingPlacesApplication.prototype, window.LoggingMixin);
         }
         if (typeof window.ValidationMixin !== 'undefined') {
-            Object.assign(WFRPTradingApplication.prototype, window.ValidationMixin);
+            Object.assign(TradingPlacesApplication.prototype, window.ValidationMixin);
         }
         if (typeof window.SeasonManagementMixin !== 'undefined') {
-            Object.assign(WFRPTradingApplication.prototype, window.SeasonManagementMixin);
+            Object.assign(TradingPlacesApplication.prototype, window.SeasonManagementMixin);
         }
         if (typeof window.SettlementSelectorMixin !== 'undefined') {
-            Object.assign(WFRPTradingApplication.prototype, window.SettlementSelectorMixin);
+            Object.assign(TradingPlacesApplication.prototype, window.SettlementSelectorMixin);
         }
         if (typeof window.UIStateMixin !== 'undefined') {
-            Object.assign(WFRPTradingApplication.prototype, window.UIStateMixin);
+            Object.assign(TradingPlacesApplication.prototype, window.UIStateMixin);
         }
         if (typeof window.ResourceManagementMixin !== 'undefined') {
-            Object.assign(WFRPTradingApplication.prototype, window.ResourceManagementMixin);
+            Object.assign(TradingPlacesApplication.prototype, window.ResourceManagementMixin);
         }
     }
 
@@ -156,10 +156,10 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
     /**
      * Static factory method to create and render trading application
      * @param {Object} options - Application options
-     * @returns {WFRPTradingApplication} - Created application instance
+     * @returns {TradingPlacesApplication} - Created application instance
      */
     static async create(options = {}) {
-        const app = new WFRPTradingApplication(options);
+        const app = new TradingPlacesApplication(options);
         await app.render(true);
         return app;
     }
@@ -1217,7 +1217,7 @@ class WFRPTradingApplication extends foundry.applications.api.HandlebarsApplicat
 }
 
 // Export for global access
-window.WFRPTradingApplication = WFRPTradingApplication;
-console.log('Trading Places | WFRPTradingApplication class registered globally');
+window.TradingPlacesApplication = TradingPlacesApplication;
+console.log('Trading Places | TradingPlacesApplication class registered globally');
 
 } // End of ApplicationV2 availability check

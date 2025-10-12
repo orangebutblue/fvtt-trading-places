@@ -1092,7 +1092,7 @@ class ConfigValidator {
 
             // Optional UI classes (not critical for core functionality)
             const optionalClasses = [
-                { name: 'WFRPTradingApplication', class: window.WFRPTradingApplication },
+                { name: 'TradingPlacesApplication', class: window.TradingPlacesApplication },
                 { name: 'WFRPFallbackDialog', class: window.WFRPFallbackDialog }
             ];
 
