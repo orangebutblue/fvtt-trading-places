@@ -160,7 +160,7 @@
     background: var(--color-bg-option);
 }
 
-.cargo-name {
+.trading-dialog .cargo-name {
     font-weight: bold;
     color: var(--color-text-dark-primary);
     font-size: 0.9em;
@@ -402,7 +402,7 @@
     margin-top: 4px;
 }
 
-.modifier {
+.trading-dialog .modifier {
     background: var(--color-bg-option);
     padding: 2px 4px;
     border-radius: 2px;
@@ -556,7 +556,7 @@
     gap: 8px;
 }
 
-.timestamp {
+.trading-dialog .timestamp {
     font-size: 0.8em;
     color: var(--color-text-dark-secondary);
 }
@@ -654,7 +654,7 @@
     background: var(--color-bg-alt);
 }
 
-.cancel-btn {
+.trading-dialog .cancel-btn {
     background: var(--color-bg);
     color: var(--color-text-dark-primary);
     border: 1px solid var(--color-border);
@@ -663,7 +663,7 @@
     cursor: pointer;
 }
 
-.confirm-reroll-btn {
+.trading-dialog .confirm-reroll-btn {
     background: var(--color-yellow);
     color: var(--color-yellow-dark);
     border: 1px solid var(--color-yellow-dark);

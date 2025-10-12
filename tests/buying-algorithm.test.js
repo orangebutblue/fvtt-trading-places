@@ -51,8 +51,7 @@ describe('WFRPBuyingAlgorithm', () => {
                     summer: 3,
                     autumn: 1,
                     winter: 4
-                },
-                encumbrancePerUnit: 1
+                }
             },
             {
                 name: "Wine/Brandy",
@@ -63,7 +62,6 @@ describe('WFRPBuyingAlgorithm', () => {
                     autumn: 18,
                     winter: 20
                 },
-                encumbrancePerUnit: 1,
                 qualityTiers: {
                     poor: 0.5,
                     average: 1.0,
@@ -79,8 +77,7 @@ describe('WFRPBuyingAlgorithm', () => {
                     summer: 8,
                     autumn: 9,
                     winter: 10
-                },
-                encumbrancePerUnit: 2
+                }
             }
         ];
 

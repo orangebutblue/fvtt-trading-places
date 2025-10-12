@@ -273,21 +273,18 @@ describe('Complete Trading Workflows Integration Tests', () => {
             {
                 name: 'Grain',
                 category: 'Agriculture',
-                basePrices: { spring: 2, summer: 3, autumn: 1, winter: 4 },
-                encumbrancePerUnit: 1
+                basePrices: { spring: 2, summer: 3, autumn: 1, winter: 4 }
             },
             {
                 name: 'Wine',
                 category: 'Wine',
                 basePrices: { spring: 15, summer: 12, autumn: 18, winter: 20 },
-                encumbrancePerUnit: 1,
                 qualityTiers: { poor: 0.5, average: 1.0, good: 1.5, excellent: 2.0 }
             },
             {
                 name: 'Trade Goods',
                 category: 'Trade',
-                basePrices: { spring: 10, summer: 10, autumn: 10, winter: 10 },
-                encumbrancePerUnit: 1
+                basePrices: { spring: 10, summer: 10, autumn: 10, winter: 10 }
             }
         ];
 
@@ -350,7 +347,7 @@ describe('Complete Trading Workflows Integration Tests', () => {
                 testActor,
                 'Wine',
                 50,
-                { category: 'Wine', encumbrancePerUnit: 1 },
+                { category: 'Wine' },
                 {
                     pricePerUnit: purchasePrice.finalPricePerUnit,
                     totalPrice: purchasePrice.totalPrice,
@@ -407,7 +404,7 @@ describe('Complete Trading Workflows Integration Tests', () => {
                 testActor,
                 'Wine',
                 30,
-                { category: 'Wine', encumbrancePerUnit: 1 },
+                { category: 'Wine' },
                 {
                     pricePerUnit: purchasePrice.finalPricePerUnit,
                     quality: 'average',
@@ -458,7 +455,7 @@ describe('Complete Trading Workflows Integration Tests', () => {
                 testActor,
                 'Grain',
                 50,
-                { category: 'Agriculture', encumbrancePerUnit: 1 },
+                { category: 'Agriculture' },
                 {
                     pricePerUnit: purchasePrice.finalPricePerUnit,
                     settlement: settlement.name,
@@ -826,7 +823,6 @@ describe('Complete Trading Workflows Integration Tests', () => {
                         name: 'Bretonnian Wine',
                         category: 'Wine',
                         basePrices: { spring: 20, summer: 18, autumn: 25, winter: 30 },
-                        encumbrancePerUnit: 1,
                         qualityTiers: { poor: 0.6, average: 1.0, good: 1.4, excellent: 1.8 }
                     }
                 ],
@@ -934,14 +930,12 @@ describe('Complete Trading Workflows Integration Tests', () => {
                     {
                         name: 'Kislev Furs',
                         category: 'Furs',
-                        basePrices: { spring: 8, summer: 6, autumn: 12, winter: 15 },
-                        encumbrancePerUnit: 2
+                        basePrices: { spring: 8, summer: 6, autumn: 12, winter: 15 }
                     },
                     {
                         name: 'Amber',
                         category: 'Amber',
-                        basePrices: { spring: 25, summer: 25, autumn: 30, winter: 35 },
-                        encumbrancePerUnit: 1
+                        basePrices: { spring: 25, summer: 25, autumn: 30, winter: 35 }
                     }
                 ],
                 config: {

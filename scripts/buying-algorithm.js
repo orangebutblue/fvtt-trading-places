@@ -676,8 +676,7 @@ class TPBuyingAlgorithm {
             basePricePerTenEP: pricePerTenEP,
             finalPricePerTenEP: finalPricePerTenEP,
             totalPrice: totalPrice,
-            modifiers: modifiers,
-            encumbrancePerUnit: cargo.encumbrancePerUnit || 1
+            modifiers: modifiers
         };
     }
 

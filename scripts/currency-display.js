@@ -48,7 +48,6 @@ function convertDenominationToCanonical(value, context, options = {}) {
     }
 
     // Prices are already in canonical unit (BP), no conversion needed
-    console.log(`💱 Price already in BP: ${value} BP (no conversion)`);
     return value;
 }
 

@@ -32,7 +32,16 @@
 }
 
 /* Ensure variables are accessible to all child elements */
-.trading-places * {
+.trading-places .trading-app,
+.trading-places .app-content,
+.trading-places .sidebar,
+.trading-places .main-panel,
+.trading-places .app-header,
+.trading-places .settlement-display,
+.trading-places .cargo-card,
+.trading-places .merchant-info,
+.trading-places .purchase-controls,
+.trading-places .selling-interface {
     box-sizing: border-box;
 }
 
@@ -1094,7 +1103,7 @@
 }
 
 /* Info Indicators */
-.info-indicator {
+.trading-places .info-indicator {
     display: inline-block;
     margin-left: 8px;
     padding: 2px 6px;
@@ -1111,12 +1120,12 @@
     vertical-align: middle;
 }
 
-.merchant-info-indicator {
+.trading-places .merchant-info-indicator {
     margin-left: 0;
 }
 
 /* Info Tooltip */
-.info-tooltip {
+.trading-places .info-tooltip {
     position: absolute;
     background: var(--bg-primary);
     border: 2px solid var(--border-medium);
@@ -1134,18 +1143,18 @@
     white-space: pre-line;
 }
 
-.info-tooltip.show {
+.trading-places .info-tooltip.show {
     opacity: 1;
     transform: translateY(0);
 }
 
-.info-tooltip p {
+.trading-places .info-tooltip p {
     margin: 0;
     color: var(--text-secondary);
 }
 
 /* Pipeline Diagnostics */
-.pipeline-diagnostics {
+.trading-places .pipeline-diagnostics {
     margin-top: 16px;
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
@@ -1153,20 +1162,20 @@
     padding: 16px;
 }
 
-.pipeline-diagnostics h5 {
+.trading-places .pipeline-diagnostics h5 {
     margin: 0 0 12px 0;
     color: var(--text-primary);
     font-size: 16px;
 }
 
-.pipeline-highlights {
+.trading-places .pipeline-highlights {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 12px;
     margin-bottom: 16px;
 }
 
-.highlight-item {
+.trading-places .highlight-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1176,24 +1185,24 @@
     border: 1px solid var(--border-light);
 }
 
-.highlight-label {
+.trading-places .highlight-label {
     color: var(--text-secondary);
     font-weight: 500;
 }
 
-.highlight-value {
+.trading-places .highlight-value {
     color: var(--accent-primary);
     font-weight: 600;
 }
 
-.pipeline-details {
+.trading-places .pipeline-details {
     margin-top: 12px;
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     background: var(--bg-secondary);
 }
 
-.pipeline-details summary {
+.trading-places .pipeline-details summary {
     padding: 10px 14px;
     cursor: pointer;
     font-weight: 600;
@@ -1202,26 +1211,26 @@
     border-radius: var(--radius-sm);
 }
 
-.pipeline-details summary:hover {
+.trading-places .pipeline-details summary:hover {
     background: var(--bg-accent);
 }
 
-.detail-content {
+.trading-places .detail-content {
     padding: 14px;
     background: var(--bg-secondary);
 }
 
-.detail-content ul {
+.trading-places .detail-content ul {
     margin: 0;
     padding-left: 20px;
 }
 
-.detail-content li {
+.trading-places .detail-content li {
     margin-bottom: 4px;
     color: var(--text-secondary);
 }
 
-.slot-summary {
+.trading-places .slot-summary {
     background: var(--bg-accent);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
@@ -1229,25 +1238,25 @@
     margin-bottom: 8px;
 }
 
-.slot-summary h6 {
+.trading-places .slot-summary h6 {
     margin: 0 0 8px 0;
     color: var(--text-primary);
     font-size: 14px;
 }
 
-.slot-summary ul {
+.trading-places .slot-summary ul {
     margin: 0;
     padding-left: 16px;
 }
 
-.slot-summary li {
+.trading-places .slot-summary li {
     margin-bottom: 2px;
     color: var(--text-secondary);
     font-size: 13px;
 }
 
 /* Availability Status Banner */
-.availability-status-banner {
+.trading-places-availability-banner {
     background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
     border: 2px solid #28a745;
     border-radius: 8px;
@@ -1263,52 +1272,52 @@
 }
 
 /* Different states for the banner */
-.availability-status-banner.no-goods {
+.trading-places-availability-banner.no-goods {
     background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
     border-color: #dc3545;
     color: #721c24;
 }
 
 /* Cargo Summary */
-.cargo-summary {
+.trading-places-cargo-summary {
     margin-top: 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.cargo-item {
+.trading-places-cargo-item {
     background: var(--bg-accent);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     padding: 12px;
 }
 
-.cargo-name {
+.trading-places-cargo-name {
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 4px;
 }
 
-.cargo-quantity {
+.trading-places-cargo-quantity {
     color: var(--accent-secondary);
     font-weight: 600;
     margin-bottom: 4px;
 }
 
-.cargo-merchant {
+.trading-places-cargo-merchant {
     color: var(--text-secondary);
     font-size: 14px;
     margin-bottom: 8px;
 }
 
-.cargo-details {
+.trading-places-cargo-details {
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     background: var(--bg-secondary);
 }
 
-.cargo-details summary {
+.trading-places-cargo-details summary {
     padding: 8px 12px;
     cursor: pointer;
     font-weight: 500;
@@ -1317,16 +1326,16 @@
     border-radius: var(--radius-sm);
 }
 
-.cargo-details summary:hover {
+.trading-places-cargo-details summary:hover {
     background: var(--bg-accent);
 }
 
-.cargo-detail-content {
+.trading-places-cargo-detail-content {
     padding: 12px;
     background: var(--bg-secondary);
 }
 
-.cargo-detail-content p {
+.trading-places-cargo-detail-content p {
     margin: 4px 0;
     color: var(--text-secondary);
 }
@@ -1699,11 +1708,11 @@
 }
 
 /* FoundryVTT Application Window Overrides */
-.trading-places.application-v2 {
+.trading-places.trading-places-application {
     background: var(--bg-primary);
 }
 
-.trading-places.application-v2 .window-content {
+.trading-places.trading-places-application .window-content {
     padding: 0;
     background: var(--bg-primary);
     height: 100%;
@@ -1711,12 +1720,12 @@
     flex-direction: column;
 }
 
-.trading-places.application-v2 .window-header {
+.trading-places.trading-places-application .window-header {
     background: var(--bg-tertiary);
     border-bottom: 1px solid var(--border-light);
 }
 
-.trading-places.application-v2 .window-title {
+.trading-places.trading-places-application .window-title {
     color: var(--text-primary);
 }
 
@@ -1746,7 +1755,7 @@
 }
 
 /* Minimum window size constraints */
-.trading-places.application-v2 {
+.trading-places.trading-places-application {
     min-width: 800px;
     min-height: 600px;
 }
@@ -2003,6 +2012,71 @@
 
 .trading-places .characteristics-list li:last-child {
     border-bottom: none;
+}
+
+/* Cargo Distribution Chart Styles */
+.cargo-distribution-chart {
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+}
+
+.cargo-distribution-chart strong {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.pie-chart-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.pie-chart-container canvas {
+    max-width: 200px;
+    max-height: 200px;
+}
+
+.chart-legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 6px;
+    font-size: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    background: var(--bg-secondary);
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.legend-label {
+    color: var(--text-secondary);
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.legend-percentage {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-left: auto;
+    font-size: 11px;
 }
 
 /* Slot Information Styles */

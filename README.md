@@ -45,6 +45,7 @@ A comprehensive FoundryVTT for river trading, featuring modern UI, advanced merc
 - Settlement Management UI
 - Cargo Type Management UI
 - Mission System / Rumors
+- Dynamic prices (selling a cargo reduces its price)
 
 ## Requirements
 

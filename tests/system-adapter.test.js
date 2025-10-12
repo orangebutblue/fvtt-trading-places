@@ -297,8 +297,7 @@ function runInventoryOperationTests() {
     console.log('==============================');
 
     const cargoData = {
-        category: 'Agriculture',
-        encumbrancePerUnit: 1
+        category: 'Agriculture'
     };
 
     const purchaseInfo = {

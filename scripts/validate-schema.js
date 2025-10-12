@@ -15,7 +15,7 @@ const __dirname = path.dirname(__filename);
 // Paths
 const SETTLEMENT_DIR = path.resolve(__dirname, '../datasets/active/settlements');
 const CARGO_TYPES_PATH = path.resolve(__dirname, '../datasets/active/cargo-types.json');
-const SOURCE_FLAGS_PATH = path.resolve(__dirname, '../datasets/source-flags.json');
+const SOURCE_FLAGS_PATH = path.resolve(__dirname, '../datasets/active/source-flags.json');
 const TRADING_CONFIG_PATH = path.resolve(__dirname, '../datasets/active/trading-config.json');
 
 class SchemaValidator {

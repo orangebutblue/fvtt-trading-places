@@ -12,8 +12,7 @@ class MockDataManager {
             {
                 name: 'Grain',
                 category: 'Bulk Goods',
-                basePrices: { spring: 1, summer: 0.5, autumn: 0.25, winter: 0.5 },
-                encumbrancePerUnit: 10
+                basePrices: { spring: 1, summer: 0.5, autumn: 0.25, winter: 0.5 }
             }
         ];
     }

@@ -195,7 +195,6 @@ class PriceCalculator {
             modifiers,
             seasonalComparison,
             haggleOutcomes,
-            encumbrancePerUnit: cargo.encumbrancePerUnit || 10,
             calculationType: 'buying'
         };
 
@@ -358,7 +357,6 @@ class PriceCalculator {
             haggleOutcomes,
             settlement: settlement.name,
             settlementInfo,
-            encumbrancePerUnit: cargo.encumbrancePerUnit || 10,
             calculationType: 'selling'
         };
 
@@ -703,7 +701,6 @@ class PriceCalculator {
             totalPrice,
             modifiers,
             saleType,
-            encumbrancePerUnit: cargo.encumbrancePerUnit || 10,
             calculationType: 'special_sale'
         };
     }
@@ -757,8 +754,7 @@ class PriceCalculator {
             },
             
             // Calculation metadata
-            calculationType: priceBreakdown.calculationType,
-            encumbrancePerUnit: priceBreakdown.encumbrancePerUnit
+            calculationType: priceBreakdown.calculationType
         };
 
         return displayData;

@@ -2,7 +2,7 @@
   "id": "trading-places",
   "title": "Trading Places",
   "description": "Trading Module",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "compatibility": {
     "minimum": "13",
     "verified": "13",
@@ -41,6 +41,7 @@
     "scripts/mixins/settlement-selector-mixin.js",
     "scripts/mixins/ui-state-mixin.js",
     "scripts/availability-results-renderer.js",
+    "scripts/cargo-distribution-charts.js",
     "scripts/fallback-dialogs-v2.js",
     "scripts/ui/TradingUIEventHandlers.js",
     "scripts/ui/TradingUIRenderer.js",

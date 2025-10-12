@@ -42,23 +42,23 @@ class AvailabilityResultsRenderer {
         
         let html = `
             <div class="availability-results">
-                <div class="availability-status-banner">
+                <div class="trading-places-availability-banner">
                     ${statusEmoji} ${statusText} - ${settlement.name} (${sizeDescription}, ${wealthDescription}) - ${season}
                 </div>`;
 
         // Continue with rest of the method content (simplified for now)
         if (availabilityResult.isAvailable && availableCargo.length > 0) {
             html += `
-                <div class="cargo-summary">
+                <div class="trading-places-cargo-summary">
                     <h4>Available Cargo (${availableCargo.length} types)</h4>
                     <div class="cargo-list">`;
             
             availableCargo.forEach(cargo => {
                 html += `
-                    <div class="cargo-item">
-                        <span class="cargo-name">${cargo.name}</span>
-                        <span class="cargo-quantity">${cargo.quantity || 1}</span>
-                        <span class="cargo-price">${cargo.currentPrice || 'N/A'} GC</span>
+                    <div class="trading-places-cargo-item">
+                        <span class="trading-places-cargo-name">${cargo.name}</span>
+                        <span class="trading-places-cargo-quantity">${cargo.quantity || 1}</span>
+                        <span class="trading-places-cargo-price">${cargo.currentPrice || 'N/A'} GC</span>
                     </div>`;
             });
             
@@ -92,10 +92,10 @@ class AvailabilityResultsRenderer {
         if (!pipelineResult) return '';
         
         return `
-            <div class="pipeline-diagnostics">
+            <div class="trading-places-pipeline-diagnostics">
                 <details>
                     <summary>🧮 Calculation Details</summary>
-                    <div class="diagnostics-content">
+                    <div class="trading-places-diagnostics-content">
                         <pre>${JSON.stringify(pipelineResult, null, 2)}</pre>
                     </div>
                 </details>

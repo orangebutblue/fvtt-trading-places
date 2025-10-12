@@ -421,7 +421,6 @@ describe('DataManager Settlement Validation', () => {
                         autumn: 1,
                         winter: 4
                     },
-                    encumbrancePerUnit: 1,
                     deteriorationRate: 0.1,
                     specialRules: []
                 };
@@ -441,7 +440,6 @@ describe('DataManager Settlement Validation', () => {
                         autumn: 8,
                         winter: 15
                     },
-                    encumbrancePerUnit: 1,
                     qualityTiers: {
                         poor: 0.5,
                         average: 1.0,
@@ -458,23 +456,21 @@ describe('DataManager Settlement Validation', () => {
             test('should fail validation for missing required fields', () => {
                 const incompleteCargo = {
                     name: 'Test Cargo'
-                    // Missing: category, basePrices, encumbrancePerUnit
+                    // Missing: category, pricing data
                 };
 
                 const result = dataManager.validateCargo(incompleteCargo);
                 expect(result.valid).toBe(false);
                 expect(result.errors[0]).toContain('Missing required fields');
                 expect(result.errors[0]).toContain('category');
-                expect(result.errors[0]).toContain('basePrices');
-                expect(result.errors[0]).toContain('encumbrancePerUnit');
+                expect(result.errors[0]).toContain('basePrice + seasonalModifiers (or basePrices)');
             });
 
             test('should fail validation for invalid name', () => {
                 const cargo = {
                     name: '',
                     category: 'Agriculture',
-                    basePrices: { spring: 1, summer: 2, autumn: 1, winter: 3 },
-                    encumbrancePerUnit: 1
+                    basePrices: { spring: 1, summer: 2, autumn: 1, winter: 3 }
                 };
 
                 const result = dataManager.validateCargo(cargo);
@@ -490,8 +486,7 @@ describe('DataManager Settlement Validation', () => {
                         spring: 1,
                         summer: 2
                         // Missing: autumn, winter
-                    },
-                    encumbrancePerUnit: 1
+                    }
                 };
 
                 const result = dataManager.validateCargo(cargo);
@@ -508,26 +503,12 @@ describe('DataManager Settlement Validation', () => {
                         summer: 2,
                         autumn: 1,
                         winter: 3
-                    },
-                    encumbrancePerUnit: 1
+                    }
                 };
 
                 const result = dataManager.validateCargo(cargo);
                 expect(result.valid).toBe(false);
-                expect(result.errors).toContain('BasePrices.spring must be a positive number');
-            });
-
-            test('should fail validation for invalid encumbrance', () => {
-                const cargo = {
-                    name: 'Test Cargo',
-                    category: 'Agriculture',
-                    basePrices: { spring: 1, summer: 2, autumn: 1, winter: 3 },
-                    encumbrancePerUnit: 0
-                };
-
-                const result = dataManager.validateCargo(cargo);
-                expect(result.valid).toBe(false);
-                expect(result.errors).toContain('EncumbrancePerUnit must be a positive number');
+                expect(result.errors).toContain('BasePrices.spring must be a non-negative number');
             });
 
             test('should fail validation for invalid quality tiers', () => {
@@ -535,7 +516,6 @@ describe('DataManager Settlement Validation', () => {
                     name: 'Wine',
                     category: 'Luxury',
                     basePrices: { spring: 10, summer: 12, autumn: 8, winter: 15 },
-                    encumbrancePerUnit: 1,
                     qualityTiers: {
                         poor: -0.5, // Invalid negative multiplier
                         average: 1.0
@@ -552,7 +532,6 @@ describe('DataManager Settlement Validation', () => {
                     name: 'Test Cargo',
                     category: 'Agriculture',
                     basePrices: { spring: 1, summer: 2, autumn: 1, winter: 3 },
-                    encumbrancePerUnit: 1,
                     deteriorationRate: 1.5 // Invalid: must be 0-1
                 };
 
@@ -571,8 +550,7 @@ describe('DataManager Settlement Validation', () => {
                     summer: 3,
                     autumn: 1,
                     winter: 4
-                },
-                encumbrancePerUnit: 1
+                }
             };
 
             test('should return correct seasonal price', () => {
@@ -713,8 +691,7 @@ describe('DataManager Settlement Validation', () => {
                 expect(cargo).toEqual({
                     name: 'Grain',
                     category: 'Agriculture',
-                    basePrices: { spring: 2, summer: 3, autumn: 1, winter: 4 },
-                    encumbrancePerUnit: 1
+                    basePrices: { spring: 2, summer: 3, autumn: 1, winter: 4 }
                 });
             });
 
@@ -723,7 +700,6 @@ describe('DataManager Settlement Validation', () => {
                     'Wine',
                     'Luxury',
                     { spring: 10, summer: 12, autumn: 8, winter: 15 },
-                    1,
                     {
                         qualityTiers: { poor: 0.5, average: 1.0, excellent: 2.0 },
                         deteriorationRate: 0.05,

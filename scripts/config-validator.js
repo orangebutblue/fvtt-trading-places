@@ -1012,7 +1012,7 @@ class ConfigValidator {
         }
 
         const categorySet = new Set();
-        const requiredFields = ['name', 'category', 'basePrice', 'seasonalModifiers', 'encumbrancePerUnit'];
+        const requiredFields = ['name', 'category', 'basePrice', 'seasonalModifiers'];
         const requiredSeasons = ['spring', 'summer', 'autumn', 'winter'];
 
         cargoTypes.cargoTypes.forEach((cargo, index) => {
@@ -1055,12 +1055,6 @@ class ConfigValidator {
                         result.errors.push(`Cargo ${index} (${cargo.name || 'unnamed'}): SeasonalModifiers.${season} must be non-negative`);
                     }
                 });
-            }
-
-            // Validate encumbrance
-            if (cargo.encumbrancePerUnit !== undefined && (typeof cargo.encumbrancePerUnit !== 'number' || cargo.encumbrancePerUnit <= 0)) {
-                result.valid = false;
-                result.errors.push(`Cargo ${index} (${cargo.name || 'unnamed'}): EncumbrancePerUnit must be a positive number`);
             }
         });
 

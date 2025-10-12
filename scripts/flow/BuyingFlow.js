@@ -221,7 +221,6 @@ export class BuyingFlow {
                         quantity: slot.amount.totalEP,
                         totalEP: slot.amount.totalEP,
                         quality: slot.quality.tier,
-                        encumbrancePerUnit: cargoType?.encumbrancePerUnit || 1,
                         merchant: merchant,
                         slotInfo: {
                             slotNumber: slot.slotNumber,

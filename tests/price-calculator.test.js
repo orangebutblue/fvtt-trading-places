@@ -17,8 +17,7 @@ class MockDataManager {
                     summer: 0.5,
                     autumn: 0.25,
                     winter: 0.5
-                },
-                encumbrancePerUnit: 10
+                }
             },
             {
                 name: 'Wine',
@@ -34,8 +33,7 @@ class MockDataManager {
                     average: 1.0,
                     good: 2.0,
                     excellent: 4.0
-                },
-                encumbrancePerUnit: 10
+                }
             },
             {
                 name: 'Luxuries',
@@ -45,8 +43,7 @@ class MockDataManager {
                     summer: 50,
                     autumn: 50,
                     winter: 50
-                },
-                encumbrancePerUnit: 10
+                }
             }
         ];
     }

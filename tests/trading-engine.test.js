@@ -11,32 +11,27 @@ class MockDataManager {
             {
                 name: "Grain",
                 category: "Bulk Goods",
-                basePrices: { spring: 1, summer: 0.5, autumn: 0.25, winter: 0.5 },
-                encumbrancePerUnit: 10
+                basePrices: { spring: 1, summer: 0.5, autumn: 0.25, winter: 0.5 }
             },
             {
                 name: "Wool",
                 category: "Textiles",
-                basePrices: { spring: 1, summer: 1.5, autumn: 2, winter: 3 },
-                encumbrancePerUnit: 10
+                basePrices: { spring: 1, summer: 1.5, autumn: 2, winter: 3 }
             },
             {
                 name: "Metal",
                 category: "Raw Materials",
-                basePrices: { spring: 8, summer: 8, autumn: 8, winter: 8 },
-                encumbrancePerUnit: 10
+                basePrices: { spring: 8, summer: 8, autumn: 8, winter: 8 }
             },
             {
                 name: "Luxuries",
                 category: "Luxury Goods",
-                basePrices: { spring: 50, summer: 50, autumn: 50, winter: 50 },
-                encumbrancePerUnit: 10
+                basePrices: { spring: 50, summer: 50, autumn: 50, winter: 50 }
             },
             {
                 name: "Armaments",
                 category: "Military",
-                basePrices: { spring: 12, summer: 10, autumn: 8, winter: 10 },
-                encumbrancePerUnit: 10
+                basePrices: { spring: 12, summer: 10, autumn: 8, winter: 10 }
             }
         ];
     }

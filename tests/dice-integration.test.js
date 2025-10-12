@@ -71,14 +71,12 @@ describe('TradingEngine - Dice Integration', () => {
             {
                 name: 'Grain',
                 category: 'Agriculture',
-                basePrices: { spring: 2, summer: 3, autumn: 1, winter: 4 },
-                encumbrancePerUnit: 1
+                basePrices: { spring: 2, summer: 3, autumn: 1, winter: 4 }
             },
             {
                 name: 'Wine',
                 category: 'Luxury',
-                basePrices: { spring: 5, summer: 4, autumn: 6, winter: 7 },
-                encumbrancePerUnit: 1
+                basePrices: { spring: 5, summer: 4, autumn: 6, winter: 7 }
             }
         ];
 

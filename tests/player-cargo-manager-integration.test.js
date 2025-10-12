@@ -50,20 +50,17 @@ describe('PlayerCargoManager Integration', () => {
                     'Grain': {
                         name: 'Grain',
                         category: 'Bulk Goods',
-                        basePrices: { spring: 1, summer: 0.5, autumn: 0.25, winter: 0.5 },
-                        encumbrancePerUnit: 10
+                        basePrices: { spring: 1, summer: 0.5, autumn: 0.25, winter: 0.5 }
                     },
                     'Metal': {
                         name: 'Metal',
                         category: 'Raw Materials',
-                        basePrices: { spring: 8, summer: 8, autumn: 8, winter: 8 },
-                        encumbrancePerUnit: 10
+                        basePrices: { spring: 8, summer: 8, autumn: 8, winter: 8 }
                     },
                     'Luxuries': {
                         name: 'Luxuries',
                         category: 'Luxury Goods',
-                        basePrices: { spring: 50, summer: 50, autumn: 50, winter: 50 },
-                        encumbrancePerUnit: 10
+                        basePrices: { spring: 50, summer: 50, autumn: 50, winter: 50 }
                     }
                 };
                 return cargoTypes[type] || null;

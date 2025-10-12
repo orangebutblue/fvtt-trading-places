@@ -482,8 +482,7 @@ class WFRPSellingAlgorithm {
             adjustedPricePerTenEP: adjustedPrice,
             totalOffer: totalOffer,
             settlement: settlementInfo.name,
-            settlementInfo: settlementInfo,
-            encumbrancePerUnit: cargo.encumbrancePerUnit || 1
+            settlementInfo: settlementInfo
         };
     }
 

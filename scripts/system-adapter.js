@@ -645,7 +645,7 @@ class SystemAdapter {
                     value: quantity
                 },
                 encumbrance: {
-                    value: cargoData.encumbrancePerUnit || 1
+                    value: 1
                 },
                 price: {
                     gc: purchaseInfo.pricePerUnit || 0

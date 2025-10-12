@@ -536,13 +536,21 @@ class DataManager {
             errors: []
         };
 
-        // Required fields for cargo
-        const requiredFields = ['name', 'category', 'basePrice', 'seasonalModifiers', 'encumbrancePerUnit'];
-
+        // Required fields for cargo (support both old and new formats)
+        const requiredFields = ['name', 'category'];
+        
         // Check for missing fields
         const missingFields = requiredFields.filter(field =>
             !cargo.hasOwnProperty(field) || cargo[field] === null || cargo[field] === undefined
         );
+
+        // Check for pricing data (either new format or old format)
+        const hasNewFormat = cargo.hasOwnProperty('basePrice') && cargo.hasOwnProperty('seasonalModifiers');
+        const hasOldFormat = cargo.hasOwnProperty('basePrices');
+        
+        if (!hasNewFormat && !hasOldFormat) {
+            missingFields.push('basePrice + seasonalModifiers (or basePrices)');
+        }
 
         if (missingFields.length > 0) {
             result.valid = false;
@@ -565,7 +573,7 @@ class DataManager {
             }
         }
 
-        // Validate basePrice
+        // Validate basePrice (new format)
         if (cargo.hasOwnProperty('basePrice')) {
             if (typeof cargo.basePrice !== 'number' || cargo.basePrice <= 0) {
                 result.valid = false;
@@ -573,7 +581,7 @@ class DataManager {
             }
         }
 
-        // Validate seasonalModifiers structure
+        // Validate seasonalModifiers (new format)
         if (cargo.hasOwnProperty('seasonalModifiers')) {
             if (typeof cargo.seasonalModifiers !== 'object' || cargo.seasonalModifiers === null) {
                 result.valid = false;
@@ -599,11 +607,29 @@ class DataManager {
             }
         }
 
-        // Validate encumbrancePerUnit
-        if (cargo.hasOwnProperty('encumbrancePerUnit')) {
-            if (typeof cargo.encumbrancePerUnit !== 'number' || cargo.encumbrancePerUnit <= 0) {
+        // Validate basePrices (old format, for backward compatibility)
+        if (cargo.hasOwnProperty('basePrices')) {
+            if (typeof cargo.basePrices !== 'object' || cargo.basePrices === null) {
                 result.valid = false;
-                result.errors.push('EncumbrancePerUnit must be a positive number');
+                result.errors.push('BasePrices must be an object');
+            } else {
+                const requiredSeasons = ['spring', 'summer', 'autumn', 'winter'];
+                const missingSeasons = requiredSeasons.filter(season =>
+                    !cargo.basePrices.hasOwnProperty(season) || typeof cargo.basePrices[season] !== 'number'
+                );
+
+                if (missingSeasons.length > 0) {
+                    result.valid = false;
+                    result.errors.push(`BasePrices missing or invalid for seasons: ${missingSeasons.join(', ')}`);
+                }
+
+                // Validate all prices are positive numbers
+                Object.entries(cargo.basePrices).forEach(([season, price]) => {
+                    if (typeof price !== 'number' || price < 0) {
+                        result.valid = false;
+                        result.errors.push(`BasePrices.${season} must be a non-negative number`);
+                    }
+                });
             }
         }
 
@@ -729,16 +755,14 @@ class DataManager {
      * @param {string} name - Cargo name
      * @param {string} category - Cargo category
      * @param {Object} seasonalPrices - Object with spring, summer, autumn, winter prices
-     * @param {number} encumbrance - Encumbrance per unit
      * @param {Object} options - Optional parameters (qualityTiers, deteriorationRate, specialRules)
      * @returns {Object} - Standardized cargo object
      */
-    createCargoData(name, category, seasonalPrices, encumbrance, options = {}) {
+    createCargoData(name, category, seasonalPrices, options = {}) {
         const cargo = {
             name: name,
             category: category,
-            basePrices: seasonalPrices,
-            encumbrancePerUnit: encumbrance
+            basePrices: seasonalPrices
         };
 
         // Add optional properties
@@ -2367,7 +2391,7 @@ class DataManager {
             
             // For browser environment (FoundryVTT)
             if (typeof fetch !== 'undefined') {
-                const response = await fetch('modules/trading-places/datasets/source-flags.json');
+                const response = await fetch('modules/trading-places/datasets/active/source-flags.json');
                 if (!response.ok) {
                     throw new Error(`Failed to load source flags: ${response.status}`);
                 }

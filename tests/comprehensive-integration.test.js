@@ -660,7 +660,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 mockActor,
                 'Wine',
                 20,
-                { category: 'Luxury', encumbrancePerUnit: 1 },
+                { category: 'Luxury' },
                 {
                     pricePerUnit: purchasePrice.finalPricePerUnit,
                     totalPrice: purchasePrice.totalPrice,

@@ -122,7 +122,7 @@ export class TradingUIEventHandlers {
         }
 
         // Cargo selection and interaction
-        const cargoItems = html.querySelectorAll('.cargo-item');
+        const cargoItems = html.querySelectorAll('.trading-places-cargo-item');
         cargoItems.forEach(item => {
             item.addEventListener('click', this._onCargoSelect.bind(this));
         });
@@ -544,7 +544,7 @@ export class TradingUIEventHandlers {
         const cargoName = event.currentTarget.dataset.cargo;
 
         // Remove previous selection
-        const cargoItems = this.app.element.querySelectorAll('.cargo-item');
+        const cargoItems = this.app.element.querySelectorAll('.trading-places-cargo-item');
         cargoItems.forEach(item => item.classList.remove('selected'));
 
         // Add selection to clicked item

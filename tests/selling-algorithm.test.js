@@ -11,18 +11,15 @@ class MockDataManager {
         this.cargoTypes = [
             {
                 name: 'Grain',
-                basePrices: { Spring: 2, Summer: 3, Autumn: 2, Winter: 4 },
-                encumbrancePerUnit: 1
+                basePrices: { Spring: 2, Summer: 3, Autumn: 2, Winter: 4 }
             },
             {
                 name: 'Wine',
-                basePrices: { Spring: 8, Summer: 10, Autumn: 12, Winter: 8 },
-                encumbrancePerUnit: 1
+                basePrices: { Spring: 8, Summer: 10, Autumn: 12, Winter: 8 }
             },
             {
                 name: 'Cloth',
-                basePrices: { Spring: 6, Summer: 6, Autumn: 7, Winter: 8 },
-                encumbrancePerUnit: 1
+                basePrices: { Spring: 6, Summer: 6, Autumn: 7, Winter: 8 }
             }
         ];
     }

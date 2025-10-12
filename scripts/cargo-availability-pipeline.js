@@ -255,6 +255,7 @@ class CargoAvailabilityPipeline {
         const entries = [];
         let totalWeight = 0;
 
+
         (this.dataManager.cargoTypes || []).forEach(cargo => {
             if (!cargo || !cargo.name) {
                 return;
@@ -331,7 +332,7 @@ class CargoAvailabilityPipeline {
         // Get the roll function for this slot
         const slotRollFunction = typeof rollFunction === 'function' ? rollFunction : this._percentile;
 
-        const selection = this._selectCargo(candidateTable, slotRollFunction);
+        const selection = await this._selectCargo(candidateTable, slotRollFunction);
         const balance = this._calculateBalance(selection, settlementProps, settlementFlags, season);
         const amount = await this._rollCargoAmount(balance, settlementProps, season, slotRollFunction, slotNumber);
         const quality = await this._evaluateQuality(balance, settlementProps, settlementFlags, slotRollFunction, slotNumber);
@@ -361,7 +362,7 @@ class CargoAvailabilityPipeline {
         };
     }
 
-    _selectCargo(candidateTable, rollFunction = null) {
+    async _selectCargo(candidateTable, rollFunction = null) {
         const entries = Array.isArray(candidateTable?.entries) ? candidateTable.entries : [];
 
         if (entries.length === 0) {
@@ -384,8 +385,13 @@ class CargoAvailabilityPipeline {
 
         // For Foundry rolls, we need to simulate the weighted selection
         // We'll use a percentile roll and map it to the weighted selection
+        const rollResult = rollFunction ? await rollFunction({ description: 'Cargo selection', postToChat: false }) : null;
+        
+        // Handle roll results properly
+        const rollValue = rollResult?.total ?? rollResult ?? 0;
+        
         const threshold = rollFunction 
-            ? (rollFunction({ description: 'Cargo selection', postToChat: false }) / 100) * safeTotal
+            ? (rollValue / 100) * safeTotal
             : this.random() * safeTotal;
         let running = 0;
         let chosen = entries[entries.length - 1];
@@ -393,6 +399,7 @@ class CargoAvailabilityPipeline {
         for (const entry of entries) {
             const weight = typeof entry.weight === 'number' ? entry.weight : 0;
             running += weight;
+            
             if (threshold <= running) {
                 chosen = entry;
                 break;

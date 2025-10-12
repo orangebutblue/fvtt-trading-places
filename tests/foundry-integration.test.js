@@ -684,8 +684,7 @@ describe('FoundryVTT Integration Components Tests', () => {
             // Requirements: 6.2, 6.3
             
             const cargoData = {
-                category: 'Agriculture',
-                encumbrancePerUnit: 1
+                category: 'Agriculture'
             };
             
             const purchaseInfo = {
@@ -765,7 +764,7 @@ describe('FoundryVTT Integration Components Tests', () => {
                     testActor,
                     cargo.name,
                     cargo.quantity,
-                    { category: 'Test', encumbrancePerUnit: 1 },
+                    { category: 'Test' },
                     { quality: cargo.quality, pricePerUnit: 10 }
                 );
                 addedItems.push(result);

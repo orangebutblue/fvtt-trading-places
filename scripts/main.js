@@ -1486,7 +1486,7 @@ window.TradingPlaces = {
             
             // Check what data is in the cargo list
             const cargoList = cargoContent.querySelector('.cargo-list');
-            const cargoItems = cargoContent.querySelectorAll('.cargo-item');
+            const cargoItems = cargoContent.querySelectorAll('.trading-places-cargo-item');
             const emptyState = cargoContent.querySelector('.empty-cargo');
             
             console.log('🚛 Cargo list element:', cargoList);

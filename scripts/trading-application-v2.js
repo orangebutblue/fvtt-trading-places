@@ -2,6 +2,7 @@ console.log('Trading Places | Loading trading-application-v2.js');
 
 import { TradingUIEventHandlers } from './ui/TradingUIEventHandlers.js';
 import TradingUIRenderer from './ui/TradingUIRenderer.js';
+import { CargoDistributionCharts } from './cargo-distribution-charts.js';
 import {
     resolveCurrencyContext,
     augmentTransaction,
@@ -90,6 +91,17 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 this._logDebug('Pipeline', 'Cargo availability pipeline ready');
             } catch (error) {
                 this._logError('Pipeline', 'Failed to initialize cargo availability pipeline', { error: error.message });
+            }
+        }
+
+        // Initialize cargo distribution charts
+        this.cargoDistributionCharts = null;
+        if (this.dataManager && this.cargoAvailabilityPipeline) {
+            try {
+                this.cargoDistributionCharts = new CargoDistributionCharts(this.dataManager, this.cargoAvailabilityPipeline);
+                this._logDebug('Charts', 'Cargo distribution charts ready');
+            } catch (error) {
+                this._logError('Charts', 'Failed to initialize cargo distribution charts', { error: error.message });
             }
         }
 
@@ -716,8 +728,30 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         // Initialize application state after render
         this._initializeApplicationState();
         
+        // Update cargo distribution charts after render
+        this._updateCargoDistributionCharts();
+        
         // Restore seller offers if they exist (after DOM is ready)
         this._restoreSellerOffersAfterRender();
+    }
+
+    /**
+     * Update cargo distribution charts when settlement or season changes
+     */
+    _updateCargoDistributionCharts() {
+        if (!this.cargoDistributionCharts) {
+            return;
+        }
+
+        try {
+            this.cargoDistributionCharts.updateCharts(this.selectedSettlement, this.currentSeason);
+            this._logDebug('Charts', 'Cargo distribution charts updated', { 
+                settlement: this.selectedSettlement?.name,
+                season: this.currentSeason 
+            });
+        } catch (error) {
+            this._logError('Charts', 'Failed to update cargo distribution charts', { error: error.message });
+        }
     }
 
     /**

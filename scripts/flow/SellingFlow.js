@@ -297,10 +297,10 @@ export class SellingFlow {
         // Use exact same structure as buying tab
         let basicInfo = `
             <div class="cargo-header">
-                <div class="cargo-name">${offer.cargo.cargo}</div>
+                <div class="trading-places-cargo-name">${offer.cargo.cargo}</div>
                 <div class="cargo-category">${offer.cargo.category || 'Goods'}</div>
             </div>
-            <div class="cargo-details">`;
+            <div class="trading-places-cargo-details">`;
 
         basicInfo += `
                 <div class="price-info">

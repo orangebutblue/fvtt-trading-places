@@ -166,6 +166,13 @@ Slot Calculation:
 {{#each (getCargoSlotsCalculationBreakdown selectedSettlement currentSeason)}}• {{this.label}} (current: {{this.current}})
 {{/each}}">?</span></span>
                             </div>
+                            <div class="cargo-distribution-chart">
+                                <strong>Cargo Spawn Distribution:</strong>
+                                <div class="pie-chart-container">
+                                    <canvas id="buying-cargo-distribution-chart" width="200" height="200"></canvas>
+                                </div>
+                                <div class="chart-legend" id="buying-chart-legend"></div>
+                            </div>
                         </div>
                     </section>
                 </div>
@@ -235,6 +242,13 @@ Season: {{currentSeason}}
 Slot Calculation:
 {{#each (getCargoSlotsCalculationBreakdown selectedSettlement currentSeason)}}• {{this.label}} (current: {{this.current}})
 {{/each}}">?</span></span>
+                            </div>
+                            <div class="cargo-distribution-chart">
+                                <strong>Buyer Demand Distribution:</strong>
+                                <div class="pie-chart-container">
+                                    <canvas id="selling-cargo-distribution-chart" width="200" height="200"></canvas>
+                                </div>
+                                <div class="chart-legend" id="selling-chart-legend"></div>
                             </div>
                         </div>
                     </section>

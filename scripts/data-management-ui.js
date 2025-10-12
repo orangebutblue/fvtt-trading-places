@@ -71,7 +71,7 @@ class DataManagementApp extends Application {
 
         // List item selection
         html.find('.settlement-item').click(this._onSettlementSelect.bind(this));
-        html.find('.cargo-item').click(this._onCargoSelect.bind(this));
+        html.find('.trading-places-cargo-item').click(this._onCargoSelect.bind(this));
 
         // Search and filter
         html.find('.search-input').on('input', this._onSearch.bind(this));

@@ -1,5 +1,5 @@
 /* Availability Status Banner Styles */
-.availability-status-banner {
+.trading-places-availability-banner {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border: 2px solid #28a745;
     border-radius: 8px;
@@ -15,20 +15,20 @@
 }
 
 /* Different states for the banner */
-.availability-status-banner.no-goods {
+.trading-places-availability-banner.no-goods {
     background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
     border-color: #dc3545;
     color: #721c24;
 }
 
-.availability-status-banner.limited-goods {
+.trading-places-availability-banner.limited-goods {
     background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
     border-color: #ffc107;
     color: #856404;
 }
 
 /* Cargo summary improvements */
-.cargo-summary {
+.trading-places-cargo-summary {
     margin-top: 12px;
     padding: 12px;
     background: #f8f9fa;
@@ -36,18 +36,18 @@
     border-left: 4px solid #28a745;
 }
 
-.cargo-summary h4 {
+.trading-places-cargo-summary h4 {
     margin: 0 0 8px 0;
     color: #495057;
     font-size: 14px;
 }
 
-.cargo-list {
+.trading-places-cargo-list {
     display: grid;
     gap: 8px;
 }
 
-.cargo-item {
+.trading-places-cargo-item {
     display: grid;
     grid-template-columns: 1fr auto auto;
     gap: 12px;
@@ -58,12 +58,12 @@
     align-items: center;
 }
 
-.cargo-name {
+.trading-places-cargo-name {
     font-weight: 500;
     color: #495057;
 }
 
-.cargo-quantity {
+.trading-places-cargo-quantity {
     font-size: 12px;
     color: #6c757d;
     background: #e9ecef;
@@ -71,23 +71,23 @@
     border-radius: 12px;
 }
 
-.cargo-price {
+.trading-places-cargo-price {
     font-weight: 600;
     color: #28a745;
 }
 
 /* Pipeline diagnostics styling */
-.pipeline-diagnostics {
+.trading-places-pipeline-diagnostics {
     margin-top: 16px;
 }
 
-.pipeline-diagnostics details {
+.trading-places-pipeline-diagnostics details {
     border: 1px solid #dee2e6;
     border-radius: 4px;
     padding: 0;
 }
 
-.pipeline-diagnostics summary {
+.trading-places-pipeline-diagnostics summary {
     padding: 8px 12px;
     background: #f8f9fa;
     cursor: pointer;
@@ -96,16 +96,16 @@
     color: #495057;
 }
 
-.pipeline-diagnostics summary:hover {
+.trading-places-pipeline-diagnostics summary:hover {
     background: #e9ecef;
 }
 
-.diagnostics-content {
+.trading-places-diagnostics-content {
     padding: 12px;
     background: white;
 }
 
-.diagnostics-content pre {
+.trading-places-diagnostics-content pre {
     margin: 0;
     padding: 8px;
     background: #f8f9fa;

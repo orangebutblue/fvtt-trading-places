@@ -253,8 +253,6 @@ export default class TradingUIRenderer {
         }
 
         const statusEmoji = this.ICONS.cargo;
-        const statusText = isSuccess ? 'Merchants are offering cargo' : 'No cargo available';
-        const statusBanner = `<div class="availability-status-banner">${statusEmoji} ${statusText}</div>`;
 
         const availabilityCheck = completeResult.availabilityCheck || {};
         const slotOutcomes = Array.isArray(availabilityCheck.rolls) ? availabilityCheck.rolls : [];
@@ -340,7 +338,6 @@ export default class TradingUIRenderer {
         `;
 
         resultsContainer.innerHTML = `
-            ${statusBanner}
             ${marketCheckHtml}
         `;
 
@@ -711,10 +708,10 @@ export default class TradingUIRenderer {
         // Basic info (always visible) - matches original layout
         let basicInfo = `
             <div class="cargo-header">
-                <div class="cargo-name">${cargo.name}</div>
+                <div class="trading-places-cargo-name">${cargo.name}</div>
                 <div class="cargo-category">${cargo.category || 'Goods'}</div>
             </div>
-            <div class="cargo-details">`;
+            <div class="trading-places-cargo-details">`;
 
         basicInfo += `
                 <div class="price-info">

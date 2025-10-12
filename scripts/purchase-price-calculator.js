@@ -180,8 +180,7 @@ class PurchasePriceCalculator {
             formattedFinalPricePerUnit,
             formattedTotalPrice,
             currencyDenomination: currencyContext?.primaryDenomination || null,
-            currencyDenominationKey: currencyContext?.denominationKey || null,
-            encumbrancePerUnit: cargo.encumbrancePerUnit || 10
+            currencyDenominationKey: currencyContext?.denominationKey || null
         };
     }
 

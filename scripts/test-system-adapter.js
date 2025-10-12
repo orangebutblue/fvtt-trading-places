@@ -135,8 +135,7 @@ async function testSystemAdapterIntegration() {
                 name: "Wine",
                 category: "Wine",
                 basePrices: { spring: 15, summer: 12, autumn: 18, winter: 20 },
-                qualityTiers: { poor: 0.5, average: 1.0, good: 1.5, excellent: 2.0 },
-                encumbrancePerUnit: 1
+                qualityTiers: { poor: 0.5, average: 1.0, good: 1.5, excellent: 2.0 }
             }
         ];
 
