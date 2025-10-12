@@ -65,12 +65,8 @@ class CargoAvailabilityPipeline {
         // Create roll function that uses Foundry's dice system
         const createFoundryRollFunction = (slotNumber) => {
             return async ({ description, postToChat = true }) => {
-                // Use the provided roll function if available, otherwise create our own
-                if (rollPercentile) {
-                    return rollPercentile({ description, postToChat });
-                }
-
-                // Fallback: create our own Foundry roll
+                // Always create unique rolls per slot for proper randomization
+                // The rollPercentile parameter is for testing/deterministic behavior only
                 const roll = new Roll("1d100");
                 await roll.evaluate();
 
@@ -639,9 +635,8 @@ class CargoAvailabilityPipeline {
         const varianceRange = qualityRoll.variance ?? 0;
         let varianceRoll = 0;
         if (varianceRange > 0) {
-            varianceRoll = rollFunction 
-                ? await rollFunction({ description: `Cargo quality variance (±${varianceRange})`, postToChat: true })
-                : Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
+            // Variance is a random modifier, not a percentile roll - use the fallback calculation
+            varianceRoll = Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
             score += varianceRoll;
             components.push({ 
                 label: `Variance roll (±${varianceRange})`, 
@@ -750,9 +745,8 @@ class CargoAvailabilityPipeline {
         const varianceRange = skillConfig.variance ?? 0;
         let varianceRoll = 0;
         if (varianceRange > 0) {
-            varianceRoll = rollFunction 
-                ? await rollFunction({ description: `Merchant skill variance (±${varianceRange})`, postToChat: true })
-                : Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
+            // Variance is a random modifier, not a percentile roll - use the fallback calculation
+            varianceRoll = Math.floor(this.random() * (varianceRange * 2 + 1)) - varianceRange;
             computedSkill += varianceRoll;
         }
 

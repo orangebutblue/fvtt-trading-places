@@ -73,8 +73,14 @@
   "changelog": "https://github.com/orangebutblue/trading-places/releases",
   "flags": {
     "hotReload": {
-      "extensions": ["css", "hbs"],
-      "paths": ["templates", "styles"]
+      "extensions": [
+        "css",
+        "hbs"
+      ],
+      "paths": [
+        "templates",
+        "styles"
+      ]
     }
   },
   "relationships": {

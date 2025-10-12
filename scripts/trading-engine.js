@@ -1622,8 +1622,8 @@ class TradingEngine {
 
         skill += tableModifier;
 
-        // Add variance
-        const varianceRoll = rollFunction ? rollFunction() : Math.floor(Math.random() * (skillConfig.variance * 2 + 1)) - skillConfig.variance;
+        // Add variance (random modifier, not a percentile roll)
+        const varianceRoll = Math.floor(Math.random() * (skillConfig.variance * 2 + 1)) - skillConfig.variance;
         skill += varianceRoll;
 
         // Clamp to min/max
@@ -1637,7 +1637,7 @@ class TradingEngine {
      * @returns {number} - Modifier value
      */
     _getPercentileModifier(roll, table) {
-        const percentiles = Object.keys(table).map(p => parseInt(p)).sort((a, b) => a - b);
+        const percentiles = Object.keys(table).map(p => parseInt(p)).sort((a, b) => b - a);
 
         for (const percentile of percentiles) {
             if (roll <= percentile) {
@@ -1645,8 +1645,8 @@ class TradingEngine {
             }
         }
 
-        // Fallback for rolls above highest percentile
-        return table[percentiles[percentiles.length - 1].toString()];
+        // Fallback for rolls above highest percentile (shouldn't happen with proper table)
+        return 0;
     }
 
     /**
