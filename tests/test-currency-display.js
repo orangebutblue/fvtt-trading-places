@@ -2,8 +2,8 @@
 // Run with: node test-currency-display.js
 
 // Load currency utilities
-import * as CurrencyUtils from './scripts/currency-utils.js';
-import * as currencyDisplay from './scripts/currency-display.js';
+import * as CurrencyUtils from '../scripts/currency-utils.js';
+import * as currencyDisplay from '../scripts/currency-display.js';
 
 // Make it available globally as the module expects
 globalThis.TradingPlacesCurrencyUtils = CurrencyUtils;

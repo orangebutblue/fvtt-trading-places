@@ -14,13 +14,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import the scripts
-await import('./scripts/data-manager.js');
-await import('./scripts/cargo-availability-pipeline.js');
-await import('./scripts/ui/TradingUIRenderer.js');
+await import('../scripts/data-manager.js');
+await import('../scripts/cargo-availability-pipeline.js');
+await import('../scripts/ui/TradingUIRenderer.js');
 
 const DataManager = window.TradingPlacesDataManager;
 const CargoAvailabilityPipeline = window.CargoAvailabilityPipeline;
-const TradingUIRenderer = (await import('./scripts/ui/TradingUIRenderer.js')).default;
+const TradingUIRenderer = (await import('../scripts/ui/TradingUIRenderer.js')).default;
 
 async function testContrabandTooltip() {
     console.log('Testing contraband tooltip functionality...\n');
