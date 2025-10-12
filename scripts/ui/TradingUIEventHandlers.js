@@ -98,11 +98,8 @@ export class TradingUIEventHandlers {
      * @private
      */
     _attachHeaderListeners(html) {
-        // Season management
-        const seasonSelect = html.querySelector('#current-season');
-        if (seasonSelect) {
-            seasonSelect.addEventListener('change', this._onSeasonChange.bind(this));
-        }
+        // Note: Season management moved to unified UI listeners to avoid duplicates
+        // The #current-season element in header is now handled by #season-select in content
 
         this._logDebug('Event Listeners', 'Header listeners attached');
     }

@@ -1591,10 +1591,7 @@ class DataManager {
      */
     notifySeasonChange(newSeason, oldSeason) {
         try {
-            // FoundryVTT notification
-            if (typeof ui !== 'undefined' && ui.notifications) {
-                ui.notifications.info(`Trading season changed to ${newSeason}. All prices updated.`);
-            }
+            // Note: Season change notification handled by application, not here to avoid duplicates
 
             // Console notification for testing
             console.log(`Season change notification: ${oldSeason || 'unset'} → ${newSeason}`);

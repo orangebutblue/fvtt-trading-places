@@ -1,0 +1,34 @@
+{
+    "rumors": [
+        {
+            "type": "shortage",
+            "description": "Local shortage of $cargoName due to poor harvest",
+            "multiplier": 1.5,
+            "weight": 30
+        },
+        {
+            "type": "demand",
+            "description": "Increased demand for $cargoName from nearby settlements",
+            "multiplier": 1.3,
+            "weight": 25
+        },
+        {
+            "type": "festival",
+            "description": "Upcoming festival requires large quantities of $cargoName",
+            "multiplier": 1.4,
+            "weight": 20
+        },
+        {
+            "type": "trade_route",
+            "description": "New trade route opened, increasing $cargoName prices",
+            "multiplier": 1.2,
+            "weight": 15
+        },
+        {
+            "type": "noble_demand",
+            "description": "Local noble requires $cargoName for special occasion",
+            "multiplier": 1.6,
+            "weight": 10
+        }
+    ]
+}

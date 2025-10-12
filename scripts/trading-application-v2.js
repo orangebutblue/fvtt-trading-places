@@ -813,8 +813,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         // Update button states
         this._updateTransactionButtons();
 
-        // Notify season change
-        this._notifySeasonChange(season);
+        // Note: Season change notification handled by SeasonManagementMixin, not here to avoid duplicates
 
         this._logInfo('Season Management', `Season successfully changed to: ${season}`);
     }

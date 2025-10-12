@@ -291,25 +291,70 @@ export class BuyingFlow {
                         availabilityResult.availabilityCheck.rolls.map(outcome => [outcome.slotNumber, outcome])
                     );
 
-                    successfulCargo.forEach((cargo) => {
-                        const slot = pipelineResult.slots.find(s => s.cargo.name === cargo.name);
-                        if (slot) {
-                            const rollInfo = slotRollMap.get(slot.slotNumber);
-                            console.log(`💰 SLOT ${slot.slotNumber}: ${cargo.name}`);
-                            if (rollInfo) {
-                                console.log(`  ├─ Availability Roll: ${rollInfo.roll} ≤ ${availabilityResult.availabilityCheck.chance} (success)`);
+                    // Create individual chat messages for each successful slot (using actual slot numbers)
+                    // Process successful rolls directly to get correct slot numbers
+                    for (const outcome of availabilityResult.availabilityCheck.rolls) {
+                        if (outcome.success) {
+                            // Find the cargo that corresponds to this successful slot
+                            const matchingSlot = pipelineResult.slots.find(s => {
+                                const rollInfo = slotRollMap.get(s.slotNumber);
+                                return rollInfo === outcome;
+                            });
+                            
+                            if (matchingSlot) {
+                                const cargo = successfulCargo.find(c => c.name === matchingSlot.cargo.name);
+                                if (cargo) {
+                                    const actualSlotNum = outcome.slotNumber; // Use the slot number from the roll outcome
+                                    
+                                    console.log(`💰 SLOT ${actualSlotNum}: ${cargo.name}`);
+                                    console.log(`  ├─ Availability Roll: ${outcome.roll} ≤ ${availabilityResult.availabilityCheck.chance} (success)`);
+                                    console.log(`  ├─ Quantity: ${cargo.quantity} units (${cargo.totalEP} EP)`);
+                                    console.log(`  ├─ Quality: ${cargo.quality}`);
+                                    console.log(`  ├─ Price: ${cargo.currentPrice} GC per EP`);
+                                    console.log(`  ├─ Merchant: ${cargo.merchant.name} (${cargo.merchant.skillDescription})`);
+                                    console.log(`  ├─ Market Balance: ${matchingSlot.balance.state} (${matchingSlot.balance.supply}/${matchingSlot.balance.demand})`);
+                                    if (cargo.slotInfo?.contraband) {
+                                        console.log(`  ├─ ⚠️  Contraband cargo`);
+                                    }
+                                    console.log(`  └─ ✅ Merchant automatically generated`);
+
+                                    // Create individual chat message for this slot
+                                    const slotContent = `
+                                        <div class="cargo-result">
+                                            <h5>${cargo.name} (Slot ${actualSlotNum})</h5>
+                                            <p><strong>Quantity:</strong> ${cargo.quantity} EP</p>
+                                            <p><strong>Quality:</strong> ${cargo.quality}</p>
+                                            <p><strong>Price:</strong> ${cargo.currentPrice} GC/EP</p>
+                                            <p><strong>Merchant:</strong> ${cargo.merchant.name} (${cargo.merchant.skillDescription})</p>
+                                            <p><strong>Market Balance:</strong> ${matchingSlot.balance.state} (${matchingSlot.balance.supply}/${matchingSlot.balance.demand})</p>
+                                            ${cargo.slotInfo?.contraband ? '<p><strong>⚠️ Contraband</strong></p>' : ''}
+                                            
+                                            <div class="roll-details">
+                                                <small>
+                                                    <strong>Rolls:</strong><br>
+                                                    • Amount: ${matchingSlot.amount.roll} → ${matchingSlot.amount.totalEP} EP<br>
+                                                    • Quality: ${matchingSlot.quality.rollDetails.percentileRoll} (+${matchingSlot.quality.rollDetails.percentileModifier}) → ${matchingSlot.quality.tier}<br>
+                                                    • Merchant: ${matchingSlot.merchant.calculation.percentileRoll} (+${matchingSlot.merchant.calculation.percentileModifier}) → ${matchingSlot.merchant.skill}<br>
+                                                    ${matchingSlot.contraband.roll ? `• Contraband: ${matchingSlot.contraband.roll} ≤ ${matchingSlot.contraband.chance.toFixed(1)}% → ${matchingSlot.contraband.contraband ? 'Yes' : 'No'}` : ''}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    `;
+
+                                    // Create individual chat message for this slot (GM only)
+                                    const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+                                    if (chatVisibility !== "disabled") {
+                                        await ChatMessage.create({
+                                            content: slotContent,
+                                            speaker: ChatMessage.getSpeaker(),
+                                            type: CONST.CHAT_MESSAGE_STYLES.OTHER,
+                                            whisper: [game.user.id]
+                                        });
+                                    }
+                                }
                             }
-                            console.log(`  ├─ Quantity: ${cargo.quantity} units (${cargo.totalEP} EP)`);
-                            console.log(`  ├─ Quality: ${cargo.quality}`);
-                            console.log(`  ├─ Price: ${cargo.currentPrice} GC per EP`);
-                            console.log(`  ├─ Merchant: ${cargo.merchant.name} (${cargo.merchant.skillDescription})`);
-                            console.log(`  ├─ Market Balance: ${slot.balance.state} (${slot.balance.supply}/${slot.balance.demand})`);
-                            if (cargo.slotInfo?.contraband) {
-                                console.log(`  ├─ ⚠️  Contraband cargo`);
-                            }
-                            console.log(`  └─ ✅ Merchant automatically generated`);
                         }
-                    });
+                    }
 
                     availabilityResult.availabilityCheck.rolls
                         .filter(outcome => !outcome.success)
@@ -474,14 +519,15 @@ export class BuyingFlow {
             `;
 
             // Add slot-by-slot results
-            availabilityResult.availabilityCheck.rolls.forEach(outcome => {
+            availabilityResult.availabilityCheck.rolls.forEach((outcome, index) => {
                 const slot = pipelineResult.slots.find(s => s.slotNumber === outcome.slotNumber);
                 const status = outcome.success ? '✅ Success' : '❌ Failed';
                 const cargoInfo = outcome.success && slot ? ` - ${slot.cargo.name}` : '';
+                const slotNum = outcome.slotNumber || index + 1;
                 
                 summaryContent += `
                     <div class="slot-result ${outcome.success ? 'success' : 'failure'}">
-                        <strong>Slot ${outcome.slotNumber}:</strong> ${outcome.roll} ≤ ${outcome.chance} ${status}${cargoInfo}
+                        <strong>Slot ${slotNum}:</strong> ${outcome.roll} ≤ ${outcome.chance} ${status}${cargoInfo}
                     </div>
                 `;
             });
@@ -503,7 +549,7 @@ export class BuyingFlow {
                     if (slot) {
                         summaryContent += `
                             <div class="cargo-result">
-                                <h5>${cargo.name} (Slot ${slot.slotNumber})</h5>
+                                <h5>${cargo.name} (Slot ${slot.slotNumber || index + 1})</h5>
                                 <p><strong>Quantity:</strong> ${cargo.quantity} EP</p>
                                 <p><strong>Quality:</strong> ${cargo.quality}</p>
                                 <p><strong>Price:</strong> ${cargo.currentPrice} GC/EP</p>
@@ -535,13 +581,36 @@ export class BuyingFlow {
                 </div>
             `;
 
-            // Post the summary to chat
+            // Post summary overview to chat (individual slot messages are created above)
             const chatVisibility = game.settings.get("trading-places", "chatVisibility");
             if (chatVisibility !== "disabled") {
+                // Create a simplified summary without individual cargo details
+                const overviewContent = `
+                    <div class="trading-summary">
+                        <h3>🎯 Cargo Availability Check</h3>
+                        <div class="summary-section">
+                            <h4>Settlement: ${this.app.selectedSettlement.name}</h4>
+                            <p><strong>Season:</strong> ${this.app.currentSeason}</p>
+                            <p><strong>Slots Evaluated:</strong> ${pipelineResult.slotPlan.producerSlots}</p>
+                            <p><strong>Successful Slots:</strong> ${availabilityResult.availabilityCheck.successfulSlots}</p>
+                            <p><strong>Cargo Types Found:</strong> ${successfulCargo.length}</p>
+                        </div>
+                        ${summaryContent.includes('slot-result') ? `
+                        <div class="summary-section">
+                            <h4>Slot Results</h4>
+                            <div class="slot-results">
+                                ${summaryContent.match(/<div class="slot-result[^>]*>.*?<\/div>/gs)?.join('') || ''}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+
                 await ChatMessage.create({
-                    content: summaryContent,
+                    content: overviewContent,
                     speaker: ChatMessage.getSpeaker(),
-                    type: CONST.CHAT_MESSAGE_STYLES.OTHER
+                    type: CONST.CHAT_MESSAGE_STYLES.OTHER,
+                    whisper: [game.user.id]
                 });
             }
 

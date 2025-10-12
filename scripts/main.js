@@ -235,7 +235,7 @@ Hooks.once('ready', async () => {
         await initializeProperSceneControls();
 
         console.log('Trading Places | Setup complete');
-        ui.notifications.info('Trading Places loaded successfully');
+        // Note: Removed startup notification to avoid notification spam
 
     } catch (error) {
         console.error('Trading Places | Setup failed:', error);
@@ -915,8 +915,7 @@ async function onCurrentSeasonChange(newValue) {
             tradingEngine.setCurrentSeason(newValue);
         }
 
-        // Notify users of season change
-        ui.notifications.info(`Trading season changed to ${newValue}. All prices updated.`);
+        // Note: Season change notification handled by application, not here to avoid duplicates
 
         // Post chat message about season change
         if (typeof ChatMessage !== 'undefined') {
