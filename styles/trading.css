@@ -2556,33 +2556,155 @@
     transform: translateY(0);
 }
 
-/* Minimal cargo list for selling tab */
+/* Enhanced cargo list for selling tab - more prominent display */
 .trading-places .cargo-minimal-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 12px;
+    margin-top: 16px;
 }
 
 .trading-places .cargo-minimal-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
-    background: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--surface-color) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 2px solid var(--border-medium);
+    border-radius: 8px;
+    font-size: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+}
+
+.trading-places .cargo-minimal-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--accent-color);
+    opacity: 0.8;
+}
+
+.trading-places .cargo-minimal-item:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, var(--surface-color) 0%, rgba(255, 255, 255, 0.08) 100%);
+}
+
+.trading-places .cargo-minimal-item:hover::before {
+    background: var(--accent-color-light, #42a5f5);
+    width: 6px;
 }
 
 .trading-places .cargo-minimal-name {
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-primary);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.trading-places .cargo-minimal-name::before {
+    content: '📦';
+    font-size: 18px;
+    opacity: 0.8;
 }
 
 .trading-places .cargo-minimal-quantity {
-    color: var(--text-secondary);
-    font-weight: 400;
+    color: var(--accent-color);
+    font-weight: 600;
+    font-size: 15px;
+    background: rgba(33, 150, 243, 0.1);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(33, 150, 243, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.trading-places .cargo-minimal-quantity::after {
+    content: '⚖️';
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* Category-specific visual indicators */
+.trading-places .cargo-minimal-item[data-category="Food"] .cargo-minimal-name::before {
+    content: '🍞';
+}
+
+.trading-places .cargo-minimal-item[data-category="Animals"] .cargo-minimal-name::before {
+    content: '🐄';
+}
+
+.trading-places .cargo-minimal-item[data-category="Textiles"] .cargo-minimal-name::before {
+    content: '🧵';
+}
+
+.trading-places .cargo-minimal-item[data-category="Metal"] .cargo-minimal-name::before {
+    content: '⚒️';
+}
+
+.trading-places .cargo-minimal-item[data-category="Wood"] .cargo-minimal-name::before {
+    content: '🪵';
+}
+
+.trading-places .cargo-minimal-item[data-category="Spices"] .cargo-minimal-name::before {
+    content: '🌶️';
+}
+
+.trading-places .cargo-minimal-item[data-category="Luxury"] .cargo-minimal-name::before {
+    content: '💎';
+}
+
+.trading-places .cargo-minimal-item[data-category="Contraband"] .cargo-minimal-name::before {
+    content: '🏴‍☠️';
+}
+
+.trading-places .cargo-minimal-item[data-category="Stone"] .cargo-minimal-name::before {
+    content: '🪨';
+}
+
+.trading-places .cargo-minimal-item[data-category="Weapons"] .cargo-minimal-name::before {
+    content: '⚔️';
+}
+
+.trading-places .cargo-minimal-item[data-category="Tools"] .cargo-minimal-name::before {
+    content: '🔨';
+}
+
+/* Special styling for contraband cargo */
+.trading-places .cargo-minimal-item[data-contraband="true"] {
+    border-color: #d32f2f;
+    background: linear-gradient(135deg, rgba(211, 47, 47, 0.05) 0%, rgba(211, 47, 47, 0.02) 100%);
+}
+
+.trading-places .cargo-minimal-item[data-contraband="true"]::before {
+    background: #d32f2f;
+}
+
+.trading-places .cargo-minimal-item[data-contraband="true"]:hover {
+    border-color: #f44336;
+    box-shadow: 0 4px 16px rgba(211, 47, 47, 0.2);
+}
+
+.trading-places .cargo-minimal-item[data-contraband="true"] .cargo-minimal-name {
+    color: #d32f2f;
+}
+
+.trading-places .cargo-minimal-item[data-contraband="true"] .cargo-minimal-quantity {
+    background: rgba(211, 47, 47, 0.1);
+    border-color: rgba(211, 47, 47, 0.2);
+    color: #d32f2f;
 }
 
 /* Selling interface styling */
@@ -2596,10 +2718,68 @@
     gap: 12px;
 }
 
-/* Make selling tab current cargo header smaller */
+/* Enhanced current cargo section for selling tab */
+.trading-places #selling-tab .current-cargo-section {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.05) 0%, rgba(33, 150, 243, 0.02) 100%);
+    border: 1px solid rgba(33, 150, 243, 0.15);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+    position: relative;
+}
+
+.trading-places #selling-tab .current-cargo-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-color) 0%, var(--accent-color-light, #42a5f5) 100%);
+    border-radius: 8px 8px 0 0;
+}
+
 .trading-places #selling-tab .current-cargo-section h6 {
-    font-size: 0.9em !important;
-    margin: 4px 0 !important;
-    font-weight: 400 !important;
+    font-size: 1.1em !important;
+    margin: 0 0 16px 0 !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.trading-places #selling-tab .current-cargo-section h6 i {
+    color: var(--accent-color);
+    font-size: 1.2em;
+}
+
+/* Empty cargo notice enhancement */
+.trading-places #selling-tab .empty-cargo-notice {
+    text-align: center;
+    padding: 32px 20px;
+    background: rgba(108, 117, 125, 0.05);
+    border: 2px dashed rgba(108, 117, 125, 0.2);
+    border-radius: 8px;
+    margin-top: 16px;
+}
+
+.trading-places #selling-tab .empty-cargo-notice i {
+    font-size: 48px;
+    color: rgba(108, 117, 125, 0.5);
+    margin-bottom: 16px;
+}
+
+.trading-places #selling-tab .empty-cargo-notice p {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin: 0 0 8px 0;
+}
+
+.trading-places #selling-tab .empty-cargo-notice .sub-text {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-style: italic;
 }
 

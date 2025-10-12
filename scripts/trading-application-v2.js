@@ -478,6 +478,8 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         if (this.selectedSettlement && this.currentSeason) {
             console.log('🔄 CARGO PERSISTENCE: Loading cargo data in _prepareContext');
             await this._loadAndRestoreCargoAvailability();
+            
+            // Note: Seller offers restoration moved to _onRender to ensure DOM is ready
         } else {
             console.log('🔄 CARGO PERSISTENCE: Not loading cargo data - missing settlement or season');
         }
@@ -713,6 +715,35 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
 
         // Initialize application state after render
         this._initializeApplicationState();
+        
+        // Restore seller offers if they exist (after DOM is ready)
+        this._restoreSellerOffersAfterRender();
+    }
+
+    /**
+     * Restore seller offers after DOM is fully rendered
+     * @private
+     */
+    async _restoreSellerOffersAfterRender() {
+        try {
+            // Only restore if we have settlement and season selected
+            if (!this.selectedSettlement || !this.currentSeason) {
+                return;
+            }
+
+            // Ensure eventHandlers and sellingFlow are available
+            if (!this.eventHandlers || !this.eventHandlers.sellingFlow) {
+                console.log('🔄 SELLER PERSISTENCE: SellingFlow not available for restoration');
+                return;
+            }
+
+            console.log('🔄 SELLER PERSISTENCE: Attempting to restore seller offers after render');
+            await this.eventHandlers.sellingFlow.restoreSellerOffers();
+            
+        } catch (error) {
+            console.error('🔄 SELLER PERSISTENCE: Failed to restore seller offers after render', error);
+            this._logError('Seller Persistence', 'Failed to restore seller offers after render', { error: error.message });
+        }
     }
 
     /** @override */
@@ -767,6 +798,12 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         await this._clearCargoAvailability();
         this.availableCargo = [];
         this.successfulCargo = [];
+        
+        // Also clear seller offers when season changes
+        this.sellerOffers = null;
+        if (this.eventHandlers && this.eventHandlers.sellingFlow) {
+            await this.eventHandlers.sellingFlow._clearSellerOffers();
+        }
 
         // Update pricing for any selected cargo
         if (this.selectedCargo) {

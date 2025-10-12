@@ -314,6 +314,9 @@ export class TradingUIEventHandlers {
                 if (targetContent) {
                     targetContent.classList.add('active');
                     targetContent.style.display = 'block'; // Explicitly show
+                    
+                    // Re-attach tooltip handlers for the newly visible tab content
+                    this._attachTooltipHandlersForTab(targetContent);
                 }
                 
                 this._logDebug('UI Interaction', 'Switched to tab:', targetTab);
@@ -370,6 +373,51 @@ export class TradingUIEventHandlers {
         }
 
         this._logDebug('Event Listeners', 'Unified UI listeners attached');
+    }
+
+    /**
+     * Attach tooltip handlers for info indicators within a specific tab content
+     * @param {HTMLElement} tabContent - The tab content element
+     * @private
+     */
+    _attachTooltipHandlersForTab(tabContent) {
+        if (!tabContent || !this.app.renderer) {
+            return;
+        }
+
+        // Find all info indicators within this tab content
+        const infoIndicators = tabContent.querySelectorAll('.info-indicator');
+        
+        this._logDebug('Tooltip Handlers', `Found ${infoIndicators.length} info indicators in tab`, {
+            tabId: tabContent.id,
+            indicators: infoIndicators.length
+        });
+
+        infoIndicators.forEach((indicator, index) => {
+            // Remove any existing listeners to avoid duplicates
+            const existingHandler = indicator._tooltipHandler;
+            if (existingHandler) {
+                indicator.removeEventListener('click', existingHandler);
+            }
+
+            // Create new handler
+            const handler = (event) => {
+                event.stopPropagation();
+                const tooltip = event.target.dataset.infoTooltip;
+                if (tooltip && this.app.renderer._showInfoTooltip) {
+                    this.app.renderer._showInfoTooltip(tooltip, event.target);
+                }
+            };
+
+            // Store handler reference and attach
+            indicator._tooltipHandler = handler;
+            indicator.addEventListener('click', handler);
+            
+            this._logDebug('Tooltip Handlers', `Attached tooltip handler ${index + 1}`, {
+                hasTooltip: !!indicator.dataset.infoTooltip,
+                tooltipLength: indicator.dataset.infoTooltip?.length || 0
+            });
+        });
     }
 
     /**
@@ -440,6 +488,10 @@ export class TradingUIEventHandlers {
             this.app.availableCargo = [];
             this.app.successfulCargo = [];
             await this.app._clearCargoAvailability();
+            
+            // Also clear seller offers when settlement changes
+            this.app.sellerOffers = null;
+            await this.sellingFlow._clearSellerOffers();
 
             // Save to Foundry settings for persistence
             game.settings.set("trading-places", "selectedSettlement", settlement.name);

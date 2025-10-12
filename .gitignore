@@ -4,3 +4,4 @@ node_modules/*
 .github/*
 .kilocode/*
 AGENTS.md
+docs/*

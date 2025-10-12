@@ -247,7 +247,7 @@ Slot Calculation:
                     {{#if currentCargo.length}}
                     <div class="cargo-minimal-list">
                         {{#each currentCargo}}
-                        <div class="cargo-minimal-item">
+                        <div class="cargo-minimal-item" data-category="{{category}}" data-contraband="{{contraband}}">
                             <span class="cargo-minimal-name">{{cargo}}</span>
                             <span class="cargo-minimal-quantity">{{quantity}} EP</span>
                         </div>

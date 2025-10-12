@@ -126,7 +126,8 @@ export class SellingFlow {
                 slotNumber++;
             }
 
-            // Step 7: Display results
+            // Step 7: Save and display results
+            await this._saveSellerOffers(sellerOffers);
             await this._displaySellerResults(sellerOffers);
 
             // Restore button
@@ -665,6 +666,169 @@ export class SellingFlow {
             if (totalPriceValue) {
                 totalPriceValue.textContent = this._formatCurrencyFromDenomination(totalPrice);
             }
+        }
+    }
+
+    /**
+     * Save seller offers to game settings for persistence
+     * @param {Array} sellerOffers - Array of seller offers
+     * @private
+     */
+    async _saveSellerOffers(sellerOffers) {
+        try {
+            if (!this.app.selectedSettlement || !this.app.currentSeason) {
+                console.log('🔄 SELLER PERSISTENCE: Cannot save - missing settlement or season');
+                return;
+            }
+
+            const sellerData = {
+                settlement: this.app.selectedSettlement.name,
+                season: this.app.currentSeason,
+                timestamp: Date.now(),
+                sellerOffers: sellerOffers
+            };
+
+            console.log('🔄 SELLER PERSISTENCE: Saving seller data', {
+                settlement: this.app.selectedSettlement.name,
+                season: this.app.currentSeason,
+                offerCount: sellerOffers.length
+            });
+
+            // Get existing seller data and add/update this entry
+            const allSellerData = await game.settings.get("trading-places", "sellerOffersData") || {};
+            const storageKey = `${this.app.selectedSettlement.name}_${this.app.currentSeason}`;
+
+            allSellerData[storageKey] = sellerData;
+
+            await game.settings.set("trading-places", "sellerOffersData", allSellerData);
+
+            console.log('🔄 SELLER PERSISTENCE: Seller data saved successfully');
+
+            this._logInfo('Seller Persistence', 'Seller offers data saved', {
+                settlement: this.app.selectedSettlement.name,
+                season: this.app.currentSeason,
+                offerCount: sellerOffers.length
+            });
+
+        } catch (error) {
+            console.error('🔄 SELLER PERSISTENCE: Failed to save seller offers data', error);
+            this._logError('Seller Persistence', 'Failed to save seller offers data', { error: error.message });
+        }
+    }
+
+    /**
+     * Load seller offers from game settings
+     * @returns {Array|null} - Seller offers array or null if not found/valid
+     * @private
+     */
+    async _loadSellerOffers() {
+        try {
+            if (!this.app.selectedSettlement || !this.app.currentSeason) {
+                console.log('🔄 SELLER PERSISTENCE: Cannot load - missing settlement or season');
+                return null;
+            }
+
+            const allSellerData = await game.settings.get("trading-places", "sellerOffersData") || {};
+            const storageKey = `${this.app.selectedSettlement.name}_${this.app.currentSeason}`;
+
+            console.log('🔄 SELLER PERSISTENCE: Looking for seller data with key:', storageKey);
+
+            const sellerData = allSellerData[storageKey];
+
+            if (!sellerData) {
+                console.log('🔄 SELLER PERSISTENCE: No saved seller data found');
+                return null;
+            }
+
+            // Validate that the data is still relevant
+            if (sellerData.settlement !== this.app.selectedSettlement.name ||
+                sellerData.season !== this.app.currentSeason) {
+                console.log('🔄 SELLER PERSISTENCE: Seller data mismatch');
+                return null;
+            }
+
+            // Check if data is not too old (24 hours)
+            const maxAge = 24 * 60 * 60 * 1000;
+            if (Date.now() - sellerData.timestamp > maxAge) {
+                console.log('🔄 SELLER PERSISTENCE: Seller data is too old, ignoring');
+                return null;
+            }
+
+            console.log('🔄 SELLER PERSISTENCE: Successfully loaded seller data', {
+                settlement: sellerData.settlement,
+                season: sellerData.season,
+                offerCount: sellerData.sellerOffers?.length || 0
+            });
+
+            this._logInfo('Seller Persistence', 'Seller offers data loaded', {
+                settlement: sellerData.settlement,
+                season: sellerData.season,
+                offerCount: sellerData.sellerOffers?.length || 0,
+                age: Math.round((Date.now() - sellerData.timestamp) / 1000 / 60) + ' minutes'
+            });
+
+            return sellerData.sellerOffers || [];
+
+        } catch (error) {
+            console.error('🔄 SELLER PERSISTENCE: Failed to load seller offers data', error);
+            this._logError('Seller Persistence', 'Failed to load seller offers data', { error: error.message });
+            return null;
+        }
+    }
+
+    /**
+     * Clear saved seller offers for current settlement/season
+     * @private
+     */
+    async _clearSellerOffers() {
+        try {
+            if (!this.app.selectedSettlement || !this.app.currentSeason) {
+                return;
+            }
+
+            const allSellerData = await game.settings.get("trading-places", "sellerOffersData") || {};
+            const storageKey = `${this.app.selectedSettlement.name}_${this.app.currentSeason}`;
+
+            delete allSellerData[storageKey];
+            await game.settings.set("trading-places", "sellerOffersData", allSellerData);
+
+            console.log('🔄 SELLER PERSISTENCE: Seller data cleared for', storageKey);
+
+            this._logInfo('Seller Persistence', 'Seller offers data cleared', {
+                settlement: this.app.selectedSettlement.name,
+                season: this.app.currentSeason
+            });
+
+        } catch (error) {
+            this._logError('Seller Persistence', 'Failed to clear seller offers data', { error: error.message });
+        }
+    }
+
+    /**
+     * Restore seller offers if they exist for current settlement/season
+     * @returns {boolean} - True if offers were restored, false otherwise
+     */
+    async restoreSellerOffers() {
+        try {
+            const savedOffers = await this._loadSellerOffers();
+            
+            if (savedOffers && savedOffers.length > 0) {
+                this.app.sellerOffers = savedOffers;
+                await this._displaySellerResults(savedOffers, { notify: false });
+                
+                // Show restoration notification
+                ui.notifications.info(`Restored ${savedOffers.length} seller offer${savedOffers.length > 1 ? 's' : ''} for ${this.app.selectedSettlement.name}`);
+                
+                console.log('🔄 SELLER PERSISTENCE: Seller offers restored successfully');
+                return true;
+            }
+            
+            return false;
+            
+        } catch (error) {
+            console.error('🔄 SELLER PERSISTENCE: Failed to restore seller offers', error);
+            this._logError('Seller Persistence', 'Failed to restore seller offers', { error: error.message });
+            return false;
         }
     }
 }

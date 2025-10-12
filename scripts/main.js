@@ -816,6 +816,16 @@ function registerModuleSettings() {
         default: {}
     });
 
+    // Seller offers data setting (for persistence)
+    game.settings.register(MODULE_ID, "sellerOffersData", {
+        name: "Seller Offers Data",
+        hint: "Stores seller offers data for all settlements and seasons",
+        scope: "client",
+        config: false,
+        type: Object,
+        default: {}
+    });
+
     // Transaction history setting (for persistence)
     game.settings.register(MODULE_ID, "transactionHistory", {
         name: "Transaction History",
