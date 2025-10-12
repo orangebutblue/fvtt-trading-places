@@ -1,5 +1,7 @@
 # Trading Places
 
+![Trading Places Logo](trading-places.png)
+
 A comprehensive FoundryVTT module implementing the full WFRP4e trading rules with the orange-realism overhaul, featuring modern UI, advanced merchant systems, and dynamic market mechanics.
 
 ## Features
@@ -20,7 +22,7 @@ A comprehensive FoundryVTT module implementing the full WFRP4e trading rules wit
 
 1. In FoundryVTT, navigate to the **Add-on Modules** tab
 2. Click **Install Module**
-3. Paste the manifest URL: `https://github.com/orangebutblue/trading-places/releases/latest/download/module.json`
+3. Paste the manifest URL: `https://raw.githubusercontent.com/orangebutblue/trading-places/refs/heads/main/module.json`
 4. Click **Install** and enable the module in your world
 
 ## Usage
