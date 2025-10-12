@@ -7,6 +7,8 @@
 import { TradingEngine } from './trading-engine.js';
 import { DataManager } from './data-manager.js';
 import { SystemAdapter } from './system-adapter.js';
+import { TradingPlacesSettings } from './module-settings.js';
+import { TradingPlacesSettingsDialog } from './settings-dialog.js';
 
 // Module constants
 const MODULE_ID = "trading-places";
@@ -692,6 +694,10 @@ function registerHandlebarsHelpers() {
  * Register module settings with FoundryVTT
  */
 function registerModuleSettings() {
+    // Register all module settings using our new system
+    TradingPlacesSettings.registerSettings();
+    
+    // Keep legacy settings for compatibility
     // Active dataset setting
     game.settings.register(MODULE_ID, "activeDataset", {
         name: "TRADING-PLACES.Settings.ActiveDataset.Name",
@@ -708,7 +714,7 @@ function registerModuleSettings() {
         name: "TRADING-PLACES.Settings.CurrentSeason.Name",
         hint: "TRADING-PLACES.Settings.CurrentSeason.Hint",
         scope: "world",
-        config: true,
+        config: false, // Hidden from settings
         type: String,
         choices: {
             "spring": "TRADING-PLACES.Seasons.Spring",
@@ -755,15 +761,6 @@ function registerModuleSettings() {
         default: ""
     });
 
-    // Trading dialog position setting (legacy)
-    game.settings.register(MODULE_ID, "dialogPosition", {
-        name: "TRADING-PLACES.Settings.DialogPosition.Name",
-        hint: "TRADING-PLACES.Settings.DialogPosition.Hint",
-        scope: "client",
-        config: true,
-        type: Object,
-        default: { top: 100, left: 100, width: 600, height: 400 }
-    });
 
     // Window state setting for V2 Application
     game.settings.register(MODULE_ID, "windowState", {
@@ -780,7 +777,7 @@ function registerModuleSettings() {
         name: "TRADING-PLACES.Settings.DebugLogging.Name",
         hint: "TRADING-PLACES.Settings.DebugLogging.Hint",
         scope: "world",
-        config: true,
+        config: false, // Hidden from settings
         type: Boolean,
         default: false,
         onChange: onDebugLoggingChange
@@ -1356,6 +1353,21 @@ async function initializeBasicSceneControls() {
                         } catch (error) {
                             console.error('Trading Places | Error opening trading interface:', error);
                             ui.notifications.error('Error opening trading interface. Check console for details.');
+                        }
+                    }
+                }, {
+                    name: "trading-settings",
+                    title: "Trading Places Settings",
+                    icon: "fas fa-cog",
+                    visible: game.user.isGM,
+                    onClick: () => {
+                        try {
+                            const settingsDialog = new TradingPlacesSettingsDialog();
+                            settingsDialog.render(true);
+                            console.log('Trading Places | Opened settings dialog');
+                        } catch (error) {
+                            console.error('Trading Places | Error opening settings dialog:', error);
+                            ui.notifications.error('Error opening settings dialog. Check console for details.');
                         }
                     }
                 }]
