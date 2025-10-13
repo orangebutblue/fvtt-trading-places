@@ -634,6 +634,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         // Add configuration data
         context.debugLoggingEnabled = game.settings.get("trading-places", "debugLogging");
         context.chatVisibility = game.settings.get("trading-places", "chatVisibility");
+        context.isGM = game.user.isGM;
 
         // Add ALL cargo types for selling (not just settlement sources)
     const allCargoTypes = this.dataManager ? this.dataManager.getCargoTypes() : [];

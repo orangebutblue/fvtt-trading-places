@@ -2,21 +2,16 @@
 
 <img src="trading-places.png" alt="Trading Places Logo" width="300" />
 
-A comprehensive FoundryVTT for river trading, featuring modern UI, advanced merchant systems, and dynamic market mechanics.
+A comprehensive FoundryVTT for river trading, featuring modern UI, advanced cargo spawn system, and dynamic market mechanics.
 
 ## Features
 
-- **Complete WFRP4e Trading Implementation**: Full adherence to the official WFRP 4E trading algorithm (pages 71-78) with orange-realism enhancements
+- **Enhanced Trading Mechanics**: Rooted in Warhammer Fantasy river trading rules, but significantly expanded with sophisticated algorithms and features
 - **Modern User Interface**: Responsive trading dialog with supply/demand visualization, merchant personality displays, and transaction management
-- **Advanced Merchant System**: Population-based merchant generation with skill distribution, behavioral traits, and special abilities
+- **Advanced Cargo Spawn System**: Population-based cargo generation with skill distribution, behavioral traits, and special abilities
 - **Equilibrium Mechanics**: Dynamic supply/demand ratios affecting availability, pricing, and merchant desperation
-- **Data Management Tools**: Built-in editors for settlements, cargo types, and trading configurations with real-time validation
 - **Seasonal Dynamics**: Market variations based on seasons with configurable price modifiers
-- **Haggling System**: Skill-based negotiation mechanics with dice rolling integration
-- **Settlement-Based Trading**: Cargo availability and buyer mechanics tied to settlement characteristics
-- **FoundryVTT Integration**: Native dice rolling, chat messages, and GM-configurable settings
 - **Dataset Flexibility**: System-agnostic design supporting multiple trading datasets
-- **Comprehensive Testing**: Full test suite with automated validation and integration scenarios
 
 ## Installation
 
@@ -31,7 +26,6 @@ A comprehensive FoundryVTT for river trading, featuring modern UI, advanced merc
 2. Configure the current season and dataset in module settings
 3. Access the trading interface through the scene controls or GM menu
 4. Conduct transactions with real-time equilibrium updates and chat logging
-5. Use the data management UI to customize settlements and cargo types
 
 ## Configuration
 

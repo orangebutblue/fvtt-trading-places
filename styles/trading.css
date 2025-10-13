@@ -1124,6 +1124,21 @@
     margin-left: 0;
 }
 
+/* Quality Styling */
+.trading-places .quality-honest {
+    color: var(--text-success, #4caf50);
+}
+
+.trading-places .quality-dishonest {
+    color: var(--text-warning, #ff9800);
+    font-weight: bold;
+}
+
+.trading-places .quality-dishonest::before {
+    content: "⚠️ ";
+    font-size: 12px;
+}
+
 /* Info Tooltip */
 .trading-places .info-tooltip {
     position: absolute;
@@ -2858,8 +2873,8 @@
 }
 
 
-/* EMERGENCY FIX - Make app-header visible and working */
-div.app-header {
+/* EMERGENCY FIX - Make app-header visible and working - PROPERLY SCOPED */
+.trading-places div.app-header {
     background: linear-gradient(135deg, #ffa726, #ff8f00) !important;
     padding: 20px 24px !important;
     display: flex !important;
@@ -2876,7 +2891,7 @@ div.app-header {
     visibility: visible !important;
 }
 
-div.app-title {
+.trading-places div.app-title {
     display: flex !important;
     align-items: center !important;
     gap: 12px !important;
@@ -2884,7 +2899,7 @@ div.app-title {
     visibility: visible !important;
 }
 
-div.app-title h1 {
+.trading-places div.app-title h1 {
     color: white !important;
     font-size: 24px !important;
     margin: 0 !important;
@@ -2893,14 +2908,14 @@ div.app-title h1 {
     visibility: visible !important;
 }
 
-div.app-title i {
+.trading-places div.app-title i {
     color: white !important;
     font-size: 24px !important;
     opacity: 1 !important;
     visibility: visible !important;
 }
 
-div.season-control {
+.trading-places div.season-control {
     display: flex !important;
     align-items: center !important;
     gap: 8px !important;
@@ -2911,7 +2926,7 @@ div.season-control {
     visibility: visible !important;
 }
 
-div.season-control label {
+.trading-places div.season-control label {
     color: white !important;
     font-size: 14px !important;
     margin: 0 !important;
@@ -2919,7 +2934,7 @@ div.season-control label {
     visibility: visible !important;
 }
 
-div.season-control select {
+.trading-places div.season-control select {
     background: white !important;
     border: none !important;
     padding: 6px 10px !important;
@@ -2930,125 +2945,125 @@ div.season-control select {
 }
 
 /* Compact mode for app header */
-.compact-mode div.app-header {
+.trading-places.compact-mode div.app-header {
     padding: 6px 12px !important;
     gap: 8px !important;
 }
 
-.compact-mode div.app-title h1 {
+.trading-places.compact-mode div.app-title h1 {
     font-size: 16px !important;
 }
 
-.compact-mode div.app-title i {
+.trading-places.compact-mode div.app-title i {
     font-size: 16px !important;
 }
 
-.compact-mode div.season-control {
+.trading-places.compact-mode div.season-control {
     padding: 4px 8px !important;
     gap: 4px !important;
 }
 
-.compact-mode div.season-control label {
+.trading-places.compact-mode div.season-control label {
     font-size: 12px !important;
 }
 
-.compact-mode div.season-control select {
+.trading-places.compact-mode div.season-control select {
     padding: 3px 6px !important;
     font-size: 12px !important;
     height: 24px !important;
 }
 
 /* Compact mode for sidebar */
-.compact-mode .sidebar {
+.trading-places.compact-mode .sidebar {
     width: 180px !important;
     padding: 6px !important;
 }
 
-.compact-mode .sidebar .section {
+.trading-places.compact-mode .sidebar .section {
     margin-bottom: 6px !important;
     padding: 4px !important;
 }
 
-.compact-mode .sidebar .section-title {
+.trading-places.compact-mode .sidebar .section-title {
     font-size: 12px !important;
     margin-bottom: 4px !important;
 }
 
-.compact-mode .sidebar .section-title i {
+.trading-places.compact-mode .sidebar .section-title i {
     font-size: 10px !important;
 }
 
-.compact-mode .sidebar .form-group {
+.trading-places.compact-mode .sidebar .form-group {
     margin-bottom: 4px !important;
 }
 
-.compact-mode .sidebar .form-label {
+.trading-places.compact-mode .sidebar .form-label {
     font-size: 10px !important;
     margin-bottom: 2px !important;
 }
 
-.compact-mode .sidebar .form-select {
+.trading-places.compact-mode .sidebar .form-select {
     padding: 2px 4px !important;
     font-size: 11px !important;
     height: 22px !important;
 }
 
-.compact-mode .sidebar h2 {
+.trading-places.compact-mode .sidebar h2 {
     font-size: 12px !important;
     margin-bottom: 4px !important;
 }
 
 /* Compact mode - Fix settlement info content in sidebar */
-.compact-mode .settlement-info-section {
+.trading-places.compact-mode .settlement-info-section {
     padding: 4px 6px !important;
     margin-bottom: 4px !important;
 }
 
-.compact-mode .settlement-info-section h5 {
+.trading-places.compact-mode .settlement-info-section h5 {
     font-size: 11px !important;
     margin-bottom: 2px !important;
 }
 
-.compact-mode .settlement-flags li {
+.trading-places.compact-mode .settlement-flags li {
     font-size: 9px !important;
     margin-bottom: 1px !important;
     padding: 0 !important;
 }
 
-.compact-mode .slot-info {
+.trading-places.compact-mode .slot-info {
     font-size: 9px !important;
 }
 
-.compact-mode .slot-value {
+.trading-places.compact-mode .slot-value {
     font-size: 10px !important;
 }
 
-.compact-mode .info-indicator {
+.trading-places.compact-mode .info-indicator {
     padding: 1px 3px !important;
     font-size: 8px !important;
     margin-left: 2px !important;
 }
 
 /* Compact mode - Make main panel expand to use available space */
-.compact-mode .app-content {
+.trading-places.compact-mode .app-content {
     display: flex !important;
 }
 
-.compact-mode .main-panel {
+.trading-places.compact-mode .main-panel {
     flex: 1 !important;
     width: auto !important;
     margin-left: 0 !important;
     padding: 6px !important;
 }
 
-.compact-mode .content-wrapper {
+.trading-places.compact-mode .content-wrapper {
     width: 100% !important;
     max-width: none !important;
 }
 
 /* Fix main content area to use full available width */
-.compact-mode .trading-content,
-.compact-mode .main-content {
+.trading-places.compact-mode .trading-content,
+.trading-places.compact-mode .main-content {
     flex: 1 !important;
     width: 100% !important;
     margin-left: 0 !important;

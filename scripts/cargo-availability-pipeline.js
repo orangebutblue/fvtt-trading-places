@@ -335,7 +335,7 @@ class CargoAvailabilityPipeline {
         const selection = await this._selectCargo(candidateTable, slotRollFunction);
         const balance = this._calculateBalance(selection, settlementProps, settlementFlags, season);
         const amount = await this._rollCargoAmount(balance, settlementProps, season, slotRollFunction, slotNumber);
-        const quality = await this._evaluateQuality(balance, settlementProps, settlementFlags, slotRollFunction, slotNumber);
+        const quality = await this._evaluateQuality(balance, settlementProps, settlementFlags, slotRollFunction, slotNumber, selection.cargoData);
         const contraband = await this._evaluateContraband(settlementProps, settlementFlags, season, slotRollFunction, slotNumber);
         const merchantSkill = await this._generateMerchant(settlementProps, slotRollFunction, slotNumber);
         const desperation = this._buildDesperation(balance);
@@ -601,7 +601,71 @@ class CargoAvailabilityPipeline {
         };
     }
 
-    async _evaluateQuality(balance, settlementProps, settlementFlags, rollFunction = null, slotNumber = null) {
+    async _evaluateQuality(balance, settlementProps, settlementFlags, rollFunction = null, slotNumber = null, cargoData = null) {
+        // Import QualitySystem if not already available
+        if (!this.qualitySystem) {
+            const { QualitySystem } = await import('./quality-system.js');
+            this.qualitySystem = new QualitySystem(this.dataManager, {
+                random: this.random,
+                logger: this.logger
+            });
+        }
+
+        // Check if this is Wine/Brandy cargo that uses the special system
+        const isWineBrandy = cargoData && this.qualitySystem.isWineBrandyCargo(cargoData);
+        
+        if (isWineBrandy) {
+            return await this._evaluateWineBrandyQuality(cargoData, settlementFlags, rollFunction);
+        } else {
+            return await this._evaluateStandardQuality(balance, settlementProps, settlementFlags, rollFunction, slotNumber);
+        }
+    }
+
+    async _evaluateWineBrandyQuality(cargoData, settlementFlags, rollFunction = null) {
+        // Roll actual quality
+        const actualQuality = this.qualitySystem.rollWineBrandyQuality(settlementFlags, cargoData.name);
+        
+        // Get dishonesty setting
+        const dishonestyChance = typeof game !== 'undefined' && game.settings 
+            ? game.settings.get('trading-places', 'merchantDishonestyChance') / 100 
+            : 0.5;
+        
+        // Roll for merchant honesty
+        const honestyResult = this.qualitySystem.rollMerchantHonesty(dishonestyChance);
+        
+        // Apply dishonesty if applicable
+        const finalQuality = this.qualitySystem.applyQualityInflation(
+            actualQuality, 
+            honestyResult.qualityInflation, 
+            true
+        );
+
+        // Generate tooltip for evaluate test if needed
+        const evaluateTooltip = this.qualitySystem.generateEvaluateTooltip(finalQuality, true);
+
+        return {
+            tier: finalQuality.merchantQuality || finalQuality.quality,
+            actualTier: finalQuality.quality,
+            score: finalQuality.finalRoll,
+            actualScore: finalQuality.finalRoll,
+            priceInBP: finalQuality.merchantPriceInBP || finalQuality.priceInBP,
+            actualPriceInBP: finalQuality.priceInBP,
+            system: 'wine_brandy',
+            dishonest: honestyResult.isDishonest,
+            evaluateTooltip,
+            components: [
+                { label: `d10 roll`, value: finalQuality.d10Roll },
+                { label: 'Settlement bonuses', value: finalQuality.bonuses.total },
+                ...(finalQuality.bonuses.details.map(bonus => ({
+                    label: bonus.source,
+                    value: `+${bonus.amount} (${bonus.cargo})`
+                })))
+            ],
+            rollDetails: finalQuality.rollDetails
+        };
+    }
+
+    async _evaluateStandardQuality(balance, settlementProps, settlementFlags, rollFunction = null, slotNumber = null) {
         const qualityConfig = this.tradingConfig.qualityEvaluation || {};
         const clamp = qualityConfig.clamp || {};
 
@@ -658,11 +722,30 @@ class CargoAvailabilityPipeline {
             score = Math.min(clamp.max, score);
         }
 
-        const tier = this._mapQualityTier(score, qualityConfig.tierThresholds);
+        const actualTier = this.qualitySystem.mapQualityTier(score, qualityConfig.tierThresholds);
+        
+        // Apply dishonesty for regular cargo
+        const dishonestyChance = typeof game !== 'undefined' && game.settings 
+            ? game.settings.get('trading-places', 'merchantDishonestyChance') / 100 
+            : 0.5;
+        
+        const honestyResult = this.qualitySystem.rollMerchantHonesty(dishonestyChance);
+        const finalQuality = this.qualitySystem.applyQualityInflation(
+            { tier: actualTier }, 
+            honestyResult.qualityInflation, 
+            false
+        );
+
+        const evaluateTooltip = this.qualitySystem.generateEvaluateTooltip(finalQuality, false);
 
         return {
-            tier,
+            tier: finalQuality.merchantTier || actualTier,
+            actualTier,
             score,
+            actualScore: score,
+            system: 'standard',
+            dishonest: honestyResult.isDishonest,
+            evaluateTooltip,
             components,
             rollDetails: {
                 percentileRoll,
@@ -784,9 +867,17 @@ class CargoAvailabilityPipeline {
         const pricingConfig = this.tradingConfig.pricing || {};
         const qualityMultipliers = pricingConfig.qualityMultipliers || {};
 
-        const basePricePer10 = this.dataManager.getSeasonalPrice(selection.cargoData, season);
-        if (typeof basePricePer10 !== 'number' || Number.isNaN(basePricePer10)) {
-            throw new Error(`Missing seasonal pricing for ${selection.name} in ${season}`);
+        // Handle Wine/Brandy pricing differently
+        let basePricePer10;
+        if (quality.system === 'wine_brandy' && quality.priceInBP) {
+            // Wine/Brandy uses fixed prices from quality table (per 10 EP)
+            basePricePer10 = quality.priceInBP;
+        } else {
+            // Regular cargo uses seasonal pricing
+            basePricePer10 = this.dataManager.getSeasonalPrice(selection.cargoData, season);
+            if (typeof basePricePer10 !== 'number' || Number.isNaN(basePricePer10)) {
+                throw new Error(`Missing seasonal pricing for ${selection.name} in ${season}`);
+            }
         }
 
         const basePricePerEP = basePricePer10 / 10;
@@ -800,14 +891,17 @@ class CargoAvailabilityPipeline {
 
         let pricePer10 = basePricePer10;
 
-        const qualityMultiplier = qualityMultipliers[quality.tier] ?? 1;
-        if (qualityMultiplier !== 1) {
-            pricePer10 *= qualityMultiplier;
-            steps.push({
-                label: `Quality (${quality.tier}) ×${qualityMultiplier.toFixed(2)}`,
-                per10: Number(pricePer10.toFixed(2)),
-                perEP: Number((pricePer10 / 10).toFixed(2))
-            });
+        // For Wine/Brandy, quality is already included in the base price
+        if (quality.system !== 'wine_brandy') {
+            const qualityMultiplier = qualityMultipliers[quality.tier] ?? 1;
+            if (qualityMultiplier !== 1) {
+                pricePer10 *= qualityMultiplier;
+                steps.push({
+                    label: `Quality (${quality.tier}) ×${qualityMultiplier.toFixed(2)}`,
+                    per10: Number(pricePer10.toFixed(2)),
+                    perEP: Number((pricePer10 / 10).toFixed(2))
+                });
+            }
         }
 
         if (contraband.contraband) {

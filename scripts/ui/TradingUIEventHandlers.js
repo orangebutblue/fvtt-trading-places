@@ -282,6 +282,14 @@ export class TradingUIEventHandlers {
         // Populate cargo types for add cargo autocomplete
         this._populateAddCargoAutocomplete();
 
+        // GM Tools - Data Management Button
+        const dataManagementBtn = html.querySelector('#open-data-management');
+        if (dataManagementBtn) {
+            dataManagementBtn.addEventListener('click', this._onOpenDataManagement.bind(this));
+            this._logDebug('Event Listeners', 'Attached data management button listener');
+        }
+
+
         this._logDebug('Event Listeners', 'Content listeners attached');
     }
 
@@ -2064,4 +2072,32 @@ export class TradingUIEventHandlers {
             }
         }
     }
+
+    /**
+     * Handle opening data management UI (GM only)
+     * @param {Event} event - Click event
+     * @private
+     */
+    async _onOpenDataManagement(event) {
+        event.preventDefault();
+
+        try {
+            // Check if DataManagementApp is available on window
+            if (!window.TradingPlacesDataManagementApp) {
+                console.error('DataManagementApp not found on window');
+                throw new Error('DataManagementApp not loaded');
+            }
+
+            // Create and render the data management app with the dataManager
+            const app = new window.TradingPlacesDataManagementApp(this.app.dataManager);
+            await app.render(true);
+
+            this._logDebug('Data Management', 'Opened data management UI');
+        } catch (error) {
+            console.error('Failed to open data management UI:', error);
+            this._logError('Data Management', 'Failed to open data management UI', error);
+            ui.notifications.error('Failed to open data management interface');
+        }
+    }
+
 }

@@ -344,8 +344,10 @@ export default class TradingUIRenderer {
         resultsContainer.style.display = 'block';
 
         const infoIndicators = resultsContainer.querySelectorAll('.info-indicator');
-        infoIndicators.forEach(indicator => {
+        console.log('🔍 DEBUG: Found cargo info indicators:', infoIndicators.length);
+        infoIndicators.forEach((indicator, index) => {
             indicator.addEventListener('click', (event) => {
+                console.log('🔍 DEBUG: Cargo info indicator clicked:', index, indicator.dataset.infoTooltip);
                 event.stopPropagation();
                 const tooltip = indicator.dataset.infoTooltip;
                 if (tooltip) {
@@ -728,7 +730,7 @@ export default class TradingUIRenderer {
                 </div>
                 <div class="price-info">
                     <span class="price-label">Quality:</span>
-                    <span class="price-value">${cargo.quality || 'Average'}</span>
+                    <span class="price-value">${this._formatQualityDisplay(cargo)}</span>
                 </div>`;
 
         if (isContraband) {
@@ -809,6 +811,20 @@ export default class TradingUIRenderer {
 
         // Add event listeners for the buying interface
         this._attachBuyingInterfaceListeners(card, cargo);
+
+        // Add tooltip handlers for info indicators in this cargo card
+        const infoIndicators = card.querySelectorAll('.info-indicator');
+        console.log('🔍 DEBUG: Found cargo card info indicators:', infoIndicators.length);
+        infoIndicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', (event) => {
+                console.log('🔍 DEBUG: Cargo card info indicator clicked:', index, indicator.dataset.infoTooltip);
+                event.stopPropagation();
+                const tooltip = indicator.dataset.infoTooltip;
+                if (tooltip) {
+                    this._showInfoTooltip(tooltip, indicator);
+                }
+            });
+        });
 
         return card;
     }
@@ -1559,5 +1575,44 @@ export default class TradingUIRenderer {
             targetContent.classList.add('active');
             targetContent.style.display = 'block';
         }
+    }
+
+    /**
+     * Formats quality display with dishonesty indication and tooltip
+     */
+    _formatQualityDisplay(cargo) {
+        const quality = cargo.quality || 'Average';
+        const actualQuality = cargo.actualTier || cargo.actualQuality;
+        const isDishonest = cargo.dishonest || false;
+        const system = cargo.system || 'standard';
+        
+        let displayText = quality;
+        let tooltipContent = '';
+        
+        // Show actual quality in parentheses if merchant is dishonest
+        if (isDishonest && actualQuality && actualQuality !== quality) {
+            displayText = `<span class="quality-dishonest">${quality} (${actualQuality})</span>`;
+        } else {
+            displayText = `<span class="quality-honest">${displayText}</span>`;
+        }
+        
+        // Generate tooltip content based on system type
+        if (system === 'wine_brandy') {
+            tooltipContent = 'Wine/Brandy Quality: 1=Swill (0.5GC), 2-3=Passable (1GC), 4-5=Average (1.5GC), 6-7=Good (3GC), 8-9=Excellent (6GC), 10+=Top Shelf (12GC)';
+        } else {
+            tooltipContent = 'Quality Tiers: Poor < Common < Average < High < Exceptional';
+        }
+        
+        // Add evaluate instructions if merchant is dishonest
+        if (isDishonest) {
+            if (system === 'wine_brandy') {
+                tooltipContent += '. GM: Ask players to make Evaluate Test (Challenging +0, or Average +20 if Consume Alcohol ≥50) to detect true quality.';
+            } else {
+                tooltipContent += '. GM: Ask players to make Evaluate Test (Challenging +0) to detect merchant dishonesty.';
+            }
+        }
+        
+        // Use existing tooltip system
+        return `${displayText} <span class="info-indicator" data-info-tooltip="${tooltipContent}">?</span>`;
     }
 }

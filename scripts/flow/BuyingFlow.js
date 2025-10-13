@@ -221,6 +221,9 @@ export class BuyingFlow {
                         quantity: slot.amount.totalEP,
                         totalEP: slot.amount.totalEP,
                         quality: slot.quality.tier,
+                        actualTier: slot.quality.actualTier,
+                        dishonest: slot.quality.dishonest,
+                        system: slot.quality.system,
                         merchant: merchant,
                         slotInfo: {
                             slotNumber: slot.slotNumber,

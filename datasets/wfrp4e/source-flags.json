@@ -92,5 +92,12 @@
       "Military": 0.1
     },
     "contrabandChance": 0.35
+  },
+  "wine_quality": {
+    "description": "Region known for producing high-quality wines and spirits.",
+    "qualityBonus": {
+      "Wine": 2,
+      "Brandy": 2
+    }
   }
 }

@@ -20,6 +20,21 @@ export class TradingPlacesSettings {
             default: false
         });
 
+        // Trading Settings
+        game.settings.register(this.MODULE_ID, 'merchantDishonestyChance', {
+            name: 'Merchant Dishonesty Chance',
+            hint: 'Percentage chance that merchants will misrepresent cargo quality (0-100).',
+            scope: 'world',
+            config: true,
+            type: Number,
+            default: 50,
+            range: {
+                min: 0,
+                max: 100,
+                step: 5
+            }
+        });
+
         // Advanced Settings (hidden from normal config)
         game.settings.register(this.MODULE_ID, 'customDatasetPath', {
             name: 'Custom Dataset Path',

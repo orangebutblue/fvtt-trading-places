@@ -123,14 +123,15 @@
         {
             "name": "Brandy",
             "category": "Brews",
-            "description": "Distilled spirit made from fermented fruit.",
+            "description": "Distilled spirit made from fermented fruit. Quality varies widely.",
             "basePrice": 0,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
                 "autumn": 1,
                 "winter": 1
-            }
+            },
+            "qualitySystem": "wine_brandy"
         },
         {
             "name": "Brewing",
@@ -699,14 +700,15 @@
         {
             "name": "Wine",
             "category": "Brews",
-            "description": "Fermented grape beverage.",
-            "basePrice": 360,
+            "description": "Fermented grape beverage. Quality varies widely.",
+            "basePrice": 0,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
-                "autumn": 1.5,
+                "autumn": 1,
                 "winter": 1
-            }
+            },
+            "qualitySystem": "wine_brandy"
         },
         {
             "name": "Woodcarving",

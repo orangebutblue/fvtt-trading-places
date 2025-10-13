@@ -8,7 +8,7 @@ console.log('Trading Places | Loading data-management-ui.js');
 /**
  * Data Management Application class
  */
-class DataManagementApp extends Application {
+class DataManagementApp extends foundry.applications.api.ApplicationV2 {
     constructor(dataManager, options = {}) {
         super(options);
         this.dataManager = dataManager;
@@ -18,8 +18,8 @@ class DataManagementApp extends Application {
         this.originalData = new Map();
     }
 
-    static get defaultOptions() {
-        return mergeObject(super.defaultOptions, {
+    static get DEFAULT_OPTIONS() {
+        return foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
             id: 'trading-data-management',
             title: 'Trading Data Management',
             template: 'modules/trading-places/templates/data-management.hbs',
@@ -33,16 +33,12 @@ class DataManagementApp extends Application {
         });
     }
 
-    async getData() {
-        const data = await super.getData();
-        
+    async _prepareContext(options) {
         // Load all required data
-        await this.dataManager.loadSettlements();
-        await this.dataManager.loadCargoTypes();
-        await this.dataManager.loadSourceFlags();
         await this.dataManager.loadTradingConfig();
+        await this.dataManager.loadSourceFlags();
 
-        const settlements = this.dataManager.getSettlements();
+        const settlements = this.dataManager.getAllSettlements();
         const cargoTypes = this.dataManager.getCargoTypes();
         const sourceFlags = this.dataManager.sourceFlags || {};
         
@@ -51,7 +47,6 @@ class DataManagementApp extends Application {
         const cargoCategories = [...new Set(cargoTypes.map(c => c.category).filter(Boolean))].sort();
 
         return {
-            ...data,
             settlements,
             cargoTypes,
             availableFlags: sourceFlags,
@@ -63,69 +58,122 @@ class DataManagementApp extends Application {
         };
     }
 
-    activateListeners(html) {
-        super.activateListeners(html);
+    _attachPartListeners(partId, htmlElement, options) {
+        super._attachPartListeners(partId, htmlElement, options);
 
-        // Tab navigation
-        html.find('.nav-tab').click(this._onTabClick.bind(this));
+        if (partId === 'content') {
+            // Tab navigation
+            htmlElement.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', this._onTabClick.bind(this));
+            });
 
-        // List item selection
-        html.find('.settlement-item').click(this._onSettlementSelect.bind(this));
-        html.find('.trading-places-cargo-item').click(this._onCargoSelect.bind(this));
+            // List item selection
+            htmlElement.querySelectorAll('.settlement-item').forEach(item => {
+                item.addEventListener('click', this._onSettlementSelect.bind(this));
+            });
+            htmlElement.querySelectorAll('.trading-places-cargo-item').forEach(item => {
+                item.addEventListener('click', this._onCargoSelect.bind(this));
+            });
 
-        // Search and filter
-        html.find('.search-input').on('input', this._onSearch.bind(this));
-        html.find('.region-filter, .category-filter').change(this._onFilter.bind(this));
+            // Search and filter
+            htmlElement.querySelectorAll('.search-input').forEach(input => {
+                input.addEventListener('input', this._onSearch.bind(this));
+            });
+            htmlElement.querySelectorAll('.region-filter, .category-filter').forEach(select => {
+                select.addEventListener('change', this._onFilter.bind(this));
+            });
 
-        // Form controls
-        html.find('.settlement-form input, .settlement-form select, .settlement-form textarea')
-            .on('input change', this._onFieldChange.bind(this));
-        html.find('.cargo-form input, .cargo-form select, .cargo-form textarea')
-            .on('input change', this._onFieldChange.bind(this));
+            // Form controls
+            htmlElement.querySelectorAll('.settlement-form input, .settlement-form select, .settlement-form textarea').forEach(element => {
+                element.addEventListener('input', this._onFieldChange.bind(this));
+                element.addEventListener('change', this._onFieldChange.bind(this));
+            });
+            htmlElement.querySelectorAll('.cargo-form input, .cargo-form select, .cargo-form textarea').forEach(element => {
+                element.addEventListener('input', this._onFieldChange.bind(this));
+                element.addEventListener('change', this._onFieldChange.bind(this));
+            });
 
-        // Population to size calculation
-        html.find('#settlement-population').on('input', this._onPopulationChange.bind(this));
+            // Population to size calculation
+            const populationInput = htmlElement.querySelector('#settlement-population');
+            if (populationInput) {
+                populationInput.addEventListener('input', this._onPopulationChange.bind(this));
+            }
 
-        // Garrison strength calculation
-        html.find('[id^="garrison-"]').on('input', this._updateGarrisonStrength.bind(this));
+            // Garrison strength calculation
+            htmlElement.querySelectorAll('[id^="garrison-"]').forEach(input => {
+                input.addEventListener('input', this._updateGarrisonStrength.bind(this));
+            });
 
-        // Flag selection
-        html.find('.flag-option input[type="checkbox"]').change(this._onFlagChange.bind(this));
+            // Flag selection
+            htmlElement.querySelectorAll('.flag-option input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', this._onFlagChange.bind(this));
+            });
 
-        // Cargo selector for produces/demands
-        html.find('.cargo-selector').change(this._onCargoSelectorChange.bind(this));
+            // Cargo selector for produces/demands
+            htmlElement.querySelectorAll('.cargo-selector').forEach(select => {
+                select.addEventListener('change', this._onCargoSelectorChange.bind(this));
+            });
 
-        // Tag removal
-        html.find('.tag-remove').click(this._onTagRemove.bind(this));
+            // Tag removal
+            htmlElement.querySelectorAll('.tag-remove').forEach(button => {
+                button.addEventListener('click', this._onTagRemove.bind(this));
+            });
 
-        // Action buttons
-        html.find('.create-new-btn').click(this._onCreateNew.bind(this));
-        html.find('.duplicate-btn').click(this._onDuplicate.bind(this));
-        html.find('.delete-btn').click(this._onDelete.bind(this));
-        html.find('.save-btn').click(this._onSave.bind(this));
-        html.find('.revert-btn').click(this._onRevert.bind(this));
+            // Action buttons
+            htmlElement.querySelectorAll('.create-new-btn').forEach(button => {
+                button.addEventListener('click', this._onCreateNew.bind(this));
+            });
+            htmlElement.querySelectorAll('.duplicate-btn').forEach(button => {
+                button.addEventListener('click', this._onDuplicate.bind(this));
+            });
+            htmlElement.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', this._onDelete.bind(this));
+            });
+            htmlElement.querySelectorAll('.save-btn').forEach(button => {
+                button.addEventListener('click', this._onSave.bind(this));
+            });
+            htmlElement.querySelectorAll('.revert-btn').forEach(button => {
+                button.addEventListener('click', this._onRevert.bind(this));
+            });
 
-        // Footer actions
-        html.find('.preview-changes-btn').click(this._onPreviewChanges.bind(this));
-        html.find('.save-all-btn').click(this._onSaveAll.bind(this));
-        html.find('.discard-all-btn').click(this._onDiscardAll.bind(this));
+            // Footer actions
+            htmlElement.querySelectorAll('.preview-changes-btn').forEach(button => {
+                button.addEventListener('click', this._onPreviewChanges.bind(this));
+            });
+            htmlElement.querySelectorAll('.save-all-btn').forEach(button => {
+                button.addEventListener('click', this._onSaveAll.bind(this));
+            });
+            htmlElement.querySelectorAll('.discard-all-btn').forEach(button => {
+                button.addEventListener('click', this._onDiscardAll.bind(this));
+            });
 
-        // Header actions
-        html.find('.export-data-btn').click(this._onExportData.bind(this));
-        html.find('.import-data-btn').click(this._onImportData.bind(this));
-        html.find('.refresh-data-btn').click(this._onRefreshData.bind(this));
+            // Header actions
+            htmlElement.querySelectorAll('.export-data-btn').forEach(button => {
+                button.addEventListener('click', this._onExportData.bind(this));
+            });
+            htmlElement.querySelectorAll('.import-data-btn').forEach(button => {
+                button.addEventListener('click', this._onImportData.bind(this));
+            });
+            htmlElement.querySelectorAll('.refresh-data-btn').forEach(button => {
+                button.addEventListener('click', this._onRefreshData.bind(this));
+            });
 
-        // Modal controls
-        html.find('.modal-close, .cancel-btn').click(this._onCloseModal.bind(this));
-        html.find('.confirm-save-btn').click(this._onConfirmSave.bind(this));
+            // Modal controls
+            htmlElement.querySelectorAll('.modal-close, .cancel-btn').forEach(button => {
+                button.addEventListener('click', this._onCloseModal.bind(this));
+            });
+            htmlElement.querySelectorAll('.confirm-save-btn').forEach(button => {
+                button.addEventListener('click', this._onConfirmSave.bind(this));
+            });
 
-        // Initialize UI state
-        this._updateUIState(html);
+            // Initialize UI state
+            this._updateUIState(htmlElement);
+        }
     }
 
     _onTabClick(event) {
         event.preventDefault();
-        const tab = $(event.currentTarget).data('tab');
+        const tab = event.currentTarget.dataset.tab;
         this._switchTab(tab);
     }
 
@@ -148,12 +196,12 @@ class DataManagementApp extends Application {
     }
 
     _onSettlementSelect(event) {
-        const settlementName = $(event.currentTarget).data('id');
+        const settlementName = event.currentTarget.dataset.id;
         this._selectSettlement(settlementName);
     }
 
     _onCargoSelect(event) {
-        const cargoName = $(event.currentTarget).data('id');
+        const cargoName = event.currentTarget.dataset.id;
         this._selectCargo(cargoName);
     }
 
@@ -178,22 +226,38 @@ class DataManagementApp extends Application {
     }
 
     _populateSettlementForm(settlement) {
-        const form = this.element.find('.settlement-form');
+        const form = this.element.querySelector('.settlement-form');
         
         // Basic fields
-        form.find('#settlement-name').val(settlement.name);
-        form.find('#settlement-region').val(settlement.region);
-        form.find('#settlement-population').val(settlement.population);
-        form.find('#settlement-size').val(settlement.size);
-        form.find('#settlement-wealth').val(settlement.wealth);
-        form.find('#settlement-ruler').val(settlement.ruler || '');
-        form.find('#settlement-notes').val(settlement.notes || '');
+        const nameInput = form?.querySelector('#settlement-name');
+        if (nameInput) nameInput.value = settlement.name;
+        
+        const regionSelect = form?.querySelector('#settlement-region');
+        if (regionSelect) regionSelect.value = settlement.region;
+        
+        const populationInput = form?.querySelector('#settlement-population');
+        if (populationInput) populationInput.value = settlement.population;
+        
+        const sizeSelect = form?.querySelector('#settlement-size');
+        if (sizeSelect) sizeSelect.value = settlement.size;
+        
+        const wealthSelect = form?.querySelector('#settlement-wealth');
+        if (wealthSelect) wealthSelect.value = settlement.wealth;
+        
+        const rulerInput = form?.querySelector('#settlement-ruler');
+        if (rulerInput) rulerInput.value = settlement.ruler || '';
+        
+        const notesTextarea = form?.querySelector('#settlement-notes');
+        if (notesTextarea) notesTextarea.value = settlement.notes || '';
 
         // Flags
-        form.find('.flag-option input[type="checkbox"]').prop('checked', false);
+        form?.querySelectorAll('.flag-option input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
         if (settlement.flags && Array.isArray(settlement.flags)) {
             settlement.flags.forEach(flag => {
-                form.find(`#flag-${flag}`).prop('checked', true);
+                const checkbox = form?.querySelector(`#flag-${flag}`);
+                if (checkbox) checkbox.checked = true;
             });
         }
 
@@ -202,42 +266,64 @@ class DataManagementApp extends Application {
         this._updateTagList('demands', settlement.demands || []);
 
         // Garrison
-        form.find('#garrison-a').val(settlement.garrison?.a || 0);
-        form.find('#garrison-b').val(settlement.garrison?.b || 0);
-        form.find('#garrison-c').val(settlement.garrison?.c || 0);
+        const garrisonA = form?.querySelector('#garrison-a');
+        if (garrisonA) garrisonA.value = settlement.garrison?.a || 0;
+        
+        const garrisonB = form?.querySelector('#garrison-b');
+        if (garrisonB) garrisonB.value = settlement.garrison?.b || 0;
+        
+        const garrisonC = form?.querySelector('#garrison-c');
+        if (garrisonC) garrisonC.value = settlement.garrison?.c || 0;
+        
         this._updateGarrisonStrength();
 
         // Show form
-        form.show();
-        this.element.find('.no-selection-message').hide();
+        if (form) form.style.display = 'block';
+        const noSelectionMsg = this.element.querySelector('.no-selection-message');
+        if (noSelectionMsg) noSelectionMsg.style.display = 'none';
     }
 
     _populateCargoForm(cargo) {
-        const form = this.element.find('.cargo-form');
+        const form = this.element.querySelector('.cargo-form');
         
         // Basic fields
-        form.find('#cargo-name').val(cargo.name);
-        form.find('#cargo-category').val(cargo.category || '');
-        form.find('#cargo-base-price').val(cargo.basePrice);
-        form.find('#cargo-description').val(cargo.description || '');
+        const nameInput = form?.querySelector('#cargo-name');
+        if (nameInput) nameInput.value = cargo.name;
+        
+        const categorySelect = form?.querySelector('#cargo-category');
+        if (categorySelect) categorySelect.value = cargo.category || '';
+        
+        const basePriceInput = form?.querySelector('#cargo-base-price');
+        if (basePriceInput) basePriceInput.value = cargo.basePrice;
+        
+        const descriptionTextarea = form?.querySelector('#cargo-description');
+        if (descriptionTextarea) descriptionTextarea.value = cargo.description || '';
 
         // Seasonal modifiers
         const seasonal = cargo.seasonalModifiers || {};
-        form.find('#seasonal-spring').val(seasonal.spring || 1);
-        form.find('#seasonal-summer').val(seasonal.summer || 1);
-        form.find('#seasonal-autumn').val(seasonal.autumn || 1);
-        form.find('#seasonal-winter').val(seasonal.winter || 1);
+        const springInput = form?.querySelector('#seasonal-spring');
+        if (springInput) springInput.value = seasonal.spring || 1;
+        
+        const summerInput = form?.querySelector('#seasonal-summer');
+        if (summerInput) summerInput.value = seasonal.summer || 1;
+        
+        const autumnInput = form?.querySelector('#seasonal-autumn');
+        if (autumnInput) autumnInput.value = seasonal.autumn || 1;
+        
+        const winterInput = form?.querySelector('#seasonal-winter');
+        if (winterInput) winterInput.value = seasonal.winter || 1;
 
         // Show form
-        form.show();
-        this.element.find('.no-selection-message').hide();
+        if (form) form.style.display = 'block';
+        const noSelectionMsg = this.element.querySelector('.no-selection-message');
+        if (noSelectionMsg) noSelectionMsg.style.display = 'none';
     }
 
     _onFieldChange(event) {
         if (!this.selectedItem) return;
 
-        const field = $(event.target);
-        const fieldName = field.attr('name');
+        const field = event.target;
+        const fieldName = field.name;
         const value = this._getFieldValue(field);
 
         // Track change
@@ -261,23 +347,24 @@ class DataManagementApp extends Application {
     }
 
     _getFieldValue(field) {
-        const type = field.attr('type');
+        const type = field.type;
         
         if (type === 'number') {
-            const val = parseFloat(field.val());
+            const val = parseFloat(field.value);
             return isNaN(val) ? 0 : val;
         } else if (type === 'checkbox') {
-            return field.prop('checked');
+            return field.checked;
         } else {
-            return field.val();
+            return field.value;
         }
     }
 
     _onPopulationChange(event) {
-        const population = parseInt($(event.target).val()) || 0;
+        const population = parseInt(event.target.value) || 0;
         const size = this._calculateSizeFromPopulation(population);
         
-        this.element.find('#settlement-size').val(size);
+        const sizeSelect = this.element.querySelector('#settlement-size');
+        if (sizeSelect) sizeSelect.value = size;
         
         if (this.selectedItem) {
             this.selectedItem.size = size;
@@ -303,20 +390,25 @@ class DataManagementApp extends Application {
     }
 
     _updateGarrisonStrength() {
-        const a = parseInt(this.element.find('#garrison-a').val()) || 0;
-        const b = parseInt(this.element.find('#garrison-b').val()) || 0;
-        const c = parseInt(this.element.find('#garrison-c').val()) || 0;
+        const garrisonA = this.element.querySelector('#garrison-a');
+        const garrisonB = this.element.querySelector('#garrison-b');
+        const garrisonC = this.element.querySelector('#garrison-c');
+        
+        const a = parseInt(garrisonA?.value) || 0;
+        const b = parseInt(garrisonB?.value) || 0;
+        const c = parseInt(garrisonC?.value) || 0;
         
         const strength = (a * 3) + (b * 2) + (c * 1);
-        this.element.find('#garrison-strength').text(strength);
+        const strengthDisplay = this.element.querySelector('#garrison-strength');
+        if (strengthDisplay) strengthDisplay.textContent = strength;
     }
 
     _onFlagChange(event) {
         if (!this.selectedItem) return;
 
         const flags = [];
-        this.element.find('.flag-option input[type="checkbox"]:checked').each((i, el) => {
-            flags.push($(el).val());
+        this.element.querySelectorAll('.flag-option input[type="checkbox"]:checked').forEach(checkbox => {
+            flags.push(checkbox.value);
         });
 
         this.selectedItem.flags = flags;
@@ -331,9 +423,9 @@ class DataManagementApp extends Application {
     }
 
     _onCargoSelectorChange(event) {
-        const selector = $(event.target);
-        const target = selector.data('target');
-        const cargoType = selector.val();
+        const selector = event.target;
+        const target = selector.dataset.target;
+        const cargoType = selector.value;
         
         if (!cargoType || !this.selectedItem) return;
 
@@ -357,33 +449,33 @@ class DataManagementApp extends Application {
         }
         
         // Reset selector
-        selector.val('');
+        selector.value = '';
     }
 
     _updateTagList(target, items) {
-        const container = this.element.find(`#${target}-tags`);
-        container.empty();
+        const container = this.element.querySelector(`#${target}-tags`);
+        if (!container) return;
         
-        items.forEach(item => {
-            const tag = $(`
-                <div class="tag-item">
-                    ${item}
-                    <span class="tag-remove" data-target="${target}" data-value="${item}">×</span>
-                </div>
-            `);
-            container.append(tag);
+        container.innerHTML = '';
+        
+        items.forEach((item, index) => {
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.innerHTML = `
+                ${item}
+                <button type="button" class="tag-remove" data-target="${target}" data-index="${index}">×</button>
+            `;
+            container.appendChild(tag);
         });
-        
-        // Rebind removal handlers
-        container.find('.tag-remove').click(this._onTagRemove.bind(this));
     }
 
     _onTagRemove(event) {
         event.preventDefault();
         if (!this.selectedItem) return;
 
-        const target = $(event.target).data('target');
-        const value = $(event.target).data('value');
+        const button = event.target;
+        const target = button.dataset.target;
+        const value = button.dataset.value;
         
         if (this.selectedItem[target]) {
             const index = this.selectedItem[target].indexOf(value);
@@ -408,18 +500,26 @@ class DataManagementApp extends Application {
         const hasSelection = !!this.selectedItem;
         
         // Update button states
-        this.element.find('.save-btn').prop('disabled', !hasSelection || !this.changes.has(this.selectedItem?.name));
-        this.element.find('.revert-btn').prop('disabled', !hasSelection || !this.changes.has(this.selectedItem?.name));
-        this.element.find('.duplicate-btn').prop('disabled', !hasSelection);
-        this.element.find('.delete-btn').prop('disabled', !hasSelection);
+        const saveBtn = this.element.querySelector('.save-btn');
+        const revertBtn = this.element.querySelector('.revert-btn');
+        const duplicateBtn = this.element.querySelector('.duplicate-btn');
+        const deleteBtn = this.element.querySelector('.delete-btn');
+        
+        if (saveBtn) saveBtn.disabled = !hasSelection || !this.changes.has(this.selectedItem?.name);
+        if (revertBtn) revertBtn.disabled = !hasSelection || !this.changes.has(this.selectedItem?.name);
+        if (duplicateBtn) duplicateBtn.disabled = !hasSelection;
+        if (deleteBtn) deleteBtn.disabled = !hasSelection;
         
         // Update changes summary
-        const changesContainer = this.element.find('.changes-summary');
-        if (hasChanges) {
-            changesContainer.show();
-            changesContainer.find('.changes-count').text(this.changes.size);
-        } else {
-            changesContainer.hide();
+        const changesContainer = this.element.querySelector('.changes-summary');
+        if (changesContainer) {
+            if (hasChanges) {
+                changesContainer.style.display = 'block';
+                const changesCount = changesContainer.querySelector('.changes-count');
+                if (changesCount) changesCount.textContent = this.changes.size;
+            } else {
+                changesContainer.style.display = 'none';
+            }
         }
     }
 
@@ -474,8 +574,11 @@ class DataManagementApp extends Application {
 
     _showValidationErrors(errors) {
         // Clear existing errors
-        this.element.find('.field-error').hide().text('');
-        this.element.find('.form-group').removeClass('error');
+        this.element.querySelectorAll('.field-error').forEach(el => {
+            el.style.display = 'none';
+            el.textContent = '';
+        });
+        this.element.querySelectorAll('.form-group').forEach(el => el.classList.remove('error'));
         
         // Show new errors (simplified - would need field mapping)
         errors.forEach(error => {
@@ -561,7 +664,8 @@ class DataManagementApp extends Application {
                     ok: {
                         label: 'Create',
                         callback: (html) => {
-                            const name = html.find('#new-name').val().trim();
+                            const input = html.querySelector('#new-name');
+                            const name = input ? input.value.trim() : '';
                             resolve(name || null);
                         }
                     },

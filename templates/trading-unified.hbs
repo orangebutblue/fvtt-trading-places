@@ -6,14 +6,16 @@
             <i class="fas fa-coins"></i>
             <h1>Trading Places</h1>
         </div>
-        <div class="season-control">
-            <label>Current Season:</label>
-            <select id="season-select">
-                <option value="spring" {{#if (eq currentSeason "spring")}}selected{{/if}}>Spring</option>
-                <option value="summer" {{#if (eq currentSeason "summer")}}selected{{/if}}>Summer</option>
-                <option value="autumn" {{#if (eq currentSeason "autumn")}}selected{{/if}}>Autumn</option>
-                <option value="winter" {{#if (eq currentSeason "winter")}}selected{{/if}}>Winter</option>
-            </select>
+        <div class="header-controls">
+            <div class="season-control">
+                <label>Current Season:</label>
+                <select id="season-select">
+                    <option value="spring" {{#if (eq currentSeason "spring")}}selected{{/if}}>Spring</option>
+                    <option value="summer" {{#if (eq currentSeason "summer")}}selected{{/if}}>Summer</option>
+                    <option value="autumn" {{#if (eq currentSeason "autumn")}}selected{{/if}}>Autumn</option>
+                    <option value="winter" {{#if (eq currentSeason "winter")}}selected{{/if}}>Winter</option>
+                </select>
+            </div>
         </div>
         {{#if debugLoggingEnabled}}
         <div class="debug-toggle">
@@ -101,6 +103,22 @@
                     {{#if (isTradeSettlement selectedSettlement)}}
                     <div class="trade-badge">Major Trade Center</div>
                     {{/if}}
+                </div>
+            </div>
+            {{/if}}
+
+            {{#if isGM}}
+            <!-- GM Tools Section -->
+            <div class="section gm-tools-section">
+                <h2 class="section-title">
+                    <i class="fas fa-tools"></i>
+                    GM Tools
+                </h2>
+                <div class="gm-tools">
+                    <button class="btn btn-secondary" id="open-data-management" title="Data Management (GM Only)" style="width: 100%;">
+                        <i class="fas fa-database"></i>
+                        Data Management
+                    </button>
                 </div>
             </div>
             {{/if}}

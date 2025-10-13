@@ -235,6 +235,27 @@
   },
   {
     "region": "Reikland",
+    "name": "Kemperbad",
+    "population": 1800,
+    "size": 3,
+    "ruler": "Emperor",
+    "wealth": 3,
+    "flags": [
+      "trade",
+      "wine_quality"
+    ],
+    "produces": [
+      "Wine",
+      "Brandy"
+    ],
+    "demands": [],
+    "garrison": {
+      "c": 50
+    },
+    "notes": "Famous wine-producing town known for exceptional vintages"
+  },
+  {
+    "region": "Reikland",
     "name": "Kaldach",
     "population": 52,
     "size": 1,
