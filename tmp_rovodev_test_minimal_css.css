@@ -1,0 +1,13 @@
+/* MINIMAL CSS TEST - Only essential styles */
+.trading-places {
+    /* Just the CSS variables */
+    --bg-primary: #1a1d23;
+    --bg-secondary: #252932;
+    --text-primary: #ffffff;
+    --text-secondary: #b8bcc8;
+    --accent-primary: #ffa726;
+    --border-light: #3a4048;
+    --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* No other styles - just the bare minimum to test if this alone causes issues */

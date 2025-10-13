@@ -34,7 +34,7 @@
 /* Ensure variables are accessible to all child elements */
 .trading-places .trading-app,
 .trading-places .app-content,
-.trading-places .trading-sidebar,
+.trading-places .sidebar,
 .trading-places .main-panel,
 .trading-places .app-header,
 .trading-places .settlement-display,
@@ -168,7 +168,7 @@
 }
 
 /* Sidebar */
-.trading-places .trading-sidebar {
+.trading-places .sidebar {
     background: var(--bg-tertiary);
     padding: 32px;
     border-right: 1px solid var(--border-light);
@@ -1669,7 +1669,7 @@
         grid-template-rows: auto 1fr;
     }
     
-    .trading-places .trading-sidebar {
+    .trading-places .sidebar {
         border-right: none;
         border-bottom: 1px solid var(--border-light);
         overflow-y: visible;
@@ -1692,7 +1692,7 @@
         grid-template-rows: auto 1fr;
     }
     
-    .trading-places .trading-sidebar {
+    .trading-places .sidebar {
         order: 1;
         border-right: none;
         border-bottom: 1px solid var(--border-light);
@@ -1757,7 +1757,7 @@
 }
 
 /* Ensure proper scrolling behavior in FoundryVTT */
-.trading-places .trading-sidebar {
+.trading-places .sidebar {
     max-height: 100%;
 }
 
@@ -1797,7 +1797,7 @@
         font-size: 20px;
     }
     
-    .trading-places .trading-sidebar {
+    .trading-places .sidebar {
         padding: 16px;
     }
     

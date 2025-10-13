@@ -2,7 +2,7 @@
   "id": "trading-places",
   "title": "Trading Places",
   "description": "Trading Module",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "compatibility": {
     "minimum": "13",
     "verified": "13",
@@ -89,13 +89,7 @@
     }
   },
   "relationships": {
-    "systems": [
-      {
-        "id": "wfrp4e",
-        "manifest": "https://raw.githubusercontent.com/moo-man/WFRP4e-FoundryVTT/master/system.json",
-        "compatibility": {}
-      }
-    ],
+    "systems": [],
     "requires": [],
     "conflicts": [],
     "flags": {}

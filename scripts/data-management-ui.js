@@ -28,7 +28,7 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
             height: 800,
             resizable: true,
             tabs: [
-                { navSelector: '.nav-tabs', contentSelector: '.data-management-content', initial: 'settlements' }
+                { navSelector: '.trading-places-nav-tabs', contentSelector: '.data-management-content', initial: 'settlements' }
             ]
         });
     }
@@ -63,12 +63,12 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
 
         if (partId === 'content') {
             // Tab navigation
-            htmlElement.querySelectorAll('.nav-tab').forEach(tab => {
+            htmlElement.querySelectorAll('.trading-places-nav-tab').forEach(tab => {
                 tab.addEventListener('click', this._onTabClick.bind(this));
             });
 
             // List item selection
-            htmlElement.querySelectorAll('.settlement-item').forEach(item => {
+            htmlElement.querySelectorAll('.trading-places-settlement-item').forEach(item => {
                 item.addEventListener('click', this._onSettlementSelect.bind(this));
             });
             htmlElement.querySelectorAll('.trading-places-cargo-item').forEach(item => {
@@ -76,19 +76,19 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
             });
 
             // Search and filter
-            htmlElement.querySelectorAll('.search-input').forEach(input => {
+            htmlElement.querySelectorAll('.trading-places-search-input').forEach(input => {
                 input.addEventListener('input', this._onSearch.bind(this));
             });
-            htmlElement.querySelectorAll('.region-filter, .category-filter').forEach(select => {
+            htmlElement.querySelectorAll('.trading-places-region-filter, .category-filter').forEach(select => {
                 select.addEventListener('change', this._onFilter.bind(this));
             });
 
             // Form controls
-            htmlElement.querySelectorAll('.settlement-form input, .settlement-form select, .settlement-form textarea').forEach(element => {
+            htmlElement.querySelectorAll('.trading-places-settlement-form input, .settlement-form select, .settlement-form textarea').forEach(element => {
                 element.addEventListener('input', this._onFieldChange.bind(this));
                 element.addEventListener('change', this._onFieldChange.bind(this));
             });
-            htmlElement.querySelectorAll('.cargo-form input, .cargo-form select, .cargo-form textarea').forEach(element => {
+            htmlElement.querySelectorAll('.trading-places-cargo-form input, .cargo-form select, .cargo-form textarea').forEach(element => {
                 element.addEventListener('input', this._onFieldChange.bind(this));
                 element.addEventListener('change', this._onFieldChange.bind(this));
             });
@@ -105,12 +105,12 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
             });
 
             // Flag selection
-            htmlElement.querySelectorAll('.flag-option input[type="checkbox"]').forEach(checkbox => {
+            htmlElement.querySelectorAll('.trading-places-flag-option input[type="checkbox"]').forEach(checkbox => {
                 checkbox.addEventListener('change', this._onFlagChange.bind(this));
             });
 
             // Cargo selector for produces/demands
-            htmlElement.querySelectorAll('.cargo-selector').forEach(select => {
+            htmlElement.querySelectorAll('.trading-places-cargo-selector').forEach(select => {
                 select.addEventListener('change', this._onCargoSelectorChange.bind(this));
             });
 
@@ -120,49 +120,49 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
             });
 
             // Action buttons
-            htmlElement.querySelectorAll('.create-new-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-create-new-btn').forEach(button => {
                 button.addEventListener('click', this._onCreateNew.bind(this));
             });
-            htmlElement.querySelectorAll('.duplicate-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-duplicate-btn').forEach(button => {
                 button.addEventListener('click', this._onDuplicate.bind(this));
             });
-            htmlElement.querySelectorAll('.delete-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-delete-btn').forEach(button => {
                 button.addEventListener('click', this._onDelete.bind(this));
             });
-            htmlElement.querySelectorAll('.save-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-save-btn').forEach(button => {
                 button.addEventListener('click', this._onSave.bind(this));
             });
-            htmlElement.querySelectorAll('.revert-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-revert-btn').forEach(button => {
                 button.addEventListener('click', this._onRevert.bind(this));
             });
 
             // Footer actions
-            htmlElement.querySelectorAll('.preview-changes-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-preview-changes-btn').forEach(button => {
                 button.addEventListener('click', this._onPreviewChanges.bind(this));
             });
-            htmlElement.querySelectorAll('.save-all-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-save-all-btn').forEach(button => {
                 button.addEventListener('click', this._onSaveAll.bind(this));
             });
-            htmlElement.querySelectorAll('.discard-all-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-discard-all-btn').forEach(button => {
                 button.addEventListener('click', this._onDiscardAll.bind(this));
             });
 
             // Header actions
-            htmlElement.querySelectorAll('.export-data-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-export-data-btn').forEach(button => {
                 button.addEventListener('click', this._onExportData.bind(this));
             });
-            htmlElement.querySelectorAll('.import-data-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-import-data-btn').forEach(button => {
                 button.addEventListener('click', this._onImportData.bind(this));
             });
-            htmlElement.querySelectorAll('.refresh-data-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-refresh-data-btn').forEach(button => {
                 button.addEventListener('click', this._onRefreshData.bind(this));
             });
 
             // Modal controls
-            htmlElement.querySelectorAll('.modal-close, .cancel-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-modal-close, .trading-places-cancel-btn').forEach(button => {
                 button.addEventListener('click', this._onCloseModal.bind(this));
             });
-            htmlElement.querySelectorAll('.confirm-save-btn').forEach(button => {
+            htmlElement.querySelectorAll('.trading-places-confirm-save-btn').forEach(button => {
                 button.addEventListener('click', this._onConfirmSave.bind(this));
             });
 
@@ -226,7 +226,7 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
     }
 
     _populateSettlementForm(settlement) {
-        const form = this.element.querySelector('.settlement-form');
+        const form = this.element.querySelector('.trading-places-settlement-form');
         
         // Basic fields
         const nameInput = form?.querySelector('#settlement-name');
@@ -251,7 +251,7 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
         if (notesTextarea) notesTextarea.value = settlement.notes || '';
 
         // Flags
-        form?.querySelectorAll('.flag-option input[type="checkbox"]').forEach(checkbox => {
+        form?.querySelectorAll('.trading-places-flag-option input[type="checkbox"]').forEach(checkbox => {
             checkbox.checked = false;
         });
         if (settlement.flags && Array.isArray(settlement.flags)) {
@@ -279,12 +279,12 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
 
         // Show form
         if (form) form.style.display = 'block';
-        const noSelectionMsg = this.element.querySelector('.no-selection-message');
+        const noSelectionMsg = this.element.querySelector('.trading-places-no-selection-message');
         if (noSelectionMsg) noSelectionMsg.style.display = 'none';
     }
 
     _populateCargoForm(cargo) {
-        const form = this.element.querySelector('.cargo-form');
+        const form = this.element.querySelector('.trading-places-cargo-form');
         
         // Basic fields
         const nameInput = form?.querySelector('#cargo-name');
@@ -315,7 +315,7 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
 
         // Show form
         if (form) form.style.display = 'block';
-        const noSelectionMsg = this.element.querySelector('.no-selection-message');
+        const noSelectionMsg = this.element.querySelector('.trading-places-no-selection-message');
         if (noSelectionMsg) noSelectionMsg.style.display = 'none';
     }
 
@@ -407,7 +407,7 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
         if (!this.selectedItem) return;
 
         const flags = [];
-        this.element.querySelectorAll('.flag-option input[type="checkbox"]:checked').forEach(checkbox => {
+        this.element.querySelectorAll('.trading-places-flag-option input[type="checkbox"]:checked').forEach(checkbox => {
             flags.push(checkbox.value);
         });
 
@@ -500,10 +500,10 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
         const hasSelection = !!this.selectedItem;
         
         // Update button states
-        const saveBtn = this.element.querySelector('.save-btn');
-        const revertBtn = this.element.querySelector('.revert-btn');
-        const duplicateBtn = this.element.querySelector('.duplicate-btn');
-        const deleteBtn = this.element.querySelector('.delete-btn');
+        const saveBtn = this.element.querySelector('.trading-places-save-btn');
+        const revertBtn = this.element.querySelector('.trading-places-revert-btn');
+        const duplicateBtn = this.element.querySelector('.trading-places-duplicate-btn');
+        const deleteBtn = this.element.querySelector('.trading-places-delete-btn');
         
         if (saveBtn) saveBtn.disabled = !hasSelection || !this.changes.has(this.selectedItem?.name);
         if (revertBtn) revertBtn.disabled = !hasSelection || !this.changes.has(this.selectedItem?.name);
@@ -511,11 +511,11 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
         if (deleteBtn) deleteBtn.disabled = !hasSelection;
         
         // Update changes summary
-        const changesContainer = this.element.querySelector('.changes-summary');
+        const changesContainer = this.element.querySelector('.trading-places-changes-summary');
         if (changesContainer) {
             if (hasChanges) {
                 changesContainer.style.display = 'block';
-                const changesCount = changesContainer.querySelector('.changes-count');
+                const changesCount = changesContainer.querySelector('.trading-places-changes-count');
                 if (changesCount) changesCount.textContent = this.changes.size;
             } else {
                 changesContainer.style.display = 'none';
@@ -574,11 +574,11 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
 
     _showValidationErrors(errors) {
         // Clear existing errors
-        this.element.querySelectorAll('.field-error').forEach(el => {
+        this.element.querySelectorAll('.trading-places-field-error').forEach(el => {
             el.style.display = 'none';
             el.textContent = '';
         });
-        this.element.querySelectorAll('.form-group').forEach(el => el.classList.remove('error'));
+        this.element.querySelectorAll('.trading-places-form-group').forEach(el => el.classList.remove('error'));
         
         // Show new errors (simplified - would need field mapping)
         errors.forEach(error => {

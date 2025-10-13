@@ -1032,9 +1032,13 @@ class ConfigValidator {
             }
 
             // Validate basePrice
-            if (cargo.basePrice !== undefined && (typeof cargo.basePrice !== 'number' || cargo.basePrice <= 0)) {
+            if (cargo.basePrice !== undefined && typeof cargo.basePrice !== 'number') {
                 result.valid = false;
-                result.errors.push(`Cargo ${index} (${cargo.name || 'unnamed'}): BasePrice must be a positive number`);
+                result.errors.push(`Cargo ${index} (${cargo.name || 'unnamed'}): BasePrice must be a number`);
+            } else if (cargo.basePrice !== undefined && cargo.basePrice <= 0 && !cargo.qualitySystem) {
+                // Allow zero basePrice for cargo with quality systems (e.g., wines, brandies)
+                result.valid = false;
+                result.errors.push(`Cargo ${index} (${cargo.name || 'unnamed'}): BasePrice must be a positive number (or use a quality system)`);
             }
 
             // Validate seasonal modifiers

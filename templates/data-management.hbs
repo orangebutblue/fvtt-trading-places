@@ -2,42 +2,42 @@
 <div class="data-management-dialog">
     <div class="data-management-header">
         <h2><i class="fas fa-database"></i> Trading Data Management</h2>
-        <div class="header-actions">
-            <button class="export-data-btn" title="Export Data Backup">
+        <div class="trading-places-header-actions">
+            <button class="trading-places-export-data-btn" title="Export Data Backup">
                 <i class="fas fa-download"></i> Export
             </button>
-            <button class="import-data-btn" title="Import Data">
+            <button class="trading-places-import-data-btn" title="Import Data">
                 <i class="fas fa-upload"></i> Import
             </button>
-            <button class="refresh-data-btn" title="Refresh Data">
+            <button class="trading-places-refresh-data-btn" title="Refresh Data">
                 <i class="fas fa-sync"></i> Refresh
             </button>
         </div>
     </div>
 
     <div class="data-management-nav">
-        <div class="nav-tabs">
-            <button class="nav-tab active" data-tab="settlements">
+        <div class="trading-places-nav-tabs">
+            <button class="trading-places-nav-tab active" data-tab="settlements">
                 <i class="fas fa-city"></i> Settlements
             </button>
-            <button class="nav-tab" data-tab="cargo-types">
+            <button class="trading-places-nav-tab" data-tab="cargo-types">
                 <i class="fas fa-boxes"></i> Cargo Types
             </button>
-            <button class="nav-tab" data-tab="flags">
+            <button class="trading-places-nav-tab" data-tab="flags">
                 <i class="fas fa-flag"></i> Source Flags
             </button>
-            <button class="nav-tab" data-tab="config">
+            <button class="trading-places-nav-tab" data-tab="config">
                 <i class="fas fa-cog"></i> Configuration
             </button>
         </div>
-        <div class="nav-actions">
-            <button class="create-new-btn" title="Create New Entry">
+        <div class="trading-places-nav-actions">
+            <button class="trading-places-create-new-btn" title="Create New Entry">
                 <i class="fas fa-plus"></i> New
             </button>
-            <button class="duplicate-btn" title="Duplicate Selected" disabled>
+            <button class="trading-places-duplicate-btn" title="Duplicate Selected" disabled>
                 <i class="fas fa-copy"></i> Duplicate
             </button>
-            <button class="delete-btn" title="Delete Selected" disabled>
+            <button class="trading-places-delete-btn" title="Delete Selected" disabled>
                 <i class="fas fa-trash"></i> Delete
             </button>
         </div>
@@ -45,16 +45,16 @@
 
     <div class="data-management-content">
         <!-- Settlements Tab -->
-        <div class="tab-content active" id="settlements-tab">
-            <div class="content-layout">
-                <div class="list-panel">
-                    <div class="list-header">
-                        <div class="search-container">
-                            <input type="text" class="search-input" placeholder="Search settlements..." />
+        <div class="trading-places-tab-content active" id="settlements-tab">
+            <div class="trading-places-content-layout">
+                <div class="trading-places-list-panel">
+                    <div class="trading-places-list-header">
+                        <div class="trading-places-search-container">
+                            <input type="text" class="trading-places-search-input" placeholder="Search settlements..." />
                             <i class="fas fa-search search-icon"></i>
                         </div>
-                        <div class="filter-container">
-                            <select class="region-filter">
+                        <div class="trading-places-filter-container">
+                            <select class="trading-places-region-filter">
                                 <option value="">All Regions</option>
                                 {{#each regions}}
                                 <option value="{{this}}">{{this}}</option>
@@ -62,23 +62,23 @@
                             </select>
                         </div>
                     </div>
-                    <div class="list-body">
-                        <div class="settlement-list">
+                    <div class="trading-places-list-body">
+                        <div class="trading-places-settlement-list">
                             {{#each settlements}}
-                            <div class="settlement-item" data-id="{{name}}">
-                                <div class="item-header">
-                                    <span class="item-name">{{name}}</span>
-                                    <span class="item-region">{{region}}</span>
+                            <div class="trading-places-settlement-item" data-id="{{name}}">
+                                <div class="trading-places-item-header">
+                                    <span class="trading-places-item-name">{{name}}</span>
+                                    <span class="trading-places-item-region">{{region}}</span>
                                 </div>
-                                <div class="item-details">
-                                    <span class="item-size">Size {{size}}</span>
-                                    <span class="item-population">{{population}} pop</span>
-                                    <span class="item-wealth">Wealth {{wealth}}</span>
+                                <div class="trading-places-item-details">
+                                    <span class="trading-places-item-size">Size {{size}}</span>
+                                    <span class="trading-places-item-population">{{population}} pop</span>
+                                    <span class="trading-places-item-wealth">Wealth {{wealth}}</span>
                                 </div>
                                 {{#if flags}}
-                                <div class="item-flags">
+                                <div class="trading-places-item-flags">
                                     {{#each flags}}
-                                    <span class="flag-badge">{{this}}</span>
+                                    <span class="trading-places-flag-badge">{{this}}</span>
                                     {{/each}}
                                 </div>
                                 {{/if}}
@@ -88,49 +88,49 @@
                     </div>
                 </div>
 
-                <div class="detail-panel">
-                    <div class="detail-header">
+                <div class="trading-places-detail-panel">
+                    <div class="trading-places-detail-header">
                         <h3 id="detail-title">Settlement Details</h3>
-                        <div class="detail-actions">
-                            <button class="save-btn" disabled>
+                        <div class="trading-places-detail-actions">
+                            <button class="trading-places-save-btn" disabled>
                                 <i class="fas fa-save"></i> Save Changes
                             </button>
-                            <button class="revert-btn" disabled>
+                            <button class="trading-places-revert-btn" disabled>
                                 <i class="fas fa-undo"></i> Revert
                             </button>
                         </div>
                     </div>
-                    <div class="detail-body">
-                        <div class="settlement-form" style="display: none;">
-                            <div class="form-section">
+                    <div class="trading-places-detail-body">
+                        <div class="trading-places-settlement-form" style="display: none;">
+                            <div class="trading-places-form-section">
                                 <h4>Basic Information</h4>
-                                <div class="form-row">
-                                    <div class="form-group">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group">
                                         <label for="settlement-name">Name</label>
                                         <input type="text" id="settlement-name" name="name" required />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="trading-places-form-group">
                                         <label for="settlement-region">Region</label>
                                         <input type="text" id="settlement-region" name="region" required />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
                                 </div>
-                                <div class="form-row">
-                                    <div class="form-group">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group">
                                         <label for="settlement-population">Population</label>
                                         <input type="number" id="settlement-population" name="population" min="0" required />
-                                        <div class="field-help">Size will be automatically calculated</div>
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-help">Size will be automatically calculated</div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="trading-places-form-group">
                                         <label for="settlement-size">Size (Auto-calculated)</label>
                                         <input type="number" id="settlement-size" name="size" readonly />
-                                        <div class="field-help">Derived from population thresholds</div>
+                                        <div class="trading-places-field-help">Derived from population thresholds</div>
                                     </div>
                                 </div>
-                                <div class="form-row">
-                                    <div class="form-group">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group">
                                         <label for="settlement-wealth">Wealth</label>
                                         <select id="settlement-wealth" name="wealth" required>
                                             <option value="1">1 - Squalid</option>
@@ -139,107 +139,107 @@
                                             <option value="4">4 - Bustling</option>
                                             <option value="5">5 - Prosperous</option>
                                         </select>
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="trading-places-form-group">
                                         <label for="settlement-ruler">Ruler</label>
                                         <input type="text" id="settlement-ruler" name="ruler" />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="form-section">
+                            <div class="trading-places-form-section">
                                 <h4>Economic Profile</h4>
-                                <div class="form-row">
-                                    <div class="form-group full-width">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group full-width">
                                         <label for="settlement-flags">Settlement Flags</label>
-                                        <div class="multi-select-container" id="settlement-flags">
+                                        <div class="trading-places-multi-select-container" id="settlement-flags">
                                             {{#each availableFlags}}
-                                            <div class="flag-option">
+                                            <div class="trading-places-flag-option">
                                                 <input type="checkbox" id="flag-{{@key}}" value="{{@key}}" />
                                                 <label for="flag-{{@key}}" title="{{this.description}}">
                                                     {{@key}}
-                                                    <span class="flag-description">{{this.description}}</span>
+                                                    <span class="trading-places-flag-description">{{this.description}}</span>
                                                 </label>
                                             </div>
                                             {{/each}}
                                         </div>
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
                                 </div>
-                                <div class="form-row">
-                                    <div class="form-group">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group">
                                         <label for="settlement-produces">Produces</label>
-                                        <div class="tag-input-container">
-                                            <select class="cargo-selector" data-target="produces">
+                                        <div class="trading-places-tag-input-container">
+                                            <select class="trading-places-cargo-selector" data-target="produces">
                                                 <option value="">Select cargo type...</option>
                                                 {{#each cargoTypes}}
                                                 <option value="{{name}}">{{name}}</option>
                                                 {{/each}}
                                             </select>
-                                            <div class="tag-list" id="produces-tags"></div>
+                                            <div class="trading-places-tag-list" id="produces-tags"></div>
                                         </div>
-                                        <div class="field-help">Goods this settlement reliably exports</div>
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-help">Goods this settlement reliably exports</div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="trading-places-form-group">
                                         <label for="settlement-demands">Demands</label>
-                                        <div class="tag-input-container">
-                                            <select class="cargo-selector" data-target="demands">
+                                        <div class="trading-places-tag-input-container">
+                                            <select class="trading-places-cargo-selector" data-target="demands">
                                                 <option value="">Select cargo type...</option>
                                                 {{#each cargoTypes}}
                                                 <option value="{{name}}">{{name}}</option>
                                                 {{/each}}
                                             </select>
-                                            <div class="tag-list" id="demands-tags"></div>
+                                            <div class="trading-places-tag-list" id="demands-tags"></div>
                                         </div>
-                                        <div class="field-help">Goods this settlement consistently seeks</div>
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-help">Goods this settlement consistently seeks</div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="form-section">
+                            <div class="trading-places-form-section">
                                 <h4>Military Garrison</h4>
-                                <div class="form-row">
-                                    <div class="form-group">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group">
                                         <label for="garrison-a">Elite Troops (a)</label>
                                         <input type="number" id="garrison-a" name="garrison.a" min="0" value="0" />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="trading-places-form-group">
                                         <label for="garrison-b">Regular Troops (b)</label>
                                         <input type="number" id="garrison-b" name="garrison.b" min="0" value="0" />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="trading-places-form-group">
                                         <label for="garrison-c">Militia (c)</label>
                                         <input type="number" id="garrison-c" name="garrison.c" min="0" value="0" />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
                                 </div>
-                                <div class="garrison-strength">
-                                    <span class="strength-label">Total Strength:</span>
-                                    <span class="strength-value" id="garrison-strength">0</span>
-                                    <span class="strength-help">(Elite×3 + Regular×2 + Militia×1)</span>
+                                <div class="trading-places-garrison-strength">
+                                    <span class="trading-places-strength-label">Total Strength:</span>
+                                    <span class="trading-places-strength-value" id="garrison-strength">0</span>
+                                    <span class="trading-places-strength-help">(Elite×3 + Regular×2 + Militia×1)</span>
                                 </div>
                             </div>
 
-                            <div class="form-section">
+                            <div class="trading-places-form-section">
                                 <h4>Additional Information</h4>
-                                <div class="form-row">
-                                    <div class="form-group full-width">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group full-width">
                                         <label for="settlement-notes">Notes</label>
                                         <textarea id="settlement-notes" name="notes" rows="3" 
                                                   placeholder="Additional notes about this settlement..."></textarea>
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="no-selection-message">
+                        <div class="trading-places-no-selection-message">
                             <i class="fas fa-arrow-left"></i>
                             <p>Select a settlement from the list to edit its details</p>
                         </div>
@@ -249,16 +249,16 @@
         </div>
 
         <!-- Cargo Types Tab -->
-        <div class="tab-content" id="cargo-types-tab">
-            <div class="content-layout">
-                <div class="list-panel">
-                    <div class="list-header">
-                        <div class="search-container">
-                            <input type="text" class="search-input" placeholder="Search cargo types..." />
+        <div class="trading-places-tab-content" id="cargo-types-tab">
+            <div class="trading-places-content-layout">
+                <div class="trading-places-list-panel">
+                    <div class="trading-places-list-header">
+                        <div class="trading-places-search-container">
+                            <input type="text" class="trading-places-search-input" placeholder="Search cargo types..." />
                             <i class="fas fa-search search-icon"></i>
                         </div>
-                        <div class="filter-container">
-                            <select class="category-filter">
+                        <div class="trading-places-filter-container">
+                            <select class="trading-places-category-filter">
                                 <option value="">All Categories</option>
                                 {{#each cargoCategories}}
                                 <option value="{{this}}">{{this}}</option>
@@ -266,17 +266,17 @@
                             </select>
                         </div>
                     </div>
-                    <div class="list-body">
-                        <div class="cargo-list">
+                    <div class="trading-places-list-body">
+                        <div class="trading-places-cargo-list">
                             {{#each cargoTypes}}
-                            <div class="cargo-item" data-id="{{name}}">
-                                <div class="item-header">
-                                    <span class="item-name">{{name}}</span>
-                                    <span class="item-category">{{category}}</span>
+                            <div class="trading-places-cargo-item" data-id="{{name}}">
+                                <div class="trading-places-item-header">
+                                    <span class="trading-places-item-name">{{name}}</span>
+                                    <span class="trading-places-item-category">{{category}}</span>
                                 </div>
-                                <div class="item-details">
-                                    <span class="item-price">{{basePrice}} GC</span>
-                                    <span class="item-seasonal">Seasonal: {{seasonalModifiers.spring}}×</span>
+                                <div class="trading-places-item-details">
+                                    <span class="trading-places-item-price">{{basePrice}} GC</span>
+                                    <span class="trading-places-item-seasonal">Seasonal: {{seasonalModifiers.spring}}×</span>
                                 </div>
                             </div>
                             {{/each}}
@@ -284,29 +284,29 @@
                     </div>
                 </div>
 
-                <div class="detail-panel">
-                    <div class="detail-header">
+                <div class="trading-places-detail-panel">
+                    <div class="trading-places-detail-header">
                         <h3 id="cargo-detail-title">Cargo Type Details</h3>
-                        <div class="detail-actions">
-                            <button class="save-btn" disabled>
+                        <div class="trading-places-detail-actions">
+                            <button class="trading-places-save-btn" disabled>
                                 <i class="fas fa-save"></i> Save Changes
                             </button>
-                            <button class="revert-btn" disabled>
+                            <button class="trading-places-revert-btn" disabled>
                                 <i class="fas fa-undo"></i> Revert
                             </button>
                         </div>
                     </div>
-                    <div class="detail-body">
-                        <div class="cargo-form" style="display: none;">
-                            <div class="form-section">
+                    <div class="trading-places-detail-body">
+                        <div class="trading-places-cargo-form" style="display: none;">
+                            <div class="trading-places-form-section">
                                 <h4>Basic Information</h4>
-                                <div class="form-row">
-                                    <div class="form-group">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group">
                                         <label for="cargo-name">Name</label>
                                         <input type="text" id="cargo-name" name="name" required />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="trading-places-form-group">
                                         <label for="cargo-category">Category</label>
                                         <input type="text" id="cargo-category" name="category" 
                                                list="category-options" />
@@ -318,62 +318,62 @@
                                             <option value="Textiles">
                                             <option value="Manufactured">
                                         </datalist>
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
                                 </div>
-                                <div class="form-row">
-                                    <div class="form-group">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group">
                                         <label for="cargo-base-price">Base Price (GC)</label>
                                         <input type="number" id="cargo-base-price" name="basePrice" 
                                                min="0" step="0.01" required />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
                                 </div>
-                                <div class="form-row">
-                                    <div class="form-group full-width">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group full-width">
                                         <label for="cargo-description">Description</label>
                                         <textarea id="cargo-description" name="description" rows="3" 
                                                   placeholder="Describe this cargo type..."></textarea>
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="form-section">
+                            <div class="trading-places-form-section">
                                 <h4>Seasonal Modifiers</h4>
-                                <div class="seasonal-grid">
-                                    <div class="form-group">
+                                <div class="trading-places-seasonal-grid">
+                                    <div class="trading-places-form-group">
                                         <label for="seasonal-spring">Spring</label>
                                         <input type="number" id="seasonal-spring" name="seasonalModifiers.spring" 
                                                min="0" step="0.01" value="1" />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="trading-places-form-group">
                                         <label for="seasonal-summer">Summer</label>
                                         <input type="number" id="seasonal-summer" name="seasonalModifiers.summer" 
                                                min="0" step="0.01" value="1" />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="trading-places-form-group">
                                         <label for="seasonal-autumn">Autumn</label>
                                         <input type="number" id="seasonal-autumn" name="seasonalModifiers.autumn" 
                                                min="0" step="0.01" value="1" />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="trading-places-form-group">
                                         <label for="seasonal-winter">Winter</label>
                                         <input type="number" id="seasonal-winter" name="seasonalModifiers.winter" 
                                                min="0" step="0.01" value="1" />
-                                        <div class="field-error"></div>
+                                        <div class="trading-places-field-error"></div>
                                     </div>
                                 </div>
-                                <div class="seasonal-help">
+                                <div class="trading-places-seasonal-help">
                                     <p>Multipliers applied to base price during each season. 1.0 = no change, 0.5 = half price, 2.0 = double price</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="no-selection-message">
+                        <div class="trading-places-no-selection-message">
                             <i class="fas fa-arrow-left"></i>
                             <p>Select a cargo type from the list to edit its details</p>
                         </div>
@@ -383,24 +383,24 @@
         </div>
 
         <!-- Flags Tab -->
-        <div class="tab-content" id="flags-tab">
-            <div class="content-layout">
-                <div class="list-panel">
-                    <div class="list-header">
-                        <div class="search-container">
-                            <input type="text" class="search-input" placeholder="Search flags..." />
+        <div class="trading-places-tab-content" id="flags-tab">
+            <div class="trading-places-content-layout">
+                <div class="trading-places-list-panel">
+                    <div class="trading-places-list-header">
+                        <div class="trading-places-search-container">
+                            <input type="text" class="trading-places-search-input" placeholder="Search flags..." />
                             <i class="fas fa-search search-icon"></i>
                         </div>
                     </div>
-                    <div class="list-body">
-                        <div class="flags-list">
+                    <div class="trading-places-list-body">
+                        <div class="trading-places-flags-list">
                             {{#each availableFlags}}
-                            <div class="flag-item" data-id="{{@key}}">
-                                <div class="item-header">
-                                    <span class="item-name">{{@key}}</span>
+                            <div class="trading-places-flag-item" data-id="{{@key}}">
+                                <div class="trading-places-item-header">
+                                    <span class="trading-places-item-name">{{@key}}</span>
                                 </div>
-                                <div class="item-details">
-                                    <span class="item-description">{{this.description}}</span>
+                                <div class="trading-places-item-details">
+                                    <span class="trading-places-item-description">{{this.description}}</span>
                                 </div>
                             </div>
                             {{/each}}
@@ -408,40 +408,40 @@
                     </div>
                 </div>
 
-                <div class="detail-panel">
-                    <div class="detail-header">
+                <div class="trading-places-detail-panel">
+                    <div class="trading-places-detail-header">
                         <h3 id="flag-detail-title">Flag Details</h3>
-                        <div class="detail-actions">
-                            <button class="save-btn" disabled>
+                        <div class="trading-places-detail-actions">
+                            <button class="trading-places-save-btn" disabled>
                                 <i class="fas fa-save"></i> Save Changes
                             </button>
-                            <button class="revert-btn" disabled>
+                            <button class="trading-places-revert-btn" disabled>
                                 <i class="fas fa-undo"></i> Revert
                             </button>
                         </div>
                     </div>
-                    <div class="detail-body">
-                        <div class="flag-form" style="display: none;">
-                            <div class="form-section">
+                    <div class="trading-places-detail-body">
+                        <div class="trading-places-flag-form" style="display: none;">
+                            <div class="trading-places-form-section">
                                 <h4>Flag Information</h4>
-                                <div class="form-row">
-                                    <div class="form-group">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group">
                                         <label for="flag-name">Name</label>
                                         <input type="text" id="flag-name" name="name" readonly />
-                                        <div class="field-help">Flag names cannot be changed</div>
+                                        <div class="trading-places-field-help">Flag names cannot be changed</div>
                                     </div>
                                 </div>
-                                <div class="form-row">
-                                    <div class="form-group full-width">
+                                <div class="trading-places-form-row">
+                                    <div class="trading-places-form-group full-width">
                                         <label for="flag-description">Description</label>
                                         <textarea id="flag-description" name="description" rows="3" readonly></textarea>
-                                        <div class="field-help">Flag descriptions cannot be changed</div>
+                                        <div class="trading-places-field-help">Flag descriptions cannot be changed</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="no-selection-message">
+                        <div class="trading-places-no-selection-message">
                             <i class="fas fa-flag"></i>
                             <p>Select a flag from the list to view its details</p>
                         </div>
@@ -451,68 +451,68 @@
         </div>
 
         <!-- Config Tab -->
-        <div class="tab-content" id="config-tab">
-            <div class="content-layout">
-                <div class="list-panel">
-                    <div class="list-header">
+        <div class="trading-places-tab-content" id="config-tab">
+            <div class="trading-places-content-layout">
+                <div class="trading-places-list-panel">
+                    <div class="trading-places-list-header">
                         <h3>Configuration Sections</h3>
                     </div>
-                    <div class="list-body">
-                        <div class="config-list">
-                            <div class="config-item" data-id="currency">
-                                <div class="item-header">
-                                    <span class="item-name">Currency</span>
+                    <div class="trading-places-list-body">
+                        <div class="trading-places-config-list">
+                            <div class="trading-places-config-item" data-id="currency">
+                                <div class="trading-places-item-header">
+                                    <span class="trading-places-item-name">Currency</span>
                                 </div>
-                                <div class="item-details">
-                                    <span class="item-description">Currency system configuration</span>
-                                </div>
-                            </div>
-                            <div class="config-item" data-id="inventory">
-                                <div class="item-header">
-                                    <span class="item-name">Inventory</span>
-                                </div>
-                                <div class="item-details">
-                                    <span class="item-description">Inventory system configuration</span>
+                                <div class="trading-places-item-details">
+                                    <span class="trading-places-item-description">Currency system configuration</span>
                                 </div>
                             </div>
-                            <div class="config-item" data-id="equilibrium">
-                                <div class="item-header">
-                                    <span class="item-name">Equilibrium</span>
+                            <div class="trading-places-config-item" data-id="inventory">
+                                <div class="trading-places-item-header">
+                                    <span class="trading-places-item-name">Inventory</span>
                                 </div>
-                                <div class="item-details">
-                                    <span class="item-description">Supply/demand equilibrium settings</span>
+                                <div class="trading-places-item-details">
+                                    <span class="trading-places-item-description">Inventory system configuration</span>
                                 </div>
                             </div>
-                            <div class="config-item" data-id="populationThresholds">
-                                <div class="item-header">
-                                    <span class="item-name">Population Thresholds</span>
+                            <div class="trading-places-config-item" data-id="equilibrium">
+                                <div class="trading-places-item-header">
+                                    <span class="trading-places-item-name">Equilibrium</span>
                                 </div>
-                                <div class="item-details">
-                                    <span class="item-description">Size category population thresholds</span>
+                                <div class="trading-places-item-details">
+                                    <span class="trading-places-item-description">Supply/demand equilibrium settings</span>
+                                </div>
+                            </div>
+                            <div class="trading-places-config-item" data-id="populationThresholds">
+                                <div class="trading-places-item-header">
+                                    <span class="trading-places-item-name">Population Thresholds</span>
+                                </div>
+                                <div class="trading-places-item-details">
+                                    <span class="trading-places-item-description">Size category population thresholds</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="detail-panel">
-                    <div class="detail-header">
+                <div class="trading-places-detail-panel">
+                    <div class="trading-places-detail-header">
                         <h3 id="config-detail-title">Configuration Details</h3>
-                        <div class="detail-actions">
-                            <button class="save-btn" disabled>
+                        <div class="trading-places-detail-actions">
+                            <button class="trading-places-save-btn" disabled>
                                 <i class="fas fa-save"></i> Save Changes
                             </button>
-                            <button class="revert-btn" disabled>
+                            <button class="trading-places-revert-btn" disabled>
                                 <i class="fas fa-undo"></i> Revert
                             </button>
                         </div>
                     </div>
-                    <div class="detail-body">
-                        <div class="config-form" style="display: none;">
+                    <div class="trading-places-detail-body">
+                        <div class="trading-places-config-form" style="display: none;">
                             <!-- Config forms will be populated dynamically -->
                         </div>
 
-                        <div class="no-selection-message">
+                        <div class="trading-places-no-selection-message">
                             <i class="fas fa-cog"></i>
                             <p>Select a configuration section from the list to edit its settings</p>
                         </div>
@@ -522,56 +522,56 @@
         </div>
 
     <div class="data-management-footer">
-        <div class="changes-summary" style="display: none;">
-            <div class="changes-indicator">
+        <div class="trading-places-changes-summary" style="display: none;">
+            <div class="trading-places-changes-indicator">
                 <i class="fas fa-exclamation-triangle"></i>
-                <span class="changes-count">0</span> unsaved changes
+                <span class="trading-places-changes-count">0</span> unsaved changes
             </div>
-            <div class="changes-actions">
-                <button class="preview-changes-btn">
+            <div class="trading-places-changes-actions">
+                <button class="trading-places-preview-changes-btn">
                     <i class="fas fa-eye"></i> Preview Changes
                 </button>
-                <button class="save-all-btn">
+                <button class="trading-places-save-all-btn">
                     <i class="fas fa-save"></i> Save All
                 </button>
-                <button class="discard-all-btn">
+                <button class="trading-places-discard-all-btn">
                     <i class="fas fa-times"></i> Discard All
                 </button>
             </div>
         </div>
-        <div class="status-bar">
-            <span class="status-text">Ready</span>
-            <span class="last-saved">Last saved: Never</span>
+        <div class="trading-places-status-bar">
+            <span class="trading-places-status-text">Ready</span>
+            <span class="trading-places-last-saved">Last saved: Never</span>
         </div>
     </div>
 </div>
 
 {{!-- Change Preview Modal --}}
-<div class="change-preview-modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
+<div class="trading-places-change-preview-modal" style="display: none;">
+    <div class="trading-places-modal-content">
+        <div class="trading-places-modal-header">
             <h3>Preview Changes</h3>
-            <button class="modal-close">
+            <button class="trading-places-modal-close">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <div class="modal-body">
-            <div class="diff-container">
-                <div class="diff-header">
-                    <div class="diff-legend">
-                        <span class="diff-added">+ Added</span>
-                        <span class="diff-removed">- Removed</span>
-                        <span class="diff-modified">~ Modified</span>
+        <div class="trading-places-modal-body">
+            <div class="trading-places-diff-container">
+                <div class="trading-places-diff-header">
+                    <div class="trading-places-diff-legend">
+                        <span class="trading-places-diff-added">+ Added</span>
+                        <span class="trading-places-diff-removed">- Removed</span>
+                        <span class="trading-places-diff-modified">~ Modified</span>
                     </div>
                 </div>
-                <div class="diff-content">
+                <div class="trading-places-diff-content">
                     <!-- Diff content will be populated by JavaScript -->
                 </div>
             </div>
         </div>
-        <div class="modal-footer">
-            <button class="cancel-btn">Cancel</button>
-            <button class="confirm-save-btn">
+        <div class="trading-places-modal-footer">
+            <button class="trading-places-cancel-btn">Cancel</button>
+            <button class="trading-places-confirm-save-btn">
                 <i class="fas fa-save"></i> Confirm Save
             </button>
         </div>

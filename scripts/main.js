@@ -1484,9 +1484,9 @@ window.TradingPlaces = {
         const cargoContent = document.querySelector('#cargo-tab');
         
         if (cargoTab && cargoContent) {
-            // Remove active from all tabs
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            // Remove active from all tabs - COMMENTED OUT TO FIX CHAT ISSUE
+            // document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            // document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             
             // Activate cargo tab
             cargoTab.classList.add('active');

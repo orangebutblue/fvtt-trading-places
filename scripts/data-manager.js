@@ -575,9 +575,13 @@ class DataManager {
 
         // Validate basePrice (new format)
         if (cargo.hasOwnProperty('basePrice')) {
-            if (typeof cargo.basePrice !== 'number' || cargo.basePrice <= 0) {
+            if (typeof cargo.basePrice !== 'number') {
                 result.valid = false;
-                result.errors.push('BasePrice must be a positive number');
+                result.errors.push('BasePrice must be a number');
+            } else if (cargo.basePrice <= 0 && !cargo.qualitySystem) {
+                // Allow zero basePrice for cargo with quality systems (e.g., wines, brandies)
+                result.valid = false;
+                result.errors.push('BasePrice must be a positive number (or use a quality system)');
             }
         }
 
