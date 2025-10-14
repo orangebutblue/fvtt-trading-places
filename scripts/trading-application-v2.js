@@ -140,6 +140,21 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         // Initialize settlement selector component if available
         if (typeof window.SettlementSelector !== 'undefined') {
             this.settlementSelector = new window.SettlementSelector(this.dataManager, this.debugLogger);
+            
+            // Ensure custom regions are loaded on startup after DOM is ready
+            const waitForElement = () => {
+                const regionSelect = document.querySelector('#region-select');
+                if (regionSelect) {
+                    console.log('REGION DROPDOWN - Found element on startup, refreshing with custom regions');
+                    if (this.settlementSelector) {
+                        this.settlementSelector.populateRegionDropdown();
+                    }
+                } else {
+                    console.log('REGION DROPDOWN - Element not ready yet, retrying in 500ms');
+                    setTimeout(waitForElement, 500);
+                }
+            };
+            setTimeout(waitForElement, 1000);
         } else {
             console.warn('Trading Places | SettlementSelector not available, some features may be limited');
             this.settlementSelector = null;
@@ -760,14 +775,34 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             return;
         }
 
-        try {
-            this.cargoDistributionCharts.updateCharts(this.selectedSettlement, this.currentSeason);
-            this._logDebug('Charts', 'Cargo distribution charts updated', { 
-                settlement: this.selectedSettlement?.name,
-                season: this.currentSeason 
-            });
-        } catch (error) {
-            this._logError('Charts', 'Failed to update cargo distribution charts', { error: error.message });
+        // Only update charts if the containers exist in the DOM
+        if (document.getElementById('buying-cargo-distribution-chart') && 
+            document.getElementById('selling-cargo-distribution-chart')) {
+            try {
+                this.cargoDistributionCharts.updateCharts(this.selectedSettlement, this.currentSeason);
+                this._logDebug('Charts', 'Cargo distribution charts updated', { 
+                    settlement: this.selectedSettlement?.name,
+                    season: this.currentSeason 
+                });
+            } catch (error) {
+                this._logError('Charts', 'Failed to update cargo distribution charts', { error: error.message });
+            }
+        } else {
+            // Retry after a longer delay if containers don't exist yet
+            setTimeout(() => {
+                if (document.getElementById('buying-cargo-distribution-chart') && 
+                    document.getElementById('selling-cargo-distribution-chart')) {
+                    try {
+                        this.cargoDistributionCharts.updateCharts(this.selectedSettlement, this.currentSeason);
+                        this._logDebug('Charts', 'Cargo distribution charts updated (delayed)', { 
+                            settlement: this.selectedSettlement?.name,
+                            season: this.currentSeason 
+                        });
+                    } catch (error) {
+                        this._logError('Charts', 'Failed to update cargo distribution charts (delayed)', { error: error.message });
+                    }
+                }
+            }, 200);
         }
     }
 
@@ -1300,6 +1335,26 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
 
 // Export for global access
 window.TradingPlacesApplication = TradingPlacesApplication;
+
+// Store the current instance globally when created
+TradingPlacesApplication.currentInstance = null;
+
+// Override render to store instance
+const originalRender = TradingPlacesApplication.prototype.render;
+TradingPlacesApplication.prototype.render = function(...args) {
+    TradingPlacesApplication.currentInstance = this;
+    return originalRender.apply(this, args);
+};
+
+// Override close to clear instance
+const originalClose = TradingPlacesApplication.prototype.close;
+TradingPlacesApplication.prototype.close = function(...args) {
+    if (TradingPlacesApplication.currentInstance === this) {
+        TradingPlacesApplication.currentInstance = null;
+    }
+    return originalClose.apply(this, args);
+};
+
 console.log('Trading Places | TradingPlacesApplication class registered globally');
 
 } // End of ApplicationV2 availability check

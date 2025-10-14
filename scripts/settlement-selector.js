@@ -133,22 +133,15 @@ class SettlementSelector {
      * @returns {Array} - Array of unique region names
      */
     getAllRegions() {
-        if (!this.dataManager.settlements || !Array.isArray(this.dataManager.settlements) || this.dataManager.settlements.length === 0) {
-            this.logger.logSystem('Settlement Selector', 'No settlement data available', {
-                settlementsType: typeof this.dataManager.settlements,
-                settlementsLength: this.dataManager.settlements?.length
-            });
+        // USE getAllSettlements() METHOD to get ALL settlements including custom ones
+        const settlements = this.dataManager.getAllSettlements();
+        
+        if (!settlements || !Array.isArray(settlements) || settlements.length === 0) {
             return [];
         }
 
-        const regions = [...new Set(this.dataManager.settlements.map(settlement => settlement.region))];
+        const regions = [...new Set(settlements.map(settlement => settlement.region))];
         regions.sort();
-
-        this.logger.logSystem('Settlement Selector', 'Extracted regions from settlement data', {
-            totalSettlements: this.dataManager.settlements.length,
-            uniqueRegions: regions.length,
-            regions: regions
-        });
 
         return regions;
     }
@@ -157,11 +150,23 @@ class SettlementSelector {
      * Populate the region dropdown with available regions
      */
     populateRegionDropdown() {
+        console.log('populateRegionDropdown() called');
+        
+        // If regionDropdown is not set, try to find it directly in the document
         if (!this.regionDropdown) {
+            console.log('populateRegionDropdown() - regionDropdown not set, searching document...');
+            this.regionDropdown = document.querySelector('#region-select');
+        }
+        
+        if (!this.regionDropdown) {
+            console.log('populateRegionDropdown() - NO REGION DROPDOWN ELEMENT FOUND!');
             this.logger.logSystem('Settlement Selector', 'Cannot populate region dropdown - element not found', {});
             return;
         }
+        
+        console.log('populateRegionDropdown() - found region dropdown, proceeding...');
 
+        console.log('populateRegionDropdown() - calling getAllRegions()');
         const regions = this.getAllRegions();
         
         // Clear existing options except the first one
@@ -179,6 +184,34 @@ class SettlementSelector {
             regionsAdded: regions.length,
             regions: regions
         });
+    }
+
+    /**
+     * Refresh the region dropdown - useful when new regions are added
+     */
+    refreshRegions() {
+        console.log('refreshRegions() called');
+        console.log('this.regionDropdown exists:', !!this.regionDropdown);
+        console.log('this.container exists:', !!this.container);
+        
+        // If regionDropdown doesn't exist, try to find it again
+        if (!this.regionDropdown && this.container) {
+            console.log('Trying to re-find region dropdown...');
+            this.regionDropdown = this.container.querySelector('#region-select');
+            console.log('Re-found region dropdown:', !!this.regionDropdown);
+        }
+        
+        this.populateRegionDropdown();
+        // Reset settlement dropdown when regions change
+        if (this.settlementDropdown) {
+            this.settlementDropdown.innerHTML = '<option value="">Select a settlement...</option>';
+            this.settlementDropdown.disabled = true;
+        }
+        // Clear settlement details
+        if (this.settlementDetails) {
+            this.settlementDetails.innerHTML = '';
+        }
+        this.logger.logSystem('Settlement Selector', 'Refreshed regions after data change');
     }
 
     /**

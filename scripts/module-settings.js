@@ -45,6 +45,26 @@ export class TradingPlacesSettings {
             default: ''
         });
 
+        // Custom settlements
+        game.settings.register(this.MODULE_ID, 'customSettlements', {
+            name: 'Custom Settlements',
+            hint: 'User-created settlements from data management',
+            type: Array,
+            default: [],
+            scope: 'world',
+            config: false
+        });
+
+        // Custom cargo types
+        game.settings.register(this.MODULE_ID, 'customCargoTypes', {
+            name: 'Custom Cargo Types',
+            hint: 'User-created cargo types from data management',
+            type: Array,
+            default: [],
+            scope: 'world',
+            config: false
+        });
+
         console.log('Trading Places | Settings registered');
     }
 

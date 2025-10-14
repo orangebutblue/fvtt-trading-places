@@ -8,7 +8,51 @@ console.log('Trading Places | Loading data-management-ui.js');
 /**
  * Data Management Application class
  */
-class DataManagementApp extends foundry.applications.api.ApplicationV2 {
+class DataManagementApp extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+    
+    async _renderHTML(context, options) {
+        console.log('DataManagementApp: _renderHTML called with context:', context);
+        console.log('Template path:', this.options.template);
+        
+        try {
+            // Try the HandlebarsApplicationMixin first
+            let result = await super._renderHTML(context, options);
+            console.log('Super._renderHTML returned:', typeof result, result);
+            
+            // If it returns an empty object, render manually
+            if (typeof result === 'object' && Object.keys(result).length === 0) {
+                console.log('Super._renderHTML returned empty object, rendering manually...');
+                
+                // Load and render template manually using the correct namespaced function
+                const template = await foundry.applications.handlebars.getTemplate(this.options.template);
+                result = template(context);
+                console.log('Manual template rendering result:', typeof result, result.substring(0, 200));
+            }
+            
+            return result;
+        } catch (error) {
+            console.error('Template rendering failed:', error);
+            throw error;
+        }
+    }
+    
+    async _replaceHTML(element, content, options) {
+        try {
+            const result = await super._replaceHTML(element, content, options);
+            return result;
+        } catch (error) {
+            // The parameters are swapped: element=HTML string, content=DOM element
+            if (typeof element === 'string' && content && content.innerHTML !== undefined) {
+                content.innerHTML = element;
+                // Manually attach event listeners instead of using the mixin
+                this._attachDataManagementListeners(content);
+                return content;
+            }
+            
+            throw error;
+        }
+    }
+    
     constructor(dataManager, options = {}) {
         super(options);
         this.dataManager = dataManager;
@@ -19,7 +63,7 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
     }
 
     static get DEFAULT_OPTIONS() {
-        return foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
+        const options = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
             id: 'trading-data-management',
             title: 'Trading Data Management',
             template: 'modules/trading-places/templates/data-management.hbs',
@@ -27,39 +71,128 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
             width: 1200,
             height: 800,
             resizable: true,
+            position: {
+                width: 1200,
+                height: 800
+            },
             tabs: [
-                { navSelector: '.trading-places-nav-tabs', contentSelector: '.data-management-content', initial: 'settlements' }
+                { navSelector: '.trading-places-nav-tabs', contentSelector: '.trading-places-data-management-content', initial: 'settlements' }
             ]
         });
+        console.log('DataManagementApp DEFAULT_OPTIONS:', options);
+        return options;
     }
 
     async _prepareContext(options) {
-        // Load all required data
-        await this.dataManager.loadTradingConfig();
-        await this.dataManager.loadSourceFlags();
+        console.log('DataManagementApp: _prepareContext called');
+        try {
+            console.log('DataManager state:', {
+                hasSettlements: !!this.dataManager.settlements,
+                settlementsLength: this.dataManager.settlements?.length || 0,
+                hasCargoTypes: !!this.dataManager.cargoTypes,
+                cargoTypesLength: this.dataManager.cargoTypes?.length || 0
+            });
 
-        const settlements = this.dataManager.getAllSettlements();
-        const cargoTypes = this.dataManager.getCargoTypes();
-        const sourceFlags = this.dataManager.sourceFlags || {};
+            // Ensure the DataManager has loaded the active dataset
+            if (!this.dataManager.settlements || this.dataManager.settlements.length === 0) {
+                console.log('Loading active dataset for data management...');
+                await this.dataManager.loadActiveDataset();
+            }
+
+            // Load all required data
+            console.log('Loading trading config and source flags...');
+            await this.dataManager.loadTradingConfig();
+            await this.dataManager.loadSourceFlags();
+
+            const settlements = this.dataManager.getAllSettlements();
+            const cargoTypes = this.dataManager.getCargoTypes();
+            const sourceFlags = this.dataManager.sourceFlags || {};
+            
+            console.log('Data loaded:', {
+                settlements: settlements.length,
+                cargoTypes: cargoTypes.length,
+                sourceFlags: Object.keys(sourceFlags).length
+            });
+            
+            // Extract unique regions and categories
+            const regions = [...new Set(settlements.map(s => s.region))].sort();
+            const cargoCategories = [...new Set(cargoTypes.map(c => c.category).filter(Boolean))].sort();
+
+            console.log(`Data Management UI: Loaded ${settlements.length} settlements, ${cargoTypes.length} cargo types`);
+
+            const context = {
+                settlements,
+                cargoTypes,
+                availableFlags: sourceFlags,
+                regions,
+                cargoCategories,
+                currentTab: this.currentTab,
+                hasChanges: this.changes.size > 0,
+                changesCount: this.changes.size
+            };
+            
+            console.log('Final context:', context);
+            return context;
+        } catch (error) {
+            console.error('Failed to prepare data management context:', error);
+            ui.notifications.error(`Failed to load data: ${error.message}`);
+            return {
+                settlements: [],
+                cargoTypes: [],
+                availableFlags: {},
+                regions: [],
+                cargoCategories: [],
+                currentTab: this.currentTab,
+                hasChanges: false,
+                changesCount: 0,
+                error: error.message
+            };
+        }
+    }
+
+    _attachDataManagementListeners(element) {
+        console.log('Attaching data management event listeners...');
         
-        // Extract unique regions and categories
-        const regions = [...new Set(settlements.map(s => s.region))].sort();
-        const cargoCategories = [...new Set(cargoTypes.map(c => c.category).filter(Boolean))].sort();
-
-        return {
-            settlements,
-            cargoTypes,
-            availableFlags: sourceFlags,
-            regions,
-            cargoCategories,
-            currentTab: this.currentTab,
-            hasChanges: this.changes.size > 0,
-            changesCount: this.changes.size
-        };
+        // Attach tab navigation listeners
+        const navTabs = element.querySelectorAll('.trading-places-nav-tab');
+        navTabs.forEach(tab => {
+            tab.addEventListener('click', (event) => {
+                event.preventDefault();
+                const tabId = tab.dataset.tab;
+                this._switchTab(tabId);
+            });
+        });
+        
+        // Attach settlement list item listeners
+        const settlementItems = element.querySelectorAll('.trading-places-settlement-item');
+        settlementItems.forEach(item => {
+            item.addEventListener('click', (event) => {
+                event.preventDefault();
+                const settlementName = item.dataset.settlement;
+                this._selectSettlement(settlementName);
+            });
+        });
+        
+        // Attach cargo list item listeners  
+        const cargoItems = element.querySelectorAll('.trading-places-cargo-item');
+        cargoItems.forEach(item => {
+            item.addEventListener('click', (event) => {
+                event.preventDefault();
+                const cargoName = item.dataset.cargo;
+                this._selectCargoType(cargoName);
+            });
+        });
+        
+        console.log('Event listeners attached successfully');
     }
 
     _attachPartListeners(partId, htmlElement, options) {
-        super._attachPartListeners(partId, htmlElement, options);
+        try {
+            super._attachPartListeners(partId, htmlElement, options);
+        } catch (error) {
+            console.log('Super._attachPartListeners failed, using manual attachment:', error);
+            this._attachDataManagementListeners(htmlElement);
+        }
 
         if (partId === 'content') {
             // Tab navigation
@@ -206,7 +339,7 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
     }
 
     _selectSettlement(name) {
-        const settlement = this.dataManager.getSettlements().find(s => s.name === name);
+        const settlement = this.dataManager.getAllSettlements().find(s => s.name === name);
         if (!settlement) return;
 
         this.selectedItem = settlement;
@@ -722,6 +855,79 @@ class DataManagementApp extends foundry.applications.api.ApplicationV2 {
                 }
             }
         });
+    }
+
+    // Tab switching functionality
+    _switchTab(tabId) {
+        console.log('Switching to tab:', tabId);
+        this.currentTab = tabId;
+        
+        // Update tab navigation
+        const allTabs = this.element.querySelectorAll('.trading-places-nav-tab');
+        const allTabContents = this.element.querySelectorAll('.trading-places-tab-content');
+        
+        allTabs.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabId);
+        });
+        
+        allTabContents.forEach(content => {
+            content.classList.toggle('active', content.id === `${tabId}-tab`);
+        });
+        
+        console.log(`Switched to ${tabId} tab`);
+    }
+
+    // Missing event handler methods that are referenced in the template
+
+    _onSearch(event) {
+        // TODO: Implement search functionality
+        console.log('Search functionality not yet implemented');
+    }
+
+    _onFilter(event) {
+        // TODO: Implement filter functionality
+        console.log('Filter functionality not yet implemented');
+    }
+
+    _onPreviewChanges(event) {
+        // TODO: Implement preview changes functionality
+        console.log('Preview changes functionality not yet implemented');
+    }
+
+    _onSaveAll(event) {
+        // TODO: Implement save all functionality
+        console.log('Save all functionality not yet implemented');
+    }
+
+    _onDiscardAll(event) {
+        // TODO: Implement discard all functionality
+        console.log('Discard all functionality not yet implemented');
+    }
+
+    _onExportData(event) {
+        // TODO: Implement export data functionality
+        console.log('Export data functionality not yet implemented');
+    }
+
+    _onImportData(event) {
+        // TODO: Implement import data functionality
+        console.log('Import data functionality not yet implemented');
+    }
+
+    _onRefreshData(event) {
+        // TODO: Implement refresh data functionality
+        console.log('Refresh data functionality not yet implemented');
+        this.render();
+    }
+
+    _onCloseModal(event) {
+        // TODO: Implement close modal functionality
+        console.log('Close modal functionality not yet implemented');
+    }
+
+    _onConfirmSave(event) {
+        // TODO: Implement confirm save functionality
+        console.log('Confirm save functionality not yet implemented');
     }
 }
 

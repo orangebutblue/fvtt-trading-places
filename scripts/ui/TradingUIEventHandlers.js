@@ -2082,17 +2082,14 @@ export class TradingUIEventHandlers {
         event.preventDefault();
 
         try {
-            // Check if DataManagementApp is available on window
-            if (!window.TradingPlacesDataManagementApp) {
-                console.error('DataManagementApp not found on window');
-                throw new Error('DataManagementApp not loaded');
+            // Use the new ApplicationV2 data management
+            if (window.DataManagementV2) {
+                const app = new window.DataManagementV2(this.app.dataManager);
+                await app.render(true);
+                this._logDebug('Data Management', 'Opened ApplicationV2 data management UI');
+            } else {
+                throw new Error('DataManagementV2 not loaded');
             }
-
-            // Create and render the data management app with the dataManager
-            const app = new window.TradingPlacesDataManagementApp(this.app.dataManager);
-            await app.render(true);
-
-            this._logDebug('Data Management', 'Opened data management UI');
         } catch (error) {
             console.error('Failed to open data management UI:', error);
             this._logError('Data Management', 'Failed to open data management UI', error);

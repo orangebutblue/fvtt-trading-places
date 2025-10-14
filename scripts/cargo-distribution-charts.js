@@ -195,6 +195,11 @@ class CargoDistributionCharts {
         const legendContainer = document.getElementById(legendId);
         
         if (!canvas || !legendContainer) {
+            // Check if we're being called too early - retry after a short delay
+            if (document.readyState === 'loading') {
+                setTimeout(() => this.renderPieChart(canvasId, legendId, distributionData, title), 100);
+                return;
+            }
             console.warn(`Trading Places | Chart containers not found: ${canvasId}, ${legendId}`);
             return;
         }
@@ -314,6 +319,14 @@ class CargoDistributionCharts {
      * @param {string} season - Current season
      */
     updateCharts(settlement, season = 'spring') {
+        // Wait for next tick to ensure DOM is fully rendered
+        setTimeout(() => {
+            this._doUpdateCharts(settlement, season);
+        }, 50);
+    }
+
+    _doUpdateCharts(settlement, season = 'spring') {
+        
         if (!settlement) {
             // Clear charts if no settlement
             this.renderPieChart('buying-cargo-distribution-chart', 'buying-chart-legend', { entries: [] });

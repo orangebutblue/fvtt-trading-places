@@ -52,6 +52,8 @@
     "scripts/flow/SellingFlow.js",
     "scripts/trading-application-v2.js",
     "scripts/data-management-ui.js",
+    "scripts/simple-data-management.js",
+    "scripts/data-management-v2.js",
     "scripts/trading-dialog.js",
     "scripts/proper-scene-controls.js",
     "scripts/main.js"

@@ -1,6 +1,6 @@
 /* Data Management UI Styles */
 
-.data-management-dialog {
+.trading-places-data-management-dialog {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -10,7 +10,7 @@
 }
 
 /* Header */
-.data-management-header {
+.trading-places-data-management-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -19,18 +19,18 @@
     border-bottom: 1px solid var(--color-border-dark);
 }
 
-.data-management-header h2 {
+.trading-places-data-management-header h2 {
     margin: 0;
     font-size: 1.2em;
     color: var(--color-text-dark-primary);
 }
 
-.data-management-dialog .header-actions {
+.trading-places-data-management-dialog .trading-places-header-actions {
     display: flex;
     gap: 8px;
 }
 
-.data-management-dialog .header-actions button {
+.trading-places-data-management-dialog .trading-places-header-actions button {
     padding: 6px 12px;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
@@ -39,13 +39,13 @@
     transition: all 0.2s;
 }
 
-.data-management-dialog .header-actions button:hover {
+.trading-places-data-management-dialog .trading-places-header-actions button:hover {
     background: var(--color-bg-option);
     border-color: var(--color-border-highlight);
 }
 
 /* Navigation */
-.data-management-nav {
+.trading-places-data-management-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -54,12 +54,12 @@
     border-bottom: 1px solid var(--color-border);
 }
 
-.data-management-dialog .nav-tabs {
+.trading-places-data-management-dialog .trading-places-nav-tabs {
     display: flex;
     gap: 4px;
 }
 
-.data-management-dialog .nav-tab {
+.trading-places-data-management-dialog .trading-places-nav-tab {
     padding: 8px 16px;
     background: transparent;
     border: 1px solid transparent;
@@ -69,24 +69,24 @@
     color: var(--color-text-dark-secondary);
 }
 
-.data-management-dialog .nav-tab:hover {
+.trading-places-data-management-dialog .trading-places-nav-tab:hover {
     background: var(--color-bg-option);
     color: var(--color-text-dark-primary);
 }
 
-.data-management-dialog .nav-tab.active {
+.trading-places-data-management-dialog .trading-places-nav-tab.active {
     background: var(--color-bg-alt);
     border-color: var(--color-border);
     border-bottom-color: var(--color-bg-alt);
     color: var(--color-text-dark-primary);
 }
 
-.data-management-dialog .nav-actions {
+.trading-places-data-management-dialog .trading-places-nav-actions {
     display: flex;
     gap: 8px;
 }
 
-.data-management-dialog .nav-actions button {
+.trading-places-data-management-dialog .trading-places-nav-actions button {
     padding: 6px 12px;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
@@ -106,44 +106,52 @@
 }
 
 /* Content Layout */
-.data-management-content {
+.trading-places-data-management-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: auto;
+    max-height: calc(100vh - 200px);
 }
 
-.data-management-dialog .tab-content {
+.data-management-dialog .tab-content,
+.trading-places-data-management-dialog .trading-places-tab-content {
     display: none;
     flex: 1;
-    overflow: hidden;
+    overflow: auto;
 }
 
-.data-management-dialog .tab-content.active {
+.data-management-dialog .tab-content.active,
+.trading-places-data-management-dialog .trading-places-tab-content.active {
     display: flex;
     flex-direction: column;
 }
 
-.data-management-dialog .content-layout {
+.data-management-dialog .content-layout,
+.trading-places-data-management-dialog .trading-places-content-layout {
     display: flex;
     flex: 1;
     overflow: hidden;
 }
 
 /* List Panel */
-.data-management-dialog .list-panel {
+.data-management-dialog .list-panel,
+.trading-places-data-management-dialog .trading-places-list-panel {
     width: 350px;
     min-width: 300px;
     border-right: 1px solid var(--color-border);
     display: flex;
     flex-direction: column;
     background: var(--color-bg);
+    overflow: hidden;
 }
 
-.data-management-dialog .list-header {
+.data-management-dialog .list-header,
+.trading-places-data-management-dialog .trading-places-list-header {
     padding: 12px;
     border-bottom: 1px solid var(--color-border);
     background: var(--color-bg-alt);
+    flex-shrink: 0;
 }
 
 .data-management-dialog .search-container {
@@ -175,7 +183,8 @@
     background: var(--color-bg);
 }
 
-.data-management-dialog .list-body {
+.data-management-dialog .list-body,
+.trading-places-data-management-dialog .trading-places-list-body {
     flex: 1;
     overflow-y: auto;
     padding: 8px;

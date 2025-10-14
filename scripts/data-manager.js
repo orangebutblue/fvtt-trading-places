@@ -975,6 +975,153 @@ class DataManager {
         return [1, 2, 3, 4, 5];
     }
 
+    /**
+     * Validate cargo type data structure
+     * @param {Object} cargoType - Cargo type object to validate
+     * @returns {Object} - Validation result with success flag and errors
+     */
+    validateCargoType(cargoType) {
+        return this.validateCargo(cargoType);
+    }
+
+    /**
+     * Update settlement data (placeholder - would typically save to file system)
+     * @param {Object} settlement - Settlement object to update
+     * @returns {Promise<boolean>} - Success flag
+     */
+    async updateSettlement(settlement) {
+        try {
+            const validation = this.validateSettlement(settlement);
+            if (!validation.valid) {
+                throw new Error(`Settlement validation failed: ${validation.errors.join(', ')}`);
+            }
+
+            // Find and update in memory
+            const index = this.settlements.findIndex(s => s.name === settlement.name);
+            if (index >= 0) {
+                this.settlements[index] = foundry.utils.deepClone(settlement);
+            } else {
+                // Add new settlement
+                this.settlements.push(foundry.utils.deepClone(settlement));
+            }
+
+            console.log(`Settlement '${settlement.name}' updated successfully`);
+            
+            // Auto-refresh region dropdown if trading interface is open
+            setTimeout(() => {
+                const regionSelect = document.querySelector('#region-select');
+                if (regionSelect) {
+                    console.log('REGION DROPDOWN - Auto-refreshing after settlement update');
+                    const settlements = this.getAllSettlements();
+                    const regions = [...new Set(settlements.map(s => s.region))].sort();
+                    regionSelect.innerHTML = '<option value="">Select a region...</option>';
+                    regions.forEach(region => {
+                        const option = document.createElement('option');
+                        option.value = region;
+                        option.textContent = region;
+                        regionSelect.appendChild(option);
+                    });
+                    console.log('REGION DROPDOWN - Auto-refreshed with regions:', regions);
+                }
+            }, 100);
+            
+            return true;
+        } catch (error) {
+            console.error('Failed to update settlement:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update cargo type data (placeholder - would typically save to file system)
+     * @param {Object} cargoType - Cargo type object to update
+     * @returns {Promise<boolean>} - Success flag
+     */
+    async updateCargoType(cargoType) {
+        try {
+            const validation = this.validateCargoType(cargoType);
+            if (!validation.valid) {
+                throw new Error(`Cargo type validation failed: ${validation.errors.join(', ')}`);
+            }
+
+            // Find and update in memory
+            const index = this.cargoTypes.findIndex(c => c.name === cargoType.name);
+            if (index >= 0) {
+                this.cargoTypes[index] = foundry.utils.deepClone(cargoType);
+            } else {
+                // Add new cargo type
+                this.cargoTypes.push(foundry.utils.deepClone(cargoType));
+            }
+
+            console.log(`Cargo type '${cargoType.name}' updated successfully`);
+            return true;
+        } catch (error) {
+            console.error('Failed to update cargo type:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete settlement by name (placeholder - would typically remove from file system)
+     * @param {string} settlementName - Name of settlement to delete
+     * @returns {Promise<boolean>} - Success flag
+     */
+    async deleteSettlement(settlementName) {
+        try {
+            const index = this.settlements.findIndex(s => s.name === settlementName);
+            if (index >= 0) {
+                this.settlements.splice(index, 1);
+                console.log(`Settlement '${settlementName}' deleted successfully`);
+                
+                // Auto-refresh region dropdown if trading interface is open
+                setTimeout(() => {
+                    const regionSelect = document.querySelector('#region-select');
+                    if (regionSelect) {
+                        console.log('REGION DROPDOWN - Auto-refreshing after settlement deletion');
+                        const settlements = this.getAllSettlements();
+                        const regions = [...new Set(settlements.map(s => s.region))].sort();
+                        regionSelect.innerHTML = '<option value="">Select a region...</option>';
+                        regions.forEach(region => {
+                            const option = document.createElement('option');
+                            option.value = region;
+                            option.textContent = region;
+                            regionSelect.appendChild(option);
+                        });
+                        console.log('REGION DROPDOWN - Auto-refreshed after deletion, regions:', regions);
+                    }
+                }, 100);
+                
+                return true;
+            } else {
+                throw new Error(`Settlement '${settlementName}' not found`);
+            }
+        } catch (error) {
+            console.error('Failed to delete settlement:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete cargo type by name (placeholder - would typically remove from file system)
+     * @param {string} cargoTypeName - Name of cargo type to delete
+     * @returns {Promise<boolean>} - Success flag
+     */
+    async deleteCargoType(cargoTypeName) {
+        try {
+            const index = this.cargoTypes.findIndex(c => c.name === cargoTypeName);
+            if (index >= 0) {
+                this.cargoTypes.splice(index, 1);
+                console.log(`Cargo type '${cargoTypeName}' deleted successfully`);
+                return true;
+            } else {
+                throw new Error(`Cargo type '${cargoTypeName}' not found`);
+            }
+        } catch (error) {
+            console.error('Failed to delete cargo type:', error);
+            throw error;
+        }
+    }
+
     async _loadDatasetFromPath(datasetPath) {
         if (typeof fetch === 'undefined') {
             throw new Error('Dataset loading requires FoundryVTT environment with fetch support');
@@ -1047,10 +1194,58 @@ class DataManager {
     async loadActiveDataset() {
         try {
             const datasetPath = await this.ensureDatasetPath();
-            return await this._loadDatasetFromPath(datasetPath);
+            const result = await this._loadDatasetFromPath(datasetPath);
+            
+            // Load custom data from settings
+            await this.loadCustomData();
+            
+            return result;
         } catch (error) {
             console.error('Failed to load active dataset:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Load custom settlements and cargo types from Foundry settings
+     */
+    async loadCustomData() {
+        try {
+            // Load custom settlements
+            const customSettlements = game.settings.get('trading-places', 'customSettlements') || [];
+            if (customSettlements.length > 0) {
+                // Add custom settlements to the existing ones (avoid duplicates)
+                customSettlements.forEach(settlement => {
+                    const existingIndex = this.settlements.findIndex(s => s.name === settlement.name);
+                    if (existingIndex >= 0) {
+                        // Replace existing
+                        this.settlements[existingIndex] = settlement;
+                    } else {
+                        // Add new
+                        this.settlements.push(settlement);
+                    }
+                });
+                console.log(`Trading Places | Loaded ${customSettlements.length} custom settlements`);
+            }
+
+            // Load custom cargo types
+            const customCargoTypes = game.settings.get('trading-places', 'customCargoTypes') || [];
+            if (customCargoTypes.length > 0) {
+                // Add custom cargo types to the existing ones (avoid duplicates)
+                customCargoTypes.forEach(cargo => {
+                    const existingIndex = this.cargoTypes.findIndex(c => c.name === cargo.name);
+                    if (existingIndex >= 0) {
+                        // Replace existing
+                        this.cargoTypes[existingIndex] = cargo;
+                    } else {
+                        // Add new
+                        this.cargoTypes.push(cargo);
+                    }
+                });
+                console.log(`Trading Places | Loaded ${customCargoTypes.length} custom cargo types`);
+            }
+        } catch (error) {
+            console.error('Trading Places | Failed to load custom data:', error);
         }
     }
 
