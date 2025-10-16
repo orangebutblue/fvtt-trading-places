@@ -19,9 +19,10 @@
         "Name": "Dialog Position",
         "Hint": "Remembers the position and size of the trading dialog window."
       },
-      "DebugLogging": {
-        "Name": "Debug Logging",
-        "Hint": "Enable detailed logging for troubleshooting. Only enable if requested by support."
+      "DatasetManagement": {
+        "Name": "Dataset Management",
+        "Label": "Manage Datasets",
+        "Hint": "Create, delete, and manage trading datasets. Requires GM permissions."
       }
     },
     "Seasons": {

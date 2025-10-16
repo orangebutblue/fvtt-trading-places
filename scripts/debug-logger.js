@@ -1,4 +1,11 @@
 /**
+ * Trading Places Module - Debug Logger
+ * Comprehensive logging system for development and troubleshooting
+ */
+
+const MODULE_ID = "fvtt-trading-places";
+
+/**
  * Trading Places Module - Comprehensive Debug Logging System
  * Provides structured logging for all trading operations with consistent format
  */
@@ -24,7 +31,7 @@ class WFRPDebugLogger {
     initializeLogger() {
         // Check if debug logging is enabled in settings
         if (typeof game !== 'undefined' && game.settings) {
-            this.isEnabled = game.settings.get("trading-places", "debugLogging") || false;
+            this.isEnabled = game.settings.get(MODULE_ID, "debugLogging") || false;
         }
         
         console.log(`WFRP Debug Logger initialized - Session: ${this.sessionId} - Enabled: ${this.isEnabled}`);

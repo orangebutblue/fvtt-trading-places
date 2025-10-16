@@ -12,6 +12,7 @@ export class SellingFlow {
     constructor(app) {
         this.app = app;
         this.dataManager = app.dataManager;
+        this.MODULE_ID = "fvtt-trading-places";
     }
 
     _getCurrencyContext() {
@@ -58,7 +59,7 @@ export class SellingFlow {
         }
 
         // Get current cargo
-        const currentCargo = await game.settings.get("trading-places", "currentCargo") || [];
+        const currentCargo = await game.settings.get(this.MODULE_ID, "currentCargo") || [];
         if (!currentCargo.length) {
             ui.notifications.warn('You have no cargo to sell');
             return;
@@ -540,15 +541,15 @@ export class SellingFlow {
             if (priceCanonical !== null) transaction.pricePerEPCanonical = priceCanonical;
             if (totalCanonical !== null) transaction.totalCostCanonical = totalCanonical;
 
-            const transactionHistory = await game.settings.get("trading-places", "transactionHistory") || [];
+            const transactionHistory = await game.settings.get(this.MODULE_ID, "transactionHistory") || [];
             transactionHistory.unshift(transaction);
-            await game.settings.set("trading-places", "transactionHistory", transactionHistory);
+            await game.settings.set(this.MODULE_ID, "transactionHistory", transactionHistory);
             
             // Update app's transaction history to keep UI in sync
             this.app.transactionHistory = transactionHistory;
 
             // Update cargo in settings
-            const currentCargo = await game.settings.get("trading-places", "currentCargo") || [];
+            const currentCargo = await game.settings.get(this.MODULE_ID, "currentCargo") || [];
             const cargoIndex = currentCargo.findIndex(c => c.cargo === offer.cargo.cargo);
             if (cargoIndex !== -1) {
                 if (currentCargo[cargoIndex].quantity <= quantity) {
@@ -556,7 +557,7 @@ export class SellingFlow {
                 } else {
                     currentCargo[cargoIndex].quantity -= quantity;
                 }
-                await game.settings.set("trading-places", "currentCargo", currentCargo);
+                await game.settings.set(this.MODULE_ID, "currentCargo", currentCargo);
                 this.app.currentCargo = currentCargo;
             }
 
@@ -695,12 +696,12 @@ export class SellingFlow {
             });
 
             // Get existing seller data and add/update this entry
-            const allSellerData = await game.settings.get("trading-places", "sellerOffersData") || {};
+            const allSellerData = await game.settings.get(this.MODULE_ID, "sellerOffersData") || {};
             const storageKey = `${this.app.selectedSettlement.name}_${this.app.currentSeason}`;
 
             allSellerData[storageKey] = sellerData;
 
-            await game.settings.set("trading-places", "sellerOffersData", allSellerData);
+            await game.settings.set(this.MODULE_ID, "sellerOffersData", allSellerData);
 
             console.log('🔄 SELLER PERSISTENCE: Seller data saved successfully');
 
@@ -728,7 +729,7 @@ export class SellingFlow {
                 return null;
             }
 
-            const allSellerData = await game.settings.get("trading-places", "sellerOffersData") || {};
+            const allSellerData = await game.settings.get(this.MODULE_ID, "sellerOffersData") || {};
             const storageKey = `${this.app.selectedSettlement.name}_${this.app.currentSeason}`;
 
             console.log('🔄 SELLER PERSISTENCE: Looking for seller data with key:', storageKey);
@@ -786,11 +787,11 @@ export class SellingFlow {
                 return;
             }
 
-            const allSellerData = await game.settings.get("trading-places", "sellerOffersData") || {};
+            const allSellerData = await game.settings.get(this.MODULE_ID, "sellerOffersData") || {};
             const storageKey = `${this.app.selectedSettlement.name}_${this.app.currentSeason}`;
 
             delete allSellerData[storageKey];
-            await game.settings.set("trading-places", "sellerOffersData", allSellerData);
+            await game.settings.set(this.MODULE_ID, "sellerOffersData", allSellerData);
 
             console.log('🔄 SELLER PERSISTENCE: Seller data cleared for', storageKey);
 

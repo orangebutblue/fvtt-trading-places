@@ -3,6 +3,8 @@ console.log('Trading Places | Loading trading-engine.js');
 import { PurchasePriceCalculator } from './purchase-price-calculator.js';
 import { SaleMechanics } from './sale-mechanics.js';
 
+const MODULE_ID = "fvtt-trading-places";
+
 function safeRequire(path) {
     try {
         if (typeof require !== 'undefined') {
@@ -221,10 +223,10 @@ class TradingEngine {
 
             if (!persisted) {
                 if (typeof globalThis !== 'undefined' && globalThis.foundryMock?.setSetting) {
-                    await globalThis.foundryMock.setSetting('trading-places', 'currentSeason', normalizedSeason);
+                    await globalThis.foundryMock.setSetting(MODULE_ID, 'currentSeason', normalizedSeason);
                     persisted = true;
                 } else if (typeof game !== 'undefined' && game.settings && game.settings.set) {
-                    await game.settings.set('trading-places', 'currentSeason', normalizedSeason);
+                    await game.settings.set(MODULE_ID, 'currentSeason', normalizedSeason);
                     persisted = true;
                 }
             }

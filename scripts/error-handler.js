@@ -7,7 +7,7 @@
  * Runtime Error Handler class for managing errors and user feedback
  */
 class RuntimeErrorHandler {
-    constructor(moduleId = "trading-places") {
+    constructor(moduleId = "fvtt-trading-places") {
         this.moduleId = moduleId;
         this.errorLog = [];
         this.debugMode = false;

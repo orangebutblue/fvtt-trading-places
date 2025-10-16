@@ -10,7 +10,7 @@ describe('Complete WFRP Dataset Integration', () => {
     let datasetPath;
     
     beforeAll(() => {
-        datasetPath = path.join(__dirname, '..', 'datasets', 'active');
+        datasetPath = path.join(__dirname, '..', 'datasets', 'wfrp4e');
     });
 
     describe('Regional Settlement Files', () => {

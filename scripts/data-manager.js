@@ -5,6 +5,8 @@
 
 console.log('🔧 Loading data-manager.js...');
 
+const MODULE_ID = "fvtt-trading-places";
+
 let CurrencyUtils = null;
 try {
     CurrencyUtils = require('./currency-utils');
@@ -38,7 +40,7 @@ class DataManager {
         this.config = {};
         this.currentSeason = null;
         this.logger = null; // Will be set by integration
-        this.moduleId = 'trading-places';
+        this.moduleId = MODULE_ID;
         this.activeDatasetName = null;
         this.dataPath = null;
         this.datasetPointer = null;
@@ -1194,6 +1196,18 @@ class DataManager {
     async loadActiveDataset() {
         try {
             const datasetPath = await this.ensureDatasetPath();
+            const datasetName = this.activeDatasetName;
+
+            // Check if this is a user dataset
+            if (typeof game !== 'undefined' && game.settings) {
+                const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+                if (userDatasets.includes(datasetName)) {
+                    // Load user dataset from settings
+                    return await this.loadUserDataset(datasetName);
+                }
+            }
+
+            // Load built-in dataset from files
             const result = await this._loadDatasetFromPath(datasetPath);
             
             // Load custom data from settings
@@ -1212,7 +1226,7 @@ class DataManager {
     async loadCustomData() {
         try {
             // Load custom settlements
-            const customSettlements = game.settings.get('trading-places', 'customSettlements') || [];
+            const customSettlements = game.settings.get(MODULE_ID, 'customSettlements') || [];
             if (customSettlements.length > 0) {
                 // Add custom settlements to the existing ones (avoid duplicates)
                 customSettlements.forEach(settlement => {
@@ -1229,7 +1243,7 @@ class DataManager {
             }
 
             // Load custom cargo types
-            const customCargoTypes = game.settings.get('trading-places', 'customCargoTypes') || [];
+            const customCargoTypes = game.settings.get(MODULE_ID, 'customCargoTypes') || [];
             if (customCargoTypes.length > 0) {
                 // Add custom cargo types to the existing ones (avoid duplicates)
                 customCargoTypes.forEach(cargo => {
@@ -1261,19 +1275,77 @@ class DataManager {
             }
 
             this.activeDatasetName = datasetName;
-            this.dataPath = `modules/${this.moduleId}/datasets/${datasetName}`;
             this.normalizedCurrencyConfig = null;
             this.currencyContextCache = null;
 
-            const dataset = await this._loadDatasetFromPath(this.dataPath);
+            // Check if this is a user dataset
+            if (typeof game !== 'undefined' && game.settings) {
+                const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+                if (userDatasets.includes(datasetName)) {
+                    // Load user dataset from settings
+                    const result = await this.loadUserDataset(datasetName);
+                    
+                    // Persist the active dataset setting
+                    await game.settings.set(this.moduleId, 'activeDataset', datasetName);
+                    return result;
+                }
+            }
+
+            // Load built-in dataset from files
+            this.dataPath = `modules/${this.moduleId}/datasets/${datasetName}`;
+            const result = await this._loadDatasetFromPath(this.dataPath);
 
             if (typeof game !== 'undefined' && game.settings) {
                 await game.settings.set(this.moduleId, 'activeDataset', datasetName);
             }
 
-            return dataset;
+            return result;
         } catch (error) {
             console.error(`Failed to switch to dataset '${datasetName}':`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Load user dataset from Foundry settings
+     * @param {string} datasetName - Name of the user dataset
+     * @returns {Promise<Object>} - Loaded dataset object
+     */
+    async loadUserDataset(datasetName) {
+        try {
+            if (!datasetName) {
+                throw new Error('Dataset name is required');
+            }
+
+            const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+            if (!userDatasets.includes(datasetName)) {
+                throw new Error(`User dataset '${datasetName}' not found`);
+            }
+
+            const datasetKey = `userDataset_${datasetName}`;
+            const datasetData = game.settings.get(MODULE_ID, datasetKey);
+
+            if (!datasetData) {
+                throw new Error(`User dataset '${datasetName}' data not found`);
+            }
+
+            // Validate the dataset structure
+            const validation = this.validateDatasetCompleteness(datasetData);
+            if (!validation.valid) {
+                throw new Error(`User dataset validation failed: ${validation.errors.join(', ')}`);
+            }
+
+            // Load the data into memory
+            this.settlements = datasetData.settlements || [];
+            this.cargoTypes = datasetData.cargoTypes || [];
+            this.config = datasetData.config || {};
+            this.normalizedCurrencyConfig = null;
+            this.currencyContextCache = null;
+
+            console.log(`Loaded user dataset '${datasetName}' with ${this.settlements.length} settlements and ${this.cargoTypes.length} cargo types`);
+            return datasetData;
+        } catch (error) {
+            console.error(`Failed to load user dataset '${datasetName}':`, error);
             throw error;
         }
     }
@@ -1737,7 +1809,7 @@ class DataManager {
     async getCurrentSeason() {
         try {
             if (typeof game !== 'undefined' && game.settings) {
-                const season = await game.settings.get("trading-places", "currentSeason");
+                const season = await game.settings.get(MODULE_ID, "currentSeason");
                 this.currentSeason = season || null;
                 return this.currentSeason;
             } else {
@@ -1768,7 +1840,7 @@ class DataManager {
 
             // Persist to FoundryVTT settings
             if (typeof game !== 'undefined' && game.settings) {
-                await game.settings.set("trading-places", "currentSeason", season);
+                await game.settings.set(MODULE_ID, "currentSeason", season);
             }
 
             // Notify season change
@@ -1793,7 +1865,7 @@ class DataManager {
 
             // Clear from FoundryVTT settings
             if (typeof game !== 'undefined' && game.settings) {
-                await game.settings.set("trading-places", "currentSeason", null);
+                await game.settings.set(MODULE_ID, "currentSeason", null);
             }
 
             // Notify season change
@@ -1824,7 +1896,7 @@ class DataManager {
 
             // Emit custom event for other modules to listen to
             if (typeof Hooks !== 'undefined') {
-                Hooks.callAll("trading-places.seasonChanged", {
+                Hooks.callAll(`${MODULE_ID}.seasonChanged`, {
                     newSeason: newSeason,
                     oldSeason: oldSeason,
                     timestamp: new Date().toISOString()
@@ -2590,7 +2662,7 @@ class DataManager {
             
             // For browser environment (FoundryVTT)
             if (typeof fetch !== 'undefined') {
-                const response = await fetch('modules/trading-places/datasets/active/source-flags.json');
+                const response = await fetch(`modules/${MODULE_ID}/datasets/active/source-flags.json`);
                 if (!response.ok) {
                     throw new Error(`Failed to load source flags: ${response.status}`);
                 }

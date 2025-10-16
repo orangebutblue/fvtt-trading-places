@@ -745,3 +745,82 @@
         align-items: stretch;
     }
 }
+
+/* Removed old dropdown styles - now using tab-specific buttons */
+
+/* Tab-specific action buttons */
+.trading-places-tab-actions {
+    display: flex !important;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.trading-places-tab-actions button {
+    background: #4a90e2 !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 12px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    font-size: 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    transition: background-color 0.2s !important;
+    white-space: nowrap !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.trading-places-tab-actions button:hover {
+    background: #357abd !important;
+}
+
+.trading-places-tab-actions button i {
+    font-size: 11px !important;
+}
+
+/* Update list header to accommodate tab actions */
+.trading-places-list-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
+    padding: 10px 15px !important;
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+.trading-places-list-header h3 {
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+.trading-places-search-container {
+    flex: 1;
+    min-width: 200px;
+}
+
+.trading-places-filter-container {
+    flex-shrink: 0;
+}
+
+/* Mobile adjustments for tab actions */
+@media (max-width: 768px) {
+    .trading-places-list-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .trading-places-tab-actions {
+        margin-left: 0;
+        justify-content: flex-end;
+    }
+    
+    .trading-places-tab-actions button {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+}

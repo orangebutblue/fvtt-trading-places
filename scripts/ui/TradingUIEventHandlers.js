@@ -1,4 +1,3 @@
-
 console.log('Trading Places | Loading TradingUIEventHandlers.js');
 
 import { BuyingFlow } from '../flow/BuyingFlow.js';
@@ -11,6 +10,8 @@ import {
     convertDenominationToCanonical,
     getCurrencyLabel
 } from '../currency-display.js';
+
+const MODULE_ID = "fvtt-trading-places";
 
 export class TradingUIEventHandlers {
     constructor(app) {
@@ -300,12 +301,12 @@ export class TradingUIEventHandlers {
      */
     _attachUnifiedUIListeners(html) {
         // Tab switching functionality
-        const tabs = html.querySelectorAll('.tab');
+        const tabs = html.querySelectorAll('.trading-places-tab');
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 // Remove active class from all tabs and content
-                html.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                html.querySelectorAll('.tab-content').forEach(content => {
+                html.querySelectorAll('.trading-places-tab').forEach(t => t.classList.remove('active'));
+                html.querySelectorAll('.trading-places-tab-content').forEach(content => {
                     content.classList.remove('active');
                     content.style.display = 'none'; // Explicitly hide
                 });
@@ -499,7 +500,7 @@ export class TradingUIEventHandlers {
             await this.sellingFlow._clearSellerOffers();
 
             // Save to Foundry settings for persistence
-            game.settings.set("trading-places", "selectedSettlement", settlement.name);
+            game.settings.set(MODULE_ID, "selectedSettlement", settlement.name);
 
             // Try to load cargo availability for this settlement/season
             await this.app._loadAndRestoreCargoAvailability();
@@ -748,7 +749,7 @@ export class TradingUIEventHandlers {
                 this._updateBuyingCargoCard(cargo, quantity);
                 
                 // Just update the app's cargo data and let it re-render naturally
-                const updatedCargo = await game.settings.get("trading-places", "currentCargo") || [];
+                const updatedCargo = await game.settings.get(MODULE_ID, "currentCargo") || [];
                 this.app.currentCargo = updatedCargo;
 
                 await this.app.refreshUI({ focusTab: 'buying' });
@@ -824,8 +825,8 @@ export class TradingUIEventHandlers {
         this.app.availableCargo = [];
         
         // Save to Foundry settings for persistence
-        game.settings.set("trading-places", "selectedRegion", selectedRegion);
-        game.settings.set("trading-places", "selectedSettlement", null);
+        game.settings.set(MODULE_ID, "selectedRegion", selectedRegion);
+        game.settings.set(MODULE_ID, "selectedSettlement", null);
         
         // Re-render to update the settlement dropdown with filtered settlements
         this.app.render(false);
@@ -959,7 +960,7 @@ export class TradingUIEventHandlers {
             }
             
             // Save to game settings
-            await game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory);
+            await game.settings.set(MODULE_ID, "transactionHistory", this.app.transactionHistory);
             
             // Clear and collapse the form
             this._clearManualTransactionForm();
@@ -1076,7 +1077,7 @@ export class TradingUIEventHandlers {
     async _populateCargoAutocomplete() {
         try {
             // Load cargo types from the JSON file
-            const response = await fetch('/modules/trading-places/datasets/active/cargo-types.json');
+            const response = await fetch(`/modules/${MODULE_ID}/datasets/active/cargo-types.json`);
             if (!response.ok) {
                 throw new Error(`Failed to load cargo types: ${response.status}`);
             }
@@ -1181,7 +1182,7 @@ export class TradingUIEventHandlers {
                 this.app.transactionHistory.splice(transactionIndex, 1);
                 
                 // Save updated transaction history
-                await game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory);
+                await game.settings.set(MODULE_ID, "transactionHistory", this.app.transactionHistory);
                 
                 await this.app.refreshUI({ focusTab: 'history' });
                 
@@ -1217,7 +1218,7 @@ export class TradingUIEventHandlers {
         const newCapacity = parseInt(event.target.value) || 0;
         
         // Save cargo capacity to game settings
-        await game.settings.set("trading-places", "cargoCapacity", newCapacity);
+        await game.settings.set(MODULE_ID, "cargoCapacity", newCapacity);
         
         // Update the capacity display immediately
         await this._updateCapacityDisplayReal();
@@ -1280,14 +1281,14 @@ export class TradingUIEventHandlers {
         console.log('🔄 Switching to selling tab');
         
         // Remove active class from all tabs and content
-        this.app.element.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        this.app.element.querySelectorAll('.tab-content').forEach(content => {
+        this.app.element.querySelectorAll('.trading-places-tab').forEach(t => t.classList.remove('active'));
+        this.app.element.querySelectorAll('.trading-places-tab-content').forEach(content => {
             content.classList.remove('active');
             content.style.display = 'none';
         });
         
         // Add active class to selling tab
-        const sellingTab = this.app.element.querySelector('.tab[data-tab="selling"]');
+        const sellingTab = this.app.element.querySelector('.trading-places-tab[data-tab="selling"]');
         const sellingContent = this.app.element.querySelector('#selling-tab');
         
         if (sellingTab && sellingContent) {
@@ -1339,7 +1340,7 @@ export class TradingUIEventHandlers {
         
         // Remove from inventory
         currentCargo.splice(cargoIndex, 1);
-    await game.settings.set("trading-places", "currentCargo", currentCargo);
+    await game.settings.set(MODULE_ID, "currentCargo", currentCargo);
     this.app.currentCargo = currentCargo;
         this.app.currentCargo = currentCargo;
 
@@ -1411,7 +1412,7 @@ export class TradingUIEventHandlers {
             currentCargo.push(newCargo);
         }
         
-        await game.settings.set("trading-places", "currentCargo", currentCargo);
+        await game.settings.set(MODULE_ID, "currentCargo", currentCargo);
         
         this._logDebug('Cargo Management', 'Cargo added to inventory', {
             cargo: transaction.cargo,
@@ -1446,7 +1447,7 @@ export class TradingUIEventHandlers {
                 cargo.totalCost = cargo.quantity * cargo.pricePerEP; // Recalculate total cost
             }
             
-            await game.settings.set("trading-places", "currentCargo", currentCargo);
+            await game.settings.set(MODULE_ID, "currentCargo", currentCargo);
             this.app.currentCargo = currentCargo;
             
             this._logDebug('Cargo Management', 'Cargo removed from inventory', {
@@ -1463,7 +1464,7 @@ export class TradingUIEventHandlers {
      * @private
      */
     async _getCurrentCargo() {
-        const rawCargo = await game.settings.get("trading-places", "currentCargo") || [];
+        const rawCargo = await game.settings.get(MODULE_ID, "currentCargo") || [];
         console.log('🚛 _getCurrentCargo: Loading cargo', { count: rawCargo.length, firstItem: rawCargo[0] });
         // Normalize cargo with formatted currency fields
         return rawCargo.map(cargo => {
@@ -1542,14 +1543,14 @@ export class TradingUIEventHandlers {
      */
     _switchToCargoTab() {
         // Remove active class from all tabs and content
-        this.app.element.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        this.app.element.querySelectorAll('.tab-content').forEach(content => {
+        this.app.element.querySelectorAll('.trading-places-tab').forEach(t => t.classList.remove('active'));
+        this.app.element.querySelectorAll('.trading-places-tab-content').forEach(content => {
             content.classList.remove('active');
             content.style.display = 'none';
         });
         
         // Activate cargo tab
-        const cargoTab = this.app.element.querySelector('.tab[data-tab="cargo"]');
+        const cargoTab = this.app.element.querySelector('.trading-places-tab[data-tab="cargo"]');
         const cargoContent = this.app.element.querySelector('#cargo-tab');
         
         if (cargoTab && cargoContent) {
@@ -1581,7 +1582,7 @@ export class TradingUIEventHandlers {
 
         const currentCargo = await this._getCurrentCargo();
         currentCargo.push(testCargo);
-        await game.settings.set("trading-places", "currentCargo", currentCargo);
+        await game.settings.set(MODULE_ID, "currentCargo", currentCargo);
         
         ui.notifications.info("Added test cargo: 50 EP of Grain");
         await this.app.refreshUI({ focusTab: 'cargo' });
@@ -1594,7 +1595,7 @@ export class TradingUIEventHandlers {
      * @private
      */
     async _clearAllCargo() {
-        await game.settings.set("trading-places", "currentCargo", []);
+        await game.settings.set(MODULE_ID, "currentCargo", []);
         ui.notifications.info("Cleared all cargo from inventory");
         await this.app.refreshUI({ focusTab: 'cargo' });
         
@@ -1740,7 +1741,7 @@ export class TradingUIEventHandlers {
     async _populateAddCargoAutocomplete() {
         try {
             // Load cargo types from the JSON file
-            const response = await fetch('/modules/trading-places/datasets/active/cargo-types.json');
+            const response = await fetch(`/modules/${MODULE_ID}/datasets/active/cargo-types.json`);
             if (!response.ok) {
                 throw new Error(`Failed to load cargo types: ${response.status}`);
             }
@@ -1819,7 +1820,7 @@ export class TradingUIEventHandlers {
         try {
             // Ensure currentCargo is loaded from settings first
             if (!this.app.currentCargo || !Array.isArray(this.app.currentCargo)) {
-                const savedCargo = await game.settings.get("trading-places", "currentCargo") || [];
+                const savedCargo = await game.settings.get(MODULE_ID, "currentCargo") || [];
                 this.app.currentCargo = savedCargo;
                 this._logDebug('Add Cargo', 'Loaded currentCargo from settings', {
                     cargoCount: savedCargo.length
@@ -1904,8 +1905,8 @@ export class TradingUIEventHandlers {
             this.app.transactionHistory.unshift(transaction);
             
             // Save both cargo and history
-            await game.settings.set("trading-places", "currentCargo", this.app.currentCargo);
-            await game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory);
+            await game.settings.set(MODULE_ID, "currentCargo", this.app.currentCargo);
+            await game.settings.set(MODULE_ID, "transactionHistory", this.app.transactionHistory);
             
             this._logDebug('Add Cargo', 'Saved cargo data', {
                 currentCargoLength: this.app.currentCargo.length,
@@ -2084,7 +2085,14 @@ export class TradingUIEventHandlers {
         try {
             // Use the new ApplicationV2 data management
             if (window.DataManagementV2) {
-                const app = new window.DataManagementV2(this.app.dataManager);
+                // Get dataManager from the global TradingPlaces object instead of this.app.dataManager
+                // to ensure it's available even if the app was initialized before the ready hook
+                const dataManager = window.TradingPlaces?.getDataManager();
+                if (!dataManager) {
+                    throw new Error('DataManager not available - module may not be fully initialized');
+                }
+                
+                const app = new window.DataManagementV2(dataManager);
                 await app.render(true);
                 this._logDebug('Data Management', 'Opened ApplicationV2 data management UI');
             } else {

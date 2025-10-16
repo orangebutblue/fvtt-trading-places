@@ -15,7 +15,7 @@ class ConfigValidator {
             runtime: null
         };
         this.isFoundryEnvironment = typeof game !== 'undefined';
-        this.moduleId = "trading-places";
+        this.moduleId = "fvtt-trading-places";
         this.datasetPointer = null;
         this.datasetPointerPath = `modules/${this.moduleId}/datasets/system-pointer.json`;
     }

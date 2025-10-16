@@ -5,6 +5,8 @@ console.log('Trading Places | Loading fallback-dialogs-v2.js');
  * Simple V2 ApplicationV2 dialogs to replace deprecated V1 Dialog usage
  */
 
+const MODULE_ID = "fvtt-trading-places";
+
 /**
  * Simple fallback dialog for when main trading interface fails
  */
@@ -39,7 +41,7 @@ class WFRPFallbackDialog extends HandlebarsApplication {
 
     static PARTS = {
         content: { 
-            template: "modules/trading-places/templates/fallback-dialog.hbs"
+            template: `modules/${MODULE_ID}/templates/fallback-dialog.hbs`
         }
     };
 
@@ -85,7 +87,7 @@ class WFRPConfigErrorDialog extends HandlebarsApplication {
 
     static PARTS = {
         content: { 
-            template: "modules/trading-places/templates/config-error-dialog.hbs"
+            template: `modules/${MODULE_ID}/templates/config-error-dialog.hbs`
         }
     };
 
@@ -155,7 +157,7 @@ class WFRPSeasonSelectionDialog extends HandlebarsApplication {
 
     static PARTS = {
         content: { 
-            template: "modules/trading-places/templates/season-selection-dialog.hbs"
+            template: `modules/${MODULE_ID}/templates/season-selection-dialog.hbs`
         }
     };
 
@@ -222,7 +224,7 @@ class WFRPTestDialog extends HandlebarsApplication {
 
     static PARTS = {
         content: { 
-            template: "modules/trading-places/templates/trading-test.hbs"
+            template: `modules/${MODULE_ID}/templates/trading-test.hbs`
         }
     };
 

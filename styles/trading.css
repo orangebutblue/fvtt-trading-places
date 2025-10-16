@@ -381,7 +381,7 @@
     border-radius: var(--radius-md);
 }
 
-.trading-places .tab {
+.trading-places .trading-places-tab {
     flex: 1;
     padding: 12px 20px;
     background: transparent;
@@ -397,24 +397,24 @@
     gap: 8px;
 }
 
-.trading-places .tab.active {
+.trading-places .trading-places-tab.active {
     background: var(--accent-primary);
     color: white;
 }
 
-.trading-places .tab:hover:not(.active) {
+.trading-places .trading-places-tab:hover:not(.active) {
     background: var(--bg-accent);
     color: var(--text-primary);
 }
 
 /* Tab Content */
-.trading-places .tab-content {
+.trading-places .trading-places-tab-content {
     display: none;
     flex: 1;
     overflow-y: auto;
 }
 
-.trading-places .tab-content.active {
+.trading-places .trading-places-tab-content.active {
     display: flex;
     flex-direction: column;
 }
@@ -1716,7 +1716,7 @@
         flex-shrink: 0;
     }
     
-    .trading-places .tab-content {
+    .trading-places .trading-places-tab-content {
         padding-top: 20px;
         flex: 1;
     }
@@ -1765,7 +1765,7 @@
     max-height: 100%;
 }
 
-.trading-places .tab-content {
+.trading-places .trading-places-tab-content {
     max-height: 100%;
 }
 

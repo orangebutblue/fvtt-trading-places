@@ -2,6 +2,8 @@
  * Data Management using ApplicationV2 - No more deprecation warnings!
  */
 
+const MODULE_ID = "fvtt-trading-places";
+
 class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
     constructor(dataManager, options = {}) {
         super(options);
@@ -14,10 +16,10 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
 
     static get DEFAULT_OPTIONS() {
         return foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
-            id: 'trading-data-management-v2',
+            id: 'trading-data-management',
             title: 'Trading Data Management',
             tag: 'div',
-            classes: ['trading-places', 'data-management-v2'],
+            classes: ['trading-places', 'data-management'],
             position: {
                 width: 900,
                 height: 700
@@ -77,7 +79,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     height: 100%;
                     font-family: var(--font-primary);
                     background: var(--color-bg);
-                    color: var(--color-text-dark-primary);
+                    color: white;
                 }
                 .trading-places-dm-tabs {
                     display: flex;
@@ -93,17 +95,17 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     background: transparent;
                     font-weight: bold;
                     border-bottom: 2px solid transparent;
-                    color: var(--color-text-dark-secondary);
+                    color: #cccccc;
                     transition: all 0.2s;
                 }
                 .trading-places-dm-tab.active {
                     background: var(--color-bg);
                     border-bottom-color: var(--color-border-highlight);
-                    color: var(--color-text-dark-primary);
+                    color: white;
                 }
                 .trading-places-dm-tab:hover:not(.active) {
                     background: var(--color-bg-option);
-                    color: var(--color-text-dark-primary);
+                    color: white;
                 }
                 .trading-places-dm-content {
                     flex: 1;
@@ -135,7 +137,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     border-radius: 3px;
                     font-size: 14px;
                     background: var(--color-bg);
-                    color: var(--color-text-dark-primary);
+                    color: white;
                 }
                 .trading-places-dm-search input:focus {
                     border-color: var(--color-border-highlight);
@@ -144,7 +146,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                 }
                 .trading-places-dm-add-btn {
                     background: var(--color-bg-option);
-                    color: var(--color-text-dark-primary);
+                    color: white;
                     border: 1px solid var(--color-border);
                     padding: 8px 16px;
                     border-radius: 3px;
@@ -156,6 +158,34 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     background: var(--color-border-highlight);
                     border-color: var(--color-border-highlight);
                     color: white;
+                }
+                .trading-places-dm-import-btn {
+                    background: var(--color-bg);
+                    color: white;
+                    border: 1px solid var(--color-border);
+                    padding: 8px 12px;
+                    border-radius: 3px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.2s;
+                }
+                .trading-places-dm-import-btn:hover {
+                    background: var(--color-bg-option);
+                    border-color: var(--color-border-highlight);
+                }
+                .trading-places-dm-export-btn {
+                    background: var(--color-bg);
+                    color: white;
+                    border: 1px solid var(--color-border);
+                    padding: 8px 12px;
+                    border-radius: 3px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.2s;
+                }
+                .trading-places-dm-export-btn:hover {
+                    background: var(--color-bg-option);
+                    border-color: var(--color-border-highlight);
                 }
                 .trading-places-dm-list {
                     flex: 1;
@@ -173,7 +203,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    color: var(--color-text-dark-primary);
+                    color: white;
                 }
                 .trading-places-dm-region:hover {
                     background: var(--color-bg-option);
@@ -206,12 +236,12 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                 }
                 .trading-places-dm-item-name {
                     font-weight: bold;
-                    color: var(--color-text-dark-primary);
+                    color: white;
                     font-size: 14px;
                 }
                 .trading-places-dm-item-details {
                     font-size: 12px;
-                    color: var(--color-text-dark-secondary);
+                    color: #cccccc;
                     margin-top: 3px;
                 }
                 .trading-places-dm-item-actions {
@@ -226,7 +256,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     border-radius: 3px;
                     font-size: 12px;
                     transition: all 0.2s;
-                    color: var(--color-text-dark-primary);
+                    color: white;
                 }
                 .trading-places-dm-btn:hover {
                     background: var(--color-bg-option);
@@ -243,7 +273,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                 }
                 .trading-places-dm-expand-icon {
                     transition: transform 0.2s;
-                    color: var(--color-text-dark-secondary);
+                    color: #cccccc;
                 }
                 .collapsed .trading-places-dm-expand-icon {
                     transform: rotate(-90deg);
@@ -271,6 +301,8 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     <div class="trading-places-dm-tab-panel active" data-panel="settlements">
                         <div class="trading-places-dm-search">
                             <input type="text" placeholder="Search settlements and regions..." class="trading-places-dm-search-input" data-type="settlements">
+                            <button class="trading-places-dm-export-btn" data-action="export-settlements" title="Export settlements data">Export</button>
+                            <button class="trading-places-dm-import-btn" data-action="import-settlements" title="Import settlements data">Import</button>
                             <button class="trading-places-dm-add-btn" data-action="add-settlement">Add Settlement</button>
                         </div>
                         <div class="trading-places-dm-list" id="settlements-list">
@@ -282,6 +314,8 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     <div class="trading-places-dm-tab-panel" data-panel="cargo">
                         <div class="trading-places-dm-search">
                             <input type="text" placeholder="Search cargo types..." class="trading-places-dm-search-input" data-type="cargo">
+                            <button class="trading-places-dm-export-btn" data-action="export-cargo" title="Export cargo data">Export</button>
+                            <button class="trading-places-dm-import-btn" data-action="import-cargo" title="Import cargo data">Import</button>
                             <button class="trading-places-dm-add-btn" data-action="add-cargo">Add Cargo Type</button>
                         </div>
                         <div class="trading-places-dm-list" id="cargo-list">
@@ -480,6 +514,12 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
             case 'delete-settlement':
                 this._deleteSettlement(name);
                 break;
+            case 'export-settlements':
+                this._exportSettlements();
+                break;
+            case 'import-settlements':
+                this._importSettlements();
+                break;
             case 'add-cargo':
                 this._addCargo();
                 break;
@@ -488,6 +528,12 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                 break;
             case 'delete-cargo':
                 this._deleteCargo(name);
+                break;
+            case 'export-cargo':
+                this._exportCargo();
+                break;
+            case 'import-cargo':
+                this._importCargo();
                 break;
         }
     }
@@ -911,6 +957,141 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
         });
     }
 
+    // Import/Export methods
+    _exportSettlements() {
+        try {
+            const settlements = this.dataManager.getAllSettlements();
+            const dataStr = JSON.stringify(settlements, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'settlements-export.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            ui.notifications.info('Settlements data exported successfully');
+        } catch (error) {
+            ui.notifications.error(`Failed to export settlements: ${error.message}`);
+        }
+    }
+
+    _importSettlements() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Show confirmation dialog
+            foundry.applications.api.DialogV2.confirm({
+                window: { title: "Import Settlements" },
+                content: `<p>This will import settlements from the selected file. Existing settlements with the same name will be updated. Continue?</p>`,
+                yes: async () => {
+                    try {
+                        const text = await file.text();
+                        const settlements = JSON.parse(text);
+                        
+                        if (!Array.isArray(settlements)) {
+                            throw new Error('Invalid settlements data format');
+                        }
+                        
+                        // Validate each settlement has required fields
+                        for (const settlement of settlements) {
+                            if (!settlement.name || !settlement.region) {
+                                throw new Error(`Invalid settlement data: missing name or region for "${settlement.name || 'unknown'}"`);
+                            }
+                        }
+                        
+                        // Import settlements
+                        for (const settlement of settlements) {
+                            await this.dataManager.updateSettlement(settlement);
+                        }
+                        
+                        ui.notifications.info(`Successfully imported ${settlements.length} settlements`);
+                        
+                        // Save data persistently and refresh
+                        await this._saveDataPersistently();
+                        this.render();
+                        
+                    } catch (error) {
+                        ui.notifications.error(`Failed to import settlements: ${error.message}`);
+                    }
+                }
+            });
+        };
+        input.click();
+    }
+
+    _exportCargo() {
+        try {
+            const cargoTypes = this.dataManager.getCargoTypes();
+            const dataStr = JSON.stringify(cargoTypes, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'cargo-types-export.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            ui.notifications.info('Cargo types data exported successfully');
+        } catch (error) {
+            ui.notifications.error(`Failed to export cargo types: ${error.message}`);
+        }
+    }
+
+    _importCargo() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Show confirmation dialog
+            foundry.applications.api.DialogV2.confirm({
+                window: { title: "Import Cargo Types" },
+                content: `<p>This will import cargo types from the selected file. Existing cargo types with the same name will be updated. Continue?</p>`,
+                yes: async () => {
+                    try {
+                        const text = await file.text();
+                        const cargoTypes = JSON.parse(text);
+                        
+                        if (!Array.isArray(cargoTypes)) {
+                            throw new Error('Invalid cargo types data format');
+                        }
+                        
+                        // Validate each cargo type has required fields
+                        for (const cargo of cargoTypes) {
+                            if (!cargo.name) {
+                                throw new Error(`Invalid cargo data: missing name for "${cargo.name || 'unknown'}"`);
+                            }
+                        }
+                        
+                        // Import cargo types
+                        for (const cargo of cargoTypes) {
+                            await this.dataManager.updateCargoType(cargo);
+                        }
+                        
+                        ui.notifications.info(`Successfully imported ${cargoTypes.length} cargo types`);
+                        
+                        // Save data persistently and refresh
+                        await this._saveDataPersistently();
+                        this.render();
+                        
+                    } catch (error) {
+                        ui.notifications.error(`Failed to import cargo types: ${error.message}`);
+                    }
+                }
+            });
+        };
+        input.click();
+    }
+
     /**
      * Save data persistently to Foundry settings
      */
@@ -918,11 +1099,11 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
         try {
             // Save settlements
             const settlements = this.dataManager.getAllSettlements();
-            await game.settings.set('trading-places', 'customSettlements', settlements);
+            await game.settings.set(MODULE_ID, 'customSettlements', settlements);
             
             // Save cargo types
             const cargoTypes = this.dataManager.getCargoTypes();
-            await game.settings.set('trading-places', 'customCargoTypes', cargoTypes);
+            await game.settings.set(MODULE_ID, 'customCargoTypes', cargoTypes);
             
             console.log('Trading Places | Data saved persistently');
         } catch (error) {

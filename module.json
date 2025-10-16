@@ -1,17 +1,19 @@
 {
-  "id": "trading-places",
+  "id": "fvtt-trading-places",
   "title": "Trading Places",
   "description": "Trading Module",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "compatibility": {
-    "minimum": "13",
+    "minimum": "12",
     "verified": "13",
     "maximum": "13"
   },
   "authors": [
     {
       "name": "Orangebutblue",
-      "discord": "tundra00001"
+      "url": "https://github.com/orangebutblue",
+      "email": "orangebutblue@protonmail.com",
+      "discord": "tundra0001"
     }
   ],
   "esmodules": [
@@ -51,9 +53,7 @@
     "scripts/flow/BuyingFlow.js",
     "scripts/flow/SellingFlow.js",
     "scripts/trading-application-v2.js",
-    "scripts/data-management-ui.js",
-    "scripts/simple-data-management.js",
-    "scripts/data-management-v2.js",
+    "scripts/data-management.js",
     "scripts/trading-dialog.js",
     "scripts/proper-scene-controls.js",
     "scripts/main.js"
@@ -73,7 +73,7 @@
   ],
   "url": "https://github.com/orangebutblue/trading-places",
   "manifest": "https://raw.githubusercontent.com/orangebutblue/trading-places/refs/heads/main/module.json",
-  "download": "https://github.com/orangebutblue/trading-places/archive/refs/tags/release.zip",
+  "download": "https://github.com/orangebutblue/fvtt-profoundry/releases/latest/download/module.zip",
   "license": "LICENSE",
   "readme": "README.md",
   "bugs": "https://github.com/orangebutblue/trading-places/issues",

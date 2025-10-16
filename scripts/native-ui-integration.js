@@ -5,6 +5,8 @@
 
 console.log('Trading Places | Loading native-ui-integration.js');
 
+const MODULE_ID = "fvtt-trading-places";
+
 /**
  * Native UI Integration class for FoundryVTT integration
  */
@@ -115,7 +117,7 @@ class WFRPNativeUIIntegration {
      * Get current trading season
      */
     getCurrentSeason() {
-        return game.settings.get('trading-places', 'currentSeason');
+        return game.settings.get(MODULE_ID, 'currentSeason');
     }
 
     /**
@@ -127,7 +129,7 @@ class WFRPNativeUIIntegration {
             throw new Error(`Invalid season: ${season}`);
         }
 
-        await game.settings.set('trading-places', 'currentSeason', season);
+        await game.settings.set(MODULE_ID, 'currentSeason', season);
         ui.notifications.info(`Trading season changed to ${season}`);
         this.log(`Season changed to ${season}`, null);
     }

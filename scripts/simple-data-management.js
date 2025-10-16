@@ -122,7 +122,7 @@ class SimpleDataManagement {
                     $(this).addClass('active');
                     
                     // Show/hide content
-                    html.find('.tab-content').hide();
+                    html.find('.trading-places-tab-content').hide();
                     html.find(`#${tabId}-content`).show();
                 });
                 

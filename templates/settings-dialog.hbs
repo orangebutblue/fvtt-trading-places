@@ -44,6 +44,33 @@
                 <p>Trading Places provides a comprehensive trading system for WFRP4e with dynamic markets and merchant generation.</p>
                 <p>Settings are kept minimal by design. Most configuration is handled automatically based on the game world and system.</p>
             </div>
+
+            {{#if isGM}}
+            <div class="settings-section">
+                <h3><i class="fas fa-database"></i> Active Dataset</h3>
+                <div class="setting-row">
+                    <label for="activeDataset">
+                        <strong>Active Dataset</strong>
+                        <span class="hint">Select which dataset to use for trading data</span>
+                    </label>
+                    <select name="activeDataset" id="activeDataset">
+                        {{#each settings.general.availableDatasets}}
+                        <option value="{{@key}}" {{#eq ../settings.general.activeDataset @key}}selected{{/eq}}>{{this}}</option>
+                        {{/each}}
+                    </select>
+                </div>
+                <div class="dataset-management">
+                    <button type="button" class="create-dataset-btn">
+                        <i class="fas fa-plus"></i>
+                        Create New Dataset
+                    </button>
+                    <button type="button" class="delete-dataset-btn">
+                        <i class="fas fa-trash"></i>
+                        Delete Dataset
+                    </button>
+                </div>
+            </div>
+            {{/if}}
         </div>
 
         <!-- Trading Tab -->

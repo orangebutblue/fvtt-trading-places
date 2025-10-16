@@ -3,6 +3,8 @@
  * Handles window positioning, resizing, and state persistence
  */
 
+const MODULE_ID = "fvtt-trading-places";
+
 const WindowManagementMixin = {
     /**
      * Initialize window management features
@@ -26,7 +28,7 @@ const WindowManagementMixin = {
      */
     async _loadWindowState() {
         try {
-            const savedState = await game.settings.get("trading-places", "windowState");
+            const savedState = await game.settings.get(MODULE_ID, "windowState");
 
             if (savedState && typeof savedState === 'object') {
                 this._logDebug('Window Management', 'Loading saved window state', savedState);
@@ -121,7 +123,7 @@ const WindowManagementMixin = {
                 timestamp: Date.now()
             };
 
-            await game.settings.set("trading-places", "windowState", windowState);
+            await game.settings.set(MODULE_ID, "windowState", windowState);
 
             this._logDebug('Window Management', 'Window state saved', windowState);
 

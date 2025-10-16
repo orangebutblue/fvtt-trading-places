@@ -11,7 +11,7 @@ import { TradingPlacesSettings } from './module-settings.js';
 import { TradingPlacesSettingsDialog } from './settings-dialog.js';
 
 // Module constants
-const MODULE_ID = "trading-places";
+const MODULE_ID = "fvtt-trading-places";
 const MODULE_VERSION = "1.0.0";
 
 // Global module state
@@ -35,89 +35,7 @@ Hooks.once('init', () => {
     // Register settings change handlers
     registerSettingsChangeHandlers();
 
-    // Register scene controls hook EARLY during init
-    console.log('Trading Places | Registering scene controls hook during init...');
-    Hooks.on('getSceneControlButtons', (controls) => {
-        console.log('Trading Places | *** EARLY getSceneControlButtons hook FIRED! ***');
-        console.log('Trading Places | Controls parameter type:', typeof controls);
-        console.log('Trading Places | Controls parameter:', controls);
-        
-        // The controls parameter should be an array for us to modify
-        if (!controls || !Array.isArray(controls)) {
-            console.log('Trading Places | Controls is not an array, cannot add trading controls');
-            console.log('Trading Places | Expected array, got:', typeof controls, controls);
-            return;
-        }
-        
-        // Check if our control already exists
-        const existingControl = controls.find(c => c.name === 'trading-places');
-        if (existingControl) {
-            console.log('Trading Places | Trading control already exists, skipping');
-            return;
-        }
-        
-        const tradingControls = {
-            name: 'trading-places',
-            title: 'Trading Places Places',
-            icon: 'fas fa-coins',
-            visible: true,
-            layer: 'TokenLayer',
-            tools: [{
-                name: 'open-trading',
-                title: 'Open Trading Interface',
-                icon: 'fas fa-store',
-                button: true,
-                onClick: () => {
-                    console.log('Trading Places | Scene controls button clicked!');
-                    
-                    // Try to open the enhanced trading interface
-                    try {
-                        // Check if EnhancedTradingDialog is available
-                        if (window.TradingPlacesEnhancedDialog) {
-                            // Get the current controlled actor
-                            const controlledTokens = canvas.tokens.controlled;
-                            let selectedActor = null;
-                            
-                            if (controlledTokens.length > 0) {
-                                // Use the first controlled token's actor
-                                selectedActor = controlledTokens[0].actor;
-                            } else if (game.user.character) {
-                                // Fallback to user's character
-                                selectedActor = game.user.character;
-                            }
-                            
-                            if (selectedActor) {
-                                // Open enhanced trading dialog for the selected actor
-                                const dialog = new window.TradingPlacesEnhancedDialog(selectedActor, null);
-                                dialog.render(true);
-                                console.log('Trading Places | Opened EnhancedTradingDialog');
-                            } else {
-                                ui.notifications.warn('Please select a token or assign a character to use the trading interface.');
-                                console.log('Trading Places | No actor selected for trading');
-                            }
-                        } else if (window.TradingPlacesApplication) {
-                            // Fallback to old application
-                            const app = new window.TradingPlacesApplication();
-                            app.render(true);
-                            console.log('Trading Places | Opened TradingPlacesApplication (fallback)');
-                        } else {
-                            ui.notifications.info('Trading interface not yet available. Please wait for the module to finish loading.');
-                            console.log('Trading Places | Trading applications not yet available');
-                        }
-                    } catch (error) {
-                        console.error('Trading Places | Error opening trading interface:', error);
-                        ui.notifications.error('Error opening trading interface. Check console for details.');
-                    }
-                }
-            }]
-        };
-        
-        controls.push(tradingControls);
-        console.log('Trading Places | Trading controls added successfully');
-        console.log('Trading Places | Controls array now has', controls.length, 'controls');
-        console.log('Trading Places | All control names:', controls.map(c => c.name));
-    });
-    console.log('Trading Places | Scene controls hook registered during init');
+    // Scene controls will be initialized later in the ready hook
 
     console.log('Trading Places | Module initialized');
 });
@@ -350,6 +268,12 @@ function registerHandlebarsHelpers() {
     Handlebars.registerHelper('join', function(array, separator) {
         if (!Array.isArray(array)) return '';
         return array.join(separator || ', ');
+    });
+
+    // Keys helper - get object keys
+    Handlebars.registerHelper('keys', function(obj) {
+        if (!obj || typeof obj !== 'object') return [];
+        return Object.keys(obj);
     });
 
     // Get size name helper
@@ -691,21 +615,48 @@ function registerHandlebarsHelpers() {
 }
 
 /**
+ * Refresh the active dataset setting choices
+ */
+function refreshDatasetChoices() {
+    const setting = game.settings.settings.get(MODULE_ID, 'activeDataset');
+    if (setting) {
+        setting.choices = getAvailableDatasets();
+        // Force Foundry to re-render the settings UI
+        if (game.settings.sheet) {
+            game.settings.sheet.render();
+        }
+    }
+}
+
+// Make it globally available
+window.refreshTradingPlacesDatasetChoices = refreshDatasetChoices;
+
+/**
  * Register module settings with FoundryVTT
  */
 function registerModuleSettings() {
     // Register all module settings using our new system
     TradingPlacesSettings.registerSettings();
     
-    // Keep legacy settings for compatibility
-    // Active dataset setting
+    // Register user datasets setting first (needed by getAvailableDatasets)
+    game.settings.register(MODULE_ID, "userDatasets", {
+        name: "User Datasets",
+        hint: "List of user-created datasets",
+        scope: "world",
+        config: false,
+        type: Array,
+        default: []
+    });
+
+    // Active dataset setting - now with dynamic choices
     game.settings.register(MODULE_ID, "activeDataset", {
         name: "TRADING-PLACES.Settings.ActiveDataset.Name",
         hint: "TRADING-PLACES.Settings.ActiveDataset.Hint",
         scope: "world",
         config: true,
         type: String,
-        default: "wfrp4e-default",
+        default: "wfrp4e",
+        choices: getAvailableDatasets,
         onChange: onActiveDatasetChange
     });
 
@@ -760,7 +711,6 @@ function registerModuleSettings() {
         type: String,
         default: ""
     });
-
 
     // Window state setting for V2 Application
     game.settings.register(MODULE_ID, "windowState", {
@@ -843,14 +793,44 @@ function registerModuleSettings() {
         default: 400
     });
 
-    // Current cargo setting (for persistence)
+    // Current cargo inventory setting
     game.settings.register(MODULE_ID, "currentCargo", {
         name: "Current Cargo",
-        hint: "Stores current cargo inventory for persistence across sessions",
+        hint: "Player's current cargo inventory",
         scope: "world",
         config: false,
         type: Array,
         default: []
+    });
+
+    // Transaction history setting
+    game.settings.register(MODULE_ID, "transactionHistory", {
+        name: "Transaction History",
+        hint: "History of all trading transactions",
+        scope: "world",
+        config: false,
+        type: Array,
+        default: []
+    });
+
+    // Selected settlement setting
+    game.settings.register(MODULE_ID, "selectedSettlement", {
+        name: "Selected Settlement",
+        hint: "Currently selected settlement for trading",
+        scope: "client",
+        config: false,
+        type: String,
+        default: null
+    });
+
+    // Selected region setting
+    game.settings.register(MODULE_ID, "selectedRegion", {
+        name: "Selected Region",
+        hint: "Currently selected region for trading",
+        scope: "client",
+        config: false,
+        type: String,
+        default: null
     });
 }
 
@@ -860,12 +840,377 @@ function registerModuleSettings() {
 function registerSettingsChangeHandlers() {
     // Additional setup for change handlers if needed
     console.log('Trading Places | Settings change handlers registered');
+
+    // Hook to add dataset management buttons to settings
+    Hooks.on('renderSettingsConfig', (app, html, data) => {
+        console.log('Trading Places | renderSettingsConfig hook fired', { app, html, data });
+
+        // Only add buttons for GMs
+        if (!game.user.isGM) {
+            console.log('Trading Places | Not GM, skipping dataset management buttons');
+            return;
+        }
+
+        // Find the activeDataset setting row
+        const $html = $(html);
+        console.log('Trading Places | Looking for activeDataset setting...');
+
+        // Try different selectors for Foundry v13
+        let activeDatasetRow = $html.find('[data-setting-id="trading-places.activeDataset"]').closest('.form-group');
+        if (!activeDatasetRow.length) {
+            console.log('Trading Places | Primary selector failed, trying alternatives...');
+            // Try alternative selectors
+            activeDatasetRow = $html.find('select[name="trading-places.activeDataset"]').closest('.form-group');
+        }
+        if (!activeDatasetRow.length) {
+            console.log('Trading Places | Alternative selector failed, trying broader search...');
+            // Try finding any trading-places setting
+            activeDatasetRow = $html.find('[data-setting-id*="trading-places"]').closest('.form-group').first();
+        }
+
+        console.log('Trading Places | Found activeDataset row:', activeDatasetRow.length, activeDatasetRow);
+
+        if (!activeDatasetRow.length) {
+            console.log('Trading Places | Could not find activeDataset setting row, available settings:', $html.find('[data-setting-id]').map((i, el) => $(el).attr('data-setting-id')).get());
+            return;
+        }
+
+        console.log('Trading Places | Adding dataset management buttons...');
+
+        // Add buttons after the activeDataset setting
+        const buttonsHtml = `
+            <div class="form-group dataset-management-buttons" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">
+                <label>Dataset Management</label>
+                <div class="form-fields">
+                    <button type="button" class="add-dataset-btn" style="margin-right: 10px;">
+                        <i class="fas fa-plus"></i>
+                        Add Dataset
+                    </button>
+                    <button type="button" class="delete-dataset-btn">
+                        <i class="fas fa-trash"></i>
+                        Delete Selected Dataset
+                    </button>
+                </div>
+                <p class="notes">Add new datasets or delete the currently selected dataset. Built-in datasets cannot be deleted.</p>
+            </div>
+        `;
+
+        activeDatasetRow.after(buttonsHtml);
+        console.log('Trading Places | Dataset management buttons added');
+
+        // Add event listeners to the buttons
+        $html.find('.add-dataset-btn').on('click', (event) => {
+            event.preventDefault();
+            console.log('Trading Places | Add dataset button clicked');
+            handleCreateDataset();
+        });
+
+        $html.find('.delete-dataset-btn').on('click', (event) => {
+            event.preventDefault();
+            console.log('Trading Places | Delete dataset button clicked');
+            handleDeleteDataset();
+        });
+
+        console.log('Trading Places | Event listeners attached');
+    });
 }
 
 /**
- * Handle active dataset setting change
- * @param {string} newValue - New dataset name
+ * Handle create dataset button click in settings
  */
+async function handleCreateDataset() {
+    const content = `
+        <div class="dataset-create-dialog">
+            <p>Enter a name for the new dataset:</p>
+            <input type="text" id="new-dataset-name" placeholder="e.g., my-custom-dataset" style="width: 100%; padding: 8px; margin: 10px 0;">
+            <p><small>The dataset will be created with empty JSON files that you can populate through the Data Management interface.</small></p>
+        </div>
+    `;
+
+    Dialog.confirm({
+        title: 'Create New Dataset',
+        content: content,
+        yes: async (html) => {
+            const datasetName = html.find('#new-dataset-name').val().trim();
+
+            if (!datasetName) {
+                ui.notifications.error('Dataset name cannot be empty');
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_-]+$/.test(datasetName)) {
+                ui.notifications.error('Dataset name can only contain letters, numbers, hyphens, and underscores');
+                return;
+            }
+
+            // Check if dataset already exists
+            const existingDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+            if (existingDatasets.includes(datasetName)) {
+                ui.notifications.error('A dataset with this name already exists');
+                return;
+            }
+
+            try {
+                // Create the dataset
+                await createDataset(datasetName);
+
+                // Add to user datasets list
+                existingDatasets.push(datasetName);
+                await game.settings.set(MODULE_ID, 'userDatasets', existingDatasets);
+
+                ui.notifications.info(`Dataset "${datasetName}" created successfully`);
+
+                // Refresh the settings page to show the new dataset in the dropdown
+                // Instead of reloading, we'll update the select element directly
+                const selectElement = document.querySelector('select[name="trading-places.activeDataset"]');
+                if (selectElement) {
+                    // Clear existing options
+                    selectElement.innerHTML = '';
+                    
+                    // Get updated choices
+                    const choices = getAvailableDatasets();
+                    
+                    // Add new options
+                    Object.entries(choices).forEach(([value, label]) => {
+                        const option = document.createElement('option');
+                        option.value = value;
+                        option.textContent = label;
+                        if (value === datasetName) {
+                            option.selected = true;
+                        }
+                        selectElement.appendChild(option);
+                    });
+                    
+                    // Trigger change event to update the setting
+                    selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+            } catch (error) {
+                ui.notifications.error(`Failed to create dataset: ${error.message}`);
+                console.error('Dataset creation error:', error);
+            }
+        },
+        no: () => {}
+    });
+}
+
+/**
+ * Handle delete dataset button click in settings
+ */
+async function handleDeleteDataset() {
+    const currentDataset = game.settings.get(MODULE_ID, 'activeDataset');
+    const availableDatasets = getAvailableDatasets();
+
+    // Filter to only user datasets (exclude built-in)
+    const userDatasets = Object.keys(availableDatasets).filter(key =>
+        availableDatasets[key].includes('(User)')
+    );
+
+    if (userDatasets.length === 0) {
+        ui.notifications.warn('No user-created datasets to delete');
+        return;
+    }
+
+    let datasetToDelete = null;
+
+    if (userDatasets.length === 1) {
+        datasetToDelete = userDatasets[0];
+    } else {
+        // Create a select dropdown for multiple datasets
+        const options = userDatasets.map(name =>
+            `<option value="${name}" ${name === currentDataset ? 'selected' : ''}>${name}</option>`
+        ).join('');
+
+        const content = `
+            <div class="dataset-delete-dialog">
+                <p>Select the dataset to delete:</p>
+                <select id="dataset-to-delete" style="width: 100%; padding: 8px; margin: 10px 0;">
+                    ${options}
+                </select>
+                <p style="color: #ff6b6b;"><strong>Warning:</strong> This action cannot be undone. The dataset files will be permanently deleted.</p>
+            </div>
+        `;
+
+        await new Promise((resolve) => {
+            Dialog.confirm({
+                title: 'Delete Dataset',
+                content: content,
+                yes: (html) => {
+                    datasetToDelete = html.find('#dataset-to-delete').val();
+                    resolve();
+                },
+                no: () => resolve(null)
+            });
+        });
+    }
+
+    if (!datasetToDelete) return;
+
+    // Confirm deletion
+    const confirmContent = `
+        <p>Are you sure you want to delete the dataset "${datasetToDelete}"?</p>
+        <p style="color: #ff6b6b;"><strong>This action cannot be undone.</strong></p>
+        ${datasetToDelete === currentDataset ? '<p style="color: #ffa500;">Note: This is your currently active dataset. It will be deleted but remain selected until you choose another dataset.</p>' : ''}
+    `;
+
+    Dialog.confirm({
+        title: 'Confirm Dataset Deletion',
+        content: confirmContent,
+        yes: async () => {
+            try {
+                // Delete the dataset
+                await deleteDataset(datasetToDelete);
+
+                // Remove from user datasets list
+                const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+                const updatedList = userDatasets.filter(name => name !== datasetToDelete);
+                await game.settings.set(MODULE_ID, 'userDatasets', updatedList);
+
+                ui.notifications.info(`Dataset "${datasetToDelete}" deleted successfully`);
+
+                // Refresh the settings page to update the dropdown
+                const selectElement = document.querySelector('select[name="trading-places.activeDataset"]');
+                if (selectElement) {
+                    // Clear existing options
+                    selectElement.innerHTML = '';
+                    
+                    // Get updated choices
+                    const choices = getAvailableDatasets();
+                    
+                    // Add remaining options
+                    Object.entries(choices).forEach(([value, label]) => {
+                        const option = document.createElement('option');
+                        option.value = value;
+                        option.textContent = label;
+                        selectElement.appendChild(option);
+                    });
+                    
+                    // If the deleted dataset was selected, switch to default
+                    if (selectElement.value === datasetToDelete || !selectElement.value) {
+                        selectElement.value = 'wfrp4e';
+                        selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+
+            } catch (error) {
+                ui.notifications.error(`Failed to delete dataset: ${error.message}`);
+                console.error('Dataset deletion error:', error);
+            }
+        },
+        no: () => {}
+    });
+}
+
+/**
+ * Create a new dataset with empty JSON files
+ */
+async function createDataset(datasetName) {
+    // Get current user datasets list and add the new one
+    const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+    if (!userDatasets.includes(datasetName)) {
+        userDatasets.push(datasetName);
+        await game.settings.set(MODULE_ID, 'userDatasets', userDatasets);
+    }
+
+    // Store placeholder data in game settings for now
+    const placeholderData = {
+        settlements: [{
+            name: "Example Settlement",
+            region: "Example Region",
+            size: 3,
+            wealth: 3,
+            population: 1000,
+            ruler: "Local Authority",
+            notes: "This is a placeholder settlement. Edit it using the Data Management interface.",
+            produces: [],
+            demands: [],
+            flags: []
+        }],
+        cargoTypes: [{
+            name: "Example Cargo",
+            category: "Trade Goods",
+            basePrice: 100,
+            description: "This is a placeholder cargo type. Edit it using the Data Management interface.",
+            seasonalModifiers: {
+                spring: 1.0,
+                summer: 1.0,
+                autumn: 1.0,
+                winter: 1.0
+            }
+        }],
+        config: {
+            "system": "wfrp4e",
+            "version": "1.0",
+            "currency": {
+                "primary": "Gold Crown",
+                "secondary": "Silver Shilling",
+                "tertiary": "Brass Penny",
+                "rates": {
+                    "Gold Crown": 240,
+                    "Silver Shilling": 12,
+                    "Brass Penny": 1
+                }
+            }
+        },
+        tradingConfig: {
+            "cargoSlots": {
+                "basePerSize": {
+                    "1": 1,
+                    "2": 2,
+                    "3": 3,
+                    "4": 4,
+                    "5": 5
+                },
+                "populationMultiplier": 0.001,
+                "sizeMultiplier": 0.5,
+                "hardCap": 20,
+                "flagMultipliers": {}
+            }
+        }
+    };
+
+    await game.settings.set(MODULE_ID, `userDataset_${datasetName}`, placeholderData);
+
+    ui.notifications.info(`Dataset "${datasetName}" created with placeholder data. Use the Data Management interface to edit settlements and cargo types.`);
+
+    console.log(`Trading Places | Created user dataset: ${datasetName} with placeholder data`);
+
+    return true;
+}
+
+/**
+ * Delete a dataset and its files
+ */
+async function deleteDataset(datasetName) {
+    // Check if it's a built-in dataset (shouldn't happen, but safety check)
+    if (datasetName === 'wfrp4e') {
+        ui.notifications.error('Cannot delete built-in datasets');
+        return false;
+    }
+
+    try {
+        // Get current user datasets list
+        const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+
+        // Remove the dataset from the list
+        const updatedDatasets = userDatasets.filter(name => name !== datasetName);
+
+        // Update the user datasets list
+        await game.settings.set(MODULE_ID, 'userDatasets', updatedDatasets);
+
+        // Remove the dataset data
+        await game.settings.set(MODULE_ID, `userDataset_${datasetName}`, null);
+
+        ui.notifications.info(`Dataset "${datasetName}" deleted successfully`);
+        console.log(`Trading Places | Deleted user dataset: ${datasetName}`);
+
+        return true;
+    } catch (error) {
+        console.error('Trading Places | Dataset deletion error:', error);
+        ui.notifications.error(`Failed to delete dataset: ${error.message}`);
+        return false;
+    }
+}
 async function onActiveDatasetChange(newValue) {
     console.log(`Trading Places | Active dataset changed to: ${newValue}`);
 
@@ -1014,7 +1359,7 @@ async function performFirstTimeSetup() {
 
     const activeDataset = game.settings.get(MODULE_ID, "activeDataset");
     if (!activeDataset) {
-        await game.settings.set(MODULE_ID, "activeDataset", "wfrp4e-default");
+        await game.settings.set(MODULE_ID, "activeDataset", "wfrp4e");
     }
 
     // Welcome message
@@ -1048,7 +1393,7 @@ async function validateDatasetExists(datasetName) {
 
         // For now, assume dataset is valid if name is provided
         // In a real implementation, you would check file system
-        const validDatasets = ['wfrp4e-default', 'custom'];
+        const validDatasets = ['wfrp4e', 'custom'];
 
         if (!validDatasets.includes(datasetName)) {
             return {
@@ -1124,6 +1469,10 @@ async function initializeCoreComponents() {
         // Initialize DataManager
         dataManager = new DataManager();
         dataManager.setModuleId(MODULE_ID);
+        
+        // Expose DataManager globally for Data Management UI
+        window.TradingPlacesDataManager = dataManager;
+        
         console.log('Trading Places | DataManager initialized');
 
         // Initialize SystemAdapter
@@ -1199,7 +1548,7 @@ async function loadActiveDataset() {
             throw new Error('DataManager not initialized');
         }
 
-        const activeDataset = game.settings.get(MODULE_ID, "activeDataset") || "wfrp4e-default";
+        const activeDataset = game.settings.get(MODULE_ID, "activeDataset") || "wfrp4e";
 
         try {
             await dataManager.loadActiveDataset();
@@ -1221,12 +1570,12 @@ async function loadActiveDataset() {
 
         } catch (datasetError) {
             // Try fallback to default dataset
-            if (activeDataset !== "wfrp4e-default") {
+            if (activeDataset !== "wfrp4e") {
                 console.warn(`Trading Places | Failed to load ${activeDataset}, trying default dataset`);
 
                 try {
-                    await dataManager.switchDataset("wfrp4e-default");
-                    await game.settings.set(MODULE_ID, "activeDataset", "wfrp4e-default");
+                    await dataManager.switchDataset("wfrp4e");
+                    await game.settings.set(MODULE_ID, "activeDataset", "wfrp4e");
 
                     if (errorHandler) {
                         errorHandler.notifyUser('warning', `Failed to load dataset '${activeDataset}', switched to default dataset`);
@@ -1422,6 +1771,30 @@ function openTradingInterface() {
 }
 
 /**
+ * Get available datasets for the active dataset setting
+ * @returns {Object} - Object mapping dataset IDs to display names
+ */
+function getAvailableDatasets() {
+    const datasets = {
+        'wfrp4e': 'WFRP4e (Built-in)'
+    };
+
+    // Add user datasets if they exist
+    try {
+        if (typeof game !== 'undefined' && game.settings) {
+            const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+            userDatasets.forEach(datasetName => {
+                datasets[datasetName] = `${datasetName} (User)`;
+            });
+        }
+    } catch (error) {
+        console.warn('Trading Places | Could not load user datasets for settings:', error);
+    }
+
+    return datasets;
+}
+
+/**
  * Export clean module API
  */
 window.TradingPlaces = {
@@ -1448,9 +1821,9 @@ window.TradingPlaces = {
             contraband: false
         };
         
-        const currentCargo = await game.settings.get("trading-places", "currentCargo") || [];
+        const currentCargo = await game.settings.get(MODULE_ID, "currentCargo") || [];
         currentCargo.push(testCargo);
-        await game.settings.set("trading-places", "currentCargo", currentCargo);
+        await game.settings.set(MODULE_ID, "currentCargo", currentCargo);
         
         console.log('✅ Test cargo added:', testCargo);
         ui.notifications.info("Added test cargo: 75 EP of Test Grain");
@@ -1466,7 +1839,7 @@ window.TradingPlaces = {
     },
     
     clearAllCargo: async () => {
-        await game.settings.set("trading-places", "currentCargo", []);
+        await game.settings.set(MODULE_ID, "currentCargo", []);
         console.log('🗑️ All cargo cleared');
         ui.notifications.info("Cleared all cargo from inventory");
         
@@ -1480,7 +1853,7 @@ window.TradingPlaces = {
     
     showCargoTab: () => {
         // Force switch to cargo tab and check what's there
-        const cargoTab = document.querySelector('.tab[data-tab="cargo"]');
+        const cargoTab = document.querySelector('.trading-places-tab[data-tab="cargo"]');
         const cargoContent = document.querySelector('#cargo-tab');
         
         if (cargoTab && cargoContent) {
@@ -1525,3 +1898,62 @@ if (typeof game !== 'undefined' && game.modules) {
         module.debugLogger = debugLogger;
     }
 }
+
+// Module hook registrations
+Hooks.once('init', async function() {
+    console.log('Trading Places | Init hook fired');
+
+    // Register module settings
+    registerModuleSettings();
+    registerSettingsChangeHandlers();
+
+    // Initialize error handler
+    errorHandler = new RuntimeErrorHandler();
+    debugLogger = new WFRPDebugLogger();
+
+    // Set up error handler for global error catching
+    window.addEventListener('error', (event) => {
+        if (errorHandler) {
+            errorHandler.handleGlobalError(event.error, 'Global Error Handler');
+        }
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+        if (errorHandler) {
+            errorHandler.handleGlobalError(event.reason, 'Unhandled Promise Rejection');
+        }
+    });
+
+    console.log('Trading Places | Init hook completed');
+});
+
+Hooks.once('ready', async function() {
+    console.log('Trading Places | Ready hook fired');
+
+    try {
+        // Perform settings migration if needed
+        await performSettingsMigration();
+
+        // Initialize core components
+        await initializeCoreComponents();
+
+        // Load active dataset
+        await loadActiveDataset();
+
+        // Initialize scene controls
+        await initializeProperSceneControls();
+
+        console.log('Trading Places | Ready hook completed successfully');
+
+    } catch (error) {
+        console.error('Trading Places | Ready hook failed:', error);
+
+        if (errorHandler) {
+            errorHandler.handleModuleInitializationError(error, 'Ready Hook');
+        } else {
+            ui.notifications.error(`Trading Places initialization failed: ${error.message}`, { permanent: true });
+        }
+    }
+});
+
+console.log('Trading Places | Module loaded successfully');

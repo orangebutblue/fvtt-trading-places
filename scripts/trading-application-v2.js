@@ -1,5 +1,7 @@
 console.log('Trading Places | Loading trading-application-v2.js');
 
+const MODULE_ID = "fvtt-trading-places";
+
 import { TradingUIEventHandlers } from './ui/TradingUIEventHandlers.js';
 import TradingUIRenderer from './ui/TradingUIRenderer.js';
 import { CargoDistributionCharts } from './cargo-distribution-charts.js';
@@ -71,7 +73,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
     /** @override */
     static PARTS = {
         content: {
-            template: "modules/trading-places/templates/trading-unified.hbs"
+            template: `modules/${MODULE_ID}/templates/trading-unified.hbs`
         }
     };
 
@@ -561,7 +563,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 length: context.currentCargo.length
             });
         }
-        context.cargoCapacity = await game.settings.get("trading-places", "cargoCapacity") || 400;
+        context.cargoCapacity = await game.settings.get(MODULE_ID, "cargoCapacity") || 400;
         context.currentLoad = this._calculateCurrentLoad(context.currentCargo);
         context.capacityPercentage = Math.min((context.currentLoad / context.cargoCapacity) * 100, 100);
         context.isOverCapacity = context.currentLoad > context.cargoCapacity;
@@ -647,8 +649,8 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         };
 
         // Add configuration data
-        context.debugLoggingEnabled = game.settings.get("trading-places", "debugLogging");
-        context.chatVisibility = game.settings.get("trading-places", "chatVisibility");
+        context.debugLoggingEnabled = game.settings.get(MODULE_ID, "debugLogging");
+        context.chatVisibility = game.settings.get(MODULE_ID, "chatVisibility");
         context.isGM = game.user.isGM;
 
         // Add ALL cargo types for selling (not just settlement sources)
@@ -693,7 +695,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
      */
     async _getCurrentCargoData() {
         try {
-            const currentCargo = await game.settings.get("trading-places", "currentCargo") || [];
+            const currentCargo = await game.settings.get(MODULE_ID, "currentCargo") || [];
             
             console.log('🚛 CARGO DEBUG: Raw cargo data from settings', {
                 length: currentCargo.length,
@@ -878,7 +880,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         }
 
         // Update FoundryVTT setting
-        await game.settings.set("trading-places", "currentSeason", season);
+        await game.settings.set(MODULE_ID, "currentSeason", season);
 
         // Clear cargo availability data when season changes (prices/availability may change)
         await this._clearCargoAvailability();
@@ -910,7 +912,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
      */
     async _loadCurrentSeason() {
         try {
-            this.currentSeason = await game.settings.get("trading-places", "currentSeason");
+            this.currentSeason = await game.settings.get(MODULE_ID, "currentSeason");
 
             if (this.tradingEngine && this.currentSeason) {
                 this.tradingEngine.setCurrentSeason(this.currentSeason);
@@ -930,14 +932,14 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
     async _loadSavedSelections() {
         try {
             // Load saved region
-            const savedRegion = await game.settings.get("trading-places", "selectedRegion");
+            const savedRegion = await game.settings.get(MODULE_ID, "selectedRegion");
             if (savedRegion) {
                 this.selectedRegion = savedRegion;
                 this._logDebug('Saved Selections', 'Loaded saved region', { region: savedRegion });
             }
 
             // Load saved settlement
-            const savedSettlementName = await game.settings.get("trading-places", "selectedSettlement");
+            const savedSettlementName = await game.settings.get(MODULE_ID, "selectedSettlement");
             if (savedSettlementName && this.dataManager) {
                 const settlement = this.dataManager.getSettlement(savedSettlementName);
                 if (settlement) {
@@ -946,12 +948,12 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 } else {
                     this._logError('Saved Selections', 'Saved settlement not found in data', { settlementName: savedSettlementName });
                     // Clear invalid saved settlement
-                    await game.settings.set("trading-places", "selectedSettlement", null);
+                    await game.settings.set(MODULE_ID, "selectedSettlement", null);
                 }
             }
 
             // Load saved transaction history
-            const savedTransactionHistory = await game.settings.get("trading-places", "transactionHistory");
+            const savedTransactionHistory = await game.settings.get(MODULE_ID, "transactionHistory");
             if (savedTransactionHistory && Array.isArray(savedTransactionHistory)) {
                 this.transactionHistory = this._prepareTransactionHistory(savedTransactionHistory);
                 this._logDebug('Saved Selections', 'Loaded saved transaction history', { transactionCount: this.transactionHistory.length });
@@ -1057,12 +1059,12 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             });
 
             // Get existing cargo data and add/update this entry
-            const allCargoData = await game.settings.get("trading-places", "cargoAvailabilityData") || {};
+            const allCargoData = await game.settings.get(MODULE_ID, "cargoAvailabilityData") || {};
             const storageKey = `${this.selectedSettlement.name}_${this.currentSeason}`;
 
             allCargoData[storageKey] = cargoData;
 
-            await game.settings.set("trading-places", "cargoAvailabilityData", allCargoData);
+            await game.settings.set(MODULE_ID, "cargoAvailabilityData", allCargoData);
 
             console.log('🔄 CARGO PERSISTENCE: Cargo data saved successfully');
 
@@ -1094,7 +1096,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 return null;
             }
 
-            const allCargoData = await game.settings.get("trading-places", "cargoAvailabilityData") || {};
+            const allCargoData = await game.settings.get(MODULE_ID, "cargoAvailabilityData") || {};
             console.log('🔄 CARGO PERSISTENCE: Retrieved all cargo data from settings:', Object.keys(allCargoData));
             const storageKey = `${this.selectedSettlement.name}_${this.currentSeason}`;
             console.log('🔄 CARGO PERSISTENCE: Looking for storage key:', storageKey);
@@ -1160,11 +1162,11 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 return;
             }
 
-            const allCargoData = await game.settings.get("trading-places", "cargoAvailabilityData") || {};
+            const allCargoData = await game.settings.get(MODULE_ID, "cargoAvailabilityData") || {};
             const storageKey = `${this.selectedSettlement.name}_${this.currentSeason}`;
 
             delete allCargoData[storageKey];
-            await game.settings.set("trading-places", "cargoAvailabilityData", allCargoData);
+            await game.settings.set(MODULE_ID, "cargoAvailabilityData", allCargoData);
 
             this._logDebug('Cargo Persistence', 'Cargo availability data cleared', {
                 settlement: this.selectedSettlement.name,
@@ -1270,7 +1272,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 </div>
             `;
 
-            const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+            const chatVisibility = game.settings.get(MODULE_ID, "chatVisibility");
             const whisperTargets = chatVisibility === "gm" ? [game.user.id] : null;
 
             await ChatMessage.create({
@@ -1290,7 +1292,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             const desiredTab = focusTab || this.renderer.getActiveTabName();
 
             this.currentCargo = await this._getCurrentCargoData();
-            this.transactionHistory = this._prepareTransactionHistory(await game.settings.get("trading-places", "transactionHistory") || []);
+            this.transactionHistory = this._prepareTransactionHistory(await game.settings.get(MODULE_ID, "transactionHistory") || []);
             this.playerCargo = Array.isArray(this.currentCargo) ? [...this.currentCargo] : [];
 
             await this.render(false);

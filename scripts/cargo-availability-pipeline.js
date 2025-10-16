@@ -9,6 +9,8 @@ class CargoAvailabilityPipeline {
         this.rollPercentile = options.rollPercentile || null;
         this.logger = options.logger || null;
 
+        this.MODULE_ID = "fvtt-trading-places";
+
         this._refreshConfig();
     }
 
@@ -71,7 +73,7 @@ class CargoAvailabilityPipeline {
                 await roll.evaluate();
 
                 if (postToChat && typeof game !== 'undefined' && game.settings) {
-                    const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+                    const chatVisibility = game.settings.get(this.MODULE_ID, "chatVisibility");
                     if (chatVisibility !== "disabled") {
                         await roll.toMessage({
                             speaker: ChatMessage.getSpeaker(),
@@ -627,7 +629,7 @@ class CargoAvailabilityPipeline {
         
         // Get dishonesty setting
         const dishonestyChance = typeof game !== 'undefined' && game.settings 
-            ? game.settings.get('trading-places', 'merchantDishonestyChance') / 100 
+            ? game.settings.get(this.MODULE_ID, 'merchantDishonestyChance') / 100 
             : 0.5;
         
         // Roll for merchant honesty
@@ -726,7 +728,7 @@ class CargoAvailabilityPipeline {
         
         // Apply dishonesty for regular cargo
         const dishonestyChance = typeof game !== 'undefined' && game.settings 
-            ? game.settings.get('trading-places', 'merchantDishonestyChance') / 100 
+            ? game.settings.get(this.MODULE_ID, 'merchantDishonestyChance') / 100 
             : 0.5;
         
         const honestyResult = this.qualitySystem.rollMerchantHonesty(dishonestyChance);

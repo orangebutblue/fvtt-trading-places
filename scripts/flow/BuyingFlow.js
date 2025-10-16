@@ -7,6 +7,7 @@ export class BuyingFlow {
         this.app = app;
         this.dataManager = app.dataManager;
         this.tradingEngine = app.tradingEngine;
+        this.MODULE_ID = "fvtt-trading-places";
     }
 
     _getCurrencyContext() {
@@ -86,7 +87,7 @@ export class BuyingFlow {
                 await roll.evaluate();
 
                 if (postToChat && typeof game !== 'undefined' && game.settings) {
-                    const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+                    const chatVisibility = game.settings.get(this.MODULE_ID, "chatVisibility");
                     if (chatVisibility !== "disabled") {
                         await roll.toMessage({
                             speaker: ChatMessage.getSpeaker(),
@@ -344,7 +345,7 @@ export class BuyingFlow {
                                     `;
 
                                     // Create individual chat message for this slot (GM only)
-                                    const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+                                    const chatVisibility = game.settings.get(this.MODULE_ID, "chatVisibility");
                                     if (chatVisibility !== "disabled") {
                                         await ChatMessage.create({
                                             content: slotContent,
@@ -584,7 +585,7 @@ export class BuyingFlow {
             `;
 
             // Post summary overview to chat (individual slot messages are created above)
-            const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+            const chatVisibility = game.settings.get(this.MODULE_ID, "chatVisibility");
             if (chatVisibility !== "disabled") {
                 // Create a simplified summary without individual cargo details
                 const overviewContent = `

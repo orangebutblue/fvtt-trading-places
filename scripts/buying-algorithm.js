@@ -1,12 +1,12 @@
 console.log('Trading Places | Loading buying-algorithm.js');
 
 /**
- * Trading Places Module - Buying Algorithm Implementation
+ * Trading Places - Buying Algorithm
+ * Implements the WFRP4e cargo availability and pricing algorithm
  */
 
-/**
- * Buying Algorithm class implementing the official Death on the Reik Companion rules
- */
+const MODULE_ID = "fvtt-trading-places";
+
 class TPBuyingAlgorithm {
     constructor(dataManager, tradingEngine) {
         this.dataManager = dataManager;
@@ -49,7 +49,7 @@ class TPBuyingAlgorithm {
     async loadRandomCargoTables() {
         try {
             if (typeof fetch !== 'undefined') {
-                const response = await fetch('modules/trading-places/datasets/active/random-cargo-tables.json');
+                const response = await fetch(`modules/${MODULE_ID}/datasets/active/random-cargo-tables.json`);
                 this.randomCargoTables = await response.json();
                 
                 const logger = this.getLogger();

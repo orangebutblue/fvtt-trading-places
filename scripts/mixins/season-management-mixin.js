@@ -3,6 +3,8 @@
  * Handles season selection, persistence, and seasonal price updates
  */
 
+const MODULE_ID = "fvtt-trading-places";
+
 const SeasonManagementMixin = {
     /**
      * Get current trading season
@@ -32,7 +34,7 @@ const SeasonManagementMixin = {
         }
 
         // Update FoundryVTT setting
-        await game.settings.set("trading-places", "currentSeason", season);
+        await game.settings.set(MODULE_ID, "currentSeason", season);
 
         // Update pricing for any selected cargo
         if (this.selectedCargo) {
@@ -54,7 +56,7 @@ const SeasonManagementMixin = {
      */
     async _loadCurrentSeason() {
         try {
-            this.currentSeason = await game.settings.get("trading-places", "currentSeason");
+            this.currentSeason = await game.settings.get(MODULE_ID, "currentSeason");
 
             if (this.tradingEngine && this.currentSeason) {
                 this.tradingEngine.setCurrentSeason(this.currentSeason);
@@ -163,7 +165,7 @@ const SeasonManagementMixin = {
                 </div>
             `;
 
-            const chatVisibility = game.settings.get("trading-places", "chatVisibility");
+            const chatVisibility = game.settings.get(MODULE_ID, "chatVisibility");
             const whisperTargets = chatVisibility === "gm" ? [game.user.id] : null;
 
             await ChatMessage.create({

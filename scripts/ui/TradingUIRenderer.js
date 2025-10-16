@@ -10,6 +10,8 @@ import {
 
 console.log('Trading Places | Loading TradingUIRenderer.js');
 
+const MODULE_ID = "fvtt-trading-places";
+
 export default class TradingUIRenderer {
     constructor(app) {
         this.app = app;
@@ -1033,7 +1035,7 @@ export default class TradingUIRenderer {
         
         // Save transaction history to Foundry settings for persistence
         try {
-            await game.settings.set("trading-places", "transactionHistory", this.app.transactionHistory);
+            await game.settings.set(MODULE_ID, "transactionHistory", this.app.transactionHistory);
             console.log('💰 Transaction history saved successfully');
         } catch (error) {
             console.error('💰 Failed to save transaction history:', error);
@@ -1191,8 +1193,8 @@ export default class TradingUIRenderer {
         
         // Wait a small moment for DOM to be ready
         setTimeout(() => {
-            const tabs = this.app.element.querySelectorAll('.tab');
-            const tabContents = this.app.element.querySelectorAll('.tab-content');
+            const tabs = this.app.element.querySelectorAll('.trading-places-tab');
+            const tabContents = this.app.element.querySelectorAll('.trading-places-tab-content');
             
             console.log('🔄 Found elements:', {
                 tabs: tabs.length,
@@ -1210,7 +1212,7 @@ export default class TradingUIRenderer {
             });
             
             // Find and activate the History tab
-            const historyTab = this.app.element.querySelector('.tab[data-tab="history"]');
+            const historyTab = this.app.element.querySelector('.trading-places-tab[data-tab="history"]');
             const historyContent = this.app.element.querySelector('#history-tab');
             
             console.log('🔄 History elements:', {
@@ -1549,7 +1551,7 @@ export default class TradingUIRenderer {
      * @private
      */
     getActiveTabName() {
-        const activeTab = this.app.element?.querySelector('.tab.active');
+        const activeTab = this.app.element?.querySelector('.trading-places-tab.active');
         return activeTab?.dataset.tab || null;
     }
 
@@ -1558,8 +1560,8 @@ export default class TradingUIRenderer {
             return;
         }
 
-        const tabs = this.app.element.querySelectorAll('.tab');
-        const tabContents = this.app.element.querySelectorAll('.tab-content');
+        const tabs = this.app.element.querySelectorAll('.trading-places-tab');
+        const tabContents = this.app.element.querySelectorAll('.trading-places-tab-content');
 
         tabs.forEach(tab => tab.classList.remove('active'));
         tabContents.forEach(content => {
@@ -1567,7 +1569,7 @@ export default class TradingUIRenderer {
             content.style.display = 'none';
         });
 
-        const targetTab = this.app.element.querySelector(`.tab[data-tab="${tabName}"]`);
+        const targetTab = this.app.element.querySelector(`.trading-places-tab[data-tab="${tabName}"]`);
         const targetContent = this.app.element.querySelector(`#${tabName}-tab`);
 
         if (targetTab && targetContent) {

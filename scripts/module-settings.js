@@ -4,7 +4,7 @@
  */
 
 export class TradingPlacesSettings {
-    static MODULE_ID = 'trading-places';
+    static MODULE_ID = 'fvtt-trading-places';
     
     /**
      * Register all module settings
@@ -92,10 +92,13 @@ export class TradingPlacesSettings {
      */
     static getAllSettings() {
         const settings = {};
-        const registeredSettings = game.settings.settings.get(this.MODULE_ID);
         
-        for (const [key] of registeredSettings) {
-            settings[key] = this.getSetting(key);
+        // Get all registered settings and filter by our module
+        for (const [key, setting] of game.settings.settings.entries()) {
+            if (key.startsWith(`${this.MODULE_ID}.`)) {
+                const settingKey = key.replace(`${this.MODULE_ID}.`, '');
+                settings[settingKey] = this.getSetting(settingKey);
+            }
         }
         
         return settings;
@@ -145,4 +148,9 @@ export class TradingPlacesSettings {
         await Promise.all(promises);
         ui.notifications.info('Trading Places settings reset to defaults');
     }
+}
+
+// Export for global access
+if (typeof window !== 'undefined') {
+    window.TradingPlacesSettings = TradingPlacesSettings;
 }
