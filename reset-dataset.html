@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trading Places Dataset Reset</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .error { color: red; background: #ffe6e6; padding: 10px; border-radius: 5px; }
+        .success { color: green; background: #e6ffe6; padding: 10px; border-radius: 5px; }
+        .info { background: #e6f3ff; padding: 10px; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Trading Places Dataset Reset Tool</h1>
+
+        <div class="error">
+            <h3>Issue Detected:</h3>
+            <p>Your Trading Places module is trying to load a dataset called 'new1' that doesn't exist or is corrupted.</p>
+            <p>The settlement "tray" in this dataset is missing the required "garrison" field.</p>
+        </div>
+
+        <div class="info">
+            <h3>Solution:</h3>
+            <p>Reset the active dataset to use the default 'wfrp4e' dataset.</p>
+        </div>
+
+        <h3>Option 1: Browser Console (Recommended)</h3>
+        <p>Open your browser's developer console (F12) in FoundryVTT and run this command:</p>
+        <pre>game.settings.set("fvtt-trading-places", "activeDataset", "wfrp4e")</pre>
+        <p>Then refresh the page.</p>
+
+        <h3>Option 2: Manual Settings Reset</h3>
+        <ol>
+            <li>Open FoundryVTT</li>
+            <li>Go to the Module Settings (gear icon)</li>
+            <li>Find "Trading Places" settings</li>
+            <li>Reset or remove the "activeDataset" setting</li>
+            <li>Restart FoundryVTT</li>
+        </ol>
+
+        <h3>Option 3: Clear All User Datasets</h3>
+        <p>If you created custom datasets that are corrupted, you can clear them:</p>
+        <pre>
+// Clear user datasets
+game.settings.set("fvtt-trading-places", "userDatasets", []);
+game.settings.set("fvtt-trading-places", "userDatasetsData", {});
+game.settings.set("fvtt-trading-places", "activeDataset", "wfrp4e");
+</pre>
+
+        <div class="success">
+            <h3>After Reset:</h3>
+            <p>The module should load the default WFRP4e dataset and work properly.</p>
+            <p>Note: The module has partial support for D&D 5e, so some features may need configuration.</p>
+        </div>
+
+        <button onclick="checkStatus()">Check Current Status</button>
+        <button onclick="resetDataset()">Reset to WFRP4e</button>
+        <button onclick="clearUserDatasets()">Clear User Datasets</button>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        async function checkStatus() {
+            try {
+                const activeDataset = await game.settings.get("fvtt-trading-places", "activeDataset");
+                const userDatasets = await game.settings.get("fvtt-trading-places", "userDatasets") || [];
+
+                document.getElementById('status').innerHTML = `
+                    <div class="info">
+                        <h4>Current Status:</h4>
+                        <p>Active Dataset: ${activeDataset || 'Not set (using default)'}</p>
+                        <p>User Datasets: ${userDatasets.join(', ') || 'None'}</p>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <div class="error">
+                        <p>Error checking status: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function resetDataset() {
+            try {
+                await game.settings.set("fvtt-trading-places", "activeDataset", "wfrp4e");
+                document.getElementById('status').innerHTML = `
+                    <div class="success">
+                        <p>Active dataset reset to 'wfrp4e'. Please refresh the page.</p>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <div class="error">
+                        <p>Error resetting dataset: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function clearUserDatasets() {
+            try {
+                await game.settings.set("fvtt-trading-places", "userDatasets", []);
+                await game.settings.set("fvtt-trading-places", "userDatasetsData", {});
+                await game.settings.set("fvtt-trading-places", "activeDataset", "wfrp4e");
+                document.getElementById('status').innerHTML = `
+                    <div class="success">
+                        <p>All user datasets cleared. Active dataset reset to 'wfrp4e'. Please refresh the page.</p>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <div class="error">
+                        <p>Error clearing user datasets: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-check status on load
+        if (typeof game !== 'undefined') {
+            checkStatus();
+        }
+    </script>
+</body>
+</html>

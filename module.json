@@ -46,7 +46,6 @@
     "scripts/availability-results-renderer.js",
     "scripts/cargo-distribution-charts.js",
     "scripts/module-settings.js",
-    "scripts/settings-dialog.js",
     "scripts/fallback-dialogs-v2.js",
     "scripts/ui/TradingUIEventHandlers.js",
     "scripts/ui/TradingUIRenderer.js",
@@ -61,8 +60,7 @@
   "styles": [
     "styles/trading.css",
     "styles/data-management.css",
-    "styles/trading-dialog.css",
-    "styles/settings-dialog.css"
+    "styles/trading-dialog.css"
   ],
   "languages": [
     {

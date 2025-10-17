@@ -7,6 +7,7 @@
     min-height: 600px;
     background: var(--color-bg);
     border: 1px solid var(--color-border-dark);
+    color: white !important;
 }
 
 /* Header */
@@ -22,7 +23,7 @@
 .trading-places-data-management-header h2 {
     margin: 0;
     font-size: 1.2em;
-    color: var(--color-text-dark-primary);
+    color: white !important;
 }
 
 .trading-places-data-management-dialog .trading-places-header-actions {
@@ -37,6 +38,7 @@
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s;
+    color: white !important;
 }
 
 .trading-places-data-management-dialog .trading-places-header-actions button:hover {
@@ -66,19 +68,19 @@
     border-radius: 3px 3px 0 0;
     cursor: pointer;
     transition: all 0.2s;
-    color: var(--color-text-dark-secondary);
+    color: white !important;
 }
 
 .trading-places-data-management-dialog .trading-places-nav-tab:hover {
     background: var(--color-bg-option);
-    color: var(--color-text-dark-primary);
+    color: white !important;
 }
 
 .trading-places-data-management-dialog .trading-places-nav-tab.active {
     background: var(--color-bg-alt);
     border-color: var(--color-border);
     border-bottom-color: var(--color-bg-alt);
-    color: var(--color-text-dark-primary);
+    color: white !important;
 }
 
 .trading-places-data-management-dialog .trading-places-nav-actions {
@@ -93,6 +95,7 @@
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s;
+    color: white;
 }
 
 .data-management-dialog .nav-actions button:disabled {
@@ -165,6 +168,7 @@
     border: 1px solid var(--color-border);
     border-radius: 3px;
     background: var(--color-bg);
+    color: white;
 }
 
 .data-management-dialog .search-icon {
@@ -172,7 +176,7 @@
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--color-text-dark-secondary);
+    color: white;
 }
 
 .data-management-dialog .filter-container select {
@@ -181,6 +185,7 @@
     border: 1px solid var(--color-border);
     border-radius: 3px;
     background: var(--color-bg);
+    color: white;
 }
 
 .data-management-dialog .list-body,
@@ -199,6 +204,7 @@
     cursor: pointer;
     transition: all 0.2s;
     background: var(--color-bg);
+    color: white;
 }
 
 .data-management-dialog .settlement-item:hover, .data-management-dialog .cargo-item:hover {
@@ -221,12 +227,12 @@
 
 .item-name {
     font-weight: bold;
-    color: var(--color-text-dark-primary);
+    color: white;
 }
 
 .item-region, .item-category {
     font-size: 0.9em;
-    color: var(--color-text-dark-secondary);
+    color: white;
     background: var(--color-bg-alt);
     padding: 2px 6px;
     border-radius: 2px;
@@ -236,7 +242,7 @@
     display: flex;
     gap: 8px;
     font-size: 0.85em;
-    color: var(--color-text-dark-secondary);
+    color: white;
     margin-bottom: 4px;
 }
 
@@ -248,7 +254,7 @@
 
 .flag-badge {
     background: var(--color-bg-option);
-    color: var(--color-text-dark-primary);
+    color: white;
     padding: 2px 6px;
     border-radius: 2px;
     font-size: 0.8em;
@@ -275,7 +281,7 @@
 
 .detail-header h3 {
     margin: 0;
-    color: var(--color-text-dark-primary);
+    color: white;
 }
 
 .detail-actions {
@@ -289,6 +295,7 @@
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s;
+    color: white;
 }
 
 .save-btn {
@@ -303,7 +310,7 @@
 
 .revert-btn {
     background: var(--color-bg);
-    color: var(--color-text-dark-primary);
+    color: white;
 }
 
 .revert-btn:not(:disabled):hover {
@@ -331,7 +338,7 @@
 
 .form-section h4 {
     margin: 0 0 16px 0;
-    color: var(--color-text-dark-primary);
+    color: white;
     border-bottom: 1px solid var(--color-border);
     padding-bottom: 8px;
 }
@@ -355,7 +362,7 @@
 .data-management-dialog .form-group label {
     margin-bottom: 4px;
     font-weight: bold;
-    color: var(--color-text-dark-primary);
+    color: white;
 }
 
 .data-management-dialog .form-group input,
@@ -365,7 +372,7 @@
     border: 1px solid var(--color-border);
     border-radius: 3px;
     background: var(--color-bg);
-    color: var(--color-text-dark-primary);
+    color: white;
 }
 
 .data-management-dialog .form-group input:focus,
@@ -378,13 +385,13 @@
 
 .data-management-dialog .form-group input[readonly] {
     background: var(--color-bg-alt);
-    color: var(--color-text-dark-secondary);
+    color: #cccccc;
 }
 
 .data-management-dialog .field-help {
     margin-top: 4px;
     font-size: 0.85em;
-    color: var(--color-text-dark-secondary);
+    color: white;
     font-style: italic;
 }
 
@@ -435,12 +442,13 @@
 .flag-option label {
     cursor: pointer;
     font-weight: normal;
+    color: white;
 }
 
 .flag-description {
     display: block;
     font-size: 0.85em;
-    color: var(--color-text-dark-secondary);
+    color: white;
     margin-top: 2px;
 }
 
@@ -455,6 +463,7 @@
     border: 1px solid var(--color-border);
     border-radius: 3px;
     background: var(--color-bg);
+    color: white;
 }
 
 .tag-list {
@@ -476,12 +485,13 @@
     border-radius: 2px;
     padding: 4px 8px;
     font-size: 0.9em;
+    color: white;
 }
 
 .tag-remove {
     margin-left: 6px;
     cursor: pointer;
-    color: var(--color-text-dark-secondary);
+    color: #cccccc;
 }
 
 .tag-remove:hover {
@@ -499,7 +509,7 @@
 
 .strength-label {
     font-weight: bold;
-    color: var(--color-text-dark-primary);
+    color: white;
 }
 
 .strength-value {
@@ -508,7 +518,7 @@
 }
 
 .strength-help {
-    color: var(--color-text-dark-secondary);
+    color: white;
     font-style: italic;
 }
 
@@ -534,7 +544,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: var(--color-text-dark-secondary);
+    color: white;
     font-style: italic;
 }
 
@@ -578,7 +588,7 @@
     align-items: center;
     padding: 8px 16px;
     font-size: 0.9em;
-    color: var(--color-text-dark-secondary);
+    color: white;
 }
 
 /* Change Preview Modal */
@@ -615,9 +625,9 @@
     background: var(--color-bg-alt);
 }
 
-.data-management-dialog .modal-header h3 {
+.data-management_dialog .modal-header h3 {
     margin: 0;
-    color: var(--color-text-dark-primary);
+    color: white;
 }
 
 .data-management-dialog .modal-close {
@@ -625,11 +635,11 @@
     border: none;
     font-size: 1.2em;
     cursor: pointer;
-    color: var(--color-text-dark-secondary);
+    color: #cccccc;
 }
 
 .data-management-dialog .modal-close:hover {
-    color: var(--color-text-dark-primary);
+    color: white;
 }
 
 .data-management-dialog .modal-body {
@@ -669,6 +679,7 @@
     border-radius: 3px;
     white-space: pre-wrap;
     font-size: 0.9em;
+    color: white;
 }
 
 .data-management-dialog .modal-footer {
@@ -686,11 +697,12 @@
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s;
+    color: white;
 }
 
 .cancel-btn {
     background: var(--color-bg);
-    color: var(--color-text-dark-primary);
+    color: white;
 }
 
 .cancel-btn:hover {
@@ -705,6 +717,69 @@
 
 .confirm-save-btn:hover {
     background: var(--color-green-dark);
+}
+
+/* Dataset Selector Styles */
+.trading-places-dm-dataset-header {
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-alt);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.trading-places-dm-dataset-header > div:first-child {
+    margin: 0;
+}
+
+.trading-places-dm-dataset-header > div:last-child {
+    display: flex;
+    gap: 5px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trading-places-dm-dataset-header h4 {
+    margin: 0;
+    font-size: 1.1em;
+    color: white;
+}
+
+.trading-places-dm-dataset-add,
+.trading-places-dm-dataset-delete {
+    padding: 6px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    min-width: 60px;
+    text-align: center;
+}
+
+.trading-places-dm-dataset-add {
+    background: var(--color-green);
+    color: white;
+    border-color: var(--color-green);
+}
+
+.trading-places-dm-dataset-add:hover {
+    background: var(--color-green-dark);
+    border-color: var(--color-green-dark);
+}
+
+.trading-places-dm-dataset-delete {
+    background: var(--color-red);
+    color: white;
+    border-color: var(--color-red);
+}
+
+.trading-places-dm-dataset-delete:hover {
+    background: var(--color-red-dark);
+    border-color: var(--color-red-dark);
 }
 
 /* Responsive Design */
@@ -823,4 +898,284 @@
         font-size: 11px;
         padding: 5px 10px;
     }
+}
+
+/* DataManagementV2 Styles - New Implementation */
+.trading-places-dm-container {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    font-family: var(--font-primary);
+    background: var(--color-bg);
+    color: white;
+}
+
+.trading-places-dm-sidebar {
+    width: 200px;
+    min-width: 200px;
+    border-right: 1px solid var(--color-border);
+    background: var(--color-bg-alt);
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+}
+
+.trading-places-dm-sidebar h3 {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: white;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 8px;
+}
+
+.trading-places-dm-dataset-selector {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.trading-places-dm-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.trading-places-dm-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-alt);
+    margin: 0;
+    padding: 0;
+}
+
+.trading-places-dm-tab {
+    padding: 12px 20px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-weight: bold;
+    border-bottom: 2px solid transparent;
+    color: #cccccc;
+    transition: all 0.2s;
+}
+
+.trading-places-dm-tab.active {
+    background: var(--color-bg);
+    border-bottom-color: var(--color-border-highlight);
+    color: white;
+}
+
+.trading-places-dm-tab:hover:not(.active) {
+    background: var(--color-bg-option);
+    color: white;
+}
+
+.trading-places-dm-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg);
+}
+
+.trading-places-dm-tab-panel {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    padding: 15px;
+    overflow: hidden;
+}
+
+.trading-places-dm-tab-panel.active {
+    display: flex;
+}
+
+.trading-places-dm-search {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.trading-places-dm-search input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    font-size: 14px;
+    background: var(--color-bg);
+    color: white;
+}
+
+.trading-places-dm-search input:focus {
+    border-color: var(--color-border-highlight);
+    outline: none;
+    box-shadow: 0 0 5px var(--color-shadow-highlight);
+}
+
+.trading-places-dm-add-btn {
+    background: var(--color-bg-option);
+    color: white;
+    border: 1px solid var(--color-border);
+    padding: 8px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.trading-places-dm-add-btn:hover {
+    background: var(--color-border-highlight);
+    border-color: var(--color-border-highlight);
+    color: white;
+}
+
+.trading-places-dm-import-btn {
+    background: var(--color-bg);
+    color: white;
+    border: 1px solid var(--color-border);
+    padding: 8px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.trading-places-dm-import-btn:hover {
+    background: var(--color-bg-option);
+    border-color: var(--color-border-highlight);
+}
+
+.trading-places-dm-export-btn {
+    background: var(--color-bg);
+    color: white;
+    border: 1px solid var(--color-border);
+    padding: 8px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.trading-places-dm-export-btn:hover {
+    background: var(--color-bg-option);
+    border-color: var(--color-border-highlight);
+}
+
+.trading-places-dm-list {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: var(--color-bg);
+}
+
+.trading-places-dm-region {
+    background: var(--color-bg-alt);
+    padding: 10px 15px;
+    font-weight: bold;
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.trading-places-dm-region:hover {
+    background: var(--color-bg-option);
+}
+
+.trading-places-dm-region.collapsed + .trading-places-dm-settlements {
+    display: none;
+}
+
+.trading-places-dm-settlements {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.trading-places-dm-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--color-border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-bg);
+    margin-left: 20px;
+    border-left: 3px solid var(--color-border-light);
+}
+
+.trading-places-dm-item:hover {
+    background: var(--color-bg-option);
+    border-left-color: var(--color-border-highlight);
+}
+
+.trading-places-dm-item:last-child {
+    border-bottom: none;
+}
+
+.trading-places-dm-item-info {
+    flex: 1;
+}
+
+.trading-places-dm-item-name {
+    font-weight: bold;
+    color: white;
+    font-size: 14px;
+}
+
+.trading-places-dm-item-details {
+    font-size: 12px;
+    color: #cccccc;
+    margin-top: 3px;
+}
+
+.trading-places-dm-item-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.trading-places-dm-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 12px;
+    transition: all 0.2s;
+    color: white;
+}
+
+.trading-places-dm-btn:hover {
+    background: var(--color-bg-option);
+}
+
+.trading-places-dm-btn.edit:hover {
+    border-color: var(--color-border-highlight);
+    background: var(--color-border-highlight);
+    color: white;
+}
+
+.trading-places-dm-btn.delete:hover {
+    border-color: #dc3545;
+    background: #dc3545;
+    color: white;
+}
+
+.trading-places-dm-expand-icon {
+    transition: transform 0.2s;
+    color: #cccccc;
+}
+
+.collapsed .trading-places-dm-expand-icon {
+    transform: rotate(-90deg);
+}
+
+/* Cargo items without indentation */
+.trading-places-dm-tab-panel[data-panel="cargo"] .trading-places-dm-item {
+    margin-left: 0;
+    border-left: none;
 }

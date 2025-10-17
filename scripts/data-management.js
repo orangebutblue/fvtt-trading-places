@@ -8,6 +8,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
     constructor(dataManager, options = {}) {
         super(options);
         this.dataManager = dataManager;
+        this.currentDataset = null; // Will be set when we load datasets
         this.searchFilters = {
             settlements: '',
             cargo: ''
@@ -21,7 +22,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
             tag: 'div',
             classes: ['trading-places', 'data-management'],
             position: {
-                width: 900,
+                width: 1100, // Increased width to accommodate sidebar
                 height: 700
             },
             window: {
@@ -32,6 +33,16 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
     }
 
     async _prepareContext(options) {
+        // Load dataset pointer if not already loaded
+        if (!this.dataManager.datasetPointer) {
+            await this.dataManager.loadDatasetPointer();
+        }
+        
+        // Set current dataset if not already set
+        if (!this.currentDataset) {
+            this.currentDataset = this.dataManager.activeDatasetName || 'wfrp4e';
+        }
+        
         const settlements = this.dataManager.getAllSettlements();
         const cargoTypes = this.dataManager.getCargoTypes();
         
@@ -61,7 +72,8 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
             settlementsByRegion,
             sortedRegions,
             cargoTypes: sortedCargo,
-            searchFilters: this.searchFilters
+            searchFilters: this.searchFilters,
+            currentDataset: this.currentDataset
         };
     }
 
@@ -72,254 +84,51 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
 
     async _renderHTML(context, options) {
         const html = `
-            <style>
-                .trading-places-dm-container {
-                    display: flex;
-                    flex-direction: column;
-                    height: 100%;
-                    font-family: var(--font-primary);
-                    background: var(--color-bg);
-                    color: white;
-                }
-                .trading-places-dm-tabs {
-                    display: flex;
-                    border-bottom: 1px solid var(--color-border);
-                    background: var(--color-bg-alt);
-                    margin: 0;
-                    padding: 0;
-                }
-                .trading-places-dm-tab {
-                    padding: 12px 20px;
-                    cursor: pointer;
-                    border: none;
-                    background: transparent;
-                    font-weight: bold;
-                    border-bottom: 2px solid transparent;
-                    color: #cccccc;
-                    transition: all 0.2s;
-                }
-                .trading-places-dm-tab.active {
-                    background: var(--color-bg);
-                    border-bottom-color: var(--color-border-highlight);
-                    color: white;
-                }
-                .trading-places-dm-tab:hover:not(.active) {
-                    background: var(--color-bg-option);
-                    color: white;
-                }
-                .trading-places-dm-content {
-                    flex: 1;
-                    overflow: hidden;
-                    display: flex;
-                    flex-direction: column;
-                    background: var(--color-bg);
-                }
-                .trading-places-dm-tab-panel {
-                    display: none;
-                    flex: 1;
-                    flex-direction: column;
-                    padding: 15px;
-                    overflow: hidden;
-                }
-                .trading-places-dm-tab-panel.active {
-                    display: flex;
-                }
-                .trading-places-dm-search {
-                    margin-bottom: 15px;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-                .trading-places-dm-search input {
-                    flex: 1;
-                    padding: 8px 12px;
-                    border: 1px solid var(--color-border);
-                    border-radius: 3px;
-                    font-size: 14px;
-                    background: var(--color-bg);
-                    color: white;
-                }
-                .trading-places-dm-search input:focus {
-                    border-color: var(--color-border-highlight);
-                    outline: none;
-                    box-shadow: 0 0 5px var(--color-shadow-highlight);
-                }
-                .trading-places-dm-add-btn {
-                    background: var(--color-bg-option);
-                    color: white;
-                    border: 1px solid var(--color-border);
-                    padding: 8px 16px;
-                    border-radius: 3px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    transition: all 0.2s;
-                }
-                .trading-places-dm-add-btn:hover {
-                    background: var(--color-border-highlight);
-                    border-color: var(--color-border-highlight);
-                    color: white;
-                }
-                .trading-places-dm-import-btn {
-                    background: var(--color-bg);
-                    color: white;
-                    border: 1px solid var(--color-border);
-                    padding: 8px 12px;
-                    border-radius: 3px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    transition: all 0.2s;
-                }
-                .trading-places-dm-import-btn:hover {
-                    background: var(--color-bg-option);
-                    border-color: var(--color-border-highlight);
-                }
-                .trading-places-dm-export-btn {
-                    background: var(--color-bg);
-                    color: white;
-                    border: 1px solid var(--color-border);
-                    padding: 8px 12px;
-                    border-radius: 3px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    transition: all 0.2s;
-                }
-                .trading-places-dm-export-btn:hover {
-                    background: var(--color-bg-option);
-                    border-color: var(--color-border-highlight);
-                }
-                .trading-places-dm-list {
-                    flex: 1;
-                    overflow-y: auto;
-                    border: 1px solid var(--color-border);
-                    border-radius: 3px;
-                    background: var(--color-bg);
-                }
-                .trading-places-dm-region {
-                    background: var(--color-bg-alt);
-                    padding: 10px 15px;
-                    font-weight: bold;
-                    border-bottom: 1px solid var(--color-border);
-                    cursor: pointer;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    color: white;
-                }
-                .trading-places-dm-region:hover {
-                    background: var(--color-bg-option);
-                }
-                .trading-places-dm-region.collapsed + .trading-places-dm-settlements {
-                    display: none;
-                }
-                .trading-places-dm-settlements {
-                    border-bottom: 1px solid var(--color-border);
-                }
-                .trading-places-dm-item {
-                    padding: 12px 15px;
-                    border-bottom: 1px solid var(--color-border-light);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    background: var(--color-bg);
-                    margin-left: 20px;
-                    border-left: 3px solid var(--color-border-light);
-                }
-                .trading-places-dm-item:hover {
-                    background: var(--color-bg-option);
-                    border-left-color: var(--color-border-highlight);
-                }
-                .trading-places-dm-item:last-child {
-                    border-bottom: none;
-                }
-                .trading-places-dm-item-info {
-                    flex: 1;
-                }
-                .trading-places-dm-item-name {
-                    font-weight: bold;
-                    color: white;
-                    font-size: 14px;
-                }
-                .trading-places-dm-item-details {
-                    font-size: 12px;
-                    color: #cccccc;
-                    margin-top: 3px;
-                }
-                .trading-places-dm-item-actions {
-                    display: flex;
-                    gap: 6px;
-                }
-                .trading-places-dm-btn {
-                    padding: 6px 12px;
-                    border: 1px solid var(--color-border);
-                    background: var(--color-bg);
-                    cursor: pointer;
-                    border-radius: 3px;
-                    font-size: 12px;
-                    transition: all 0.2s;
-                    color: white;
-                }
-                .trading-places-dm-btn:hover {
-                    background: var(--color-bg-option);
-                }
-                .trading-places-dm-btn.edit:hover {
-                    border-color: var(--color-border-highlight);
-                    background: var(--color-border-highlight);
-                    color: white;
-                }
-                .trading-places-dm-btn.delete:hover {
-                    border-color: #dc3545;
-                    background: #dc3545;
-                    color: white;
-                }
-                .trading-places-dm-expand-icon {
-                    transition: transform 0.2s;
-                    color: #cccccc;
-                }
-                .collapsed .trading-places-dm-expand-icon {
-                    transform: rotate(-90deg);
-                }
-                
-                /* Cargo items without indentation */
-                .trading-places-dm-tab-panel[data-panel="cargo"] .trading-places-dm-item {
-                    margin-left: 0;
-                    border-left: none;
-                }
-            </style>
-            
             <div class="trading-places-dm-container">
-                <div class="trading-places-dm-tabs">
-                    <button class="trading-places-dm-tab active" data-tab="settlements">
-                        Settlements (${Object.values(context.settlementsByRegion).flat().length})
-                    </button>
-                    <button class="trading-places-dm-tab" data-tab="cargo">
-                        Cargo Types (${context.cargoTypes.length})
-                    </button>
+                <!-- Dataset Selector Sidebar -->
+                <div class="trading-places-dm-sidebar">
+                    <h3>Datasets</h3>
+                    <div class="trading-places-dm-dataset-selector">
+                        ${this._renderDatasetSelector(context)}
+                    </div>
                 </div>
                 
-                <div class="trading-places-dm-content">
-                    <!-- Settlements Tab -->
-                    <div class="trading-places-dm-tab-panel active" data-panel="settlements">
-                        <div class="trading-places-dm-search">
-                            <input type="text" placeholder="Search settlements and regions..." class="trading-places-dm-search-input" data-type="settlements">
-                            <button class="trading-places-dm-export-btn" data-action="export-settlements" title="Export settlements data">Export</button>
-                            <button class="trading-places-dm-import-btn" data-action="import-settlements" title="Import settlements data">Import</button>
-                            <button class="trading-places-dm-add-btn" data-action="add-settlement">Add Settlement</button>
-                        </div>
-                        <div class="trading-places-dm-list" id="settlements-list">
-                            ${this._renderSettlementsList(context.settlementsByRegion, context.sortedRegions)}
-                        </div>
+                <!-- Main Content Area -->
+                <div class="trading-places-dm-main">
+                    <div class="trading-places-dm-tabs">
+                        <button class="trading-places-dm-tab active" data-tab="settlements">
+                            Settlements (${Object.values(context.settlementsByRegion).flat().length})
+                        </button>
+                        <button class="trading-places-dm-tab" data-tab="cargo">
+                            Cargo Types (${context.cargoTypes.length})
+                        </button>
                     </div>
                     
-                    <!-- Cargo Tab -->
-                    <div class="trading-places-dm-tab-panel" data-panel="cargo">
-                        <div class="trading-places-dm-search">
-                            <input type="text" placeholder="Search cargo types..." class="trading-places-dm-search-input" data-type="cargo">
-                            <button class="trading-places-dm-export-btn" data-action="export-cargo" title="Export cargo data">Export</button>
-                            <button class="trading-places-dm-import-btn" data-action="import-cargo" title="Import cargo data">Import</button>
-                            <button class="trading-places-dm-add-btn" data-action="add-cargo">Add Cargo Type</button>
+                    <div class="trading-places-dm-content">
+                        <!-- Settlements Tab -->
+                        <div class="trading-places-dm-tab-panel active" data-panel="settlements">
+                            <div class="trading-places-dm-search">
+                                <input type="text" placeholder="Search settlements and regions..." class="trading-places-dm-search-input" data-type="settlements">
+                                <button class="trading-places-dm-export-btn" data-action="export-settlements" title="Export settlements data">Export</button>
+                                <button class="trading-places-dm-import-btn" data-action="import-settlements" title="Import settlements data">Import</button>
+                                <button class="trading-places-dm-add-btn" data-action="add-settlement">Add Settlement</button>
+                            </div>
+                            <div class="trading-places-dm-list" id="settlements-list">
+                                ${this._renderSettlementsList(context.settlementsByRegion, context.sortedRegions)}
+                            </div>
                         </div>
-                        <div class="trading-places-dm-list" id="cargo-list">
-                            ${this._renderCargoList(context.cargoTypes)}
+                        
+                        <!-- Cargo Tab -->
+                        <div class="trading-places-dm-tab-panel" data-panel="cargo">
+                            <div class="trading-places-dm-search">
+                                <input type="text" placeholder="Search cargo types..." class="trading-places-dm-search-input" data-type="cargo">
+                                <button class="trading-places-dm-export-btn" data-action="export-cargo" title="Export cargo data">Export</button>
+                                <button class="trading-places-dm-import-btn" data-action="import-cargo" title="Import cargo data">Import</button>
+                                <button class="trading-places-dm-add-btn" data-action="add-cargo">Add Cargo Type</button>
+                            </div>
+                            <div class="trading-places-dm-list" id="cargo-list">
+                                ${this._renderCargoList(context.cargoTypes)}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -402,6 +211,80 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
         `).join('');
     }
 
+    _renderDatasetSelector(context) {
+        // Get available datasets from the dataManager
+        const datasets = this._getAvailableDatasets();
+        
+        // Create dropdown options
+        const options = datasets.map(dataset => 
+            `<option value="${dataset.id}" ${dataset.id === this.currentDataset ? 'selected' : ''}>${dataset.label} (${dataset.type})</option>`
+        ).join('');
+        
+        return `
+            <div class="trading-places-dm-dataset-header">
+                <div>
+                    <select id="trading-places-dataset-selector" style="width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 3px;">
+                        ${options}
+                    </select>
+                </div>
+                <div>
+                    <button class="trading-places-dm-dataset-add" 
+                            data-action="add-dataset"
+                            title="Add new dataset">
+                        add
+                    </button>
+                    <button class="trading-places-dm-dataset-delete" 
+                            data-action="delete-dataset"
+                            title="Delete selected dataset">
+                        delete
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    _getAvailableDatasets() {
+        const datasets = [];
+        
+        // Get built-in datasets from the dataManager's dataset pointer
+        if (this.dataManager.datasetPointer && this.dataManager.datasetPointer.systems) {
+            this.dataManager.datasetPointer.systems.forEach(system => {
+                datasets.push({
+                    id: system.id,
+                    label: system.label || system.id,
+                    type: 'built-in'
+                });
+            });
+        }
+        
+        // If no built-in datasets found, add a default one
+        if (datasets.length === 0) {
+            datasets.push({
+                id: 'wfrp4e',
+                label: 'Warhammer Fantasy Roleplay 4th Edition',
+                type: 'built-in'
+            });
+        }
+        
+        // Get user datasets from Foundry settings
+        try {
+            if (typeof game !== 'undefined' && game.settings) {
+                const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+                userDatasets.forEach(datasetName => {
+                    datasets.push({
+                        id: datasetName,
+                        label: datasetName,
+                        type: 'user'
+                    });
+                });
+            }
+        } catch (error) {
+            console.warn('Failed to load user datasets:', error);
+        }
+        
+        return datasets;
+    }
+
     _filterSettlements(settlements, searchTerm) {
         if (!searchTerm) return settlements;
         const term = searchTerm.toLowerCase();
@@ -429,6 +312,12 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
         html.find('.trading-places-dm-tab').click((e) => {
             const tab = $(e.currentTarget).data('tab');
             this._switchTab(tab);
+        });
+        
+        // Dataset selection
+        html.find('#trading-places-dataset-selector').change((e) => {
+            const datasetId = $(e.currentTarget).val();
+            this._switchDataset(datasetId);
         });
         
         // Search functionality
@@ -462,6 +351,50 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
         // Update tab panels
         html.find('.trading-places-dm-tab-panel').removeClass('active');
         html.find(`[data-panel="${tabName}"]`).addClass('active');
+    }
+
+    async _switchDataset(datasetId) {
+        try {
+            // Validate that the dataset exists
+            const availableDatasets = this._getAvailableDatasets();
+            const datasetExists = availableDatasets.some(d => d.id === datasetId);
+            
+            if (!datasetExists) {
+                console.warn(`Dataset '${datasetId}' does not exist, cannot switch`);
+                ui.notifications.error(`Dataset '${datasetId}' does not exist`);
+                return;
+            }
+
+            // Switch the dataset in the dataManager
+            await this.dataManager.switchDataset(datasetId);
+            
+            // Update current dataset
+            this.currentDataset = datasetId;
+            
+            // Update the UI to reflect the new dataset
+            await this.render();
+            
+            // Update dataset selector selected option
+            const html = $(this.element);
+            html.find('#trading-places-dataset-selector').val(datasetId);
+            
+            // Notification is handled by the settings change handler to avoid duplicates
+        } catch (error) {
+            console.error('Failed to switch dataset:', error);
+            ui.notifications.error(`Failed to switch dataset: ${error.message}`);
+            
+            // If switching failed, try to reset to a valid dataset
+            try {
+                const availableDatasets = this._getAvailableDatasets();
+                if (availableDatasets.length > 0) {
+                    const defaultDataset = availableDatasets.find(d => d.id === 'wfrp4e') || availableDatasets[0];
+                    console.log(`Attempting to reset to default dataset: ${defaultDataset.id}`);
+                    await this._switchDataset(defaultDataset.id);
+                }
+            } catch (resetError) {
+                console.error('Failed to reset to default dataset:', resetError);
+            }
+        }
     }
 
     _updateSearch(type) {
@@ -534,6 +467,15 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                 break;
             case 'import-cargo':
                 this._importCargo();
+                break;
+            case 'add-dataset':
+                this._addDataset();
+                break;
+            case 'delete-dataset':
+                // Get selected dataset from dropdown - scope to this application
+                const selectedDataset = $(this.element).find('#trading-places-dataset-selector').val();
+                console.log('DELETE DATASET: selected dataset =', selectedDataset);
+                this._deleteDataset(selectedDataset);
                 break;
         }
     }
@@ -1110,6 +1052,117 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
             console.error('Trading Places | Failed to save data persistently:', error);
             ui.notifications.error('Failed to save data persistently');
         }
+    }
+
+    _addDataset() {
+        const content = `
+            <div style="padding: 10px;">
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Dataset Name:</label>
+                    <input type="text" id="dataset-name" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;" placeholder="Enter a unique name for the dataset">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <p style="font-size: 0.9em; color: #666;">
+                        This will create a new user dataset based on the currently active dataset. 
+                        You can then modify settlements and cargo types in this dataset.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        new foundry.applications.api.DialogV2({
+            window: { title: "Add New Dataset" },
+            content: content,
+            buttons: [{
+                action: "save",
+                label: "Create",
+                callback: async (event, button, dialog) => {
+                    const element = dialog.element;
+                    const datasetName = element.querySelector('#dataset-name').value.trim();
+                    
+                    if (!datasetName) {
+                        ui.notifications.error('Dataset name is required');
+                        return;
+                    }
+                    
+                    try {
+                        await this.dataManager.createUserDataset(datasetName);
+                        ui.notifications.info(`Dataset "${datasetName}" created successfully`);
+                        
+                        // Switch to the new dataset
+                        await this._switchDataset(datasetName);
+                        
+                        this.render(); // Refresh the dialog
+                    } catch (error) {
+                        ui.notifications.error(`Failed to create dataset: ${error.message}`);
+                    }
+                }
+            }, {
+                action: "cancel",
+                label: "Cancel"
+            }]
+        }).render(true);
+    }
+
+    _deleteDataset(datasetName) {
+        console.log('DELETE DATASET: _deleteDataset called with datasetName =', datasetName);
+        if (!datasetName) {
+            ui.notifications.error('Dataset name is required');
+            return;
+        }
+
+        // Check if it's a built-in dataset
+        const datasets = this._getAvailableDatasets();
+        console.log('DELETE DATASET: available datasets =', datasets);
+        const dataset = datasets.find(d => d.id === datasetName);
+        console.log('DELETE DATASET: found dataset =', dataset);
+
+        if (dataset && dataset.type === 'built-in') {
+            ui.notifications.error('Cannot delete built-in datasets');
+            return;
+        }
+
+        foundry.applications.api.DialogV2.confirm({
+            window: {
+                title: "Delete Dataset",
+                resizable: false
+            },
+            position: {
+                width: 400,
+                height: 'auto'
+            },
+            content: `<p>Are you sure you want to delete the dataset "${datasetName}"?</p><p style="color: #ff6b6b; font-weight: bold;">This action cannot be undone.</p>`,
+            buttons: [{
+                action: "yes",
+                label: "Delete",
+                default: false,
+                callback: async (event, button, dialog) => {
+                    console.log('DELETE DATASET: confirmation callback called');
+                    try {
+                        console.log('DELETE DATASET: calling dataManager.deleteUserDataset');
+                        await this.dataManager.deleteUserDataset(datasetName);
+                        console.log('DELETE DATASET: deleteUserDataset completed successfully');
+                        ui.notifications.info(`Dataset "${datasetName}" deleted successfully`);
+
+                        // If we deleted the current dataset, switch to the default one
+                        if (this.currentDataset === datasetName) {
+                            console.log('DELETE DATASET: switching to default dataset');
+                            await this._switchDataset('wfrp4e');
+                        } else {
+                            console.log('DELETE DATASET: refreshing dialog');
+                            this.render(); // Refresh the dialog
+                        }
+                    } catch (error) {
+                        console.error('DELETE DATASET: error during deletion:', error);
+                        ui.notifications.error(`Failed to delete dataset: ${error.message}`);
+                    }
+                }
+            }, {
+                action: "no",
+                label: "Cancel",
+                default: true
+            }]
+        });
     }
 }
 

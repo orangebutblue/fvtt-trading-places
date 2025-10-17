@@ -65,6 +65,26 @@ export class TradingPlacesSettings {
             config: false
         });
 
+        // User datasets
+        game.settings.register(this.MODULE_ID, 'userDatasets', {
+            name: 'User Datasets',
+            hint: 'List of user-created dataset names',
+            type: Array,
+            default: [],
+            scope: 'world',
+            config: false
+        });
+
+        // User dataset data
+        game.settings.register(this.MODULE_ID, 'userDatasetsData', {
+            name: 'User Datasets Data',
+            hint: 'Data for all user-created datasets',
+            type: Object,
+            default: {},
+            scope: 'world',
+            config: false
+        });
+
         console.log('Trading Places | Settings registered');
     }
 

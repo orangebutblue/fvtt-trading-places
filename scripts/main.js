@@ -8,7 +8,7 @@ import { TradingEngine } from './trading-engine.js';
 import { DataManager } from './data-manager.js';
 import { SystemAdapter } from './system-adapter.js';
 import { TradingPlacesSettings } from './module-settings.js';
-import { TradingPlacesSettingsDialog } from './settings-dialog.js';
+//import { TradingPlacesSettingsDialog } from './settings-dialog.js';
 
 // Module constants
 const MODULE_ID = "fvtt-trading-places";
@@ -153,6 +153,27 @@ Hooks.once('ready', async () => {
 
         // Initialize native UI integration
         await initializeProperSceneControls();
+
+        // Register dataset change hook listener
+        Hooks.on(`${MODULE_ID}.datasetChanged`, async (data) => {
+            console.log(`Trading Places | Dataset changed hook received:`, data);
+            
+            try {
+                // Refresh any open trading applications to update their context
+                setTimeout(() => {
+                    for (let app of Object.values(ui.windows)) {
+                        if (app.constructor.name === 'TradingPlacesApplication') {
+                            console.log(`Trading Places | Refreshing ${app.constructor.name} after dataset change`);
+                            app.render(false);
+                        }
+                    }
+                }, 100);
+                
+                ui.notifications.info(`Dataset switched to: ${data.newDataset}`);
+            } catch (error) {
+                console.error('Trading Places | Error handling dataset change:', error);
+            }
+        });
 
         console.log('Trading Places | Setup complete');
         // Note: Removed startup notification to avoid notification spam
@@ -648,6 +669,16 @@ function registerModuleSettings() {
         default: []
     });
 
+    // Register user datasets data setting (stores all user dataset data)
+    game.settings.register(MODULE_ID, "userDatasetsData", {
+        name: "User Datasets Data",
+        hint: "Data for all user-created datasets",
+        scope: "world",
+        config: false,
+        type: Object,
+        default: {}
+    });
+
     // Active dataset setting - now with dynamic choices
     game.settings.register(MODULE_ID, "activeDataset", {
         name: "TRADING-PLACES.Settings.ActiveDataset.Name",
@@ -1050,8 +1081,7 @@ async function handleDeleteDataset() {
     const confirmContent = `
         <p>Are you sure you want to delete the dataset "${datasetToDelete}"?</p>
         <p style="color: #ff6b6b;"><strong>This action cannot be undone.</strong></p>
-        ${datasetToDelete === currentDataset ? '<p style="color: #ffa500;">Note: This is your currently active dataset. It will be deleted but remain selected until you choose another dataset.</p>' : ''}
-    `;
+        ${datasetToDelete === currentDataset ? '<p style="color: #ffa500;">Note: This is your currently active dataset. It will be deleted but remain selected until you choose another dataset.</p>' : ''}`;
 
     Dialog.confirm({
         title: 'Confirm Dataset Deletion',
@@ -1112,32 +1142,11 @@ async function createDataset(datasetName) {
         await game.settings.set(MODULE_ID, 'userDatasets', userDatasets);
     }
 
-    // Store placeholder data in game settings for now
+    // Store placeholder data in the userDatasetsData object
+    const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
     const placeholderData = {
-        settlements: [{
-            name: "Example Settlement",
-            region: "Example Region",
-            size: 3,
-            wealth: 3,
-            population: 1000,
-            ruler: "Local Authority",
-            notes: "This is a placeholder settlement. Edit it using the Data Management interface.",
-            produces: [],
-            demands: [],
-            flags: []
-        }],
-        cargoTypes: [{
-            name: "Example Cargo",
-            category: "Trade Goods",
-            basePrice: 100,
-            description: "This is a placeholder cargo type. Edit it using the Data Management interface.",
-            seasonalModifiers: {
-                spring: 1.0,
-                summer: 1.0,
-                autumn: 1.0,
-                winter: 1.0
-            }
-        }],
+        settlements: [],
+        cargoTypes: [],
         config: {
             "system": "wfrp4e",
             "version": "1.0",
@@ -1150,6 +1159,10 @@ async function createDataset(datasetName) {
                     "Silver Shilling": 12,
                     "Brass Penny": 1
                 }
+            },
+            "inventory": {
+                "field": "items",
+                "addMethod": "createEmbeddedDocuments"
             }
         },
         tradingConfig: {
@@ -1169,9 +1182,10 @@ async function createDataset(datasetName) {
         }
     };
 
-    await game.settings.set(MODULE_ID, `userDataset_${datasetName}`, placeholderData);
+    userDatasetsData[datasetName] = placeholderData;
+    await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
 
-    ui.notifications.info(`Dataset "${datasetName}" created with placeholder data. Use the Data Management interface to edit settlements and cargo types.`);
+    ui.notifications.info(`Dataset "${datasetName}" created successfully. Use the Data Management interface to add settlements and cargo types.`);
 
     console.log(`Trading Places | Created user dataset: ${datasetName} with placeholder data`);
 
@@ -1194,12 +1208,12 @@ async function deleteDataset(datasetName) {
 
         // Remove the dataset from the list
         const updatedDatasets = userDatasets.filter(name => name !== datasetName);
-
-        // Update the user datasets list
         await game.settings.set(MODULE_ID, 'userDatasets', updatedDatasets);
 
-        // Remove the dataset data
-        await game.settings.set(MODULE_ID, `userDataset_${datasetName}`, null);
+        // Remove the dataset data from the userDatasetsData object
+        const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+        delete userDatasetsData[datasetName];
+        await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
 
         ui.notifications.info(`Dataset "${datasetName}" deleted successfully`);
         console.log(`Trading Places | Deleted user dataset: ${datasetName}`);
@@ -1222,11 +1236,33 @@ async function onActiveDatasetChange(newValue) {
             return;
         }
 
+        // Check if this dataset is already active to prevent duplicate switching
+        if (dataManager && dataManager.activeDatasetName === newValue) {
+            console.log(`Trading Places | Dataset ${newValue} is already active, skipping duplicate switch`);
+            return;
+        }
+
         // Reload dataset
         if (dataManager) {
             await dataManager.switchDataset(newValue);
             ui.notifications.info(`Switched to dataset: ${newValue}`);
+
+            // Add console log with list of settlements
+            const settlements = dataManager.getAllSettlements();
+            console.log(`📍 Settlements in dataset '${newValue}':`, settlements.map(s => s.name));
         }
+
+        // Refresh any open trading applications
+        setTimeout(() => {
+            for (let app of Object.values(ui.windows)) {
+                if (app.constructor.name === 'TradingPlacesApplication' ||
+                    app.constructor.name === 'TradingPlacesEnhancedDialog' ||
+                    app.constructor.name === 'WFRPSimpleTradingV2') {
+                    console.log(`Trading Places | Refreshing ${app.constructor.name} after dataset change`);
+                    app.render(false);
+                }
+            }
+        }, 100);
 
         // Update last validation timestamp
         await game.settings.set(MODULE_ID, "lastDatasetValidation", new Date().toISOString());
@@ -1318,6 +1354,8 @@ async function performSettingsMigration() {
     const currentVersion = game.settings.get(MODULE_ID, "moduleVersion");
 
     if (currentVersion === MODULE_VERSION) {
+        // Still perform recovery check even if version matches
+        await performDatasetRecovery();
         return; // No migration needed
     }
 
@@ -1335,6 +1373,9 @@ async function performSettingsMigration() {
 
         // Update version setting
         await game.settings.set(MODULE_ID, "moduleVersion", MODULE_VERSION);
+
+        // Perform dataset recovery
+        await performDatasetRecovery();
 
         console.log('Trading Places | Migration completed successfully');
 
@@ -1382,23 +1423,117 @@ async function performVersionMigration(fromVersion, toVersion) {
 }
 
 /**
+ * Perform dataset recovery to fix inconsistencies between userDatasets and userDatasetsData
+ */
+async function performDatasetRecovery() {
+    console.log('Trading Places | Performing dataset recovery check');
+
+    try {
+        const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+        const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+
+        const userDatasetsSet = new Set(userDatasets);
+        const userDatasetsDataKeys = Object.keys(userDatasetsData);
+
+        let recoveryNeeded = false;
+        const recoveredDatasets = [];
+        const orphanedDatasets = [];
+
+        // Check for datasets in userDatasetsData but not in userDatasets (missing registrations)
+        for (const datasetName of userDatasetsDataKeys) {
+            if (!userDatasetsSet.has(datasetName)) {
+                console.warn(`Trading Places | Found unregistered user dataset: ${datasetName}`);
+                recoveredDatasets.push(datasetName);
+                recoveryNeeded = true;
+            }
+        }
+
+        // Check for datasets in userDatasets but not in userDatasetsData (orphaned registrations)
+        for (const datasetName of userDatasets) {
+            if (!userDatasetsData[datasetName]) {
+                console.warn(`Trading Places | Found orphaned user dataset registration: ${datasetName}`);
+                orphanedDatasets.push(datasetName);
+                recoveryNeeded = true;
+            }
+        }
+
+        if (recoveryNeeded) {
+            // Recover missing registrations
+            if (recoveredDatasets.length > 0) {
+                const updatedUserDatasets = [...userDatasets, ...recoveredDatasets];
+                await game.settings.set(MODULE_ID, 'userDatasets', updatedUserDatasets);
+                console.log(`Trading Places | Recovered ${recoveredDatasets.length} missing dataset registrations: ${recoveredDatasets.join(', ')}`);
+            }
+
+            // Clean up orphaned registrations
+            if (orphanedDatasets.length > 0) {
+                const updatedUserDatasets = userDatasets.filter(name => !orphanedDatasets.includes(name));
+                await game.settings.set(MODULE_ID, 'userDatasets', updatedUserDatasets);
+                console.log(`Trading Places | Cleaned up ${orphanedDatasets.length} orphaned dataset registrations: ${orphanedDatasets.join(', ')}`);
+            }
+
+            ui.notifications.info(`Dataset recovery completed. ${recoveredDatasets.length} datasets recovered, ${orphanedDatasets.length} orphaned registrations cleaned up.`);
+        } else {
+            console.log('Trading Places | Dataset recovery check completed - no issues found');
+        }
+
+    } catch (error) {
+        console.error('Trading Places | Dataset recovery failed:', error);
+        // Don't throw - recovery failure shouldn't break module initialization
+    }
+}
+
+/**
  * Validate that a dataset exists
  * @param {string} datasetName - Name of dataset to validate
  * @returns {Object} - Validation result
  */
 async function validateDatasetExists(datasetName) {
     try {
-        // Check if dataset directory exists
-        const datasetPath = `modules/${MODULE_ID}/datasets/${datasetName}`;
-
-        // For now, assume dataset is valid if name is provided
-        // In a real implementation, you would check file system
-        const validDatasets = ['wfrp4e', 'custom'];
-
-        if (!validDatasets.includes(datasetName)) {
+        if (!datasetName || typeof datasetName !== 'string') {
             return {
                 valid: false,
-                errors: [`Dataset '${datasetName}' not found. Available datasets: ${validDatasets.join(', ')}`]
+                errors: ['Dataset name is required and must be a string']
+            };
+        }
+
+        // Get all available datasets dynamically
+        const availableDatasets = getAvailableDatasets();
+        const datasetKeys = Object.keys(availableDatasets);
+
+        if (!datasetKeys.includes(datasetName)) {
+            return {
+                valid: false,
+                errors: [`Dataset '${datasetName}' not found. Available datasets: ${datasetKeys.join(', ')}`]
+            };
+        }
+
+        // For built-in datasets, check if the directory exists
+        if (datasetName === 'wfrp4e') {
+            try {
+                const response = await fetch(`modules/${MODULE_ID}/datasets/${datasetName}/config.json`, { method: 'HEAD' });
+                if (!response.ok) {
+                    return {
+                        valid: false,
+                        errors: [`Built-in dataset '${datasetName}' files not accessible`]
+                    };
+                }
+            } catch (error) {
+                return {
+                    valid: false,
+                    errors: [`Cannot access built-in dataset '${datasetName}': ${error.message}`]
+                };
+            }
+        }
+
+        // For user datasets (created at runtime), check if they exist in settings
+        // User datasets don't have files - they only exist in Foundry settings
+        if (availableDatasets[datasetName] && availableDatasets[datasetName].includes('(User)')) {
+            // User datasets are validated by their presence in the available datasets list
+            // which is populated from settings. No additional file validation needed.
+            return {
+                valid: true,
+                errors: []
             };
         }
 
@@ -1467,6 +1602,9 @@ async function initializeCoreComponents() {
 
     try {
         // Initialize DataManager
+        if (typeof DataManager === 'undefined') {
+            throw new Error('DataManager class not loaded. Check module loading order.');
+        }
         dataManager = new DataManager();
         dataManager.setModuleId(MODULE_ID);
         
@@ -1548,24 +1686,46 @@ async function loadActiveDataset() {
             throw new Error('DataManager not initialized');
         }
 
-        const activeDataset = game.settings.get(MODULE_ID, "activeDataset") || "wfrp4e";
+        // Get the active dataset name from settings
+        let activeDataset = game.settings.get(MODULE_ID, "activeDataset") || "wfrp4e";
+
+        // Validate the active dataset setting
+        const validation = await validateDatasetExists(activeDataset);
+
+        if (!validation.valid) {
+            console.warn(`Trading Places | Active dataset '${activeDataset}' is invalid: ${validation.errors.join(', ')}`);
+
+            // Reset to default dataset
+            activeDataset = "wfrp4e";
+            await game.settings.set(MODULE_ID, "activeDataset", activeDataset);
+            console.log(`Trading Places | Reset active dataset to '${activeDataset}'`);
+        }
 
         try {
             await dataManager.loadActiveDataset();
             console.log(`Trading Places | Successfully loaded dataset: ${activeDataset}`);
 
             // Validate loaded data
+            // Use lenient validation at startup: auto-fill missing config sections
+            // with defaults and report them as warnings instead of hard errors.
             const validation = dataManager.validateDatasetCompleteness({
                 settlements: dataManager.settlements,
                 config: dataManager.config
-            });
+            }, { lenient: true });
 
             if (!validation.valid) {
-                const warningMessage = `Dataset validation warnings: ${validation.errors.join(', ')}`;
+                const warningMessage = `Dataset validation errors: ${validation.errors.join(', ')}`;
                 if (errorHandler) {
                     errorHandler.notifyUser('warning', warningMessage);
                 }
-                console.warn('Trading Places | Dataset validation warnings:', validation.errors);
+                console.warn('Trading Places | Dataset validation errors:', validation.errors);
+            } else if (validation.diagnosticReport) {
+                // Non-fatal warnings were generated (e.g., defaults applied)
+                const warningMessage = `Dataset validation warnings: ${validation.diagnosticReport}`;
+                if (errorHandler) {
+                    errorHandler.notifyUser('warning', `Dataset validation warnings were detected; see console for details`);
+                }
+                console.warn('Trading Places | Dataset validation warnings:', validation.diagnosticReport);
             }
 
         } catch (datasetError) {
@@ -1783,8 +1943,19 @@ function getAvailableDatasets() {
     try {
         if (typeof game !== 'undefined' && game.settings) {
             const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+            const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+            
+            // Add datasets from the userDatasets array
             userDatasets.forEach(datasetName => {
                 datasets[datasetName] = `${datasetName} (User)`;
+            });
+            
+            // Also add any datasets that exist in userDatasetsData but not in userDatasets (recovery)
+            Object.keys(userDatasetsData).forEach(datasetName => {
+                if (!userDatasets.includes(datasetName)) {
+                    datasets[datasetName] = `${datasetName} (User - Recovered)`;
+                    console.warn(`Trading Places | Recovered missing user dataset: ${datasetName}`);
+                }
             });
         }
     } catch (error) {
@@ -1949,7 +2120,7 @@ Hooks.once('ready', async function() {
         console.error('Trading Places | Ready hook failed:', error);
 
         if (errorHandler) {
-            errorHandler.handleModuleInitializationError(error, 'Ready Hook');
+            errorHandler.handleDataLoadingError(error, 'Module Initialization', 'ready hook');
         } else {
             ui.notifications.error(`Trading Places initialization failed: ${error.message}`, { permanent: true });
         }

@@ -600,6 +600,10 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             : [];
         context.allSettlements = allSettlements;
 
+        // Get all unique regions for the region dropdown
+        const allRegions = [...new Set(allSettlements.map(s => s.region))].sort();
+        context.allRegions = allRegions;
+
         // Add UI state data
         context.hasSettlement = !!this.selectedSettlement;
     context.hasCargo = successfulCargo.length > 0;

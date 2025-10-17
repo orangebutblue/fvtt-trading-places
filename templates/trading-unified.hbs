@@ -43,16 +43,9 @@
                     <label class="form-label">Region</label>
                     <select class="form-select" id="region-select">
                         <option value="">Select a region...</option>
-                        <option value="Reikland" {{#if (eq selectedRegion "Reikland")}}selected{{/if}}>Reikland</option>
-                        <option value="Middenland" {{#if (eq selectedRegion "Middenland")}}selected{{/if}}>Middenland</option>
-                        <option value="Nordland" {{#if (eq selectedRegion "Nordland")}}selected{{/if}}>Nordland</option>
-                        <option value="Ostland" {{#if (eq selectedRegion "Ostland")}}selected{{/if}}>Ostland</option>
-                        <option value="Ostermark" {{#if (eq selectedRegion "Ostermark")}}selected{{/if}}>Ostermark</option>
-                        <option value="Stirland" {{#if (eq selectedRegion "Stirland")}}selected{{/if}}>Stirland</option>
-                        <option value="Averland" {{#if (eq selectedRegion "Averland")}}selected{{/if}}>Averland</option>
-                        <option value="Wissenland" {{#if (eq selectedRegion "Wissenland")}}selected{{/if}}>Wissenland</option>
-                        <option value="Talabecland" {{#if (eq selectedRegion "Talabecland")}}selected{{/if}}>Talabecland</option>
-                        <option value="Hochland" {{#if (eq selectedRegion "Hochland")}}selected{{/if}}>Hochland</option>
+                        {{#each allRegions}}
+                        <option value="{{this}}" {{#if (eq ../selectedRegion this)}}selected{{/if}}>{{this}}</option>
+                        {{/each}}
                     </select>
                 </div>
                 

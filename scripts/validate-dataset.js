@@ -49,9 +49,37 @@ class DatasetValidator {
         console.log('📍 Validating settlement data...');
         
         const settlementsDir = path.join(this.datasetPath, 'settlements');
+        const aggregatedPath = path.join(this.datasetPath, 'settlements.json');
         
+        // Check for aggregated settlements.json file first
+        if (fs.existsSync(aggregatedPath)) {
+            try {
+                const settlements = JSON.parse(fs.readFileSync(aggregatedPath, 'utf8'));
+                
+                if (!Array.isArray(settlements)) {
+                    this.errors.push('settlements.json: Must contain an array of settlements');
+                    return;
+                }
+
+                settlements.forEach((settlement, index) => {
+                    this.validateSettlement(settlement, `settlements.json[${index}]`);
+                    this.updateStats(settlement);
+                });
+
+                this.stats.totalSettlements = settlements.length;
+                this.stats.regionCount = 1; // Aggregated file counts as 1 "regional file"
+                console.log(`  ✓ settlements.json: ${settlements.length} settlements`);
+                return;
+                
+            } catch (error) {
+                this.errors.push(`settlements.json: JSON parsing error - ${error.message}`);
+                return;
+            }
+        }
+        
+        // Fall back to regional directory structure
         if (!fs.existsSync(settlementsDir)) {
-            this.errors.push('Settlements directory not found');
+            this.errors.push('Settlements directory not found and no settlements.json file present');
             return;
         }
 
@@ -329,7 +357,8 @@ class DatasetValidator {
 }
 
 // Run validation
-const validator = new DatasetValidator('datasets/active');
+const datasetPath = process.argv[2] || 'datasets/active';
+const validator = new DatasetValidator(datasetPath);
 const isValid = validator.validateDataset();
 
 process.exit(isValid ? 0 : 1);

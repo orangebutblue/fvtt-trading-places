@@ -14,11 +14,14 @@ try {
     // Ignore require failures in browser context; window fallback below.
 }
 
-console.log('🔍 Checking for window.TradingPlacesCurrencyUtils...', !!window?.TradingPlacesCurrencyUtils);
-if (typeof window !== 'undefined' && window.TradingPlacesCurrencyUtils) {
-    CurrencyUtils = window.TradingPlacesCurrencyUtils;
+// Safely check for a browser `window` before accessing properties (Node tests don't have `window`)
+let _window = (typeof window !== 'undefined') ? window : null;
+console.log('🔍 Checking for window.TradingPlacesCurrencyUtils...', !!(_window && _window.TradingPlacesCurrencyUtils));
+if (_window && _window.TradingPlacesCurrencyUtils) {
+    CurrencyUtils = _window.TradingPlacesCurrencyUtils;
     console.log('✅ CurrencyUtils loaded from window');
-} else {
+} else if (_window) {
+    // Running in a browser but the global helper isn't present yet
     console.error('❌ window.TradingPlacesCurrencyUtils not found at data-manager load time');
 }
 
@@ -454,9 +457,14 @@ class DataManager {
 
         // Validate config structure
         if (dataset.config && typeof dataset.config === 'object') {
+            console.log('🔍 DEBUG: Validating config structure');
+            console.log('🔍 DEBUG: Config keys:', Object.keys(dataset.config));
+            console.log('🔍 DEBUG: Config object:', dataset.config);
+
             // Check for required config sections
             const requiredConfigSections = ['currency', 'inventory'];
             requiredConfigSections.forEach(section => {
+                console.log(`🔍 DEBUG: Checking for section '${section}':`, dataset.config.hasOwnProperty(section));
                 if (!dataset.config.hasOwnProperty(section)) {
                     result.valid = false;
                     result.errors.push(`Config missing required section: ${section}`);
@@ -465,6 +473,7 @@ class DataManager {
 
             // Validate currency config
             if (dataset.config.currency) {
+                console.log('🔍 DEBUG: Validating currency config:', dataset.config.currency);
                 const currencyConfig = dataset.config.currency;
                 if (!currencyConfig.canonicalUnit || typeof currencyConfig.canonicalUnit.value !== 'number') {
                     result.valid = false;
@@ -479,6 +488,7 @@ class DataManager {
 
             // Validate inventory config
             if (dataset.config.inventory) {
+                console.log('🔍 DEBUG: Validating inventory config:', dataset.config.inventory);
                 if (!dataset.config.inventory.field || typeof dataset.config.inventory.field !== 'string') {
                     result.valid = false;
                     result.errors.push('Config inventory.field must be a non-empty string');
@@ -517,11 +527,33 @@ class DataManager {
      * @param {Object} dataset - Dataset to validate
      * @returns {Object} - Detailed validation result
      */
-    validateDatasetCompleteness(dataset) {
+    validateDatasetCompleteness(dataset, options = {}) {
+        // options.lenient: when true, attempt to auto-fill missing config sections
+        // with safe defaults and report them as warnings instead of hard errors.
+        const opts = Object.assign({ lenient: false }, options);
+
+        // If lenient mode and config is present, auto-fill missing sections
+        if (opts.lenient && dataset && dataset.config && typeof dataset.config === 'object') {
+            const requiredConfigSections = ['currency', 'inventory'];
+            requiredConfigSections.forEach(section => {
+                if (!dataset.config.hasOwnProperty(section)) {
+                    try {
+                        if (section === 'currency') dataset.config.currency = this.getCurrencyConfig();
+                        if (section === 'inventory') dataset.config.inventory = this.getInventoryConfig();
+                    } catch (err) {
+                        // ignore - let strict validation catch this
+                    }
+                }
+            });
+        }
+
         const result = this.validateDatasetStructure(dataset);
 
         if (!result.valid) {
             result.diagnosticReport = this.generateDiagnosticReport(result.errors);
+        } else if (opts.lenient && Array.isArray(result.warnings) && result.warnings.length > 0) {
+            // If lenient mode produced warnings (e.g., we filled defaults earlier), attach a diagnostic
+            result.diagnosticReport = this.generateDiagnosticReport(result.warnings);
         }
 
         return result;
@@ -1026,6 +1058,8 @@ class DataManager {
                     console.log('REGION DROPDOWN - Auto-refreshed with regions:', regions);
                 }
             }, 100);
+
+            await this._persistUserDatasetChanges();
             
             return true;
         } catch (error) {
@@ -1056,6 +1090,7 @@ class DataManager {
             }
 
             console.log(`Cargo type '${cargoType.name}' updated successfully`);
+            await this._persistUserDatasetChanges();
             return true;
         } catch (error) {
             console.error('Failed to update cargo type:', error);
@@ -1093,6 +1128,7 @@ class DataManager {
                     }
                 }, 100);
                 
+                await this._persistUserDatasetChanges();
                 return true;
             } else {
                 throw new Error(`Settlement '${settlementName}' not found`);
@@ -1114,6 +1150,7 @@ class DataManager {
             if (index >= 0) {
                 this.cargoTypes.splice(index, 1);
                 console.log(`Cargo type '${cargoTypeName}' deleted successfully`);
+                await this._persistUserDatasetChanges();
                 return true;
             } else {
                 throw new Error(`Cargo type '${cargoTypeName}' not found`);
@@ -1124,10 +1161,48 @@ class DataManager {
         }
     }
 
+    /**
+     * Persist user dataset changes back to Foundry settings
+     * @returns {Promise<boolean>} - Success flag
+     */
+    async _persistUserDatasetChanges() {
+        try {
+            // Only persist if this is a user dataset
+            if (typeof game !== 'undefined' && game.settings) {
+                const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+                if (userDatasets.includes(this.activeDatasetName)) {
+                    // Get current user datasets data
+                    const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+
+                    // Save the current dataset data back to settings
+                    const datasetData = {
+                        name: this.activeDatasetName,
+                        settlements: this.settlements,
+                        cargoTypes: this.cargoTypes,
+                        config: this.config
+                    };
+
+                    userDatasetsData[this.activeDatasetName] = datasetData;
+                    await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
+
+                    console.log(`User dataset '${this.activeDatasetName}' changes persisted to settings`);
+                    return true;
+                }
+            }
+            return false;
+        } catch (error) {
+            console.error('Failed to persist user dataset changes:', error);
+            throw error;
+        }
+    }
+
     async _loadDatasetFromPath(datasetPath) {
         if (typeof fetch === 'undefined') {
             throw new Error('Dataset loading requires FoundryVTT environment with fetch support');
         }
+
+        // Extract dataset name from path (e.g., "modules/trading-places/datasets/wfrp4e" -> "wfrp4e")
+        const datasetName = datasetPath.split('/').pop();
 
         const [cargoResponse, configResponse] = await Promise.all([
             fetch(`${datasetPath}/cargo-types.json`, { cache: 'no-store' }),
@@ -1287,6 +1362,16 @@ class DataManager {
                     
                     // Persist the active dataset setting
                     await game.settings.set(this.moduleId, 'activeDataset', datasetName);
+
+                    // Emit dataset change hook
+                    if (typeof Hooks !== 'undefined') {
+                        Hooks.callAll(`${MODULE_ID}.datasetChanged`, {
+                            newDataset: datasetName,
+                            datasetType: 'user',
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+
                     return result;
                 }
             }
@@ -1297,6 +1382,15 @@ class DataManager {
 
             if (typeof game !== 'undefined' && game.settings) {
                 await game.settings.set(this.moduleId, 'activeDataset', datasetName);
+            }
+
+            // Emit dataset change hook
+            if (typeof Hooks !== 'undefined') {
+                Hooks.callAll(`${MODULE_ID}.datasetChanged`, {
+                    newDataset: datasetName,
+                    datasetType: 'built-in',
+                    timestamp: new Date().toISOString()
+                });
             }
 
             return result;
@@ -1322,8 +1416,8 @@ class DataManager {
                 throw new Error(`User dataset '${datasetName}' not found`);
             }
 
-            const datasetKey = `userDataset_${datasetName}`;
-            const datasetData = game.settings.get(MODULE_ID, datasetKey);
+            const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+            const datasetData = userDatasetsData[datasetName];
 
             if (!datasetData) {
                 throw new Error(`User dataset '${datasetName}' data not found`);
@@ -2628,7 +2722,7 @@ class DataManager {
             
             // For browser environment (FoundryVTT)
             if (typeof fetch !== 'undefined') {
-                const response = await fetch(`${this.dataPath}/trading-config.json`);
+                const response = await fetch(`modules/${this.moduleId}/datasets/${this.activeDatasetName}/trading-config.json`);
                 if (!response.ok) {
                     throw new Error(`Failed to load trading config: ${response.status}`);
                 }
@@ -2662,7 +2756,7 @@ class DataManager {
             
             // For browser environment (FoundryVTT)
             if (typeof fetch !== 'undefined') {
-                const response = await fetch(`modules/${MODULE_ID}/datasets/active/source-flags.json`);
+                const response = await fetch(`modules/${this.moduleId}/datasets/${this.activeDatasetName}/source-flags.json`);
                 if (!response.ok) {
                     throw new Error(`Failed to load source flags: ${response.status}`);
                 }
@@ -2762,6 +2856,90 @@ class DataManager {
         return flags
             .map(flag => String(flag || '').toLowerCase().trim())
             .filter(Boolean);
+    }
+
+    /**
+     * Create a new user dataset with empty data
+     * @param {string} datasetName - Name of the dataset to create
+     * @returns {Promise<Object>} - Created dataset object
+     */
+    async createUserDataset(datasetName) {
+        try {
+            if (!datasetName) {
+                throw new Error('Dataset name is required');
+            }
+
+            if (typeof game === 'undefined' || !game.settings) {
+                throw new Error('FoundryVTT environment required for user dataset creation');
+            }
+
+            // Check if dataset already exists
+            const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+            if (userDatasets.includes(datasetName)) {
+                throw new Error(`User dataset '${datasetName}' already exists`);
+            }
+
+            // Create empty dataset structure
+            const emptyDataset = {
+                name: datasetName,
+                settlements: [],
+                cargoTypes: [],
+                config: this.config || {} // Copy current config or use empty object
+            };
+
+            // Add to user datasets list
+            userDatasets.push(datasetName);
+            await game.settings.set(MODULE_ID, 'userDatasets', userDatasets);
+
+            // Store dataset data
+            const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+            userDatasetsData[datasetName] = emptyDataset;
+            await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
+
+            console.log(`Created empty user dataset '${datasetName}'`);
+            return emptyDataset;
+        } catch (error) {
+            console.error(`Failed to create user dataset '${datasetName}':`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a user dataset
+     * @param {string} datasetName - Name of the dataset to delete
+     * @returns {Promise<boolean>} - Success status
+     */
+    async deleteUserDataset(datasetName) {
+        try {
+            if (!datasetName) {
+                throw new Error('Dataset name is required');
+            }
+
+            if (typeof game === 'undefined' || !game.settings) {
+                throw new Error('FoundryVTT environment required for user dataset deletion');
+            }
+
+            // Check if dataset exists
+            const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+            if (!userDatasets.includes(datasetName)) {
+                throw new Error(`User dataset '${datasetName}' not found`);
+            }
+
+            // Remove from user datasets list
+            const updatedUserDatasets = userDatasets.filter(name => name !== datasetName);
+            await game.settings.set(MODULE_ID, 'userDatasets', updatedUserDatasets);
+
+            // Remove dataset data
+            const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+            delete userDatasetsData[datasetName];
+            await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
+
+            console.log(`Deleted user dataset '${datasetName}'`);
+            return true;
+        } catch (error) {
+            console.error(`Failed to delete user dataset '${datasetName}':`, error);
+            throw error;
+        }
     }
 }
 

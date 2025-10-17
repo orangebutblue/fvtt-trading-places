@@ -122,6 +122,104 @@ class ConfigValidator {
     }
 
     /**
+     * Check if a dataset is a user-created dataset stored in settings
+     * @param {string} datasetId - Dataset ID to check
+     * @returns {boolean} - True if user dataset, false if built-in
+     */
+    isUserDataset(datasetId) {
+        if (!this.isFoundryEnvironment) return false;
+        
+        try {
+            const userDatasets = game.settings.get(this.moduleId, 'userDatasets') || [];
+            const userDatasetsData = game.settings.get(this.moduleId, 'userDatasetsData') || {};
+            
+            // Check both the registry and the data storage
+            return userDatasets.includes(datasetId) || userDatasetsData.hasOwnProperty(datasetId);
+        } catch (error) {
+            console.warn('ConfigValidator | Error checking if dataset is user dataset:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Validate user dataset from settings
+     * @param {string} datasetId - Dataset ID
+     * @returns {Promise<Object>} - Validation result
+     */
+    async validateUserDataset(datasetId) {
+        const result = {
+            valid: true,
+            errors: [],
+            warnings: [],
+            files: {},
+            statistics: {}
+        };
+
+        try {
+            const userDatasetsData = game.settings.get(this.moduleId, 'userDatasetsData') || {};
+            const datasetData = userDatasetsData[datasetId];
+
+            if (!datasetData) {
+                result.valid = false;
+                result.errors.push(`User dataset '${datasetId}' not found in settings`);
+                return result;
+            }
+
+            // Validate structure - user datasets should have config, settlements, and cargoTypes
+            const requiredKeys = ['config', 'settlements', 'cargoTypes'];
+            for (const key of requiredKeys) {
+                if (!datasetData.hasOwnProperty(key)) {
+                    result.valid = false;
+                    result.errors.push(`User dataset '${datasetId}' missing required data: ${key}`);
+                }
+            }
+
+            if (!result.valid) {
+                return result;
+            }
+
+            // Create mock file results for compatibility
+            result.files = {
+                config: {
+                    accessible: true,
+                    validJSON: true,
+                    content: datasetData.config
+                },
+                settlements: {
+                    accessible: true,
+                    validJSON: true,
+                    content: { settlements: datasetData.settlements || [] }
+                },
+                cargoTypes: {
+                    accessible: true,
+                    validJSON: true,
+                    content: { cargoTypes: datasetData.cargoTypes || [] }
+                }
+            };
+
+            // Validate content structure
+            const contentValidation = this.validateDatasetContent(
+                datasetData.config,
+                { settlements: datasetData.settlements || [] },
+                { cargoTypes: datasetData.cargoTypes || [] }
+            );
+
+            if (!contentValidation.valid) {
+                result.valid = false;
+                result.errors.push(...contentValidation.errors);
+            }
+            result.warnings.push(...contentValidation.warnings);
+            result.statistics = contentValidation.statistics;
+
+        } catch (error) {
+            result.valid = false;
+            result.errors.push(`User dataset validation error: ${error.message}`);
+        }
+
+        return result;
+    }
+
+    /**
      * Perform complete startup validation
      * @returns {Promise<Object>} - Comprehensive validation result
      */
@@ -274,38 +372,41 @@ class ConfigValidator {
         const activeDatasetId = await this.resolveActiveDatasetId();
         const activeBasePath = await this.getDatasetBasePath(activeDatasetId);
 
+        // Check if active dataset is a user dataset
+        const isActiveUserDataset = this.isUserDataset(activeDatasetId);
+
         const requiredFiles = [
             {
                 path: this.datasetPointerPath,
                 name: 'Dataset Pointer',
                 required: true,
                 type: 'file'
-            },
-            {
-                path: `${activeBasePath}/config.json`,
-                name: `Active Dataset (${activeDatasetId}) Config`,
-                required: true,
-                type: 'file'
-            },
-            {
-                basePath: activeBasePath,
-                name: `Active Dataset (${activeDatasetId}) Settlements`,
-                required: true,
-                type: 'settlements-directory'
-            },
-            {
-                path: `${activeBasePath}/cargo-types.json`,
-                name: `Active Dataset (${activeDatasetId}) Cargo Types`,
-                required: true,
-                type: 'file'
-            },
-            {
-                path: `modules/${this.moduleId}/lang/en.json`,
-                name: 'Language File',
-                required: false,
-                type: 'file'
             }
         ];
+
+        // For user datasets, we don't need to check filesystem files
+        if (!isActiveUserDataset) {
+            requiredFiles.push(
+                {
+                    path: `${activeBasePath}/config.json`,
+                    name: `Active Dataset (${activeDatasetId}) Config`,
+                    required: true,
+                    type: 'file'
+                },
+                {
+                    basePath: activeBasePath,
+                    name: `Active Dataset (${activeDatasetId}) Settlements`,
+                    required: true,
+                    type: 'settlements-directory'
+                },
+                {
+                    path: `${activeBasePath}/cargo-types.json`,
+                    name: `Active Dataset (${activeDatasetId}) Cargo Types`,
+                    required: true,
+                    type: 'file'
+                }
+            );
+        }
 
         const pointerSystems = Array.isArray(pointer?.systems) ? pointer.systems : [];
         pointerSystems
@@ -410,6 +511,25 @@ class ConfigValidator {
                 } else {
                     result.warnings.push(`Failed to validate optional file ${file.name}: ${error.message}`);
                 }
+            }
+        }
+
+        // If active dataset is a user dataset, validate it from settings
+        if (isActiveUserDataset) {
+            try {
+                const userDatasetValidation = await this.validateUserDataset(activeDatasetId);
+                result.files[`Active Dataset (${activeDatasetId}) Config`] = userDatasetValidation.files.config;
+                result.files[`Active Dataset (${activeDatasetId}) Settlements`] = userDatasetValidation.files.settlements;
+                result.files[`Active Dataset (${activeDatasetId}) Cargo Types`] = userDatasetValidation.files.cargoTypes;
+
+                if (!userDatasetValidation.valid) {
+                    result.valid = false;
+                    result.errors.push(...userDatasetValidation.errors);
+                }
+                result.warnings.push(...userDatasetValidation.warnings);
+            } catch (error) {
+                result.valid = false;
+                result.errors.push(`Failed to validate user dataset '${activeDatasetId}': ${error.message}`);
             }
         }
 
@@ -572,46 +692,15 @@ class ConfigValidator {
                 foundryVersion: game.version || game.data?.version || 'unknown'
             };
 
-            // Check system compatibility
+            // Basic system compatibility info: record system id/title and leave
+            // compatibility details minimal. Specific system checks (e.g. WFRP4e)
+            // are handled below by dedicated validators.
             const systemId = result.systemInfo.id;
-            const supportedSystems = {
-                'wfrp4e': {
-                    name: 'Warhammer Fantasy Roleplay 4e',
-                    fullSupport: true,
-                    currencyField: 'system.money.gc',
-                    inventoryField: 'items'
-                },
-                'dnd5e': {
-                    name: 'D&D 5th Edition',
-                    fullSupport: false,
-                    currencyField: 'system.currency.gp',
-                    inventoryField: 'items',
-                    notes: 'Partial support - may require configuration adjustments'
-                },
-                'pf2e': {
-                    name: 'Pathfinder 2nd Edition',
-                    fullSupport: false,
-                    currencyField: 'system.money.gp',
-                    inventoryField: 'items',
-                    notes: 'Partial support - may require configuration adjustments'
-                }
+            result.compatibility = {
+                name: result.systemInfo.title || systemId,
+                fullSupport: false,
+                notes: 'No automatic compatibility profile available; manual configuration may be required.'
             };
-
-            if (supportedSystems[systemId]) {
-                const systemSupport = supportedSystems[systemId];
-                result.compatibility = systemSupport;
-
-                if (!systemSupport.fullSupport) {
-                    result.warnings.push(`System '${systemSupport.name}' has partial support. ${systemSupport.notes || 'Configuration may need adjustment.'}`);
-                }
-            } else {
-                result.warnings.push(`System '${systemId}' is not officially supported. Manual configuration will be required.`);
-                result.compatibility = {
-                    name: result.systemInfo.title,
-                    fullSupport: false,
-                    notes: 'Unsupported system - manual configuration required'
-                };
-            }
 
             // Validate system-specific requirements
             if (systemId === 'wfrp4e') {
@@ -719,8 +808,16 @@ class ConfigValidator {
             for (const dataset of datasetsToValidate) {
                 const datasetId = dataset.id || dataset.path;
                 const datasetLabel = dataset.label || datasetId;
-                const basePath = `modules/${this.moduleId}/datasets/${dataset.path || datasetId}`;
-                const validation = await this.validateSingleDataset(datasetId, basePath);
+
+                let validation;
+                if (this.isUserDataset(datasetId)) {
+                    // Validate user dataset from settings
+                    validation = await this.validateUserDataset(datasetId);
+                } else {
+                    // Validate built-in dataset from filesystem
+                    const basePath = `modules/${this.moduleId}/datasets/${dataset.path || datasetId}`;
+                    validation = await this.validateSingleDataset(datasetId, basePath);
+                }
 
                 result.datasets[datasetLabel] = validation;
 
@@ -1120,16 +1217,7 @@ class ConfigValidator {
                 }
             }
 
-            // Check for optional dependencies
-            const optionalDependencies = [
-                { name: 'game.wfrp4e', object: game.wfrp4e, description: 'WFRP4e system integration' }
-            ];
-
-            for (const dep of optionalDependencies) {
-                if (!dep.object) {
-                    result.warnings.push(`Optional dependency not available: ${dep.name} (${dep.description})`);
-                }
-            }
+            // No automatic optional dependency checks required here.
 
         } catch (error) {
             result.valid = false;
