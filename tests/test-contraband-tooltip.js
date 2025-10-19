@@ -31,7 +31,7 @@ async function testContrabandTooltip() {
 
         // Load test data
         console.log('Loading test data...');
-        const settlementsDir = path.join(__dirname, 'datasets/active/settlements');
+        const settlementsDir = path.join(__dirname, 'datasets/wfrp4e/settlements');
         const regionFiles = fs.readdirSync(settlementsDir).filter(f => f.endsWith('.json'));
         const settlementsData = { settlements: [] };
 
@@ -42,13 +42,13 @@ async function testContrabandTooltip() {
             settlementsData.settlements.push(...regionSettlements);
         });
 
-            const cargoData = JSON.parse(fs.readFileSync(path.join(__dirname, 'datasets/active/cargo-types.json'), 'utf8'));
-            const configData = JSON.parse(fs.readFileSync(path.join(__dirname, 'datasets/active/config.json'), 'utf8'));        dataManager.settlements = settlementsData.settlements || [];
+            const cargoData = JSON.parse(fs.readFileSync(path.join(__dirname, 'datasets/wfrp4e/cargo-types.json'), 'utf8'));
+            const configData = JSON.parse(fs.readFileSync(path.join(__dirname, 'datasets/wfrp4e/config.json'), 'utf8'));        dataManager.settlements = settlementsData.settlements || [];
         dataManager.cargoTypes = cargoData.cargoTypes || [];
         dataManager.config = configData;
 
         // Load trading config and source flags
-        const tradingConfigData = JSON.parse(fs.readFileSync(path.join(__dirname, 'datasets/active/trading-config.json'), 'utf8'));
+        const tradingConfigData = JSON.parse(fs.readFileSync(path.join(__dirname, 'datasets/wfrp4e/trading-config.json'), 'utf8'));
         const sourceFlagsData = JSON.parse(fs.readFileSync(path.join(__dirname, 'datasets/source-flags.json'), 'utf8'));
         dataManager.tradingConfig = tradingConfigData;
         dataManager.sourceFlags = sourceFlagsData;

@@ -525,24 +525,30 @@ class SystemAdapter {
             return result;
         }
 
-        if (currentAmount < amount) {
+        // Convert amount from primary denomination (GC) to canonical units (BP)
+        const schema = this.getCurrencySchema();
+        const primaryDenom = schema.denominations.find(d => d.abbreviation === 'GC');
+        const amountInCanonical = amount * (primaryDenom?.value || 240);
+
+        if (currentAmount < amountInCanonical) {
             const result = {
                 success: false,
-                error: `Insufficient currency. Has ${currentAmount}, needs ${amount}`,
+                error: `Insufficient currency. Has ${Math.round(currentAmount / 240 * 100) / 100} GC, needs ${amount} GC`,
                 currentAmount: currentAmount,
-                newAmount: null
+                newAmount: null,
+                amountDeducted: 0
             };
             
             // This is expected behavior, not an error - just log for debugging
             if (this.debugMode) {
-                console.log(`SystemAdapter | Insufficient currency: ${actor.name} has ${currentAmount}, needs ${amount}`);
+                console.log(`SystemAdapter | Insufficient currency: ${actor.name} has ${currentAmount} BP, needs ${amountInCanonical} BP`);
             }
             
             return result;
         }
 
         try {
-            const newAmount = currentAmount - amount;
+            const newAmount = currentAmount - amountInCanonical;
             const updateData = this.buildCurrencyUpdate(newAmount);
             
             await actor.update(updateData);
@@ -604,7 +610,12 @@ class SystemAdapter {
         }
 
         try {
-            const newAmount = currentAmount + amount;
+            // Convert amount from primary denomination (GC) to canonical units (BP)
+            const schema = this.getCurrencySchema();
+            const primaryDenom = schema.denominations.find(d => d.abbreviation === 'GC');
+            const amountInCanonical = amount * (primaryDenom?.value || 240);
+            
+            const newAmount = currentAmount + amountInCanonical;
             const updateData = this.buildCurrencyUpdate(newAmount);
             
             await actor.update(updateData);

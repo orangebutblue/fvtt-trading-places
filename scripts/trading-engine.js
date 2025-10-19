@@ -1575,7 +1575,7 @@ class TradingEngine {
      */
     async generateRandomMerchant(settlement, rollFunction = null) {
         // Get config data
-        const config = this.dataManager.getSystemConfig();
+        const config = this.dataManager.getTradingConfig();
         const skillConfig = config.skillDistribution;
 
         if (!skillConfig) {

@@ -43,8 +43,8 @@ describe('Season Management', () => {
     beforeEach(async () => {
         dataManager = new DataManager();
         
-        // Load test data from new regional structure
-        const settlementsDir = path.join(__dirname, '../datasets/active/settlements');
+        // Load test data from regional structure
+        const settlementsDir = path.join(__dirname, '../datasets/wfrp4e/settlements');
         const regionFiles = fs.readdirSync(settlementsDir).filter(f => f.endsWith('.json'));
         const settlementsData = { settlements: [] };
         
@@ -55,8 +55,8 @@ describe('Season Management', () => {
             settlementsData.settlements.push(...regionSettlements);
         });
         
-        const cargoData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/active/cargo-types.json'), 'utf8'));
-        const configData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/active/config.json'), 'utf8'));
+        const cargoData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/wfrp4e/cargo-types.json'), 'utf8'));
+        const configData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/wfrp4e/config.json'), 'utf8'));
 
         dataManager.settlements = settlementsData.settlements || [];
         dataManager.cargoTypes = cargoData.cargoTypes || [];

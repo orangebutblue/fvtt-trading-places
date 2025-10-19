@@ -12,17 +12,9 @@ const fs = require('fs');
 const path = require('path');
 
 const datasetsRoot = path.join(__dirname, '../datasets');
-let pointerData = null;
-try {
-    pointerData = JSON.parse(fs.readFileSync(path.join(datasetsRoot, 'system-pointer.json'), 'utf8'));
-} catch (error) {
-    pointerData = { activeSystem: 'wfrp4e' };
-}
 
-const systems = Array.isArray(pointerData?.systems) ? pointerData.systems : [];
-const activeSystemId = pointerData?.activeSystem || pointerData?.activeDataset || pointerData?.active || 'wfrp4e';
-const activeSystemEntry = systems.find(system => system.id === activeSystemId || system.path === activeSystemId) || null;
-const activeDatasetDir = path.join(datasetsRoot, activeSystemEntry?.path || activeSystemId);
+// Since we now dynamically discover datasets, we'll use the wfrp4e dataset directly
+const activeDatasetDir = path.join(datasetsRoot, 'wfrp4e');
 
 describe('DataManager Settlement Validation', () => {
     let dataManager;

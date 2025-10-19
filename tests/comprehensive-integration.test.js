@@ -234,7 +234,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 const path = require('path');
                 
                 // Load settlements
-                const settlementsDir = path.join(__dirname, '../datasets/active/settlements');
+                const settlementsDir = path.join(__dirname, '../datasets/wfrp4e/settlements');
                 const regionFiles = fs.readdirSync(settlementsDir).filter(f => f.endsWith('.json'));
                 const settlementsData = { settlements: [] };
                 
@@ -245,14 +245,18 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 });
                 
                 // Load cargo types
-                const cargoData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/active/cargo-types.json'), 'utf8'));
+                const cargoData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/wfrp4e/cargo-types.json'), 'utf8'));
                 
                 // Load config
-                const configData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/active/config.json'), 'utf8'));
+                const configData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/wfrp4e/config.json'), 'utf8'));
+                
+                // Load trading config
+                const tradingConfigData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/wfrp4e/trading-config.json'), 'utf8'));
                 
                 dataManager.settlements = settlementsData.settlements || [];
                 dataManager.cargoTypes = cargoData.cargoTypes || [];
                 dataManager.config = configData;
+                dataManager.tradingConfig = tradingConfigData;
             } catch (error) {
                 console.warn('Could not load test data:', error.message);
             }

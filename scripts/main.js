@@ -117,16 +117,19 @@ Hooks.once('ready', async () => {
         // Load trading configuration and source flags for Phase 3 features
         try {
             console.log('Trading Places | Loading trading configuration...');
-            await dataManager.loadTradingConfig();
-            console.log('Trading Places | Trading configuration loaded');
+            // TODO: Implement loadTradingConfig method in DataManager
+            // await dataManager.loadTradingConfig();
+            console.log('Trading Places | Trading configuration loading skipped (not implemented)');
             
             console.log('Trading Places | Loading source flags...');
-            await dataManager.loadSourceFlags();
-            console.log('Trading Places | Source flags loaded');
+            // TODO: Implement loadSourceFlags method in DataManager
+            // await dataManager.loadSourceFlags();
+            console.log('Trading Places | Source flags loading skipped (not implemented)');
             
             console.log('Trading Places | Initializing merchant system...');
-            dataManager.initializeMerchantSystem();
-            console.log('Trading Places | Merchant system initialized');
+            // TODO: Implement initializeMerchantSystem method in DataManager
+            // dataManager.initializeMerchantSystem();
+            console.log('Trading Places | Merchant system initialization skipped (not implemented)');
             
         } catch (error) {
             console.warn('Trading Places | Phase 3 initialization failed (continuing with basic functionality):', error);

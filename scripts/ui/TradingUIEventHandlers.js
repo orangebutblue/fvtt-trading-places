@@ -1076,22 +1076,19 @@ export class TradingUIEventHandlers {
      */
     async _populateCargoAutocomplete() {
         try {
-            // Load cargo types from the JSON file
-            const response = await fetch(`/modules/${MODULE_ID}/datasets/active/cargo-types.json`);
-            if (!response.ok) {
-                throw new Error(`Failed to load cargo types: ${response.status}`);
+            // Get cargo types from DataManager instead of fetching file
+            const dataManager = window.TradingPlaces?.getDataManager();
+            if (!dataManager) {
+                throw new Error('DataManager not available');
             }
             
-            const cargoData = await response.json();
+            const cargoData = dataManager.getCargoTypes();
             const datalist = this.app.element.querySelector('#cargo-datalist');
             const categorySelect = this.app.element.querySelector('#manual-category');
             
-            if (!cargoData.cargoTypes) {
+            if (!cargoData || cargoData.length === 0) {
                 return;
             }
-            
-            // Store cargo data for auto-select functionality
-            this.cargoTypesData = cargoData;
             
             // Populate cargo autocomplete datalist
             if (datalist) {
@@ -1099,7 +1096,7 @@ export class TradingUIEventHandlers {
                 datalist.innerHTML = '';
                 
                 // Add cargo types as options
-                cargoData.cargoTypes.forEach(cargo => {
+                cargoData.forEach(cargo => {
                     const option = document.createElement('option');
                     option.value = cargo.name;
                     option.textContent = `${cargo.name} (${cargo.category})`;
@@ -1110,7 +1107,7 @@ export class TradingUIEventHandlers {
             // Populate category dropdown
             if (categorySelect) {
                 // Get unique categories from cargo types
-                const categories = [...new Set(cargoData.cargoTypes.map(cargo => cargo.category))].sort();
+                const categories = [...new Set(cargoData.map(cargo => cargo.category))].sort();
                 
                 // Clear existing options (keep the default empty option)
                 const defaultOption = categorySelect.querySelector('option[value=""]');
@@ -1134,7 +1131,7 @@ export class TradingUIEventHandlers {
             }
             
             this._logDebug('Cargo Autocomplete', 'Populated cargo types and categories', {
-                cargoCount: cargoData.cargoTypes.length,
+                cargoCount: cargoData.length,
                 categoryCount: categorySelect ? categorySelect.options.length - 1 : 0 // -1 for default option
             });
             
@@ -1740,22 +1737,22 @@ export class TradingUIEventHandlers {
      */
     async _populateAddCargoAutocomplete() {
         try {
-            // Load cargo types from the JSON file
-            const response = await fetch(`/modules/${MODULE_ID}/datasets/active/cargo-types.json`);
-            if (!response.ok) {
-                throw new Error(`Failed to load cargo types: ${response.status}`);
+            // Get cargo types from DataManager instead of fetching file
+            const dataManager = window.TradingPlaces?.getDataManager();
+            if (!dataManager) {
+                throw new Error('DataManager not available');
             }
             
-            const cargoData = await response.json();
+            const cargoData = dataManager.getCargoTypes();
             const datalist = this.app.element.querySelector('#add-cargo-datalist');
             const categorySelect = this.app.element.querySelector('#add-cargo-category');
             
-            if (!cargoData.cargoTypes) {
+            if (!cargoData || cargoData.length === 0) {
                 return;
             }
             
             // Store cargo data for auto-select functionality
-            this.addCargoTypesData = cargoData;
+            this.addCargoTypesData = { cargoTypes: cargoData };
             
             // Populate cargo autocomplete datalist
             if (datalist) {
@@ -1763,7 +1760,7 @@ export class TradingUIEventHandlers {
                 datalist.innerHTML = '';
                 
                 // Add cargo types as options
-                cargoData.cargoTypes.forEach(cargo => {
+                cargoData.forEach(cargo => {
                     const option = document.createElement('option');
                     option.value = cargo.name;
                     option.textContent = `${cargo.name} (${cargo.category})`;
@@ -1774,7 +1771,7 @@ export class TradingUIEventHandlers {
             // Populate category dropdown
             if (categorySelect) {
                 // Get unique categories from cargo types
-                const categories = [...new Set(cargoData.cargoTypes.map(cargo => cargo.category))].sort();
+                const categories = [...new Set(cargoData.map(cargo => cargo.category))].sort();
                 
                 // Clear existing options (keep the default empty option)
                 const defaultOption = categorySelect.querySelector('option[value=""]');
@@ -1798,7 +1795,7 @@ export class TradingUIEventHandlers {
             }
             
             this._logDebug('Add Cargo Autocomplete', 'Populated cargo types and categories', {
-                cargoCount: cargoData.cargoTypes.length,
+                cargoCount: cargoData.length,
                 categoryCount: categorySelect ? categorySelect.options.length - 1 : 0 // -1 for default option
             });
             

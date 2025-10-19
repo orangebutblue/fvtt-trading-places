@@ -78,10 +78,10 @@ class SaleMechanics {
             // Check if minimum time has passed (1 week)
             if (currentTime && purchaseData.purchaseTime) {
                 const timeElapsed = currentTime - purchaseData.purchaseTime;
-                const oneWeekInDays = 7; // Assuming time is in days
+                const oneWeekInMs = 7 * 24 * 60 * 60 * 1000; // 1 week in milliseconds
 
-                if (timeElapsed < oneWeekInDays) {
-                    errors.push(`Cannot sell in same settlement (${currentSettlement.name}) until 1 week has passed. Time remaining: ${oneWeekInDays - timeElapsed} days`);
+                if (timeElapsed < oneWeekInMs) {
+                    errors.push(`Cannot sell in same settlement (${currentSettlement.name}) until 1 week has passed. Time remaining: ${Math.ceil((oneWeekInMs - timeElapsed) / (24 * 60 * 60 * 1000))} days`);
                 } else {
                     warnings.push(`Selling in same settlement after waiting period`);
                 }
@@ -93,7 +93,14 @@ class SaleMechanics {
         return {
             eligible: errors.length === 0,
             errors: errors,
-            warnings: warnings
+            warnings: warnings,
+            timeRestriction: currentTime && purchaseData.purchaseTime ? {
+                required: true,
+                currentTime: currentTime,
+                purchaseTime: purchaseData.purchaseTime,
+                timeElapsed: currentTime - purchaseData.purchaseTime,
+                minimumWaitDays: 7
+            } : null
         };
     }
 
@@ -258,7 +265,7 @@ class SaleMechanics {
             const { denominationKey, config } = currencyContext;
             try {
                 basePricePerUnitCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: basePricePerUnit }, config);
-                wealthAdjustedPriceCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: wealthAdjustedPrice }, config);
+                wealthAdjustedPriceCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: finalPricePerUnit }, config);
                 finalPricePerUnitCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: finalPricePerUnit }, config);
                 totalPriceCanonical = Math.round(finalPricePerUnitCanonical * quantity);
                 formattedBasePricePerUnit = CurrencyUtils.formatCurrency(basePricePerUnitCanonical, config);
@@ -280,7 +287,7 @@ class SaleMechanics {
             totalPrice: totalPrice,
             modifiers: modifiers,
             wealthModifier: wealthModifier,
-            wealthAdjustedPrice,
+            wealthAdjustedPrice: finalPricePerUnit,
             basePricePerUnitCanonical,
             wealthAdjustedPriceCanonical,
             finalPricePerUnitCanonical,
@@ -584,7 +591,8 @@ class SaleMechanics {
                 success: false,
                 reason: 'Desperate sales are only available at Trade settlements',
                 settlement: settlement.name,
-                isTradeSettlement: false
+                isTradeSettlement: false,
+                errors: ['Desperate sales are only available at Trade settlements']
             };
         }
 
@@ -670,7 +678,9 @@ class SaleMechanics {
                 description: rumorData.description,
                 multiplier: rumorData.multiplier,
                 premiumAmount: premiumAmount,
-                premiumPercentage: premiumPercentage
+                premiumPercentage: premiumPercentage,
+                targetSettlement: settlement.name,
+                demandReason: rumorData.description
             },
             baseModifiers: normalSalePrice.modifiers
         };
@@ -757,7 +767,8 @@ class SaleMechanics {
                     description: rumor.description,
                     multiplier: rumor.multiplier,
                     settlement: settlement.name,
-                    cargoName: cargoName
+                    cargoName: cargoName,
+                    premiumPercentage: Math.round((rumor.multiplier - 1) * 100)
                 };
             }
         }

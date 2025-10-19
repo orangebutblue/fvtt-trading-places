@@ -17,7 +17,6 @@ class ConfigValidator {
         this.isFoundryEnvironment = typeof game !== 'undefined';
         this.moduleId = "fvtt-trading-places";
         this.datasetPointer = null;
-        this.datasetPointerPath = `modules/${this.moduleId}/datasets/system-pointer.json`;
     }
 
     static get SETTLEMENT_FILES() {
@@ -35,17 +34,14 @@ class ConfigValidator {
         }
 
         try {
-            if (typeof fetch !== 'undefined') {
-                const response = await fetch(this.datasetPointerPath, { cache: 'no-store' });
-                if (!response.ok) {
-                    throw new Error(`Failed to load dataset pointer: ${response.status} ${response.statusText}`);
-                }
-                this.datasetPointer = await response.json();
-            } else {
-                // eslint-disable-next-line global-require, import/no-dynamic-require
-                this.datasetPointer = require('../datasets/system-pointer.json');
-            }
+            // Dynamically discover available datasets
+            const datasets = await this.discoverAvailableDatasets();
+            this.datasetPointer = {
+                activeSystem: 'wfrp4e',
+                systems: datasets
+            };
         } catch (error) {
+            // Fallback to default WFRP4e dataset if discovery fails
             this.datasetPointer = {
                 activeSystem: 'wfrp4e',
                 systems: [
@@ -376,12 +372,7 @@ class ConfigValidator {
         const isActiveUserDataset = this.isUserDataset(activeDatasetId);
 
         const requiredFiles = [
-            {
-                path: this.datasetPointerPath,
-                name: 'Dataset Pointer',
-                required: true,
-                type: 'file'
-            }
+            // No longer require system-pointer.json - datasets are discovered dynamically
         ];
 
         // For user datasets, we don't need to check filesystem files
@@ -534,6 +525,72 @@ class ConfigValidator {
         }
 
         return result;
+    }
+
+    /**
+     * Dynamically discover available datasets by scanning the datasets directory
+     * @returns {Promise<Array>} - Array of dataset objects with id, path, and label
+     */
+    async discoverAvailableDatasets() {
+        const datasets = [];
+
+        try {
+            if (typeof fetch !== 'undefined') {
+                // Browser environment - limited discovery capabilities
+                // For now, assume WFRP4e is available
+                datasets.push({
+                    id: 'wfrp4e',
+                    path: 'wfrp4e',
+                    label: 'Warhammer Fantasy Roleplay 4th Edition'
+                });
+            } else {
+                // Node.js environment (testing/development)
+                const fs = require('fs');
+                const path = require('path');
+                const datasetsDir = path.join(__dirname, '..', 'datasets');
+
+                if (fs.existsSync(datasetsDir)) {
+                    const entries = fs.readdirSync(datasetsDir, { withFileTypes: true });
+
+                    for (const entry of entries) {
+                        if (entry.isDirectory()) {
+                            const datasetId = entry.name;
+                            const datasetPath = path.join(datasetsDir, datasetId);
+                            const configPath = path.join(datasetPath, 'config.json');
+
+                            // Check if this directory contains a valid dataset (has config.json)
+                            if (fs.existsSync(configPath)) {
+                                try {
+                                    const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                                    const label = configData.label || configData.name || datasetId;
+
+                                    datasets.push({
+                                        id: datasetId,
+                                        path: datasetId,
+                                        label: label
+                                    });
+                                } catch (error) {
+                                    console.warn(`ConfigValidator | Skipping invalid dataset '${datasetId}': ${error.message}`);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn('ConfigValidator | Dataset discovery failed:', error);
+        }
+
+        // Ensure we always have at least the WFRP4e dataset
+        if (datasets.length === 0) {
+            datasets.push({
+                id: 'wfrp4e',
+                path: 'wfrp4e',
+                label: 'Warhammer Fantasy Roleplay 4th Edition'
+            });
+        }
+
+        return datasets;
     }
 
     /**
