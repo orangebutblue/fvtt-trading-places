@@ -45,6 +45,8 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
         
         const settlements = this.dataManager.getAllSettlements();
         const cargoTypes = this.dataManager.getCargoTypes();
+        const tradingConfig = this.dataManager.getTradingConfig();
+        const config = this.dataManager.getConfig();
         
         // Sort settlements first
         settlements.sort((a, b) => a.name.localeCompare(b.name));
@@ -73,7 +75,9 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
             sortedRegions,
             cargoTypes: sortedCargo,
             searchFilters: this.searchFilters,
-            currentDataset: this.currentDataset
+            currentDataset: this.currentDataset,
+            tradingConfig,
+            config
         };
     }
 
@@ -102,6 +106,12 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         <button class="trading-places-dm-tab" data-tab="cargo">
                             Cargo Types (${context.cargoTypes.length})
                         </button>
+                        <button class="trading-places-dm-tab" data-tab="trading-config">
+                            Trading Config
+                        </button>
+                        <button class="trading-places-dm-tab" data-tab="config">
+                            Config
+                        </button>
                     </div>
                     
                     <div class="trading-places-dm-content">
@@ -109,9 +119,10 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         <div class="trading-places-dm-tab-panel active" data-panel="settlements">
                             <div class="trading-places-dm-search">
                                 <input type="text" placeholder="Search settlements and regions..." class="trading-places-dm-search-input" data-type="settlements">
+                                <button class="trading-places-dm-add-btn" data-action="add-settlement">Add Settlement</button>
                                 <button class="trading-places-dm-export-btn" data-action="export-settlements" title="Export settlements data">Export</button>
                                 <button class="trading-places-dm-import-btn" data-action="import-settlements" title="Import settlements data">Import</button>
-                                <button class="trading-places-dm-add-btn" data-action="add-settlement">Add Settlement</button>
+                                
                             </div>
                             <div class="trading-places-dm-list" id="settlements-list">
                                 ${this._renderSettlementsList(context.settlementsByRegion, context.sortedRegions)}
@@ -128,6 +139,76 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                             </div>
                             <div class="trading-places-dm-list" id="cargo-list">
                                 ${this._renderCargoList(context.cargoTypes)}
+                            </div>
+                        </div>
+                        
+                        <!-- Trading Config Tab -->
+                        <div class="trading-places-dm-tab-panel" data-panel="trading-config">
+                            <pre>${JSON.stringify(context.tradingConfig, null, 2)}</pre>
+                        </div>
+                        
+                        <!-- Config Tab -->
+                        <div class="trading-places-dm-tab-panel" data-panel="config">
+                            <div class="trading-places-dm-config-section">
+                                <h3>Currency Configuration</h3>
+                                <div class="trading-places-dm-config-group">
+                                    <h4>Canonical Unit (Base Currency)</h4>
+                                    <div class="trading-places-dm-config-row">
+                                        <label>Name:</label>
+                                        <input type="text" id="canonical-name" value="${context.config?.currency?.canonicalUnit?.name || 'Brass Penny'}" style="flex: 1;">
+                                    </div>
+                                    <div class="trading-places-dm-config-row">
+                                        <label>Abbreviation:</label>
+                                        <input type="text" id="canonical-abbrev" value="${context.config?.currency?.canonicalUnit?.abbreviation || 'BP'}" style="flex: 1;">
+                                    </div>
+                                </div>
+                                
+                                <div class="trading-places-dm-config-group">
+                                    <h4>Currency Denominations</h4>
+                                    <div id="denominations-list">
+                                        ${(context.config?.currency?.denominations || []).map((denom, index) => `
+                                            <div class="trading-places-dm-denomination" data-index="${index}">
+                                                <div class="trading-places-dm-config-row">
+                                                    <label>Name:</label>
+                                                    <input type="text" class="denom-name" value="${denom.name}" style="flex: 1;">
+                                                </div>
+                                                <div class="trading-places-dm-config-row">
+                                                    <label>Plural Name:</label>
+                                                    <input type="text" class="denom-plural" value="${denom.pluralName}" style="flex: 1;">
+                                                </div>
+                                                <div class="trading-places-dm-config-row">
+                                                    <label>Abbreviation:</label>
+                                                    <input type="text" class="denom-abbrev" value="${denom.abbreviation}" style="flex: 1;">
+                                                </div>
+                                                <div class="trading-places-dm-config-row">
+                                                    <label>Value (in ${context.config?.currency?.canonicalUnit?.abbreviation || 'BP'}):</label>
+                                                    <input type="number" class="denom-value" value="${denom.value}" style="flex: 1;">
+                                                </div>
+                                                <div class="trading-places-dm-denomination-actions">
+                                                    <button class="trading-places-dm-btn delete-denom" data-index="${index}">Remove</button>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    <button class="trading-places-dm-add-btn" id="add-denomination">Add Denomination</button>
+                                </div>
+                                
+                                <div class="trading-places-dm-config-group">
+                                    <h4>Display Order</h4>
+                                    <div class="trading-places-dm-config-row">
+                                        <label>Order (comma-separated abbreviations):</label>
+                                        <input type="text" id="display-order" value="${(context.config?.currency?.display?.order || []).join(', ')}" style="flex: 1;">
+                                    </div>
+                                    <div class="trading-places-dm-config-help">
+                                        Enter currency abbreviations in the order you want them displayed, separated by commas.
+                                        Available: ${(context.config?.currency?.canonicalUnit?.abbreviation || 'BP')}, ${((context.config?.currency?.denominations || []).map(d => d.abbreviation)).join(', ')}
+                                    </div>
+                                </div>
+                                
+                                <div class="trading-places-dm-config-actions">
+                                    <button class="trading-places-dm-btn save" id="save-config">Save Configuration</button>
+                                    <button class="trading-places-dm-btn reset" id="reset-config">Reset to Defaults</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -339,6 +420,24 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
             const name = $(e.currentTarget).data('name');
             this._handleAction(action, name);
         });
+        
+        // Config tab event handlers
+        html.find('#add-denomination').click(() => {
+            this._addDenomination();
+        });
+        
+        html.find('.delete-denom').click((e) => {
+            const index = $(e.currentTarget).data('index');
+            this._deleteDenomination(index);
+        });
+        
+        html.find('#save-config').click(() => {
+            this._saveConfig();
+        });
+        
+        html.find('#reset-config').click(() => {
+            this._resetConfig();
+        });
     }
 
     _switchTab(tabName) {
@@ -546,6 +645,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         population: parseInt(element.querySelector('#settlement-population').value),
                         ruler: element.querySelector('#settlement-ruler').value,
                         notes: element.querySelector('#settlement-notes').value,
+                        garrison: {},
                         produces: [],
                         demands: [],
                         flags: []
@@ -579,8 +679,13 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                             console.log('REGION DROPDOWN ELEMENT NOT FOUND');
                         }
                         
-                        // Save data persistently
-                        await this._saveDataPersistently();
+                        // For user datasets, persistence is handled by dataManager.updateSettlement()
+                        // For built-in datasets, save to custom settings
+                        const datasets = this._getAvailableDatasets();
+                        const currentDataset = datasets.find(d => d.id === this.currentDataset);
+                        if (currentDataset && currentDataset.type === 'built-in') {
+                            await this._saveDataPersistently();
+                        }
                         
                         this.render(); // Refresh the dialog
                     } catch (error) {
@@ -695,8 +800,13 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                             console.log('REGION DROPDOWN UPDATED WITH REGIONS (EDIT):', regions);
                         }
                         
-                        // Save data persistently
-                        await this._saveDataPersistently();
+                        // For user datasets, persistence is handled by dataManager.updateSettlement()
+                        // For built-in datasets, save to custom settings
+                        const datasets = this._getAvailableDatasets();
+                        const currentDataset = datasets.find(d => d.id === this.currentDataset);
+                        if (currentDataset && currentDataset.type === 'built-in') {
+                            await this._saveDataPersistently();
+                        }
                         
                         this.render(); // Refresh the dialog
                     } catch (error) {
@@ -711,41 +821,53 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
     }
 
     _deleteSettlement(name) {
-        foundry.applications.api.DialogV2.confirm({
+        const dialog = new foundry.applications.api.DialogV2({
             window: { title: "Delete Settlement" },
             content: `<p>Are you sure you want to delete the settlement "${name}"?</p>`,
-            yes: async () => {
-                try {
-                    await this.dataManager.deleteSettlement(name);
-                    ui.notifications.info(`Settlement "${name}" deleted successfully`);
-                    
-                    // Refresh the main trading interface region dropdown directly
-                    const regionDropdown = document.querySelector('#region-select');
-                    if (regionDropdown) {
-                        console.log('FOUND REGION DROPDOWN - UPDATING DIRECTLY (DELETE)');
-                        const settlements = this.dataManager.getAllSettlements();
-                        const regions = [...new Set(settlements.map(s => s.region))].sort();
+            buttons: [{
+                action: "yes",
+                label: "Delete",
+                default: true,
+                callback: async (event, button, dialogInstance) => {
+                    try {
+                        await this.dataManager.deleteSettlement(name);
+                        ui.notifications.info(`Settlement "${name}" deleted successfully`);
                         
-                        // Clear and repopulate
-                        regionDropdown.innerHTML = '<option value="">Select a region...</option>';
-                        regions.forEach(region => {
-                            const option = document.createElement('option');
-                            option.value = region;
-                            option.textContent = region;
-                            regionDropdown.appendChild(option);
-                        });
-                        console.log('REGION DROPDOWN UPDATED WITH REGIONS (DELETE):', regions);
+                        // Refresh the main trading interface region dropdown directly
+                        const regionDropdown = document.querySelector('#region-select');
+                        if (regionDropdown) {
+                            const settlements = this.dataManager.getAllSettlements();
+                            const regions = [...new Set(settlements.map(s => s.region))].sort();
+                            
+                            regionDropdown.innerHTML = '<option value="">Select a region...</option>';
+                            regions.forEach(region => {
+                                const option = document.createElement('option');
+                                option.value = region;
+                                option.textContent = region;
+                                regionDropdown.appendChild(option);
+                            });
+                        }
+                        
+                        // For user datasets, persistence is handled by dataManager.deleteSettlement()
+                        // For built-in datasets, save to custom settings
+                        const datasets = this._getAvailableDatasets();
+                        const currentDataset = datasets.find(d => d.id === this.currentDataset);
+                        if (currentDataset && currentDataset.type === 'built-in') {
+                            await this._saveDataPersistently();
+                        }
+                        
+                        this.render(); // Refresh the dialog
+                    } catch (error) {
+                        ui.notifications.error(`Failed to delete settlement: ${error.message}`);
                     }
-                    
-                    // Save data persistently
-                    await this._saveDataPersistently();
-                    
-                    this.render(); // Refresh the dialog
-                } catch (error) {
-                    ui.notifications.error(`Failed to delete settlement: ${error.message}`);
                 }
-            }
+            }, {
+                action: "no",
+                label: "Cancel",
+                default: false
+            }]
         });
+        dialog.render(true);
     }
 
     _addCargo() {
@@ -795,8 +917,13 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         await this.dataManager.updateCargoType(newCargo);
                         ui.notifications.info(`Cargo type "${newCargo.name}" added successfully`);
                         
-                        // Save data persistently
-                        await this._saveDataPersistently();
+                        // For user datasets, persistence is handled by dataManager.updateCargoType()
+                        // For built-in datasets, save to custom settings
+                        const datasets = this._getAvailableDatasets();
+                        const currentDataset = datasets.find(d => d.id === this.currentDataset);
+                        if (currentDataset && currentDataset.type === 'built-in') {
+                            await this._saveDataPersistently();
+                        }
                         
                         this.render(); // Refresh the dialog
                     } catch (error) {
@@ -864,8 +991,13 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         await this.dataManager.updateCargoType(updatedCargo);
                         ui.notifications.info(`Cargo type "${updatedCargo.name}" updated successfully`);
                         
-                        // Save data persistently
-                        await this._saveDataPersistently();
+                        // For user datasets, persistence is handled by dataManager.updateCargoType()
+                        // For built-in datasets, save to custom settings
+                        const datasets = this._getAvailableDatasets();
+                        const currentDataset = datasets.find(d => d.id === this.currentDataset);
+                        if (currentDataset && currentDataset.type === 'built-in') {
+                            await this._saveDataPersistently();
+                        }
                         
                         this.render(); // Refresh the dialog
                     } catch (error) {
@@ -888,8 +1020,13 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     await this.dataManager.deleteCargoType(name);
                     ui.notifications.info(`Cargo type "${name}" deleted successfully`);
                     
-                    // Save data persistently
-                    await this._saveDataPersistently();
+                    // For user datasets, persistence is handled by dataManager.deleteCargoType()
+                    // For built-in datasets, save to custom settings
+                    const datasets = this._getAvailableDatasets();
+                    const currentDataset = datasets.find(d => d.id === this.currentDataset);
+                    if (currentDataset && currentDataset.type === 'built-in') {
+                        await this._saveDataPersistently();
+                    }
                     
                     this.render(); // Refresh the dialog
                 } catch (error) {
@@ -945,6 +1082,9 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                             if (!settlement.name || !settlement.region) {
                                 throw new Error(`Invalid settlement data: missing name or region for "${settlement.name || 'unknown'}"`);
                             }
+                            if (!settlement.hasOwnProperty('garrison')) {
+                                throw new Error(`Invalid settlement data: missing garrison for "${settlement.name || 'unknown'}"`);
+                            }
                         }
                         
                         // Import settlements
@@ -954,8 +1094,13 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         
                         ui.notifications.info(`Successfully imported ${settlements.length} settlements`);
                         
-                        // Save data persistently and refresh
-                        await this._saveDataPersistently();
+                        // For user datasets, persistence is handled by dataManager.updateSettlement()
+                        // For built-in datasets, save to custom settings
+                        const datasets = this._getAvailableDatasets();
+                        const currentDataset = datasets.find(d => d.id === this.currentDataset);
+                        if (currentDataset && currentDataset.type === 'built-in') {
+                            await this._saveDataPersistently();
+                        }
                         this.render();
                         
                     } catch (error) {
@@ -1021,8 +1166,13 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         
                         ui.notifications.info(`Successfully imported ${cargoTypes.length} cargo types`);
                         
-                        // Save data persistently and refresh
-                        await this._saveDataPersistently();
+                        // For user datasets, persistence is handled by dataManager.updateCargoType()
+                        // For built-in datasets, save to custom settings
+                        const datasets = this._getAvailableDatasets();
+                        const currentDataset = datasets.find(d => d.id === this.currentDataset);
+                        if (currentDataset && currentDataset.type === 'built-in') {
+                            await this._saveDataPersistently();
+                        }
                         this.render();
                         
                     } catch (error) {
@@ -1165,6 +1315,187 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
         });
     }
 }
+
+// Config management methods
+DataManagementV2.prototype._addDenomination = function() {
+    const html = $(this.element);
+    const denominationsList = html.find('#denominations-list');
+    
+    const newIndex = denominationsList.children().length;
+    const canonicalAbbrev = html.find('#canonical-abbrev').val() || 'BP';
+    
+    const newDenomHtml = `
+        <div class="trading-places-dm-denomination" data-index="${newIndex}">
+            <div class="trading-places-dm-config-row">
+                <label>Name:</label>
+                <input type="text" class="denom-name" value="" style="flex: 1;">
+            </div>
+            <div class="trading-places-dm-config-row">
+                <label>Plural Name:</label>
+                <input type="text" class="denom-plural" value="" style="flex: 1;">
+            </div>
+            <div class="trading-places-dm-config-row">
+                <label>Abbreviation:</label>
+                <input type="text" class="denom-abbrev" value="" style="flex: 1;">
+            </div>
+            <div class="trading-places-dm-config-row">
+                <label>Value (in ${canonicalAbbrev}):</label>
+                <input type="number" class="denom-value" value="1" style="flex: 1;">
+            </div>
+            <div class="trading-places-dm-denomination-actions">
+                <button class="trading-places-dm-btn delete-denom" data-index="${newIndex}">Remove</button>
+            </div>
+        </div>
+    `;
+    
+    denominationsList.append(newDenomHtml);
+    
+    // Reattach event handlers for the new element
+    denominationsList.find('.delete-denom').last().click((e) => {
+        const index = $(e.currentTarget).data('index');
+        this._deleteDenomination(index);
+    });
+};
+
+DataManagementV2.prototype._deleteDenomination = function(index) {
+    const html = $(this.element);
+    html.find(`.trading-places-dm-denomination[data-index="${index}"]`).remove();
+    
+    // Re-index remaining denominations
+    html.find('.trading-places-dm-denomination').each((i, elem) => {
+        $(elem).attr('data-index', i);
+        $(elem).find('.delete-denom').attr('data-index', i);
+    });
+};
+
+DataManagementV2.prototype._saveConfig = async function() {
+    try {
+        const html = $(this.element);
+        
+        // Get current config
+        const currentConfig = this.dataManager.getConfig();
+        
+        // Build updated config
+        const updatedConfig = {
+            ...currentConfig,
+            currency: {
+                ...currentConfig.currency,
+                canonicalUnit: {
+                    name: html.find('#canonical-name').val(),
+                    abbreviation: html.find('#canonical-abbrev').val(),
+                    value: 1 // Always 1
+                },
+                denominations: [],
+                rounding: "nearest", // Always nearest
+                display: {
+                    order: html.find('#display-order').val().split(',').map(s => s.trim()).filter(s => s),
+                    includeZeroDenominations: false, // Always false
+                    separator: " " // Always space
+                }
+            }
+        };
+        
+        // Collect denominations
+        html.find('.trading-places-dm-denomination').each((i, elem) => {
+            const $elem = $(elem);
+            updatedConfig.currency.denominations.push({
+                name: $elem.find('.denom-name').val(),
+                pluralName: $elem.find('.denom-plural').val(),
+                abbreviation: $elem.find('.denom-abbrev').val(),
+                value: parseInt($elem.find('.denom-value').val()) || 1
+            });
+        });
+        
+        // Validate the config
+        if (!updatedConfig.currency.canonicalUnit.name || !updatedConfig.currency.canonicalUnit.abbreviation) {
+            ui.notifications.error('Canonical unit name and abbreviation are required');
+            return;
+        }
+        
+        // Check for duplicate abbreviations
+        const abbrevs = updatedConfig.currency.denominations.map(d => d.abbreviation);
+        if (new Set(abbrevs).size !== abbrevs.length) {
+            ui.notifications.error('Currency abbreviations must be unique');
+            return;
+        }
+        
+        // Save the config
+        await this.dataManager.updateConfig(updatedConfig);
+        
+        ui.notifications.info('Configuration saved successfully');
+        
+        // Refresh the UI
+        this.render();
+        
+    } catch (error) {
+        console.error('Failed to save config:', error);
+        ui.notifications.error(`Failed to save configuration: ${error.message}`);
+    }
+};
+
+DataManagementV2.prototype._resetConfig = async function() {
+    foundry.applications.api.DialogV2.confirm({
+        window: { title: "Reset Configuration" },
+        content: `<p>Are you sure you want to reset the currency configuration to defaults?</p><p>This will restore the original WFRP4e currency settings.</p>`,
+        yes: async () => {
+            try {
+                // Reset to default WFRP4e config
+                const defaultConfig = {
+                    systemName: "wfrp4e",
+                    minimumSystemVersion: "7.0.0",
+                    currency: {
+                        canonicalUnit: {
+                            name: "Brass Penny",
+                            abbreviation: "BP",
+                            value: 1
+                        },
+                        denominations: [
+                            {
+                                name: "Gold Crown",
+                                pluralName: "Gold Crowns",
+                                abbreviation: "GC",
+                                value: 240
+                            },
+                            {
+                                name: "Silver Shilling",
+                                pluralName: "Silver Shillings",
+                                abbreviation: "SS",
+                                value: 12
+                            }
+                        ],
+                        rounding: "nearest",
+                        display: {
+                            order: ["GC", "SS", "BP"],
+                            includeZeroDenominations: false,
+                            separator: " "
+                        }
+                    },
+                    inventory: {
+                        field: "items",
+                        addMethod: "createEmbeddedDocuments"
+                    },
+                    skills: {
+                        haggle: "system.skills.haggle.total",
+                        gossip: "system.skills.gossip.total"
+                    },
+                    talents: {
+                        dealmaker: "system.talents.dealmaker"
+                    }
+                };
+                
+                await this.dataManager.updateConfig(defaultConfig);
+                ui.notifications.info('Configuration reset to defaults');
+                
+                // Refresh the UI
+                this.render();
+                
+            } catch (error) {
+                console.error('Failed to reset config:', error);
+                ui.notifications.error(`Failed to reset configuration: ${error.message}`);
+            }
+        }
+    });
+};
 
 // Export for global access
 window.DataManagementV2 = DataManagementV2;

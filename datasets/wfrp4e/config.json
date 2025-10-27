@@ -19,12 +19,6 @@
         "pluralName": "Silver Shillings",
         "abbreviation": "SS",
         "value": 12
-      },
-      {
-        "name": "Brass Penny",
-        "pluralName": "Brass Pennies",
-        "abbreviation": "BP",
-        "value": 1
       }
     ],
     "rounding": "nearest",

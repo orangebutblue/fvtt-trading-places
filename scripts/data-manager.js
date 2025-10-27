@@ -1111,6 +1111,52 @@ class DataManager {
     }
 
     /**
+     * Create a new user dataset
+     * @param {string} datasetName - Name of the dataset to create
+     * @returns {Promise<boolean>} - Success flag
+     */
+    async createUserDataset(datasetName) {
+        try {
+            if (!datasetName) {
+                throw new Error('Dataset name is required');
+            }
+
+            if (typeof game === 'undefined' || !game.settings) {
+                throw new Error('FoundryVTT environment required for user datasets');
+            }
+
+            // Check if dataset already exists
+            const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+            if (userDatasets.includes(datasetName)) {
+                throw new Error(`User dataset '${datasetName}' already exists`);
+            }
+
+            // Add to user datasets list
+            userDatasets.push(datasetName);
+            await game.settings.set(MODULE_ID, 'userDatasets', userDatasets);
+
+            // Create initial dataset data based on current loaded dataset
+            const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+            const datasetData = {
+                name: datasetName,
+                settlements: foundry.utils.deepClone(this.settlements || []),
+                cargoTypes: foundry.utils.deepClone(this.cargoTypes || []),
+                config: foundry.utils.deepClone(this.config || {}),
+                tradingConfig: foundry.utils.deepClone(this.tradingConfig || {})
+            };
+
+            userDatasetsData[datasetName] = datasetData;
+            await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
+
+            console.log(`User dataset '${datasetName}' created successfully`);
+            return true;
+        } catch (error) {
+            console.error('Failed to create user dataset:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Delete settlement by name (placeholder - would typically remove from file system)
      * @param {string} settlementName - Name of settlement to delete
      * @returns {Promise<boolean>} - Success flag
@@ -1126,7 +1172,6 @@ class DataManager {
                 setTimeout(() => {
                     const regionSelect = document.querySelector('#region-select');
                     if (regionSelect) {
-                        console.log('REGION DROPDOWN - Auto-refreshing after settlement deletion');
                         const settlements = this.getAllSettlements();
                         const regions = [...new Set(settlements.map(s => s.region))].sort();
                         regionSelect.innerHTML = '<option value="">Select a region...</option>';
@@ -1136,7 +1181,6 @@ class DataManager {
                             option.textContent = region;
                             regionSelect.appendChild(option);
                         });
-                        console.log('REGION DROPDOWN - Auto-refreshed after deletion, regions:', regions);
                     }
                 }, 100);
                 
@@ -1174,40 +1218,78 @@ class DataManager {
     }
 
     /**
+     * Delete a user dataset
+     * @param {string} datasetName - Name of the dataset to delete
+     * @returns {Promise<boolean>} - Success flag
+     */
+    async deleteUserDataset(datasetName) {
+        try {
+            if (!datasetName) {
+                throw new Error('Dataset name is required');
+            }
+
+            if (typeof game === 'undefined' || !game.settings) {
+                throw new Error('FoundryVTT environment required for user datasets');
+            }
+
+            // Check if dataset exists
+            const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+            if (!userDatasets.includes(datasetName)) {
+                throw new Error(`User dataset '${datasetName}' not found`);
+            }
+
+            // Remove from user datasets list
+            const updatedUserDatasets = userDatasets.filter(name => name !== datasetName);
+            await game.settings.set(MODULE_ID, 'userDatasets', updatedUserDatasets);
+
+            // Remove from user datasets data
+            const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+            delete userDatasetsData[datasetName];
+            await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
+
+            console.log(`User dataset '${datasetName}' deleted successfully`);
+            return true;
+        } catch (error) {
+            console.error('Failed to delete user dataset:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Persist user dataset changes back to Foundry settings
      * @returns {Promise<boolean>} - Success flag
      */
     async _persistUserDatasetChanges() {
         try {
-            // Only persist if this is a user dataset
-            if (typeof game !== 'undefined' && game.settings) {
-                const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
-                if (userDatasets.includes(this.activeDatasetName)) {
-                    // Get current user datasets data
-                    const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
-
-                    // Save the current dataset data back to settings
-                    const datasetData = {
-                        name: this.activeDatasetName,
-                        settlements: this.settlements,
-                        cargoTypes: this.cargoTypes,
-                        config: this.config
-                    };
-
-                    userDatasetsData[this.activeDatasetName] = datasetData;
-                    await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
-
-                    console.log(`User dataset '${this.activeDatasetName}' changes persisted to settings`);
-                    return true;
-                }
+            if (typeof game === 'undefined' || !game.settings) {
+                console.error('PERSIST: FoundryVTT environment required for user datasets');
+                throw new Error('FoundryVTT environment required for user datasets');
             }
-            return false;
+
+            const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+            const currentDatasetName = this.activeDatasetName;
+
+            if (!currentDatasetName) {
+                console.error('PERSIST: No current dataset name set');
+                throw new Error('No current dataset name set');
+            }
+
+            // Update the current dataset data
+            userDatasetsData[currentDatasetName] = {
+                settlements: this.settlements,
+                cargoTypes: this.cargoTypes,
+                config: this.config,
+                lastModified: new Date().toISOString()
+            };
+
+            await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
+            console.log(`User dataset '${currentDatasetName}' changes persisted`);
+            return true;
         } catch (error) {
             console.error('Failed to persist user dataset changes:', error);
             throw error;
         }
     }
-
     async _loadDatasetFromPath(datasetPath) {
         if (typeof fetch === 'undefined') {
             throw new Error('Dataset loading requires FoundryVTT environment with fetch support');
@@ -1216,9 +1298,10 @@ class DataManager {
         // Extract dataset name from path (e.g., "modules/trading-places/datasets/wfrp4e" -> "wfrp4e")
         const datasetName = datasetPath.split('/').pop();
 
-        const [cargoResponse, configResponse] = await Promise.all([
+        const [cargoResponse, configResponse, tradingConfigResponse] = await Promise.all([
             fetch(`${datasetPath}/cargo-types.json`, { cache: 'no-store' }),
-            fetch(`${datasetPath}/config.json`, { cache: 'no-store' })
+            fetch(`${datasetPath}/config.json`, { cache: 'no-store' }),
+            fetch(`${datasetPath}/trading-config.json`, { cache: 'no-store' })
         ]);
 
         if (!cargoResponse.ok) {
@@ -1229,8 +1312,13 @@ class DataManager {
             throw new Error(`Failed to load dataset config (${configResponse.status} ${configResponse.statusText})`);
         }
 
+        if (!tradingConfigResponse.ok) {
+            throw new Error(`Failed to load trading config (${tradingConfigResponse.status} ${tradingConfigResponse.statusText})`);
+        }
+
         const cargoData = await cargoResponse.json();
         const configData = await configResponse.json();
+        const tradingConfigData = await tradingConfigResponse.json();
 
         const settlementPromises = SETTLEMENT_FILES.map(file =>
             fetch(`${datasetPath}/settlements/${file}`, { cache: 'no-store' })
@@ -1257,14 +1345,14 @@ class DataManager {
 
         this.cargoTypes = cargoData.cargoTypes || [];
         this.config = configData;
+        this.tradingConfig = tradingConfigData;
         this.normalizedCurrencyConfig = null;
-    this.currencyContextCache = null;
-
-        const dataset = {
+        this.currencyContextCache = null;        const dataset = {
             name: this.activeDatasetName,
             settlements: this.settlements,
             cargoTypes: this.cargoTypes,
-            config: this.config
+            config: this.config,
+            tradingConfig: this.tradingConfig
         };
 
         const validation = this.validateDatasetCompleteness(dataset);
@@ -1457,6 +1545,7 @@ class DataManager {
             this.settlements = datasetData.settlements || [];
             this.cargoTypes = datasetData.cargoTypes || [];
             this.config = datasetData.config || {};
+            this.tradingConfig = datasetData.tradingConfig || {};
             this.normalizedCurrencyConfig = null;
             this.currencyContextCache = null;
 
@@ -1479,6 +1568,31 @@ class DataManager {
         }
 
         return await response.json();
+    }
+
+    /**
+     * Load trading configuration from the current dataset
+     * @returns {Promise<Object>} - Trading configuration object
+     */
+    async loadTradingConfig() {
+        try {
+            const datasetPath = await this.ensureDatasetPath();
+            const tradingConfigPath = `${datasetPath}/trading-config.json`;
+
+            const response = await fetch(tradingConfigPath, { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error(`Failed to load trading config (${response.status} ${response.statusText})`);
+            }
+
+            this.tradingConfig = await response.json();
+            console.log('Trading config loaded successfully');
+            return this.tradingConfig;
+        } catch (error) {
+            console.error('Failed to load trading config:', error);
+            // Return empty object as fallback to maintain graceful degradation
+            this.tradingConfig = {};
+            return this.tradingConfig;
+        }
     }
 
     getCargoTypes() {
@@ -1805,39 +1919,10 @@ class DataManager {
      * @returns {Object} - Inventory configuration object
      */
     getInventoryConfig() {
-        return this.config?.inventory || {};
-    }
-
-    /**
-     * Get cargo availability pipeline (lazy instantiate)
-     * @param {Object} options - Optional pipeline options
-     * @returns {Object} - CargoAvailabilityPipeline instance
-     */
-    getCargoAvailabilityPipeline(options = {}) {
-        if (this.cargoAvailabilityPipeline) {
-            return this.cargoAvailabilityPipeline;
-        }
-
-        let PipelineClass = null;
-
-        if (typeof require !== 'undefined') {
-            try {
-                PipelineClass = require('./cargo-availability-pipeline');
-            } catch (error) {
-                // Ignore require failures; will try window fallback
-            }
-        }
-
-        if (!PipelineClass && typeof window !== 'undefined') {
-            PipelineClass = window.CargoAvailabilityPipeline;
-        }
-
-        if (!PipelineClass) {
-            throw new Error('CargoAvailabilityPipeline module is not available');
-        }
-
-        this.cargoAvailabilityPipeline = new PipelineClass(this, options);
-        return this.cargoAvailabilityPipeline;
+        return this.config?.inventory || {
+            field: 'items',
+            addMethod: 'createEmbeddedDocuments'
+        };
     }
 
     /**
@@ -1845,7 +1930,10 @@ class DataManager {
      * @returns {Object} - Skills configuration object
      */
     getSkillsConfig() {
-        return this.config?.skills || {};
+        return this.config?.skills || {
+            haggle: 'system.skills.haggle.total',
+            gossip: 'system.skills.gossip.total'
+        };
     }
 
     /**
@@ -1854,6 +1942,22 @@ class DataManager {
      */
     getTalentsConfig() {
         return this.config?.talents || {};
+    }
+
+    /**
+     * Get dataset config
+     * @returns {Object} - Config object
+     */
+    getConfig() {
+        return this.config || {};
+    }
+
+    /**
+     * Get trading config
+     * @returns {Object} - Trading config object
+     */
+    getTradingConfig() {
+        return this.tradingConfig || {};
     }
 
     /**
@@ -2523,6 +2627,10 @@ class DataManager {
         return this.currencyContextCache;
     }
 
+    /**
+     * Get inventory configuration
+     * @returns {Object} - Inventory configuration object
+     */
     getInventoryConfig() {
         return this.config?.inventory || {
             field: 'items',
@@ -2530,6 +2638,10 @@ class DataManager {
         };
     }
 
+    /**
+     * Get skills configuration
+     * @returns {Object} - Skills configuration object
+     */
     getSkillsConfig() {
         return this.config?.skills || {
             haggle: 'system.skills.haggle.total',
@@ -2537,14 +2649,33 @@ class DataManager {
         };
     }
 
+    /**
+     * Get talents configuration
+     * @returns {Object} - Talents configuration object
+     */
     getTalentsConfig() {
-        return this.config?.talents || {
-            dealmaker: 'system.talents.dealmaker'
-        };
+        return this.config?.talents || {};
     }
 
     /**
-     * Data loading and testing methods
+     * Get dataset config
+     * @returns {Object} - Config object
+     */
+    getConfig() {
+        return this.config || {};
+    }
+
+    /**
+     * Get trading config
+     * @returns {Object} - Trading config object
+     */
+    getTradingConfig() {
+        return this.tradingConfig || {};
+    }
+
+    /**
+     * Test data loading with error handling for missing data
+     * @returns {Object} - Test results object
      */
     testDataLoading() {
         const results = {
@@ -2552,122 +2683,592 @@ class DataManager {
             errors: [],
             warnings: [],
             stats: {
-                settlements: this.settlements ? this.settlements.length : 0,
-                cargoTypes: this.cargoTypes ? this.cargoTypes.length : 0,
-                regions: this.getAvailableRegions().length,
-                categories: this.buildAvailableCategories().length
+                settlements: this.settlements.length,
+                cargoTypes: this.cargoTypes.length,
+                regions: 0,
+                categories: 0
             }
         };
 
-        // Test settlement data
-        if (!this.settlements || this.settlements.length === 0) {
-            results.errors.push('No settlement data loaded');
-            results.success = false;
-        }
-
-        // Test cargo data
-        if (!this.cargoTypes || this.cargoTypes.length === 0) {
-            results.errors.push('No cargo type data loaded');
-            results.success = false;
-        }
-
-        // Test configuration
-        if (!this.config || Object.keys(this.config).length === 0) {
-            results.warnings.push('No configuration data loaded');
-        }
-
-        // Validate a few sample settlements
-        if (this.settlements && this.settlements.length > 0) {
-            const sampleSize = Math.min(3, this.settlements.length);
-            for (let i = 0; i < sampleSize; i++) {
-                const validation = this.validateSettlement(this.settlements[i]);
-                if (!validation.valid) {
-                    results.errors.push(`Settlement ${i}: ${validation.errors.join(', ')}`);
-                    results.success = false;
-                }
+        try {
+            // Test settlements data
+            if (!this.settlements || this.settlements.length === 0) {
+                results.errors.push('No settlements data loaded');
+                results.success = false;
+            } else {
+                results.stats.regions = this.getAvailableRegions().length;
+                results.stats.categories = this.buildAvailableCategories().length;
             }
-        }
 
-        // Validate a few sample cargo types
-        if (this.cargoTypes && this.cargoTypes.length > 0) {
-            const sampleSize = Math.min(3, this.cargoTypes.length);
-            for (let i = 0; i < sampleSize; i++) {
-                const validation = this.validateCargo(this.cargoTypes[i]);
-                if (!validation.valid) {
-                    results.errors.push(`Cargo ${i}: ${validation.errors.join(', ')}`);
-                    results.success = false;
-                }
+            // Test cargo types data
+            if (!this.cargoTypes || this.cargoTypes.length === 0) {
+                results.errors.push('No cargo types data loaded');
+                results.success = false;
             }
+
+            // Test configuration
+            if (!this.config || Object.keys(this.config).length === 0) {
+                results.errors.push('No configuration data loaded');
+                results.success = false;
+            }
+
+            // Test specific lookups
+            const testSettlement = this.getSettlement('Averheim');
+            if (!testSettlement) {
+                results.warnings.push('Test settlement "Averheim" not found');
+            }
+
+            const testCargo = this.getCargoType('Grain');
+            if (!testCargo) {
+                results.warnings.push('Test cargo type "Grain" not found');
+            }
+
+            // Test search functionality
+            const tradeSettlements = this.getSettlementsByProduction('Trade');
+            if (tradeSettlements.length === 0) {
+                results.warnings.push('No Trade settlements found');
+            }
+
+        } catch (error) {
+            results.errors.push(`Data loading test failed: ${error.message}`);
+            results.success = false;
         }
 
         return results;
     }
 
     /**
-     * Dynamically discover available datasets by scanning the datasets directory
-     * @returns {Promise<Array>} - Array of dataset objects with id, path, and label
+     * Get current season from FoundryVTT settings
+     * @returns {Promise<string|null>} - Current season or null if not set
      */
-    async discoverAvailableDatasets() {
-        const datasets = [];
-
+    async getCurrentSeason() {
         try {
-            if (typeof fetch !== 'undefined') {
-                // Browser environment - try to fetch a directory listing
-                // This is tricky in browsers, so we'll fall back to known datasets
-                // In a real implementation, you might need a server endpoint or manifest
-                datasets.push({
-                    id: 'wfrp4e',
-                    path: 'wfrp4e',
-                    label: 'Warhammer Fantasy Roleplay 4th Edition'
-                });
+            if (typeof game !== 'undefined' && game.settings) {
+                const season = await game.settings.get(MODULE_ID, "currentSeason");
+                this.currentSeason = season || null;
+                return this.currentSeason;
             } else {
-                // Node.js environment (testing/development)
-                const fs = require('fs');
-                const path = require('path');
-                const datasetsDir = path.join(__dirname, '..', 'datasets');
-
-                if (fs.existsSync(datasetsDir)) {
-                    const entries = fs.readdirSync(datasetsDir, { withFileTypes: true });
-
-                    for (const entry of entries) {
-                        if (entry.isDirectory()) {
-                            const datasetId = entry.name;
-                            const datasetPath = path.join(datasetsDir, datasetId);
-                            const configPath = path.join(datasetPath, 'config.json');
-
-                            // Check if this directory contains a valid dataset (has config.json)
-                            if (fs.existsSync(configPath)) {
-                                try {
-                                    const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-                                    const label = configData.label || configData.name || datasetId;
-
-                                    datasets.push({
-                                        id: datasetId,
-                                        path: datasetId,
-                                        label: label
-                                    });
-                                } catch (error) {
-                                    console.warn(`Skipping invalid dataset '${datasetId}': ${error.message}`);
-                                }
-                            }
-                        }
-                    }
-                }
+                // For testing outside FoundryVTT
+                return this.currentSeason || null;
             }
         } catch (error) {
-            console.warn('Dataset discovery failed:', error);
+            console.error('Failed to get current season:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Set current season and persist to FoundryVTT settings
+     * @param {string} season - Season name (spring, summer, autumn, winter)
+     * @returns {Promise<boolean>} - Success status
+     */
+    async setCurrentSeason(season) {
+        try {
+            // Validate season
+            const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
+            if (!validSeasons.includes(season)) {
+                throw new Error(`Invalid season: ${season}. Must be one of: ${validSeasons.join(', ')}`);
+            }
+
+            const oldSeason = this.currentSeason;
+            this.currentSeason = season;
+
+            // Persist to FoundryVTT settings
+            if (typeof game !== 'undefined' && game.settings) {
+                await game.settings.set(MODULE_ID, "currentSeason", season);
+            }
+
+            // Notify season change
+            this.notifySeasonChange(season, oldSeason);
+
+            console.log(`Season changed from ${oldSeason || 'unset'} to ${season}`);
+            return true;
+        } catch (error) {
+            console.error('Failed to set current season:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Reset current season to null
+     * @returns {Promise<boolean>} - Success status
+     */
+    async resetSeason() {
+        try {
+            const oldSeason = this.currentSeason;
+            this.currentSeason = null;
+
+            // Clear from FoundryVTT settings
+            if (typeof game !== 'undefined' && game.settings) {
+                await game.settings.set(MODULE_ID, "currentSeason", null);
+            }
+
+            // Notify season change
+            this.notifySeasonChange(null, oldSeason);
+
+            console.log(`Season reset from ${oldSeason || 'unset'} to unset`);
+            return true;
+        } catch (error) {
+            console.error('Failed to reset season:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Notify about season change and update prices
+     * @param {string} newSeason - New season
+     * @param {string|null} oldSeason - Previous season
+     */
+    notifySeasonChange(newSeason, oldSeason) {
+        try {
+            // Note: Season change notification handled by application, not here to avoid duplicates
+
+            // Console notification for testing
+            console.log(`Season change notification: ${oldSeason || 'unset'} → ${newSeason}`);
+
+            // Trigger price updates (this would be used by UI components)
+            this.updatePricingForSeason(newSeason);
+
+            // Emit custom event for other modules to listen to
+            if (typeof Hooks !== 'undefined') {
+                Hooks.callAll(`${MODULE_ID}.seasonChanged`, {
+                    newSeason: newSeason,
+                    oldSeason: oldSeason,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        } catch (error) {
+            console.error('Failed to notify season change:', error);
+        }
+    }
+
+    /**
+     * Update pricing for current season
+     * @param {string} season - Season to update pricing for
+     */
+    updatePricingForSeason(season) {
+        try {
+            if (!season) {
+                console.warn('Cannot update pricing: no season specified');
+                return;
+            }
+
+            // This method would trigger UI updates in a real FoundryVTT environment
+            // For now, we just log the update
+            console.log(`Pricing updated for season: ${season}`);
+
+            // In a full implementation, this would:
+            // 1. Update any cached price calculations
+            // 2. Refresh open trading dialogs
+            // 3. Update any displayed price information
+        } catch (error) {
+            console.error('Failed to update pricing for season:', error);
+        }
+    }
+
+    /**
+     * Validate season before trading operations
+     * @returns {Promise<boolean>} - True if season is set and valid
+     */
+    async validateSeasonSet() {
+        try {
+            const currentSeason = await this.getCurrentSeason();
+
+            if (!currentSeason) {
+                // Prompt for season selection in FoundryVTT
+                if (typeof ui !== 'undefined' && ui.notifications) {
+                    ui.notifications.warn('Please set the current season before trading.');
+                }
+
+                console.warn('Season validation failed: no season set');
+                return false;
+            }
+
+            const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
+            if (!validSeasons.includes(currentSeason)) {
+                console.error(`Season validation failed: invalid season '${currentSeason}'`);
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            console.error('Season validation error:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get all valid seasons
+     * @returns {Array} - Array of valid season names
+     */
+    getValidSeasons() {
+        return ['spring', 'summer', 'autumn', 'winter'];
+    }
+
+    /**
+     * Get season display name
+     * @param {string} season - Season name
+     * @returns {string} - Capitalized season name
+     */
+    getSeasonDisplayName(season) {
+        if (!season || typeof season !== 'string') {
+            return 'Unknown';
         }
 
-        // Ensure we always have at least the WFRP4e dataset
-        if (datasets.length === 0) {
-            datasets.push({
-                id: 'wfrp4e',
-                path: 'wfrp4e',
-                label: 'Warhammer Fantasy Roleplay 4th Edition'
+        return season.charAt(0).toUpperCase() + season.slice(1);
+    }
+
+    /**
+     * Get seasonal price modifiers for all cargo types
+     * @param {string} season - Season name
+     * @returns {Object} - Object mapping cargo names to seasonal prices
+     */
+    getSeasonalPrices(season) {
+        const seasonalPrices = {};
+
+        try {
+            this.cargoTypes.forEach(cargo => {
+                if (cargo.basePrices && cargo.basePrices.hasOwnProperty(season)) {
+                    seasonalPrices[cargo.name] = {
+                        basePrice: cargo.basePrices[season],
+                        qualityTiers: cargo.qualityTiers || { average: 1.0 }
+                    };
+                }
             });
+        } catch (error) {
+            console.error('Failed to get seasonal prices:', error);
         }
 
-        return datasets;
+        return seasonalPrices;
+    }
+
+    /**
+     * Compare prices between seasons for a cargo type
+     * @param {string} cargoName - Name of cargo type
+     * @returns {Object} - Object with price comparison data
+     */
+    compareSeasonalPrices(cargoName) {
+        const cargo = this.getCargoType(cargoName);
+        if (!cargo || !cargo.basePrices) {
+            return null;
+        }
+
+        const comparison = {
+            cargoName: cargoName,
+            prices: {},
+            bestSeason: null,
+            worstSeason: null,
+            priceRange: 0
+        };
+
+        const seasons = this.getValidSeasons();
+        let minPrice = Infinity;
+        let maxPrice = -Infinity;
+
+        seasons.forEach(season => {
+            if (cargo.basePrices.hasOwnProperty(season)) {
+                const price = cargo.basePrices[season];
+                comparison.prices[season] = price;
+
+                if (price < minPrice) {
+                    minPrice = price;
+                    comparison.bestSeason = season; // Best for buying (lowest price)
+                }
+
+                if (price > maxPrice) {
+                    maxPrice = price;
+                    comparison.worstSeason = season; // Worst for buying (highest price)
+                }
+            }
+        });
+
+        comparison.priceRange = maxPrice - minPrice;
+        return comparison;
+    }
+
+    /**
+     * Get recommended trading seasons for all cargo types
+     * @returns {Object} - Object with buy/sell recommendations per cargo
+     */
+    getTradingRecommendations() {
+        const recommendations = {};
+
+        this.cargoTypes.forEach(cargo => {
+            const comparison = this.compareSeasonalPrices(cargo.name);
+            if (comparison) {
+                recommendations[cargo.name] = {
+                    bestBuySeason: comparison.bestSeason,
+                    bestSellSeason: comparison.worstSeason,
+                    priceVariation: comparison.priceRange,
+                    profitPotential: ((comparison.prices[comparison.worstSeason] - comparison.prices[comparison.bestSeason]) / comparison.prices[comparison.bestSeason] * 100).toFixed(1) + '%'
+                };
+            }
+        });
+
+        return recommendations;
+    }
+
+    /**
+     * Initialize season management system
+     * @returns {Promise<boolean>} - Success status
+     */
+    async initializeSeasonManagement() {
+        try {
+            // Load current season from settings
+            const currentSeason = await this.getCurrentSeason();
+
+            if (!currentSeason) {
+                console.log('No season set - trading operations will require season selection');
+            } else {
+                console.log(`Season management initialized: current season is ${currentSeason}`);
+            }
+
+            return true;
+        } catch (error) {
+            console.error('Failed to initialize season management:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Initialize merchant system data and configuration
+     * @returns {Promise<boolean>} - Success status
+     */
+    async initializeMerchantSystem() {
+        try {
+            // Load merchant-related configuration if needed
+            // This method is called during module initialization to ensure
+            // merchant system components are properly set up
+            
+            console.log('Initializing merchant system...');
+            
+            // Ensure trading config is loaded (merchant config is part of trading config)
+            if (!this.tradingConfig || Object.keys(this.tradingConfig).length === 0) {
+                await this.loadTradingConfig();
+            }
+            
+            // Validate that merchant-related config exists
+            const merchantConfig = this.tradingConfig?.skillDistribution || this.tradingConfig?.merchantConfig;
+            if (!merchantConfig) {
+                console.warn('Merchant system configuration not found in trading config');
+                // This is not necessarily an error - merchant system can work with defaults
+            } else {
+                console.log('Merchant system configuration loaded successfully');
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('Failed to initialize merchant system:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Calculate cargo slots for a settlement
+     * @param {Object} settlement - Settlement object
+     * @param {string} season - Current season (optional, for future use)
+     * @returns {number} - Number of cargo slots available
+     */
+    calculateCargoSlots(settlement, season = null) {
+        try {
+            if (!settlement) {
+                console.warn('Cannot calculate cargo slots: no settlement provided');
+                return 0;
+            }
+
+            const props = this.getSettlementProperties(settlement);
+            const config = this.tradingConfig?.cargoSlots;
+
+            if (!config) {
+                console.warn('Cannot calculate cargo slots: no cargo slots configuration found');
+                return 0;
+            }
+
+            const flags = props.productionCategories || [];
+
+            // Base slots by size
+            const baseSlots = config.basePerSize?.[String(props.sizeNumeric)] ??
+                            config.basePerSize?.[props.sizeNumeric] ??
+                            Math.max(1, props.sizeNumeric || 1);
+
+            let currentTotal = baseSlots;
+
+            // Population contribution
+            const populationContribution = (props.population || 0) * (config.populationMultiplier ?? 0);
+            if (populationContribution > 0) {
+                currentTotal += populationContribution;
+            }
+
+            // Size multiplier bonus
+            const sizeContribution = (props.sizeNumeric || 0) * (config.sizeMultiplier ?? 0);
+            if (sizeContribution > 0) {
+                currentTotal += sizeContribution;
+            }
+
+            // Flag multipliers
+            flags.forEach(flag => {
+                const multiplier = config.flagMultipliers?.[flag.toLowerCase()];
+                if (multiplier && multiplier !== 1) {
+                    currentTotal *= multiplier;
+                }
+            });
+
+            // Apply hard cap
+            const hardCap = config.hardCap;
+            if (typeof hardCap === 'number' && currentTotal > hardCap) {
+                currentTotal = hardCap;
+            }
+
+            // Return final result (minimum 1)
+            return Math.max(1, Math.round(currentTotal));
+
+        } catch (error) {
+            console.error('Error calculating cargo slots:', error);
+            return 0;
+        }
+    }
+
+    /**
+     * Get settlement properties for cargo slot calculations
+     * @param {Object} settlement - Settlement object
+     * @returns {Object} - Settlement properties
+     */
+    /**
+     * Get size rating from settlement size string
+     * @param {string} size - Settlement size string
+     * @returns {number} - Size rating (1-5)
+     */
+    getSizeRating(size) {
+        if (!size || typeof size !== 'string') {
+            return 1;
+        }
+
+        const sizeMap = {
+            'hamlet': 1,
+            'village': 2,
+            'town': 3,
+            'city': 4,
+            'metropolis': 5
+        };
+
+        return sizeMap[size.toLowerCase()] || 1;
+    }
+
+    /**
+     * Update dataset config
+     * @param {Object} newConfig - New configuration object
+     * @returns {Promise<boolean>} - Success flag
+     */
+    async updateConfig(newConfig) {
+        try {
+            // Validate the config structure
+            if (!newConfig || typeof newConfig !== 'object') {
+                throw new Error('Config must be a valid object');
+            }
+
+            // Validate required sections
+            const requiredSections = ['currency', 'inventory'];
+            for (const section of requiredSections) {
+                if (!newConfig.hasOwnProperty(section)) {
+                    throw new Error(`Config missing required section: ${section}`);
+                }
+            }
+
+            // Validate currency config
+            if (newConfig.currency) {
+                const currency = newConfig.currency;
+                
+                // Validate canonical unit
+                if (!currency.canonicalUnit || typeof currency.canonicalUnit !== 'object') {
+                    throw new Error('Currency config missing canonicalUnit');
+                }
+                
+                if (!currency.canonicalUnit.name || !currency.canonicalUnit.abbreviation) {
+                    throw new Error('Canonical unit must have name and abbreviation');
+                }
+                
+                // Ensure canonical unit value is always 1
+                currency.canonicalUnit.value = 1;
+                
+                // Validate denominations
+                if (!Array.isArray(currency.denominations)) {
+                    throw new Error('Currency denominations must be an array');
+                }
+                
+                // Check for duplicate abbreviations
+                const abbrevs = currency.denominations.map(d => d.abbreviation);
+                if (new Set(abbrevs).size !== abbrevs.length) {
+                    throw new Error('Currency denomination abbreviations must be unique');
+                }
+                
+                // Validate each denomination
+                currency.denominations.forEach((denom, index) => {
+                    if (!denom.name || !denom.abbreviation || typeof denom.value !== 'number') {
+                        throw new Error(`Denomination ${index} missing required fields (name, abbreviation, value)`);
+                    }
+                });
+                
+                // Set fixed values
+                currency.rounding = "nearest";
+                currency.display = currency.display || {};
+                currency.display.includeZeroDenominations = false;
+                currency.display.separator = " ";
+            }
+
+            // Update the config in memory
+            this.config = this._deepClone(newConfig);
+            this.normalizedCurrencyConfig = null; // Clear cache
+            this.currencyContextCache = null; // Clear cache
+
+            // Persist to settings if this is a user dataset
+            if (typeof game !== 'undefined' && game.settings) {
+                const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
+                if (userDatasets.includes(this.activeDatasetName)) {
+                    // Update user dataset config in settings
+                    const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+                    if (userDatasetsData[this.activeDatasetName]) {
+                        userDatasetsData[this.activeDatasetName].config = this.config;
+                        await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
+                        console.log(`User dataset '${this.activeDatasetName}' config updated in settings`);
+                    }
+                } else {
+                    // For built-in datasets, we could potentially save custom config
+                    // but for now we'll just log that it's not persisted
+                    console.log('Config updated in memory (built-in dataset - not persisted to disk)');
+                }
+            }
+
+            console.log('Dataset config updated successfully');
+            return true;
+        } catch (error) {
+            console.error('Failed to update config:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Deep clone utility that works in both FoundryVTT and Node.js environments
+     * @param {any} obj - Object to clone
+     * @returns {any} - Deep cloned object
+     */
+    _deepClone(obj) {
+        if (obj === null || typeof obj !== 'object') {
+            return obj;
+        }
+
+        // Use FoundryVTT's deepClone if available
+        if (typeof foundry !== 'undefined' && foundry.utils && foundry.utils.deepClone) {
+            return foundry.utils.deepClone(obj);
+        }
+
+        // Fallback to JSON-based deep clone
+        try {
+            return JSON.parse(JSON.stringify(obj));
+        } catch (error) {
+            // If JSON serialization fails, return a shallow copy
+            console.warn('Deep clone failed, using shallow copy:', error);
+            return { ...obj };
+        }
     }
 }
 

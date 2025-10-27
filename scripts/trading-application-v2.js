@@ -103,25 +103,11 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         this.debugLogger = window.TPMLogger;
 
         this.cargoAvailabilityPipeline = null;
-        if (this.dataManager && typeof this.dataManager.getCargoAvailabilityPipeline === 'function') {
-            try {
-                this.cargoAvailabilityPipeline = this.dataManager.getCargoAvailabilityPipeline();
-                this._logDebug('Pipeline', 'Cargo availability pipeline ready');
-            } catch (error) {
-                this._logError('Pipeline', 'Failed to initialize cargo availability pipeline', { error: error.message });
-            }
-        }
+        // Initialize pipeline asynchronously
+        this._initializeCargoAvailabilityPipeline();
 
-        // Initialize cargo distribution charts
+        // Initialize cargo distribution charts (will be initialized after pipeline is ready)
         this.cargoDistributionCharts = null;
-        if (this.dataManager && this.cargoAvailabilityPipeline) {
-            try {
-                this.cargoDistributionCharts = new CargoDistributionCharts(this.dataManager, this.cargoAvailabilityPipeline);
-                this._logDebug('Charts', 'Cargo distribution charts ready');
-            } catch (error) {
-                this._logError('Charts', 'Failed to initialize cargo distribution charts', { error: error.message });
-            }
-        }
 
         // Validate components are available
         if (!this.dataManager || !this.tradingEngine) {
@@ -386,17 +372,31 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
     }
 
     /**
-     * Log debug message with consistent format
-     * @param {string} category - Log category
-     * @param {string} message - Log message
-     * @param {Object} data - Additional data
+     * Initialize cargo availability pipeline asynchronously
      * @private
      */
-    _logDebug(category, message, data = {}) {
-        if (this.debugLogger && this.debugLogger.log) {
-            this.debugLogger.log('DEBUG', category, message, data, 'DEBUG');
-        } else {
-            console.debug(`Trading Places | ${category}: ${message}`, data);
+    async _initializeCargoAvailabilityPipeline() {
+        if (!this.dataManager) {
+            return;
+        }
+
+        try {
+            // Import and create the pipeline instance
+            const { CargoAvailabilityPipeline } = await import('./cargo-availability-pipeline.js');
+            this.cargoAvailabilityPipeline = new CargoAvailabilityPipeline(this.dataManager);
+            this._logDebug('Pipeline', 'Cargo availability pipeline ready');
+
+            // Now that pipeline is ready, initialize cargo distribution charts
+            if (this.dataManager && !this.cargoDistributionCharts) {
+                try {
+                    this.cargoDistributionCharts = new CargoDistributionCharts(this.dataManager, this.cargoAvailabilityPipeline);
+                    this._logDebug('Charts', 'Cargo distribution charts ready');
+                } catch (error) {
+                    this._logError('Charts', 'Failed to initialize cargo distribution charts', { error: error.message });
+                }
+            }
+        } catch (error) {
+            this._logError('Pipeline', 'Failed to initialize cargo availability pipeline', { error: error.message });
         }
     }
 
@@ -777,7 +777,8 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
      * Update cargo distribution charts when settlement or season changes
      */
     _updateCargoDistributionCharts() {
-        if (!this.cargoDistributionCharts) {
+        if (!this.cargoDistributionCharts || !this.cargoAvailabilityPipeline) {
+            // Pipeline not ready yet, charts will be updated when pipeline initializes
             return;
         }
 

@@ -494,7 +494,7 @@ class TradingEngine {
             return null;
         }
 
-        const pipeline = this._getPipeline();
+        const pipeline = await this._getPipeline();
         if (!pipeline) {
             return null;
         }
@@ -573,7 +573,7 @@ class TradingEngine {
         return `${season}::${identifier}`;
     }
 
-    _getPipeline() {
+    async _getPipeline() {
         if (!this.pipelineEnabled) {
             this.pipelineStatus = 'disabled';
             return null;
@@ -588,7 +588,13 @@ class TradingEngine {
         if (typeof this.pipelineFactory === 'function') {
             pipelineInstance = this.pipelineFactory(this.dataManager, this.pipelineOptions);
         } else if (typeof this.dataManager?.getCargoAvailabilityPipeline === 'function') {
-            pipelineInstance = this.dataManager.getCargoAvailabilityPipeline(this.pipelineOptions);
+            try {
+                pipelineInstance = await this.dataManager.getCargoAvailabilityPipeline(this.pipelineOptions);
+            } catch (error) {
+                console.error('Failed to get pipeline from DataManager:', error);
+                this.pipelineStatus = 'error';
+                return null;
+            }
         } else {
             const PipelineClass = safeRequire('./cargo-availability-pipeline.js')
                 || (typeof window !== 'undefined' ? window.CargoAvailabilityPipeline : null);
