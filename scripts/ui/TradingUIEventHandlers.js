@@ -749,7 +749,9 @@ export class TradingUIEventHandlers {
                 this._updateBuyingCargoCard(cargo, quantity);
                 
                 // Just update the app's cargo data and let it re-render naturally
-                const updatedCargo = await game.settings.get(MODULE_ID, "currentCargo") || [];
+                const datasetId = this.app.dataManager.activeDatasetName;
+                const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+                const updatedCargo = allCargoData[datasetId] || [];
                 this.app.currentCargo = updatedCargo;
 
                 await this.app.refreshUI({ focusTab: 'buying' });
@@ -960,7 +962,10 @@ export class TradingUIEventHandlers {
             }
             
             // Save to game settings
-            await game.settings.set(MODULE_ID, "transactionHistory", this.app.transactionHistory);
+            const datasetId = this.app.dataManager.activeDatasetName;
+            const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
+            allTransactionData[datasetId] = this.app.transactionHistory;
+            await game.settings.set(MODULE_ID, "transactionHistory", allTransactionData);
             
             // Clear and collapse the form
             this._clearManualTransactionForm();
@@ -1179,7 +1184,10 @@ export class TradingUIEventHandlers {
                 this.app.transactionHistory.splice(transactionIndex, 1);
                 
                 // Save updated transaction history
-                await game.settings.set(MODULE_ID, "transactionHistory", this.app.transactionHistory);
+                const datasetId = this.app.dataManager.activeDatasetName;
+                const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
+                allTransactionData[datasetId] = this.app.transactionHistory;
+                await game.settings.set(MODULE_ID, "transactionHistory", allTransactionData);
                 
                 await this.app.refreshUI({ focusTab: 'history' });
                 
@@ -1337,8 +1345,14 @@ export class TradingUIEventHandlers {
         
         // Remove from inventory
         currentCargo.splice(cargoIndex, 1);
-    await game.settings.set(MODULE_ID, "currentCargo", currentCargo);
-    this.app.currentCargo = currentCargo;
+        const datasetId = this.app.dataManager.activeDatasetName;
+        const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+        if (!allCargoData[datasetId]) {
+            allCargoData[datasetId] = [];
+        }
+        allCargoData[datasetId] = currentCargo;
+        await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
+        this.app.currentCargo = currentCargo;
         this.app.currentCargo = currentCargo;
 
         await this.app.refreshUI({ focusTab: 'cargo' });
@@ -1409,7 +1423,13 @@ export class TradingUIEventHandlers {
             currentCargo.push(newCargo);
         }
         
-        await game.settings.set(MODULE_ID, "currentCargo", currentCargo);
+        const datasetId = this.app.dataManager.activeDatasetName;
+        const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+        if (!allCargoData[datasetId]) {
+            allCargoData[datasetId] = [];
+        }
+        allCargoData[datasetId] = currentCargo;
+        await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
         
         this._logDebug('Cargo Management', 'Cargo added to inventory', {
             cargo: transaction.cargo,
@@ -1444,7 +1464,13 @@ export class TradingUIEventHandlers {
                 cargo.totalCost = cargo.quantity * cargo.pricePerEP; // Recalculate total cost
             }
             
-            await game.settings.set(MODULE_ID, "currentCargo", currentCargo);
+            const datasetId = this.app.dataManager.activeDatasetName;
+            const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+            if (!allCargoData[datasetId]) {
+                allCargoData[datasetId] = [];
+            }
+            allCargoData[datasetId] = currentCargo;
+            await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
             this.app.currentCargo = currentCargo;
             
             this._logDebug('Cargo Management', 'Cargo removed from inventory', {
@@ -1461,7 +1487,9 @@ export class TradingUIEventHandlers {
      * @private
      */
     async _getCurrentCargo() {
-        const rawCargo = await game.settings.get(MODULE_ID, "currentCargo") || [];
+        const datasetId = this.app.dataManager.activeDatasetName;
+        const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+        const rawCargo = allCargoData[datasetId] || [];
         console.log('🚛 _getCurrentCargo: Loading cargo', { count: rawCargo.length, firstItem: rawCargo[0] });
         // Normalize cargo with formatted currency fields
         return rawCargo.map(cargo => {
@@ -1579,7 +1607,13 @@ export class TradingUIEventHandlers {
 
         const currentCargo = await this._getCurrentCargo();
         currentCargo.push(testCargo);
-        await game.settings.set(MODULE_ID, "currentCargo", currentCargo);
+        const datasetId = this.app.dataManager.activeDatasetName;
+        const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+        if (!allCargoData[datasetId]) {
+            allCargoData[datasetId] = [];
+        }
+        allCargoData[datasetId] = currentCargo;
+        await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
         
         ui.notifications.info("Added test cargo: 50 EP of Grain");
         await this.app.refreshUI({ focusTab: 'cargo' });
@@ -1592,7 +1626,10 @@ export class TradingUIEventHandlers {
      * @private
      */
     async _clearAllCargo() {
-        await game.settings.set(MODULE_ID, "currentCargo", []);
+        const datasetId = this.app.dataManager.activeDatasetName;
+        const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+        allCargoData[datasetId] = [];
+        await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
         ui.notifications.info("Cleared all cargo from inventory");
         await this.app.refreshUI({ focusTab: 'cargo' });
         
@@ -1817,7 +1854,9 @@ export class TradingUIEventHandlers {
         try {
             // Ensure currentCargo is loaded from settings first
             if (!this.app.currentCargo || !Array.isArray(this.app.currentCargo)) {
-                const savedCargo = await game.settings.get(MODULE_ID, "currentCargo") || [];
+                const datasetId = this.app.dataManager.activeDatasetName;
+                const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+                const savedCargo = allCargoData[datasetId] || [];
                 this.app.currentCargo = savedCargo;
                 this._logDebug('Add Cargo', 'Loaded currentCargo from settings', {
                     cargoCount: savedCargo.length
@@ -1902,8 +1941,16 @@ export class TradingUIEventHandlers {
             this.app.transactionHistory.unshift(transaction);
             
             // Save both cargo and history
-            await game.settings.set(MODULE_ID, "currentCargo", this.app.currentCargo);
-            await game.settings.set(MODULE_ID, "transactionHistory", this.app.transactionHistory);
+            const datasetId = this.app.dataManager.activeDatasetName;
+            const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+            if (!allCargoData[datasetId]) {
+                allCargoData[datasetId] = [];
+            }
+            allCargoData[datasetId] = this.app.currentCargo;
+            await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
+            const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
+            allTransactionData[datasetId] = this.app.transactionHistory;
+            await game.settings.set(MODULE_ID, "transactionHistory", allTransactionData);
             
             this._logDebug('Add Cargo', 'Saved cargo data', {
                 currentCargoLength: this.app.currentCargo.length,

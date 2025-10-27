@@ -20,33 +20,32 @@ class CargoAvailabilityPipeline {
     }
 
     async _ensureDataLoaded() {
-        if (!this.tradingConfig || Object.keys(this.tradingConfig).length === 0) {
-            if (typeof this.dataManager.loadTradingConfig === 'function') {
-                try {
-                    await this.dataManager.loadTradingConfig();
-                } catch (error) {
-                    // Ignore load failures here; downstream calls will surface issues if config is still missing
-                }
-            }
-            this._refreshConfig();
-        }
-
-        if (!Array.isArray(this.dataManager.cargoTypes) || this.dataManager.cargoTypes.length === 0) {
-            await this.dataManager.loadCargoTypes();
-        }
-
-        if (!this.sourceFlags || Object.keys(this.sourceFlags).length === 0) {
-            if (typeof this.dataManager.loadSourceFlags === 'function') {
-                await this.dataManager.loadSourceFlags();
-                this._refreshConfig();
-            }
-        }
+        // Data should already be loaded by DataManager when the dataset was switched
+        // No need to call loadTradingConfig or loadCargoTypes as they don't exist
+        // and data is already available in this.dataManager.tradingConfig and this.dataManager.cargoTypes
+        this._refreshConfig();
     }
 
     async run({ settlement, season = 'spring', rollPercentile = null } = {}) {
         if (!settlement) {
             throw new Error('Settlement is required to run the cargo availability pipeline');
         }
+
+        // Validate minimum dataset requirements
+        if (!this.dataManager.cargoTypes || this.dataManager.cargoTypes.length === 0) {
+            throw new Error('No cargo types available in the dataset. Please add at least one cargo type using the Data Management interface.');
+        }
+
+        const settlementProps = this.dataManager.getSettlementProperties(settlement);
+        if (!settlementProps) {
+            throw new Error('Settlement properties could not be retrieved');
+        }
+
+        // Note: Empty productionCategories/flags are allowed - settlements without special flags
+        // will still generate cargo but without flag bonuses
+
+        // Extract settlement flags from settlement properties
+        const settlementFlags = settlementProps.productionCategories || [];
 
         // Update roll function if provided
         if (rollPercentile) {
@@ -57,8 +56,6 @@ class CargoAvailabilityPipeline {
         this._refreshConfig();
 
         const normalizedSeason = (season || 'spring').toLowerCase();
-        const settlementProps = this.dataManager.getSettlementProperties(settlement);
-        const settlementFlags = this._normaliseFlags(settlementProps.productionCategories);
 
         const settlementContext = this._buildSettlementContext(settlementProps, normalizedSeason);
         const cargoSlotPlan = this._calculateCargoSlots(settlementProps, settlementFlags, normalizedSeason);
@@ -242,7 +239,11 @@ class CargoAvailabilityPipeline {
     }
 
     _buildCandidateTable(props, flags, season) {
-        const weightsConfig = this.tradingConfig.candidateWeights || {};
+    console.log('CARGO-AVAILABILITY: Building candidate table for settlement:', props.name);
+    console.log('CARGO-AVAILABILITY: Settlement flags:', flags);
+    console.log('CARGO-AVAILABILITY: Settlement produces:', props.produces);
+    console.log('CARGO-AVAILABILITY: Settlement demands:', props.demands);
+    console.log('CARGO-AVAILABILITY: Available cargo types count:', (this.dataManager.cargoTypes || []).length);        const weightsConfig = this.tradingConfig.candidateWeights || {};
         const baseline = weightsConfig.baseline ?? 1;
         const producesBonus = weightsConfig.producesBonus ?? weightsConfig.producesWeight ?? 0;
         const demandsBonus = weightsConfig.demandsBonus ?? weightsConfig.demandsWeight ?? 0;
@@ -253,6 +254,10 @@ class CargoAvailabilityPipeline {
         const producesSet = new Set((props.produces || []).map(name => String(name)));
         const demandsSet = new Set((props.demands || []).map(name => String(name)));
         const seasonalShifts = this.tradingConfig.equilibrium?.seasonalShifts?.[season] || {};
+
+        console.log('CARGO-AVAILABILITY: Produces set:', Array.from(producesSet));
+        console.log('CARGO-AVAILABILITY: Demands set:', Array.from(demandsSet));
+        console.log('CARGO-AVAILABILITY: Seasonal shifts for', season, ':', seasonalShifts);
 
         const entries = [];
         let totalWeight = 0;
@@ -313,6 +318,9 @@ class CargoAvailabilityPipeline {
             });
             totalWeight += weight;
         });
+
+        console.log('CARGO-AVAILABILITY: Candidate table entries count:', entries.length);
+        console.log('CARGO-AVAILABILITY: Total weight:', totalWeight);
 
         entries.sort((a, b) => b.weight - a.weight);
         entries.forEach(entry => {

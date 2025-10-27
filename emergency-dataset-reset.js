@@ -26,7 +26,8 @@
 
         // Step 4: Clear any cached cargo data
         console.log('4. Clearing cached cargo data...');
-        await game.settings.set(MODULE_ID, 'currentCargo', []);
+        await game.settings.set(MODULE_ID, 'currentCargo', {});
+        await game.settings.set(MODULE_ID, 'transactionHistory', {});
         await game.settings.set(MODULE_ID, 'cargoAvailabilityData', {});
         await game.settings.set(MODULE_ID, 'sellerOffersData', {});
         console.log('✅ Cached data cleared');

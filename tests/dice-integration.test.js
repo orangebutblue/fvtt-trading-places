@@ -80,6 +80,27 @@ describe('TradingEngine - Dice Integration', () => {
             }
         ];
 
+        // Set up trading config for merchant generation
+        dataManager.tradingConfig = {
+            skillDistribution: {
+                type: 'piecewise',
+                baseSkill: 25,
+                wealthModifier: 8,
+                variance: 20,
+                percentileTable: {
+                    "10": -15,
+                    "25": -8,
+                    "50": 0,
+                    "75": 8,
+                    "90": 15,
+                    "95": 25,
+                    "99": 35
+                },
+                minSkill: 5,
+                maxSkill: 95
+            }
+        };
+
         // Mock required methods
         dataManager.getSettlementProperties = jest.fn().mockReturnValue({
             name: 'Averheim',

@@ -830,21 +830,31 @@ function registerModuleSettings() {
     // Current cargo inventory setting
     game.settings.register(MODULE_ID, "currentCargo", {
         name: "Current Cargo",
-        hint: "Player's current cargo inventory",
+        hint: "Player's current cargo inventory by dataset",
         scope: "world",
         config: false,
-        type: Array,
-        default: []
+        type: Object,
+        default: {}
     });
 
     // Transaction history setting
     game.settings.register(MODULE_ID, "transactionHistory", {
         name: "Transaction History",
-        hint: "History of all trading transactions",
+        hint: "History of all trading transactions by dataset",
         scope: "world",
         config: false,
-        type: Array,
-        default: []
+        type: Object,
+        default: {}
+    });
+
+    // Cargo availability data setting
+    game.settings.register(MODULE_ID, "cargoAvailabilityData", {
+        name: "Cargo Availability Data",
+        hint: "Cached cargo availability data by dataset",
+        scope: "world",
+        config: false,
+        type: Object,
+        default: {}
     });
 
     // Selected settlement setting
@@ -1995,9 +2005,11 @@ window.TradingPlaces = {
             contraband: false
         };
         
-        const currentCargo = await game.settings.get(MODULE_ID, "currentCargo") || [];
-        currentCargo.push(testCargo);
-        await game.settings.set(MODULE_ID, "currentCargo", currentCargo);
+        const datasetId = dataManager?.activeDatasetName || 'default';
+        const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+        if (!allCargoData[datasetId]) allCargoData[datasetId] = [];
+        allCargoData[datasetId].push(testCargo);
+        await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
         
         console.log('✅ Test cargo added:', testCargo);
         ui.notifications.info("Added test cargo: 75 EP of Test Grain");
@@ -2013,7 +2025,10 @@ window.TradingPlaces = {
     },
     
     clearAllCargo: async () => {
-        await game.settings.set(MODULE_ID, "currentCargo", []);
+        const datasetId = dataManager?.activeDatasetName || 'default';
+        const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+        allCargoData[datasetId] = [];
+        await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
         console.log('🗑️ All cargo cleared');
         ui.notifications.info("Cleared all cargo from inventory");
         

@@ -80,6 +80,17 @@ export class BuyingFlow {
             console.log('=== CARGO AVAILABILITY CHECK ===');
             console.log('Settlement:', this.app.selectedSettlement.name);
             console.log('Season:', this.app.currentSeason);
+            
+            // Debug settlement properties
+            const settlementProps = this.dataManager.getSettlementProperties(this.app.selectedSettlement);
+            console.log('CARGO-AVAILABILITY: Settlement properties:', {
+                name: settlementProps.name,
+                flags: settlementProps.productionCategories,
+                produces: settlementProps.produces,
+                demands: settlementProps.demands,
+                size: settlementProps.sizeNumeric,
+                wealth: settlementProps.wealthRating
+            });
 
             // Create a simple roll function that uses Foundry's dice system
             const foundryRollFunction = async ({ description, postToChat = true }) => {

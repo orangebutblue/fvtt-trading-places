@@ -699,9 +699,12 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
      */
     async _getCurrentCargoData() {
         try {
-            const currentCargo = await game.settings.get(MODULE_ID, "currentCargo") || [];
+            const datasetId = this.dataManager?.activeDatasetName || 'default';
+            const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
+            const currentCargo = allCargoData[datasetId] || [];
             
             console.log('🚛 CARGO DEBUG: Raw cargo data from settings', {
+                dataset: datasetId,
                 length: currentCargo.length,
                 data: currentCargo
             });
@@ -957,14 +960,16 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 }
             }
 
-            // Load saved transaction history
-            const savedTransactionHistory = await game.settings.get(MODULE_ID, "transactionHistory");
+            // Load saved transaction history (dataset-specific)
+            const datasetId = this.dataManager?.activeDatasetName || 'default';
+            const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
+            const savedTransactionHistory = allTransactionData[datasetId] || [];
             if (savedTransactionHistory && Array.isArray(savedTransactionHistory)) {
                 this.transactionHistory = this._prepareTransactionHistory(savedTransactionHistory);
-                this._logDebug('Saved Selections', 'Loaded saved transaction history', { transactionCount: this.transactionHistory.length });
+                this._logDebug('Saved Selections', 'Loaded saved transaction history', { dataset: datasetId, transactionCount: this.transactionHistory.length });
             } else {
                 this.transactionHistory = [];
-                this._logDebug('Saved Selections', 'No saved transaction history found, initialized empty array');
+                this._logDebug('Saved Selections', 'No saved transaction history found, initialized empty array', { dataset: datasetId });
             }
 
         } catch (error) {
@@ -1046,6 +1051,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 return;
             }
 
+            const datasetId = this.dataManager?.activeDatasetName || 'default';
             const cargoData = {
                 settlement: this.selectedSettlement.name,
                 season: this.currentSeason,
@@ -1057,23 +1063,28 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             };
 
             console.log('🔄 CARGO PERSISTENCE: Saving cargo data', {
+                dataset: datasetId,
                 settlement: this.selectedSettlement.name,
                 season: this.currentSeason,
                 availableCargoCount: availableCargo?.length || 0,
                 successfulCargoCount: successfulCargo?.length || 0
             });
 
-            // Get existing cargo data and add/update this entry
+            // Get existing cargo availability data and add/update this entry
             const allCargoData = await game.settings.get(MODULE_ID, "cargoAvailabilityData") || {};
+            if (!allCargoData[datasetId]) {
+                allCargoData[datasetId] = {};
+            }
             const storageKey = `${this.selectedSettlement.name}_${this.currentSeason}`;
 
-            allCargoData[storageKey] = cargoData;
+            allCargoData[datasetId][storageKey] = cargoData;
 
             await game.settings.set(MODULE_ID, "cargoAvailabilityData", allCargoData);
 
             console.log('🔄 CARGO PERSISTENCE: Cargo data saved successfully');
 
             this._logDebug('Cargo Persistence', 'Cargo availability data saved', {
+                dataset: datasetId,
                 settlement: this.selectedSettlement.name,
                 season: this.currentSeason,
                 cargoCount: successfulCargo.length
@@ -1101,12 +1112,14 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 return null;
             }
 
+            const datasetId = this.dataManager?.activeDatasetName || 'default';
             const allCargoData = await game.settings.get(MODULE_ID, "cargoAvailabilityData") || {};
-            console.log('🔄 CARGO PERSISTENCE: Retrieved all cargo data from settings:', Object.keys(allCargoData));
+            const datasetCargoData = allCargoData[datasetId] || {};
+            console.log('🔄 CARGO PERSISTENCE: Retrieved all cargo data from settings:', Object.keys(datasetCargoData));
             const storageKey = `${this.selectedSettlement.name}_${this.currentSeason}`;
             console.log('🔄 CARGO PERSISTENCE: Looking for storage key:', storageKey);
 
-            const cargoData = allCargoData[storageKey];
+            const cargoData = datasetCargoData[storageKey];
 
             if (!cargoData) {
                 console.log('🔄 CARGO PERSISTENCE: No saved cargo data found for key:', storageKey);
@@ -1135,6 +1148,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             }
 
             console.log('🔄 CARGO PERSISTENCE: Successfully loaded cargo data', {
+                dataset: datasetId,
                 settlement: cargoData.settlement,
                 season: cargoData.season,
                 availableCargoCount: cargoData.availableCargo?.length || 0,
@@ -1142,6 +1156,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             });
 
             this._logDebug('Cargo Persistence', 'Cargo availability data loaded', {
+                dataset: datasetId,
                 settlement: cargoData.settlement,
                 season: cargoData.season,
                 cargoCount: cargoData.successfulCargo?.length || 0,
@@ -1167,13 +1182,16 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 return;
             }
 
+            const datasetId = this.dataManager?.activeDatasetName || 'default';
             const allCargoData = await game.settings.get(MODULE_ID, "cargoAvailabilityData") || {};
-            const storageKey = `${this.selectedSettlement.name}_${this.currentSeason}`;
-
-            delete allCargoData[storageKey];
-            await game.settings.set(MODULE_ID, "cargoAvailabilityData", allCargoData);
+            if (allCargoData[datasetId]) {
+                const storageKey = `${this.selectedSettlement.name}_${this.currentSeason}`;
+                delete allCargoData[datasetId][storageKey];
+                await game.settings.set(MODULE_ID, "cargoAvailabilityData", allCargoData);
+            }
 
             this._logDebug('Cargo Persistence', 'Cargo availability data cleared', {
+                dataset: datasetId,
                 settlement: this.selectedSettlement.name,
                 season: this.currentSeason
             });
@@ -1297,7 +1315,9 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             const desiredTab = focusTab || this.renderer.getActiveTabName();
 
             this.currentCargo = await this._getCurrentCargoData();
-            this.transactionHistory = this._prepareTransactionHistory(await game.settings.get(MODULE_ID, "transactionHistory") || []);
+            const datasetId = this.dataManager?.activeDatasetName || 'default';
+            const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
+            this.transactionHistory = this._prepareTransactionHistory(allTransactionData[datasetId] || []);
             this.playerCargo = Array.isArray(this.currentCargo) ? [...this.currentCargo] : [];
 
             await this.render(false);

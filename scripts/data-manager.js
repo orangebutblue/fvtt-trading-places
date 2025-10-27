@@ -1135,15 +1135,63 @@ class DataManager {
             userDatasets.push(datasetName);
             await game.settings.set(MODULE_ID, 'userDatasets', userDatasets);
 
-            // Create initial dataset data based on current loaded dataset
+            // Ensure we have a proper trading config with cargoSlots
+            let tradingConfig = this.tradingConfig;
+            if (!tradingConfig || !tradingConfig.cargoSlots) {
+                console.log('Current trading config is missing or incomplete, loading from built-in dataset');
+                try {
+                    tradingConfig = await this.loadBuiltInTradingConfig();
+                } catch (error) {
+                    console.warn('Failed to load built-in trading config, using fallback:', error);
+                    // Fallback trading config with essential cargoSlots
+                    tradingConfig = {
+                        cargoSlots: {
+                            basePerSize: { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5 },
+                            populationMultiplier: 0.0001,
+                            sizeMultiplier: 1.5,
+                            flagMultipliers: { "trade": 1.5 },
+                            hardCap: 10
+                        }
+                    };
+                }
+            }
+
+            // Create initial dataset data with empty arrays - user datasets should start clean
             const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
             const datasetData = {
                 name: datasetName,
-                settlements: foundry.utils.deepClone(this.settlements || []),
-                cargoTypes: foundry.utils.deepClone(this.cargoTypes || []),
+                settlements: [],
+                cargoTypes: [],
                 config: foundry.utils.deepClone(this.config || {}),
-                tradingConfig: foundry.utils.deepClone(this.tradingConfig || {})
+                tradingConfig: foundry.utils.deepClone(tradingConfig),
+                sourceFlags: {} // Start with empty sourceFlags for new user datasets
             };
+
+            // Always add dummy data for new user datasets to ensure minimum functionality
+            console.log(`Creating dummy settlement for new dataset '${datasetName}'`);
+            datasetData.settlements = [{
+                name: "Example Settlement",
+                region: "Example Region",
+                size: "T",
+                wealth: 3,
+                population: 5000,
+                ruler: "Example Ruler",
+                notes: "This is a placeholder settlement. Edit or delete this settlement and add your own settlements using the Data Management interface.",
+                source: ["trade", "agriculture"]
+            }];
+
+            console.log(`Creating dummy cargo type for new dataset '${datasetName}'`);
+            datasetData.cargoTypes = [{
+                name: "Example Cargo",
+                category: "Trade Goods",
+                basePrices: {
+                    spring: 100,
+                    summer: 120,
+                    autumn: 110,
+                    winter: 130
+                },
+                description: "This is a placeholder cargo type. Edit or delete this cargo type and add your own cargo types using the Data Management interface."
+            }];
 
             userDatasetsData[datasetName] = datasetData;
             await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
@@ -1165,6 +1213,11 @@ class DataManager {
         try {
             const index = this.settlements.findIndex(s => s.name === settlementName);
             if (index >= 0) {
+                // Prevent deletion if it would leave no settlements
+                if (this.settlements.length <= 1) {
+                    throw new Error('Cannot delete the last settlement. Datasets must have at least one settlement.');
+                }
+
                 this.settlements.splice(index, 1);
                 console.log(`Settlement '${settlementName}' deleted successfully`);
                 
@@ -1204,6 +1257,11 @@ class DataManager {
         try {
             const index = this.cargoTypes.findIndex(c => c.name === cargoTypeName);
             if (index >= 0) {
+                // Prevent deletion if it would leave no cargo types
+                if (this.cargoTypes.length <= 1) {
+                    throw new Error('Cannot delete the last cargo type. Datasets must have at least one cargo type.');
+                }
+
                 this.cargoTypes.splice(index, 1);
                 console.log(`Cargo type '${cargoTypeName}' deleted successfully`);
                 await this._persistUserDatasetChanges();
@@ -1279,6 +1337,8 @@ class DataManager {
                 settlements: this.settlements,
                 cargoTypes: this.cargoTypes,
                 config: this.config,
+                tradingConfig: this.tradingConfig,
+                sourceFlags: this.sourceFlags,
                 lastModified: new Date().toISOString()
             };
 
@@ -1298,10 +1358,11 @@ class DataManager {
         // Extract dataset name from path (e.g., "modules/trading-places/datasets/wfrp4e" -> "wfrp4e")
         const datasetName = datasetPath.split('/').pop();
 
-        const [cargoResponse, configResponse, tradingConfigResponse] = await Promise.all([
+        const [cargoResponse, configResponse, tradingConfigResponse, sourceFlagsResponse] = await Promise.all([
             fetch(`${datasetPath}/cargo-types.json`, { cache: 'no-store' }),
             fetch(`${datasetPath}/config.json`, { cache: 'no-store' }),
-            fetch(`${datasetPath}/trading-config.json`, { cache: 'no-store' })
+            fetch(`${datasetPath}/trading-config.json`, { cache: 'no-store' }),
+            fetch(`${datasetPath}/source-flags.json`, { cache: 'no-store' })
         ]);
 
         if (!cargoResponse.ok) {
@@ -1316,9 +1377,14 @@ class DataManager {
             throw new Error(`Failed to load trading config (${tradingConfigResponse.status} ${tradingConfigResponse.statusText})`);
         }
 
+        if (!sourceFlagsResponse.ok) {
+            throw new Error(`Failed to load source flags (${sourceFlagsResponse.status} ${sourceFlagsResponse.statusText})`);
+        }
+
         const cargoData = await cargoResponse.json();
         const configData = await configResponse.json();
         const tradingConfigData = await tradingConfigResponse.json();
+        const sourceFlagsData = await sourceFlagsResponse.json();
 
         const settlementPromises = SETTLEMENT_FILES.map(file =>
             fetch(`${datasetPath}/settlements/${file}`, { cache: 'no-store' })
@@ -1346,13 +1412,15 @@ class DataManager {
         this.cargoTypes = cargoData.cargoTypes || [];
         this.config = configData;
         this.tradingConfig = tradingConfigData;
+        this.sourceFlags = sourceFlagsData;
         this.normalizedCurrencyConfig = null;
         this.currencyContextCache = null;        const dataset = {
             name: this.activeDatasetName,
             settlements: this.settlements,
             cargoTypes: this.cargoTypes,
             config: this.config,
-            tradingConfig: this.tradingConfig
+            tradingConfig: this.tradingConfig,
+            sourceFlags: this.sourceFlags
         };
 
         const validation = this.validateDatasetCompleteness(dataset);
@@ -1546,8 +1614,35 @@ class DataManager {
             this.cargoTypes = datasetData.cargoTypes || [];
             this.config = datasetData.config || {};
             this.tradingConfig = datasetData.tradingConfig || {};
+            this.sourceFlags = datasetData.sourceFlags || {};
             this.normalizedCurrencyConfig = null;
             this.currencyContextCache = null;
+
+            // Ensure trading config has cargoSlots - load from built-in if missing
+            if (!this.tradingConfig || !this.tradingConfig.cargoSlots) {
+                console.log(`User dataset '${datasetName}' missing cargoSlots config, loading from built-in dataset`);
+                try {
+                    const builtInTradingConfig = await this.loadBuiltInTradingConfig();
+                    this.tradingConfig = foundry.utils.deepClone(builtInTradingConfig);
+                    // Update the stored dataset with the complete config
+                    datasetData.tradingConfig = this.tradingConfig;
+                    userDatasetsData[datasetName] = datasetData;
+                    await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
+                    console.log(`Updated user dataset '${datasetName}' with complete trading config`);
+                } catch (error) {
+                    console.warn('Failed to load built-in trading config for user dataset, using fallback:', error);
+                    // Fallback trading config with essential cargoSlots
+                    this.tradingConfig = {
+                        cargoSlots: {
+                            basePerSize: { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5 },
+                            populationMultiplier: 0.0001,
+                            sizeMultiplier: 1.5,
+                            flagMultipliers: { "trade": 1.5 },
+                            hardCap: 10
+                        }
+                    };
+                }
+            }
 
             console.log(`Loaded user dataset '${datasetName}' with ${this.settlements.length} settlements and ${this.cargoTypes.length} cargo types`);
             return datasetData;
@@ -1568,31 +1663,6 @@ class DataManager {
         }
 
         return await response.json();
-    }
-
-    /**
-     * Load trading configuration from the current dataset
-     * @returns {Promise<Object>} - Trading configuration object
-     */
-    async loadTradingConfig() {
-        try {
-            const datasetPath = await this.ensureDatasetPath();
-            const tradingConfigPath = `${datasetPath}/trading-config.json`;
-
-            const response = await fetch(tradingConfigPath, { cache: 'no-store' });
-            if (!response.ok) {
-                throw new Error(`Failed to load trading config (${response.status} ${response.statusText})`);
-            }
-
-            this.tradingConfig = await response.json();
-            console.log('Trading config loaded successfully');
-            return this.tradingConfig;
-        } catch (error) {
-            console.error('Failed to load trading config:', error);
-            // Return empty object as fallback to maintain graceful degradation
-            this.tradingConfig = {};
-            return this.tradingConfig;
-        }
     }
 
     getCargoTypes() {

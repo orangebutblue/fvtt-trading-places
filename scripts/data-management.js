@@ -622,8 +622,8 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     <input type="text" id="settlement-ruler" value="Local Authority" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;">
                 </div>
                 <div style="margin-bottom: 10px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Notes:</label>
-                    <textarea id="settlement-notes" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; height: 80px;" placeholder="Optional notes about this settlement"></textarea>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Production Categories (Flags):</label>
+                    <input type="text" id="settlement-flags" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;" placeholder="e.g. trade, agriculture, government (comma-separated)">
                 </div>
             </div>
         `;
@@ -648,7 +648,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         garrison: {},
                         produces: [],
                         demands: [],
-                        flags: []
+                        flags: element.querySelector('#settlement-flags').value.split(',').map(s => s.trim()).filter(s => s)
                     };
                     
                     try {
@@ -751,8 +751,8 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     <textarea id="settlement-notes" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; height: 80px;">${settlement.notes || ''}</textarea>
                 </div>
                 <div style="margin-bottom: 10px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Produces (comma-separated):</label>
-                    <input type="text" id="settlement-produces" value="${(settlement.produces || []).join(', ')}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Production Categories (Flags):</label>
+                    <input type="text" id="settlement-flags" value="${(settlement.flags || []).join(', ')}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;" placeholder="e.g. trade, agriculture, government (comma-separated)">
                 </div>
             </div>
         `;
@@ -775,7 +775,8 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         population: parseInt(element.querySelector('#settlement-population').value),
                         ruler: element.querySelector('#settlement-ruler').value,
                         notes: element.querySelector('#settlement-notes').value,
-                        produces: element.querySelector('#settlement-produces').value.split(',').map(s => s.trim()).filter(s => s)
+                        produces: element.querySelector('#settlement-produces').value.split(',').map(s => s.trim()).filter(s => s),
+                        flags: element.querySelector('#settlement-flags').value.split(',').map(s => s.trim()).filter(s => s)
                     };
                     
                     try {

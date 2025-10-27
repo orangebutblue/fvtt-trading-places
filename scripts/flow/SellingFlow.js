@@ -59,7 +59,9 @@ export class SellingFlow {
         }
 
         // Get current cargo
-        const currentCargo = await game.settings.get(this.MODULE_ID, "currentCargo") || [];
+        const datasetId = this.dataManager?.activeDatasetName || 'default';
+        const allCargoData = await game.settings.get(this.MODULE_ID, "currentCargo") || {};
+        const currentCargo = allCargoData[datasetId] || [];
         if (!currentCargo.length) {
             ui.notifications.warn('You have no cargo to sell');
             return;
@@ -541,15 +543,19 @@ export class SellingFlow {
             if (priceCanonical !== null) transaction.pricePerEPCanonical = priceCanonical;
             if (totalCanonical !== null) transaction.totalCostCanonical = totalCanonical;
 
-            const transactionHistory = await game.settings.get(this.MODULE_ID, "transactionHistory") || [];
+            const datasetId = this.dataManager?.activeDatasetName || 'default';
+            const allTransactionData = await game.settings.get(this.MODULE_ID, "transactionHistory") || {};
+            const transactionHistory = allTransactionData[datasetId] || [];
             transactionHistory.unshift(transaction);
-            await game.settings.set(this.MODULE_ID, "transactionHistory", transactionHistory);
+            allTransactionData[datasetId] = transactionHistory;
+            await game.settings.set(this.MODULE_ID, "transactionHistory", allTransactionData);
             
             // Update app's transaction history to keep UI in sync
             this.app.transactionHistory = transactionHistory;
 
             // Update cargo in settings
-            const currentCargo = await game.settings.get(this.MODULE_ID, "currentCargo") || [];
+            const allCargoData = await game.settings.get(this.MODULE_ID, "currentCargo") || {};
+            const currentCargo = allCargoData[datasetId] || [];
             const cargoIndex = currentCargo.findIndex(c => c.cargo === offer.cargo.cargo);
             if (cargoIndex !== -1) {
                 if (currentCargo[cargoIndex].quantity <= quantity) {
@@ -557,7 +563,8 @@ export class SellingFlow {
                 } else {
                     currentCargo[cargoIndex].quantity -= quantity;
                 }
-                await game.settings.set(this.MODULE_ID, "currentCargo", currentCargo);
+                allCargoData[datasetId] = currentCargo;
+                await game.settings.set(this.MODULE_ID, "currentCargo", allCargoData);
                 this.app.currentCargo = currentCargo;
             }
 

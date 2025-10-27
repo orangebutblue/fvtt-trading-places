@@ -1035,7 +1035,10 @@ export default class TradingUIRenderer {
         
         // Save transaction history to Foundry settings for persistence
         try {
-            await game.settings.set(MODULE_ID, "transactionHistory", this.app.transactionHistory);
+            const datasetId = this.app.dataManager?.activeDatasetName || 'default';
+            const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
+            allTransactionData[datasetId] = this.app.transactionHistory;
+            await game.settings.set(MODULE_ID, "transactionHistory", allTransactionData);
             console.log('💰 Transaction history saved successfully');
         } catch (error) {
             console.error('💰 Failed to save transaction history:', error);
