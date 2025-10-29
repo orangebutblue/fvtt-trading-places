@@ -554,6 +554,67 @@
     opacity: 0.5;
 }
 
+/* Region Autocomplete Styles */
+.trading-places-region-autocomplete {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--color-bg-alt, #2a2a2a);
+    border: 1px solid var(--color-border, #555);
+    border-top: none;
+    border-radius: 0 0 3px 3px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.trading-places-autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    color: white;
+}
+
+.trading-places-autocomplete-item:hover {
+    background-color: var(--color-bg-option, #3a3a3a);
+}
+
+.trading-places-autocomplete-item.trading-places-autocomplete-selected {
+    background-color: var(--color-bg-option, #4a4a4a);
+}
+
+/* Flag Tags */
+.trading-places-flag-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    background-color: var(--color-bg-option, #3a5f7a);
+    border: 1px solid var(--color-border, #5a8fa0);
+    border-radius: 3px;
+    font-size: 13px;
+    color: #b8d4e0;
+}
+
+.trading-places-flag-remove {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 1;
+    color: #b8d4e0;
+    opacity: 0.7;
+    transition: all 0.15s ease;
+    margin-left: 3px;
+}
+
+.trading-places-flag-remove:hover {
+    opacity: 1;
+    color: #ff6b6b;
+    transform: scale(1.1);
+}
+
 /* Footer */
 .data-management-footer {
     border-top: 1px solid var(--color-border);

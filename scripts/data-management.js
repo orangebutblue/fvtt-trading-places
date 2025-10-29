@@ -606,9 +606,10 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Name:</label>
                     <input type="text" id="settlement-name" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;">
                 </div>
-                <div style="margin-bottom: 10px;">
+                <div style="margin-bottom: 10px; position: relative;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Region:</label>
-                    <input type="text" id="settlement-region" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;">
+                    <input type="text" id="settlement-region" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;" autocomplete="off">
+                    <div id="region-autocomplete" class="trading-places-region-autocomplete" style="display: none;"></div>
                 </div>
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <div style="flex: 1;">
@@ -640,14 +641,17 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Ruler:</label>
                     <input type="text" id="settlement-ruler" value="Local Authority" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;">
                 </div>
-                <div style="margin-bottom: 10px;">
+                <div style="margin-bottom: 10px; position: relative;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Production Categories (Flags):</label>
-                    <input type="text" id="settlement-flags" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;" placeholder="e.g. trade, agriculture, government (comma-separated)">
+                    <div id="flags-container" class="trading-places-flags-container"></div>
+                    <input type="text" id="settlement-flags-input" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; margin-top: 5px;" placeholder="Type to add flags..." autocomplete="off">
+                    <div id="flags-autocomplete" class="trading-places-region-autocomplete" style="display: none;"></div>
+                    <input type="hidden" id="settlement-flags" value="">
                 </div>
             </div>
         `;
 
-        new foundry.applications.api.DialogV2({
+        const dialog = new foundry.applications.api.DialogV2({
             window: { title: "Add New Settlement" },
             content: content,
             buttons: [{
@@ -663,7 +667,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         size: parseInt(element.querySelector('#settlement-size').value),
                         population: parseInt(element.querySelector('#settlement-population').value),
                         ruler: element.querySelector('#settlement-ruler').value,
-                        notes: element.querySelector('#settlement-notes').value,
+                        notes: '',
                         garrison: {},
                         produces: [],
                         demands: [],
@@ -715,7 +719,13 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                 action: "cancel",
                 label: "Cancel"
             }]
-        }).render(true);
+        });
+        
+        // Set up autocomplete after dialog is rendered
+        dialog.render(true).then(() => {
+            this._setupRegionAutocomplete(dialog.element);
+            this._setupFlagsAutocomplete(dialog.element);
+        });
     }
 
     _editSettlement(name) {
@@ -731,9 +741,10 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Name:</label>
                     <input type="text" id="settlement-name" value="${settlement.name}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;">
                 </div>
-                <div style="margin-bottom: 10px;">
+                <div style="margin-bottom: 10px; position: relative;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Region:</label>
-                    <input type="text" id="settlement-region" value="${settlement.region}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;">
+                    <input type="text" id="settlement-region" value="${settlement.region}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;" autocomplete="off">
+                    <div id="region-autocomplete" class="trading-places-region-autocomplete" style="display: none;"></div>
                 </div>
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <div style="flex: 1;">
@@ -769,14 +780,17 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Notes:</label>
                     <textarea id="settlement-notes" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; height: 80px;">${settlement.notes || ''}</textarea>
                 </div>
-                <div style="margin-bottom: 10px;">
+                <div style="margin-bottom: 10px; position: relative;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Production Categories (Flags):</label>
-                    <input type="text" id="settlement-flags" value="${(settlement.flags || []).join(', ')}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;" placeholder="e.g. trade, agriculture, government (comma-separated)">
+                    <div id="flags-container" class="trading-places-flags-container" data-initial-flags="${(settlement.flags || []).join(',')}"></div>
+                    <input type="text" id="settlement-flags-input" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; margin-top: 5px;" placeholder="Type to add flags..." autocomplete="off">
+                    <div id="flags-autocomplete" class="trading-places-region-autocomplete" style="display: none;"></div>
+                    <input type="hidden" id="settlement-flags" value="${(settlement.flags || []).join(', ')}">
                 </div>
             </div>
         `;
 
-        new foundry.applications.api.DialogV2({
+        const editDialog = new foundry.applications.api.DialogV2({
             window: { title: `Edit Settlement: ${name}` },
             content: content,
             buttons: [{
@@ -837,7 +851,13 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                 action: "cancel",
                 label: "Cancel"
             }]
-        }).render(true);
+        });
+        
+        // Set up autocomplete after dialog is rendered
+        editDialog.render(true).then(() => {
+            this._setupRegionAutocomplete(editDialog.element);
+            this._setupFlagsAutocomplete(editDialog.element);
+        });
     }
 
     _deleteSettlement(name) {
@@ -888,6 +908,289 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
             }]
         });
         dialog.render(true);
+    }
+
+    // Region autocomplete helper
+    _setupRegionAutocomplete(html) {
+        const input = html.querySelector('#settlement-region');
+        const autocompleteDiv = html.querySelector('#region-autocomplete');
+        
+        if (!input || !autocompleteDiv) return;
+
+        // Get all existing regions from settlements
+        const settlements = this.dataManager.getAllSettlements();
+        const existingRegions = [...new Set(settlements.map(s => s.region))].sort();
+
+        // Track selected index for keyboard navigation
+        let selectedIndex = -1;
+
+        // Filter and show suggestions
+        const showSuggestions = (value) => {
+            const filtered = existingRegions.filter(region => 
+                region.toLowerCase().includes(value.toLowerCase())
+            );
+
+            if (filtered.length === 0 || (filtered.length === 1 && filtered[0].toLowerCase() === value.toLowerCase())) {
+                autocompleteDiv.style.display = 'none';
+                return;
+            }
+
+            autocompleteDiv.innerHTML = filtered.map((region, index) => 
+                `<div class="trading-places-autocomplete-item" data-index="${index}" data-value="${region}">${region}</div>`
+            ).join('');
+            autocompleteDiv.style.display = 'block';
+            selectedIndex = -1;
+        };
+
+        // Handle input
+        input.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+            if (value.length === 0) {
+                autocompleteDiv.style.display = 'none';
+                return;
+            }
+            showSuggestions(value);
+        });
+
+        // Handle keyboard navigation
+        input.addEventListener('keydown', (e) => {
+            const items = autocompleteDiv.querySelectorAll('.trading-places-autocomplete-item');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                updateSelection(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, -1);
+                updateSelection(items);
+            } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                e.preventDefault();
+                items[selectedIndex].click();
+            } else if (e.key === 'Escape') {
+                autocompleteDiv.style.display = 'none';
+                selectedIndex = -1;
+            }
+        });
+
+        // Update visual selection
+        const updateSelection = (items) => {
+            items.forEach((item, index) => {
+                if (index === selectedIndex) {
+                    item.classList.add('trading-places-autocomplete-selected');
+                } else {
+                    item.classList.remove('trading-places-autocomplete-selected');
+                }
+            });
+        };
+
+        // Handle click on suggestion
+        autocompleteDiv.addEventListener('click', (e) => {
+            const item = e.target.closest('.trading-places-autocomplete-item');
+            if (item) {
+                input.value = item.dataset.value;
+                autocompleteDiv.style.display = 'none';
+                selectedIndex = -1;
+            }
+        });
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!input.contains(e.target) && !autocompleteDiv.contains(e.target)) {
+                autocompleteDiv.style.display = 'none';
+                selectedIndex = -1;
+            }
+        });
+
+        // Show all suggestions on focus if input is empty
+        input.addEventListener('focus', () => {
+            if (input.value.trim().length === 0) {
+                autocompleteDiv.innerHTML = existingRegions.map((region, index) => 
+                    `<div class="trading-places-autocomplete-item" data-index="${index}" data-value="${region}">${region}</div>`
+                ).join('');
+                autocompleteDiv.style.display = 'block';
+            }
+        });
+    }
+
+    // Flags autocomplete helper with tag support
+    _setupFlagsAutocomplete(html) {
+        const input = html.querySelector('#settlement-flags-input');
+        const autocompleteDiv = html.querySelector('#flags-autocomplete');
+        const container = html.querySelector('#flags-container');
+        const hiddenInput = html.querySelector('#settlement-flags');
+        
+        if (!input || !autocompleteDiv || !container || !hiddenInput) return;
+
+        // Get all existing flags from settlements
+        const settlements = this.dataManager.getAllSettlements();
+        const allFlags = settlements.flatMap(s => s.flags || []);
+        const existingFlags = [...new Set(allFlags)].sort();
+
+        // Track current flags
+        let currentFlags = [];
+        
+        // Load initial flags if editing
+        const initialFlags = container.dataset.initialFlags;
+        if (initialFlags) {
+            currentFlags = initialFlags.split(',').filter(f => f.trim());
+            currentFlags.forEach(flag => addFlagTag(flag));
+        }
+
+        // Update hidden input
+        const updateHiddenInput = () => {
+            hiddenInput.value = currentFlags.join(', ');
+        };
+
+        // Add a flag tag
+        const addFlagTag = (flag) => {
+            if (!flag || currentFlags.includes(flag)) return;
+            
+            currentFlags.push(flag);
+            
+            const tag = document.createElement('span');
+            tag.className = 'trading-places-flag-tag';
+            tag.innerHTML = `
+                ${flag}
+                <span class="trading-places-flag-remove" data-flag="${flag}">×</span>
+            `;
+            container.appendChild(tag);
+            updateHiddenInput();
+        };
+
+        // Remove a flag tag
+        const removeFlagTag = (flag) => {
+            currentFlags = currentFlags.filter(f => f !== flag);
+            const tags = container.querySelectorAll('.trading-places-flag-tag');
+            tags.forEach(tag => {
+                const removeBtn = tag.querySelector('.trading-places-flag-remove');
+                if (removeBtn && removeBtn.dataset.flag === flag) {
+                    tag.remove();
+                }
+            });
+            updateHiddenInput();
+        };
+
+        // Handle remove button clicks
+        container.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('.trading-places-flag-remove');
+            if (removeBtn) {
+                removeFlagTag(removeBtn.dataset.flag);
+            }
+        });
+
+        // Track selected index for keyboard navigation
+        let selectedIndex = -1;
+
+        // Filter and show suggestions
+        const showSuggestions = (value) => {
+            const filtered = existingFlags.filter(flag => 
+                flag.toLowerCase().includes(value.toLowerCase()) && !currentFlags.includes(flag)
+            );
+
+            if (filtered.length === 0) {
+                autocompleteDiv.style.display = 'none';
+                return;
+            }
+
+            autocompleteDiv.innerHTML = filtered.map((flag, index) => 
+                `<div class="trading-places-autocomplete-item" data-index="${index}" data-value="${flag}">${flag}</div>`
+            ).join('');
+            autocompleteDiv.style.display = 'block';
+            selectedIndex = -1;
+        };
+
+        // Handle input
+        input.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+            if (value.length === 0) {
+                autocompleteDiv.style.display = 'none';
+                return;
+            }
+            showSuggestions(value);
+        });
+
+        // Handle keyboard navigation
+        input.addEventListener('keydown', (e) => {
+            const items = autocompleteDiv.querySelectorAll('.trading-places-autocomplete-item');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                updateSelection(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, -1);
+                updateSelection(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedIndex >= 0 && items[selectedIndex]) {
+                    items[selectedIndex].click();
+                } else {
+                    // Add custom flag
+                    const value = input.value.trim();
+                    if (value) {
+                        addFlagTag(value);
+                        input.value = '';
+                        autocompleteDiv.style.display = 'none';
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                autocompleteDiv.style.display = 'none';
+                selectedIndex = -1;
+            } else if (e.key === ',' || e.key === 'Tab') {
+                e.preventDefault();
+                const value = input.value.trim();
+                if (value) {
+                    addFlagTag(value);
+                    input.value = '';
+                    autocompleteDiv.style.display = 'none';
+                }
+            }
+        });
+
+        // Update visual selection
+        const updateSelection = (items) => {
+            items.forEach((item, index) => {
+                if (index === selectedIndex) {
+                    item.classList.add('trading-places-autocomplete-selected');
+                } else {
+                    item.classList.remove('trading-places-autocomplete-selected');
+                }
+            });
+        };
+
+        // Handle click on suggestion
+        autocompleteDiv.addEventListener('click', (e) => {
+            const item = e.target.closest('.trading-places-autocomplete-item');
+            if (item) {
+                addFlagTag(item.dataset.value);
+                input.value = '';
+                autocompleteDiv.style.display = 'none';
+                selectedIndex = -1;
+            }
+        });
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!input.contains(e.target) && !autocompleteDiv.contains(e.target)) {
+                autocompleteDiv.style.display = 'none';
+                selectedIndex = -1;
+            }
+        });
+
+        // Show all suggestions on focus if input is empty
+        input.addEventListener('focus', () => {
+            if (input.value.trim().length === 0) {
+                const availableFlags = existingFlags.filter(flag => !currentFlags.includes(flag));
+                if (availableFlags.length > 0) {
+                    autocompleteDiv.innerHTML = availableFlags.map((flag, index) => 
+                        `<div class="trading-places-autocomplete-item" data-index="${index}" data-value="${flag}">${flag}</div>`
+                    ).join('');
+                    autocompleteDiv.style.display = 'block';
+                }
+            }
+        });
     }
 
     _addCargo() {
