@@ -129,20 +129,9 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         if (typeof window.SettlementSelector !== 'undefined') {
             this.settlementSelector = new window.SettlementSelector(this.dataManager, this.debugLogger);
             
-            // Ensure custom regions are loaded on startup after DOM is ready
-            const waitForElement = () => {
-                const regionSelect = document.querySelector('#region-select');
-                if (regionSelect) {
-                    console.log('REGION DROPDOWN - Found element on startup, refreshing with custom regions');
-                    if (this.settlementSelector) {
-                        this.settlementSelector.populateRegionDropdown();
-                    }
-                } else {
-                    console.log('REGION DROPDOWN - Element not ready yet, retrying in 500ms');
-                    setTimeout(waitForElement, 500);
-                }
-            };
-            setTimeout(waitForElement, 1000);
+            // NOTE: Region dropdown is already populated by the template via _prepareContext
+            // which includes all regions (built-in and custom). No need to repopulate here.
+            // The delayed repopulation was causing the selected region to be reset after render.
         } else {
             console.warn('Trading Places | SettlementSelector not available, some features may be limited');
             this.settlementSelector = null;
@@ -391,6 +380,11 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 try {
                     this.cargoDistributionCharts = new CargoDistributionCharts(this.dataManager, this.cargoAvailabilityPipeline);
                     this._logDebug('Charts', 'Cargo distribution charts ready');
+                    
+                    // Update charts now that they're initialized (if UI is already rendered)
+                    if (this.selectedSettlement && this.currentSeason) {
+                        this._updateCargoDistributionCharts();
+                    }
                 } catch (error) {
                     this._logError('Charts', 'Failed to initialize cargo distribution charts', { error: error.message });
                 }
