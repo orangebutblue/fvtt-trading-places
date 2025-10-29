@@ -961,11 +961,17 @@ export class TradingUIEventHandlers {
                 await this._removeCargoFromInventory(transaction);
             }
             
-            // Save to game settings
-            const datasetId = this.app.dataManager.activeDatasetName;
-            const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
-            allTransactionData[datasetId] = this.app.transactionHistory;
-            await game.settings.set(MODULE_ID, "transactionHistory", allTransactionData);
+            console.log('🚛 CARGO_PERSIST: Adding transaction to history', {
+                type: transactionType,
+                cargo: transaction.cargo,
+                historyLength: this.app.transactionHistory.length
+            });
+            
+            // Save to DataManager
+            this.app.dataManager.history = this.app.transactionHistory;
+            await this.app.dataManager.saveCurrentDataset();
+            
+            console.log('🚛 CARGO_PERSIST: Transaction history saved to dataset');
             
             // Clear and collapse the form
             this._clearManualTransactionForm();
@@ -1183,11 +1189,16 @@ export class TradingUIEventHandlers {
             if (this.app.transactionHistory && this.app.transactionHistory.length > transactionIndex) {
                 this.app.transactionHistory.splice(transactionIndex, 1);
                 
-                // Save updated transaction history
-                const datasetId = this.app.dataManager.activeDatasetName;
-                const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
-                allTransactionData[datasetId] = this.app.transactionHistory;
-                await game.settings.set(MODULE_ID, "transactionHistory", allTransactionData);
+                console.log('🚛 CARGO_PERSIST: Deleting transaction from history', {
+                    transactionIndex,
+                    remainingTransactions: this.app.transactionHistory.length
+                });
+                
+                // Save updated history to DataManager
+                this.app.dataManager.history = this.app.transactionHistory;
+                await this.app.dataManager.saveCurrentDataset();
+                
+                console.log('🚛 CARGO_PERSIST: Updated history saved to dataset');
                 
                 await this.app.refreshUI({ focusTab: 'history' });
                 
@@ -1345,14 +1356,18 @@ export class TradingUIEventHandlers {
         
         // Remove from inventory
         currentCargo.splice(cargoIndex, 1);
-        const datasetId = this.app.dataManager.activeDatasetName;
-        const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
-        if (!allCargoData[datasetId]) {
-            allCargoData[datasetId] = [];
-        }
-        allCargoData[datasetId] = currentCargo;
-        await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
-        this.app.currentCargo = currentCargo;
+        
+        console.log('🚛 CARGO_PERSIST: Deleting cargo', {
+            cargoId,
+            remainingCargo: currentCargo.length
+        });
+        
+        // Update DataManager and save to dataset
+        this.app.dataManager.cargo = currentCargo;
+        await this.app.dataManager.saveCurrentDataset();
+        
+        console.log('🚛 CARGO_PERSIST: Cargo deleted and dataset saved');
+        
         this.app.currentCargo = currentCargo;
 
         await this.app.refreshUI({ focusTab: 'cargo' });
@@ -1423,13 +1438,22 @@ export class TradingUIEventHandlers {
             currentCargo.push(newCargo);
         }
         
-        const datasetId = this.app.dataManager.activeDatasetName;
-        const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
-        if (!allCargoData[datasetId]) {
-            allCargoData[datasetId] = [];
-        }
-        allCargoData[datasetId] = currentCargo;
-        await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
+        console.log('🚛 CARGO_PERSIST: Adding cargo to inventory', {
+            cargo: transaction.cargo,
+            quantity: transaction.quantity,
+            totalCargoItems: currentCargo.length,
+            currentHistoryLength: this.app.transactionHistory?.length || 0
+        });
+        
+        // Update DataManager with both cargo AND history (in case history was already updated)
+        this.app.dataManager.cargo = currentCargo;
+        this.app.dataManager.history = this.app.transactionHistory || [];
+        await this.app.dataManager.saveCurrentDataset();
+        
+        console.log('🚛 CARGO_PERSIST: Cargo and history saved to dataset', {
+            cargoCount: currentCargo.length,
+            historyCount: this.app.transactionHistory?.length || 0
+        });
         
         this._logDebug('Cargo Management', 'Cargo added to inventory', {
             cargo: transaction.cargo,
@@ -1464,13 +1488,23 @@ export class TradingUIEventHandlers {
                 cargo.totalCost = cargo.quantity * cargo.pricePerEP; // Recalculate total cost
             }
             
-            const datasetId = this.app.dataManager.activeDatasetName;
-            const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
-            if (!allCargoData[datasetId]) {
-                allCargoData[datasetId] = [];
-            }
-            allCargoData[datasetId] = currentCargo;
-            await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
+            console.log('🚛 CARGO_PERSIST: Removing cargo after sale', {
+                cargo: transaction.cargo,
+                quantitySold: transaction.quantity,
+                remainingCargo: currentCargo.length,
+                currentHistoryLength: this.app.transactionHistory?.length || 0
+            });
+            
+            // Update DataManager with both cargo AND history (in case history was already updated)
+            this.app.dataManager.cargo = currentCargo;
+            this.app.dataManager.history = this.app.transactionHistory || [];
+            await this.app.dataManager.saveCurrentDataset();
+            
+            console.log('🚛 CARGO_PERSIST: Cargo and history saved to dataset', {
+                cargoCount: currentCargo.length,
+                historyCount: this.app.transactionHistory?.length || 0
+            });
+            
             this.app.currentCargo = currentCargo;
             
             this._logDebug('Cargo Management', 'Cargo removed from inventory', {
@@ -1482,14 +1516,13 @@ export class TradingUIEventHandlers {
     }
 
     /**
-     * Get current cargo from game settings
+     * Get current cargo from DataManager
      * @returns {Array} Current cargo array
      * @private
      */
     async _getCurrentCargo() {
-        const datasetId = this.app.dataManager.activeDatasetName;
-        const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
-        const rawCargo = allCargoData[datasetId] || [];
+        console.log('🚛 CARGO_PERSIST: Loading cargo from DataManager');
+        const rawCargo = this.app.dataManager.cargo || [];
         console.log('🚛 _getCurrentCargo: Loading cargo', { count: rawCargo.length, firstItem: rawCargo[0] });
         // Normalize cargo with formatted currency fields
         return rawCargo.map(cargo => {
@@ -1940,17 +1973,18 @@ export class TradingUIEventHandlers {
             }
             this.app.transactionHistory.unshift(transaction);
             
-            // Save both cargo and history
-            const datasetId = this.app.dataManager.activeDatasetName;
-            const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
-            if (!allCargoData[datasetId]) {
-                allCargoData[datasetId] = [];
-            }
-            allCargoData[datasetId] = this.app.currentCargo;
-            await game.settings.set(MODULE_ID, "currentCargo", allCargoData);
-            const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
-            allTransactionData[datasetId] = this.app.transactionHistory;
-            await game.settings.set(MODULE_ID, "transactionHistory", allTransactionData);
+            console.log('🚛 CARGO_PERSIST: Manual cargo addition', {
+                cargo: cargoType,
+                quantity: quantity,
+                totalCargo: this.app.currentCargo.length
+            });
+            
+            // Save both cargo and history to DataManager
+            this.app.dataManager.cargo = this.app.currentCargo;
+            this.app.dataManager.history = this.app.transactionHistory;
+            await this.app.dataManager.saveCurrentDataset();
+            
+            console.log('🚛 CARGO_PERSIST: Manual addition saved to dataset');
             
             this._logDebug('Add Cargo', 'Saved cargo data', {
                 currentCargoLength: this.app.currentCargo.length,

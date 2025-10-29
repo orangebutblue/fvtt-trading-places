@@ -162,10 +162,6 @@ class WFRPProperSceneControls {
                             
                             // Also log what buttons actually exist
                             const allButtons = $html.find('[data-tool]');
-                            console.log('Trading Places | All tool buttons found:', allButtons.length);
-                            allButtons.each((i, el) => {
-                                console.log(`Trading Places | Button ${i}:`, el.getAttribute('data-tool'), el);
-                            });
                             
                             if (tradingButton.length > 0) {
                                 tradingButton.off('click').on('click', (event) => {

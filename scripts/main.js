@@ -1164,14 +1164,28 @@ async function createDataset(datasetName) {
             "system": "wfrp4e",
             "version": "1.0",
             "currency": {
-                "primary": "Gold Crown",
-                "secondary": "Silver Shilling",
-                "tertiary": "Brass Penny",
-                "rates": {
-                    "Gold Crown": 240,
-                    "Silver Shilling": 12,
-                    "Brass Penny": 1
-                }
+                "canonicalUnit": {
+                    "name": "Brass Penny",
+                    "abbreviation": "BP",
+                    "value": 1
+                },
+                "denominations": [
+                    {
+                        "name": "Gold Crown",
+                        "abbreviation": "GC",
+                        "value": 240
+                    },
+                    {
+                        "name": "Silver Shilling",
+                        "abbreviation": "SS",
+                        "value": 12
+                    },
+                    {
+                        "name": "Brass Penny",
+                        "abbreviation": "BP",
+                        "value": 1
+                    }
+                ]
             },
             "inventory": {
                 "field": "items",
@@ -1451,6 +1465,90 @@ async function performDatasetRecovery() {
         let recoveryNeeded = false;
         const recoveredDatasets = [];
         const orphanedDatasets = [];
+        
+        // Migrate currency config in the NEW datasets setting
+        const allDatasets = game.settings.get(MODULE_ID, 'datasets') || {};
+        for (const datasetName of Object.keys(allDatasets)) {
+            const dataset = allDatasets[datasetName];
+            if (dataset) {
+                // Ensure config exists
+                if (!dataset.config) {
+                    dataset.config = {};
+                }
+                
+                const currency = dataset.config.currency;
+                let needsMigration = false;
+                
+                // Check if currency config is missing or incomplete
+                if (!currency) {
+                    console.log(`Trading Places | Dataset '${datasetName}' missing currency config, adding default`);
+                    needsMigration = true;
+                } else if (currency.primary && currency.rates && !currency.canonicalUnit) {
+                    // Old format detected
+                    console.log(`Trading Places | Migrating old currency config format for dataset: ${datasetName}`);
+                    needsMigration = true;
+                } else if (!currency.canonicalUnit || !Array.isArray(currency.denominations) || currency.denominations.length === 0) {
+                    // Incomplete new format
+                    console.log(`Trading Places | Dataset '${datasetName}' has incomplete currency config, fixing`);
+                    needsMigration = true;
+                }
+                
+                if (needsMigration) {
+                    // Apply correct currency config
+                    dataset.config.currency = {
+                        "canonicalUnit": {
+                            "name": "Brass Penny",
+                            "abbreviation": "BP",
+                            "value": 1
+                        },
+                        "denominations": [
+                            {
+                                "name": "Gold Crown",
+                                "abbreviation": "GC",
+                                "value": 240
+                            },
+                            {
+                                "name": "Silver Shilling",
+                                "abbreviation": "SS",
+                                "value": 12
+                            },
+                            {
+                                "name": "Brass Penny",
+                                "abbreviation": "BP",
+                                "value": 1
+                            }
+                        ]
+                    };
+                    
+                    recoveryNeeded = true;
+                    console.log(`Trading Places | Currency config fixed for dataset: ${datasetName}`);
+                }
+                
+                // Ensure inventory config exists
+                if (!dataset.config.inventory) {
+                    console.log(`Trading Places | Dataset '${datasetName}' missing inventory config, adding default`);
+                    dataset.config.inventory = {
+                        "field": "items",
+                        "addMethod": "createEmbeddedDocuments"
+                    };
+                    recoveryNeeded = true;
+                }
+                
+                // Ensure settlements array exists
+                if (!Array.isArray(dataset.settlements)) {
+                    console.log(`Trading Places | Dataset '${datasetName}' missing settlements array, adding empty array`);
+                    dataset.settlements = [];
+                    recoveryNeeded = true;
+                }
+                
+                // Ensure cargoTypes array exists
+                if (!Array.isArray(dataset.cargoTypes)) {
+                    console.log(`Trading Places | Dataset '${datasetName}' missing cargoTypes array, adding empty array`);
+                    dataset.cargoTypes = [];
+                    recoveryNeeded = true;
+                }
+            }
+        }
 
         // Check for datasets in userDatasetsData but not in userDatasets (missing registrations)
         for (const datasetName of userDatasetsDataKeys) {
@@ -1471,6 +1569,10 @@ async function performDatasetRecovery() {
         }
 
         if (recoveryNeeded) {
+            // Save migrated currency configs to the NEW datasets setting
+            await game.settings.set(MODULE_ID, 'datasets', allDatasets);
+            console.log('Trading Places | Saved migrated datasets data');
+            
             // Recover missing registrations
             if (recoveredDatasets.length > 0) {
                 const updatedUserDatasets = [...userDatasets, ...recoveredDatasets];
@@ -1620,6 +1722,9 @@ async function initializeCoreComponents() {
         }
         dataManager = new DataManager();
         dataManager.setModuleId(MODULE_ID);
+        
+        // Initialize datasets (loads from files on first launch, or from flags)
+        await dataManager.initialize();
         
         // Expose DataManager globally for Data Management UI
         window.TradingPlacesDataManager = dataManager;
@@ -1948,31 +2053,26 @@ function openTradingInterface() {
  * @returns {Object} - Object mapping dataset IDs to display names
  */
 function getAvailableDatasets() {
-    const datasets = {
-        'wfrp4e': 'WFRP4e (Built-in)'
-    };
+    const datasets = {};
 
-    // Add user datasets if they exist
+    // Load all datasets from the new persistence system
     try {
         if (typeof game !== 'undefined' && game.settings) {
-            const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
-            const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
+            const allDatasets = game.settings.get(MODULE_ID, 'datasets') || {};
             
-            // Add datasets from the userDatasets array
-            userDatasets.forEach(datasetName => {
-                datasets[datasetName] = `${datasetName} (User)`;
+            // Add all datasets from the new system
+            Object.keys(allDatasets).forEach(datasetId => {
+                const dataset = allDatasets[datasetId];
+                const typeLabel = dataset.type === 'file-based' ? 'Built-in' : 'User';
+                datasets[datasetId] = `${dataset.label || datasetId} (${typeLabel})`;
             });
             
-            // Also add any datasets that exist in userDatasetsData but not in userDatasets (recovery)
-            Object.keys(userDatasetsData).forEach(datasetName => {
-                if (!userDatasets.includes(datasetName)) {
-                    datasets[datasetName] = `${datasetName} (User - Recovered)`;
-                    console.warn(`Trading Places | Recovered missing user dataset: ${datasetName}`);
-                }
-            });
+            console.log('📦 getAvailableDatasets:', Object.keys(datasets));
         }
     } catch (error) {
-        console.warn('Trading Places | Could not load user datasets for settings:', error);
+        console.warn('Trading Places | Could not load datasets for validation:', error);
+        // Fallback to wfrp4e only
+        datasets['wfrp4e'] = 'WFRP4e (Built-in)';
     }
 
     return datasets;

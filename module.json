@@ -27,6 +27,7 @@
     "scripts/merchant-generator.js",
     "scripts/cargo-availability-pipeline.js",
     "scripts/quality-system.js",
+    "scripts/dataset-persistence.js",
     "scripts/data-manager.js",
     "scripts/system-adapter.js",
     "scripts/trading-engine.js",

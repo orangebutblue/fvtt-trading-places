@@ -117,103 +117,6 @@ class ConfigValidator {
         return `modules/${this.moduleId}/datasets/${folderName}`;
     }
 
-    /**
-     * Check if a dataset is a user-created dataset stored in settings
-     * @param {string} datasetId - Dataset ID to check
-     * @returns {boolean} - True if user dataset, false if built-in
-     */
-    isUserDataset(datasetId) {
-        if (!this.isFoundryEnvironment) return false;
-        
-        try {
-            const userDatasets = game.settings.get(this.moduleId, 'userDatasets') || [];
-            const userDatasetsData = game.settings.get(this.moduleId, 'userDatasetsData') || {};
-            
-            // Check both the registry and the data storage
-            return userDatasets.includes(datasetId) || userDatasetsData.hasOwnProperty(datasetId);
-        } catch (error) {
-            console.warn('ConfigValidator | Error checking if dataset is user dataset:', error);
-            return false;
-        }
-    }
-
-    /**
-     * Validate user dataset from settings
-     * @param {string} datasetId - Dataset ID
-     * @returns {Promise<Object>} - Validation result
-     */
-    async validateUserDataset(datasetId) {
-        const result = {
-            valid: true,
-            errors: [],
-            warnings: [],
-            files: {},
-            statistics: {}
-        };
-
-        try {
-            const userDatasetsData = game.settings.get(this.moduleId, 'userDatasetsData') || {};
-            const datasetData = userDatasetsData[datasetId];
-
-            if (!datasetData) {
-                result.valid = false;
-                result.errors.push(`User dataset '${datasetId}' not found in settings`);
-                return result;
-            }
-
-            // Validate structure - user datasets should have config, settlements, and cargoTypes
-            const requiredKeys = ['config', 'settlements', 'cargoTypes'];
-            for (const key of requiredKeys) {
-                if (!datasetData.hasOwnProperty(key)) {
-                    result.valid = false;
-                    result.errors.push(`User dataset '${datasetId}' missing required data: ${key}`);
-                }
-            }
-
-            if (!result.valid) {
-                return result;
-            }
-
-            // Create mock file results for compatibility
-            result.files = {
-                config: {
-                    accessible: true,
-                    validJSON: true,
-                    content: datasetData.config
-                },
-                settlements: {
-                    accessible: true,
-                    validJSON: true,
-                    content: { settlements: datasetData.settlements || [] }
-                },
-                cargoTypes: {
-                    accessible: true,
-                    validJSON: true,
-                    content: { cargoTypes: datasetData.cargoTypes || [] }
-                }
-            };
-
-            // Validate content structure
-            const contentValidation = this.validateDatasetContent(
-                datasetData.config,
-                { settlements: datasetData.settlements || [] },
-                { cargoTypes: datasetData.cargoTypes || [] }
-            );
-
-            if (!contentValidation.valid) {
-                result.valid = false;
-                result.errors.push(...contentValidation.errors);
-            }
-            result.warnings.push(...contentValidation.warnings);
-            result.statistics = contentValidation.statistics;
-
-        } catch (error) {
-            result.valid = false;
-            result.errors.push(`User dataset validation error: ${error.message}`);
-        }
-
-        return result;
-    }
 
     /**
      * Perform complete startup validation
@@ -364,164 +267,43 @@ class ConfigValidator {
             files: {}
         };
 
-        const pointer = await this.loadDatasetPointer();
-        const activeDatasetId = await this.resolveActiveDatasetId();
-        const activeBasePath = await this.getDatasetBasePath(activeDatasetId);
-
-        // Check if active dataset is a user dataset
-        const isActiveUserDataset = this.isUserDataset(activeDatasetId);
-
-        const requiredFiles = [
-            // No longer require system-pointer.json - datasets are discovered dynamically
-        ];
-
-        // For user datasets, we don't need to check filesystem files
-        if (!isActiveUserDataset) {
-            requiredFiles.push(
-                {
-                    path: `${activeBasePath}/config.json`,
-                    name: `Active Dataset (${activeDatasetId}) Config`,
-                    required: true,
-                    type: 'file'
-                },
-                {
-                    basePath: activeBasePath,
-                    name: `Active Dataset (${activeDatasetId}) Settlements`,
-                    required: true,
-                    type: 'settlements-directory'
-                },
-                {
-                    path: `${activeBasePath}/cargo-types.json`,
-                    name: `Active Dataset (${activeDatasetId}) Cargo Types`,
-                    required: true,
-                    type: 'file'
-                }
-            );
-        }
-
-        const pointerSystems = Array.isArray(pointer?.systems) ? pointer.systems : [];
-        pointerSystems
-            .filter(system => (system?.id || system?.path) && (system?.id !== activeDatasetId && system?.path !== activeDatasetId))
-            .forEach(system => {
-                const datasetId = system.id || system.path;
-                if (!datasetId) {
-                    return;
-                }
-                const basePath = `modules/${this.moduleId}/datasets/${system.path || system.id}`;
-                const label = system.label || datasetId;
-
-                requiredFiles.push(
-                    {
-                        path: `${basePath}/config.json`,
-                        name: `${label} Dataset Config`,
-                        required: false,
-                        type: 'file'
-                    },
-                    {
-                        basePath: basePath,
-                        name: `${label} Dataset Settlements`,
-                        required: false,
-                        type: 'settlements-directory'
-                    },
-                    {
-                        path: `${basePath}/cargo-types.json`,
-                        name: `${label} Dataset Cargo Types`,
-                        required: false,
-                        type: 'file'
-                    }
-                );
-            });
-
-        for (const file of requiredFiles) {
-            try {
-                if (file.type === 'settlements-directory') {
-                    const settlementsResult = await this.loadSettlementsDirectory(file.basePath, { required: file.required });
-                    result.files[file.name] = settlementsResult;
-
-                    if (!settlementsResult.accessible) {
-                        const message = `Settlement data not accessible: ${file.name} (${file.basePath}/settlements/*.json)`;
-                        if (file.required) {
-                            result.valid = false;
-                            result.errors.push(`Required configuration data not accessible: ${file.name}`);
-                        } else {
-                            result.warnings.push(message);
-                        }
-                    }
-
-                    if (!settlementsResult.validJSON) {
-                        const errorMessage = settlementsResult.parseError || 'Unknown settlements parse error';
-                        if (file.required) {
-                            result.valid = false;
-                            result.errors.push(`Configuration settlements parse error: ${file.name} - ${errorMessage}`);
-                        } else {
-                            result.warnings.push(`Optional settlements parse issue: ${file.name} - ${errorMessage}`);
-                        }
-                    }
-
-                    if (settlementsResult.missingFiles.length > 0 && file.required) {
-                        result.errors.push(`Missing settlement files: ${settlementsResult.missingFiles.join(', ')}`);
-                    } else if (settlementsResult.missingFiles.length > 0) {
-                        result.warnings.push(`Optional settlement files missing: ${settlementsResult.missingFiles.join(', ')}`);
-                    }
-
-                    if (settlementsResult.invalidFiles.length > 0) {
-                        const message = `Invalid settlement files: ${settlementsResult.invalidFiles.join(', ')}`;
-                        if (file.required) {
-                            result.errors.push(message);
-                        } else {
-                            result.warnings.push(message);
-                        }
-                    }
-
-                    continue;
-                }
-
-                const fileResult = await this.validateConfigFile(file.path, file.name);
-                result.files[file.name] = fileResult;
-
-                if (!fileResult.accessible && file.required) {
-                    result.valid = false;
-                    result.errors.push(`Required configuration file not accessible: ${file.name} (${file.path})`);
-                } else if (!fileResult.accessible && !file.required) {
-                    result.warnings.push(`Optional configuration file not accessible: ${file.name} (${file.path})`);
-                }
-
-                if (fileResult.parseError) {
-                    if (file.required) {
-                        result.valid = false;
-                        result.errors.push(`Configuration file parse error: ${file.name} - ${fileResult.parseError}`);
-                    } else {
-                        result.warnings.push(`Configuration file parse error: ${file.name} - ${fileResult.parseError}`);
-                    }
-                }
-
-            } catch (error) {
-                if (file.required) {
-                    result.valid = false;
-                    result.errors.push(`Failed to validate required file ${file.name}: ${error.message}`);
-                } else {
-                    result.warnings.push(`Failed to validate optional file ${file.name}: ${error.message}`);
-                }
+        try {
+            // Check if datasets have been initialized
+            const datasetsInitialized = game.settings.get(this.moduleId, 'datasetsInitialized');
+            
+            if (!datasetsInitialized) {
+                // First launch - datasets not yet loaded, skip file validation
+                result.warnings.push('Datasets not yet initialized - first launch file loading will occur');
+                return result;
             }
-        }
 
-        // If active dataset is a user dataset, validate it from settings
-        if (isActiveUserDataset) {
-            try {
-                const userDatasetValidation = await this.validateUserDataset(activeDatasetId);
-                result.files[`Active Dataset (${activeDatasetId}) Config`] = userDatasetValidation.files.config;
-                result.files[`Active Dataset (${activeDatasetId}) Settlements`] = userDatasetValidation.files.settlements;
-                result.files[`Active Dataset (${activeDatasetId}) Cargo Types`] = userDatasetValidation.files.cargoTypes;
+            // After initialization, all datasets are in game.settings, no file validation needed
+            // Just verify the active dataset exists in settings
+            const allDatasets = game.settings.get(this.moduleId, 'datasets') || {};
+            const activeDatasetId = await this.resolveActiveDatasetId();
+            const activeDataset = allDatasets[activeDatasetId];
 
-                if (!userDatasetValidation.valid) {
-                    result.valid = false;
-                    result.errors.push(...userDatasetValidation.errors);
-                }
-                result.warnings.push(...userDatasetValidation.warnings);
-            } catch (error) {
+            if (!activeDataset) {
                 result.valid = false;
-                result.errors.push(`Failed to validate user dataset '${activeDatasetId}': ${error.message}`);
+                result.errors.push(`Active dataset '${activeDatasetId}' not found in loaded datasets`);
+                return result;
             }
+
+            // Validate the active dataset from memory
+            const validation = await this.validateDatasetFromMemory(activeDatasetId, activeDataset);
+            result.files[`Active Dataset (${activeDatasetId}) Config`] = validation.files.config;
+            result.files[`Active Dataset (${activeDatasetId}) Settlements`] = validation.files.settlements;
+            result.files[`Active Dataset (${activeDatasetId}) Cargo Types`] = validation.files.cargoTypes;
+
+            if (!validation.valid) {
+                result.valid = false;
+                result.errors.push(...validation.errors);
+            }
+            result.warnings.push(...validation.warnings);
+
+        } catch (error) {
+            result.valid = false;
+            result.errors.push(`Configuration validation failed: ${error.message}`);
         }
 
         return result;
@@ -831,71 +613,132 @@ class ConfigValidator {
         };
 
         try {
-            const pointer = await this.loadDatasetPointer();
-            const activeDatasetId = await this.resolveActiveDatasetId();
-            const pointerSystems = Array.isArray(pointer?.systems) ? pointer.systems : [];
-            if (pointer && pointer.error) {
-                const pointerError = pointer.error?.message || pointer.error?.toString?.() || 'Unknown error';
-                result.warnings.push(`Dataset pointer load encountered an issue: ${pointerError}. Falling back to default dataset configuration.`);
+            // Check if datasets have been initialized
+            const datasetsInitialized = game.settings.get(this.moduleId, 'datasetsInitialized');
+            
+            if (!datasetsInitialized) {
+                // First launch - datasets not yet loaded from files
+                result.warnings.push('Datasets not yet initialized - first launch file loading will occur');
+                return result;
             }
-            const activeEntry = this.getDatasetEntry(pointer, activeDatasetId) || {
-                id: activeDatasetId,
-                path: activeDatasetId,
-                label: activeDatasetId
-            };
 
-            const datasetsToValidate = [activeEntry];
+            // After initialization, ALL datasets are in game.settings
+            const allDatasets = game.settings.get(this.moduleId, 'datasets') || {};
+            const activeDatasetId = await this.resolveActiveDatasetId();
 
-            pointerSystems.forEach(system => {
-                const identifier = system.id || system.path;
-                if (!identifier) {
-                    return;
+            // Validate the active dataset
+            const activeDataset = allDatasets[activeDatasetId];
+            if (!activeDataset) {
+                result.valid = false;
+                result.errors.push(`Active dataset '${activeDatasetId}' not found in loaded datasets`);
+                return result;
+            }
+
+            // Validate active dataset from memory
+            const validation = await this.validateDatasetFromMemory(activeDatasetId, activeDataset);
+            const datasetLabel = activeDataset.label || activeDatasetId;
+            result.datasets[datasetLabel] = validation;
+
+            if (!validation.valid) {
+                result.valid = false;
+                result.errors.push(`Active dataset '${datasetLabel}' validation failed:`);
+                result.errors.push(...validation.errors.map(err => `  - ${err}`));
+            }
+            result.warnings.push(...validation.warnings);
+
+            // Optionally validate other datasets (as warnings only)
+            for (const [datasetId, dataset] of Object.entries(allDatasets)) {
+                if (datasetId === activeDatasetId) continue; // Already validated
+                
+                const otherValidation = await this.validateDatasetFromMemory(datasetId, dataset);
+                const otherLabel = dataset.label || datasetId;
+                result.datasets[otherLabel] = otherValidation;
+
+                if (!otherValidation.valid) {
+                    result.warnings.push(`Additional dataset '${otherLabel}' validation failed:`);
+                    result.warnings.push(...otherValidation.errors.map(err => `  - ${err}`));
                 }
-
-                const alreadyIncluded = datasetsToValidate.some(existing => {
-                    const existingId = existing.id || existing.path;
-                    return existingId === identifier;
-                });
-
-                if (!alreadyIncluded) {
-                    datasetsToValidate.push(system);
-                }
-            });
-
-            for (const dataset of datasetsToValidate) {
-                const datasetId = dataset.id || dataset.path;
-                const datasetLabel = dataset.label || datasetId;
-
-                let validation;
-                if (this.isUserDataset(datasetId)) {
-                    // Validate user dataset from settings
-                    validation = await this.validateUserDataset(datasetId);
-                } else {
-                    // Validate built-in dataset from filesystem
-                    const basePath = `modules/${this.moduleId}/datasets/${dataset.path || datasetId}`;
-                    validation = await this.validateSingleDataset(datasetId, basePath);
-                }
-
-                result.datasets[datasetLabel] = validation;
-
-                if (!validation.valid) {
-                    const prefix = datasetId === activeDatasetId ? 'Active' : 'Additional';
-                    const collection = datasetId === activeDatasetId ? result.errors : result.warnings;
-
-                    if (datasetId === activeDatasetId) {
-                        result.valid = false;
-                    }
-
-                    collection.push(`${prefix} dataset '${datasetLabel}' validation failed:`);
-                    collection.push(...validation.errors.map(err => `  - ${err}`));
-                }
-
-                result.warnings.push(...validation.warnings);
             }
 
         } catch (error) {
             result.valid = false;
             result.errors.push(`Dataset structure validation failed: ${error.message}`);
+        }
+
+        return result;
+    }
+
+    /**
+     * Validate a dataset from memory (game.settings)
+     * @param {string} datasetId - Dataset ID
+     * @param {Object} dataset - Dataset object from settings
+     * @returns {Promise<Object>} - Validation result
+     */
+    async validateDatasetFromMemory(datasetId, dataset) {
+        const result = {
+            valid: true,
+            errors: [],
+            warnings: [],
+            files: {},
+            statistics: {}
+        };
+
+        try {
+            if (!dataset) {
+                result.valid = false;
+                result.errors.push(`Dataset '${datasetId}' not found`);
+                return result;
+            }
+
+            // Validate structure - datasets should have config, settlements, and cargoTypes
+            const requiredKeys = ['config', 'settlements', 'cargoTypes'];
+            for (const key of requiredKeys) {
+                if (!dataset.hasOwnProperty(key)) {
+                    result.valid = false;
+                    result.errors.push(`Dataset '${datasetId}' missing required data: ${key}`);
+                }
+            }
+
+            if (!result.valid) {
+                return result;
+            }
+
+            // Create mock file results for compatibility with existing validation
+            result.files = {
+                config: {
+                    accessible: true,
+                    validJSON: true,
+                    content: dataset.config
+                },
+                settlements: {
+                    accessible: true,
+                    validJSON: true,
+                    content: { settlements: dataset.settlements || [] }
+                },
+                cargoTypes: {
+                    accessible: true,
+                    validJSON: true,
+                    content: { cargoTypes: dataset.cargoTypes || [] }
+                }
+            };
+
+            // Validate content structure
+            const contentValidation = this.validateDatasetContent(
+                dataset.config,
+                { settlements: dataset.settlements || [] },
+                { cargoTypes: dataset.cargoTypes || [] }
+            );
+
+            if (!contentValidation.valid) {
+                result.valid = false;
+                result.errors.push(...contentValidation.errors);
+            }
+            result.warnings.push(...contentValidation.warnings);
+            result.statistics = contentValidation.statistics;
+
+        } catch (error) {
+            result.valid = false;
+            result.errors.push(`Dataset validation error: ${error.message}`);
         }
 
         return result;

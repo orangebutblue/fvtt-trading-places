@@ -699,19 +699,17 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
      */
     async _getCurrentCargoData() {
         try {
-            const datasetId = this.dataManager?.activeDatasetName || 'default';
-            const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
-            const currentCargo = allCargoData[datasetId] || [];
+            console.log('🚛 CARGO_PERSIST: Loading cargo from DataManager for display');
+            const currentCargo = this.dataManager?.cargo || [];
             
-            console.log('🚛 CARGO DEBUG: Raw cargo data from settings', {
-                dataset: datasetId,
+            console.log('🚛 CARGO_PERSIST: Raw cargo data from DataManager', {
                 length: currentCargo.length,
                 data: currentCargo
             });
             
             const processedCargo = this._prepareCurrentCargoList(currentCargo);
             
-            console.log('🚛 CARGO DEBUG: Processed cargo data', {
+            console.log('🚛 CARGO_PERSIST: Processed cargo data', {
                 length: processedCargo.length,
                 data: processedCargo
             });
@@ -960,16 +958,21 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 }
             }
 
-            // Load saved transaction history (dataset-specific)
-            const datasetId = this.dataManager?.activeDatasetName || 'default';
-            const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
-            const savedTransactionHistory = allTransactionData[datasetId] || [];
+            // Load saved transaction history from DataManager
+            console.log('🚛 CARGO_PERSIST: Loading transaction history from DataManager');
+            const savedTransactionHistory = this.dataManager?.history || [];
             if (savedTransactionHistory && Array.isArray(savedTransactionHistory)) {
                 this.transactionHistory = this._prepareTransactionHistory(savedTransactionHistory);
-                this._logDebug('Saved Selections', 'Loaded saved transaction history', { dataset: datasetId, transactionCount: this.transactionHistory.length });
+                console.log('🚛 CARGO_PERSIST: Loaded transaction history', { 
+                    transactionCount: this.transactionHistory.length 
+                });
+                this._logDebug('Saved Selections', 'Loaded saved transaction history', { 
+                    transactionCount: this.transactionHistory.length 
+                });
             } else {
                 this.transactionHistory = [];
-                this._logDebug('Saved Selections', 'No saved transaction history found, initialized empty array', { dataset: datasetId });
+                console.log('🚛 CARGO_PERSIST: No transaction history found, initialized empty array');
+                this._logDebug('Saved Selections', 'No saved transaction history found, initialized empty array');
             }
 
         } catch (error) {
@@ -1310,23 +1313,53 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         }
     }
 
-    async refreshUI({ focusTab = null } = {}) {
+    /**
+     * Comprehensive UI refresh - reloads all data and re-renders
+     * @param {Object} options - Refresh options
+     * @param {string} options.focusTab - Tab to focus after refresh
+     * @param {boolean} options.force - Force a complete re-render (default: true)
+     */
+    async refreshUI({ focusTab = null, force = true } = {}) {
         try {
+            console.log('🔄 UI_REFRESH: ========== STARTING REFRESH ==========');
+            console.log('🔄 UI_REFRESH: Options:', { focusTab, force });
+            
             const desiredTab = focusTab || this.renderer.getActiveTabName();
+            console.log('🔄 UI_REFRESH: Desired tab:', desiredTab);
 
+            // Reload cargo data from DataManager
+            console.log('🔄 UI_REFRESH: DataManager cargo before reload:', this.dataManager?.cargo?.length || 0);
             this.currentCargo = await this._getCurrentCargoData();
-            const datasetId = this.dataManager?.activeDatasetName || 'default';
-            const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
-            this.transactionHistory = this._prepareTransactionHistory(allTransactionData[datasetId] || []);
             this.playerCargo = Array.isArray(this.currentCargo) ? [...this.currentCargo] : [];
+            console.log('🔄 UI_REFRESH: Cargo reloaded:', {
+                currentCargoCount: this.currentCargo.length,
+                playerCargoCount: this.playerCargo.length
+            });
+            
+            // Reload transaction history from DataManager
+            console.log('🔄 UI_REFRESH: DataManager history before reload:', this.dataManager?.history?.length || 0);
+            this.transactionHistory = this._prepareTransactionHistory(this.dataManager?.history || []);
+            console.log('🔄 UI_REFRESH: History reloaded:', this.transactionHistory.length);
 
-            await this.render(false);
+            // Force a complete re-render
+            console.log('🔄 UI_REFRESH: Calling render() with force =', force);
+            await this.render(force);
+            console.log('🔄 UI_REFRESH: Render complete');
 
+            // Switch to the desired tab after render completes
             const tabToActivate = desiredTab || 'buying';
-            if (tabToActivate) {
-                setTimeout(() => this.renderer.setActiveTab(tabToActivate), 0);
-            }
+            console.log('🔄 UI_REFRESH: Switching to tab:', tabToActivate);
+            
+            // Use a small delay to ensure render is complete
+            setTimeout(() => {
+                this.renderer.setActiveTab(tabToActivate);
+                console.log('🔄 UI_REFRESH: ========== REFRESH COMPLETE ==========');
+            }, 50);
+            
         } catch (error) {
+            console.error('🔄 UI_REFRESH: ========== REFRESH FAILED ==========');
+            console.error('🔄 UI_REFRESH: Error:', error);
+            console.error('🔄 UI_REFRESH: Stack:', error.stack);
             this._logError('UI Refresh', 'Failed to refresh UI', { error: error.message });
         }
     }

@@ -33,11 +33,6 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
     }
 
     async _prepareContext(options) {
-        // Load dataset pointer if not already loaded
-        if (!this.dataManager.datasetPointer) {
-            await this.dataManager.loadDatasetPointer();
-        }
-        
         // Set current dataset if not already set
         if (!this.currentDataset) {
             this.currentDataset = this.dataManager.activeDatasetName || 'wfrp4e';
@@ -79,6 +74,29 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
             tradingConfig,
             config
         };
+    }
+
+    /**
+     * Comprehensive refresh of the Data Management UI
+     * Reloads all data from DataManager and re-renders
+     */
+    async refreshUI() {
+        try {
+            console.log('🔄 DATA_MGMT_REFRESH: Starting refresh');
+            
+            // Reload current dataset from DataManager
+            await this.dataManager.loadActiveDataset();
+            
+            console.log('🔄 DATA_MGMT_REFRESH: Dataset reloaded, re-rendering');
+            
+            // Re-render the UI
+            await this.render(false);
+            
+            console.log('🔄 DATA_MGMT_REFRESH: Refresh complete');
+        } catch (error) {
+            console.error('🔄 DATA_MGMT_REFRESH: Failed to refresh', error);
+            ui.notifications.error('Failed to refresh data management UI');
+        }
     }
 
     async _preparePartContext(partId, context, options) {
@@ -325,45 +343,30 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
     }
 
     _getAvailableDatasets() {
-        const datasets = [];
-        
-        // Get built-in datasets from the dataManager's dataset pointer
-        if (this.dataManager.datasetPointer && this.dataManager.datasetPointer.systems) {
-            this.dataManager.datasetPointer.systems.forEach(system => {
-                datasets.push({
-                    id: system.id,
-                    label: system.label || system.id,
-                    type: 'built-in'
-                });
+        // Get all datasets from DatasetPersistence (stored in game.settings)
+        try {
+            const allDatasets = game.settings.get(MODULE_ID, 'datasets') || {};
+            const datasets = Object.keys(allDatasets).map(id => ({
+                id: id,
+                label: allDatasets[id].label || id,
+                type: allDatasets[id].type || 'unknown'
+            }));
+            
+            console.log('📦 DATA_MANAGEMENT: Loaded available datasets', {
+                count: datasets.length,
+                datasets: datasets.map(d => d.id)
             });
-        }
-        
-        // If no built-in datasets found, add a default one
-        if (datasets.length === 0) {
-            datasets.push({
+            
+            return datasets;
+        } catch (error) {
+            console.error('Failed to load datasets:', error);
+            // Fallback to wfrp4e
+            return [{
                 id: 'wfrp4e',
                 label: 'Warhammer Fantasy Roleplay 4th Edition',
-                type: 'built-in'
-            });
+                type: 'file-based'
+            }];
         }
-        
-        // Get user datasets from Foundry settings
-        try {
-            if (typeof game !== 'undefined' && game.settings) {
-                const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
-                userDatasets.forEach(datasetName => {
-                    datasets.push({
-                        id: datasetName,
-                        label: datasetName,
-                        type: 'user'
-                    });
-                });
-            }
-        } catch (error) {
-            console.warn('Failed to load user datasets:', error);
-        }
-        
-        return datasets;
     }
 
     _filterSettlements(settlements, searchTerm) {
@@ -464,6 +467,22 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                 return;
             }
 
+            // Close trading UI by finding and closing the DOM element
+            const tradingDialog = document.querySelector('.trading-places.application-v2');
+            if (tradingDialog) {
+                console.log('📦 Closing trading UI by removing DOM element');
+                // Find the close button and click it
+                const closeButton = tradingDialog.querySelector('.window-header .close');
+                if (closeButton) {
+                    closeButton.click();
+                    console.log('📦 Trading UI close button clicked');
+                } else {
+                    // Fallback: just remove the element
+                    tradingDialog.remove();
+                    console.log('📦 Trading UI element removed');
+                }
+            }
+            
             // Switch the dataset in the dataManager
             await this.dataManager.switchDataset(datasetId);
             
@@ -471,7 +490,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
             this.currentDataset = datasetId;
             
             // Update the UI to reflect the new dataset
-            await this.render();
+            await this.refreshUI();
             
             // Update dataset selector selected option
             const html = $(this.element);
@@ -687,7 +706,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                             await this._saveDataPersistently();
                         }
                         
-                        this.render(); // Refresh the dialog
+                        await this.refreshUI(); // Refresh the dialog
                     } catch (error) {
                         ui.notifications.error(`Failed to add settlement: ${error.message}`);
                     }
@@ -809,7 +828,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                             await this._saveDataPersistently();
                         }
                         
-                        this.render(); // Refresh the dialog
+                        await this.refreshUI(); // Refresh the dialog
                     } catch (error) {
                         ui.notifications.error(`Failed to update settlement: ${error.message}`);
                     }
@@ -857,7 +876,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                             await this._saveDataPersistently();
                         }
                         
-                        this.render(); // Refresh the dialog
+                        await this.refreshUI(); // Refresh the dialog
                     } catch (error) {
                         ui.notifications.error(`Failed to delete settlement: ${error.message}`);
                     }
@@ -926,7 +945,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                             await this._saveDataPersistently();
                         }
                         
-                        this.render(); // Refresh the dialog
+                        await this.refreshUI(); // Refresh the dialog
                     } catch (error) {
                         ui.notifications.error(`Failed to add cargo type: ${error.message}`);
                     }
@@ -1000,7 +1019,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                             await this._saveDataPersistently();
                         }
                         
-                        this.render(); // Refresh the dialog
+                        await this.refreshUI(); // Refresh the dialog
                     } catch (error) {
                         ui.notifications.error(`Failed to update cargo type: ${error.message}`);
                     }
@@ -1029,7 +1048,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         await this._saveDataPersistently();
                     }
                     
-                    this.render(); // Refresh the dialog
+                    await this.refreshUI(); // Refresh the dialog
                 } catch (error) {
                     ui.notifications.error(`Failed to delete cargo type: ${error.message}`);
                 }
@@ -1102,7 +1121,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         if (currentDataset && currentDataset.type === 'built-in') {
                             await this._saveDataPersistently();
                         }
-                        this.render();
+                        await this.refreshUI();
                         
                     } catch (error) {
                         ui.notifications.error(`Failed to import settlements: ${error.message}`);
@@ -1174,7 +1193,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         if (currentDataset && currentDataset.type === 'built-in') {
                             await this._saveDataPersistently();
                         }
-                        this.render();
+                        await this.refreshUI();
                         
                     } catch (error) {
                         ui.notifications.error(`Failed to import cargo types: ${error.message}`);
@@ -1237,13 +1256,13 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     }
                     
                     try {
-                        await this.dataManager.createUserDataset(datasetName);
+                        await this.dataManager.createUserDataset(datasetName, datasetName);
                         ui.notifications.info(`Dataset "${datasetName}" created successfully`);
                         
                         // Switch to the new dataset
                         await this._switchDataset(datasetName);
                         
-                        this.render(); // Refresh the dialog
+                        await this.refreshUI(); // Refresh the dialog
                     } catch (error) {
                         ui.notifications.error(`Failed to create dataset: ${error.message}`);
                     }
@@ -1290,9 +1309,9 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                 callback: async (event, button, dialog) => {
                     console.log('DELETE DATASET: confirmation callback called');
                     try {
-                        console.log('DELETE DATASET: calling dataManager.deleteUserDataset');
-                        await this.dataManager.deleteUserDataset(datasetName);
-                        console.log('DELETE DATASET: deleteUserDataset completed successfully');
+                        console.log('DELETE DATASET: calling dataManager.deleteDataset');
+                        await this.dataManager.deleteDataset(datasetName);
+                        console.log('DELETE DATASET: deleteDataset completed successfully');
                         ui.notifications.info(`Dataset "${datasetName}" deleted successfully`);
 
                         // If we deleted the current dataset, switch to the default one
@@ -1301,7 +1320,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                             await this._switchDataset('wfrp4e');
                         } else {
                             console.log('DELETE DATASET: refreshing dialog');
-                            this.render(); // Refresh the dialog
+                            await this.refreshUI(); // Refresh the dialog
                         }
                     } catch (error) {
                         console.error('DELETE DATASET: error during deletion:', error);
@@ -1426,7 +1445,7 @@ DataManagementV2.prototype._saveConfig = async function() {
         ui.notifications.info('Configuration saved successfully');
         
         // Refresh the UI
-        this.render();
+                        await this.refreshUI();
         
     } catch (error) {
         console.error('Failed to save config:', error);
@@ -1488,7 +1507,7 @@ DataManagementV2.prototype._resetConfig = async function() {
                 ui.notifications.info('Configuration reset to defaults');
                 
                 // Refresh the UI
-                this.render();
+                        await this.refreshUI();
                 
             } catch (error) {
                 console.error('Failed to reset config:', error);

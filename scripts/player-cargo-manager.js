@@ -44,9 +44,29 @@ class PlayerCargoManager {
     }
 
     /**
-     * Load session data from browser storage
+     * Load session data from DataManager or browser storage (fallback)
      */
     loadSessionData() {
+        console.log('🚛 CARGO_PERSIST: Loading cargo data', {
+            hasDataManager: !!this.dataManager,
+            dataManagerCargo: this.dataManager?.cargo?.length || 0
+        });
+        
+        // First try to load from DataManager
+        if (this.dataManager && this.dataManager.cargo) {
+            this.playerCargo = this.dataManager.cargo || [];
+            console.log('🚛 CARGO_PERSIST: ✅ Loaded cargo from DataManager', {
+                cargoCount: this.playerCargo.length
+            });
+            this.log('SYSTEM', 'Session Load', 'Loaded cargo from DataManager', {
+                cargoItems: this.playerCargo.length
+            });
+            return;
+        }
+        
+        console.log('🚛 CARGO_PERSIST: DataManager cargo not available, trying browser storage');
+        
+        // Fallback to browser storage for backward compatibility
         if (!this.storage) {
             this.log('SYSTEM', 'Session Load', 'No storage available, starting fresh');
             return;
@@ -61,7 +81,7 @@ class PlayerCargoManager {
                 this.playerCargo = parsedData.playerCargo || [];
                 this.sessionData = parsedData.sessionData || {};
                 
-                this.log('SYSTEM', 'Session Load', 'Loaded existing cargo session', {
+                this.log('SYSTEM', 'Session Load', 'Loaded existing cargo session from browser storage', {
                     cargoItems: this.playerCargo.length,
                     sessionId: this.sessionData.sessionId
                 });
@@ -76,11 +96,37 @@ class PlayerCargoManager {
     }
 
     /**
-     * Save session data to browser storage
+     * Save session data to DataManager and browser storage
      */
-    saveSessionData() {
+    async saveSessionData() {
+        console.log('🚛 CARGO_PERSIST: Attempting to save cargo', {
+            cargoCount: this.playerCargo.length,
+            hasDataManager: !!this.dataManager
+        });
+        
+        // Save to DataManager if available (primary storage)
+        if (this.dataManager) {
+            this.dataManager.cargo = this.playerCargo;
+            console.log('🚛 CARGO_PERSIST: Updated DataManager.cargo array', {
+                cargoCount: this.dataManager.cargo.length
+            });
+            
+            try {
+                await this.dataManager.saveCurrentDataset();
+                console.log('🚛 CARGO_PERSIST: ✅ Cargo saved successfully to dataset');
+                this.log('SYSTEM', 'Session Save', 'Cargo saved to DataManager', {
+                    cargoItems: this.playerCargo.length
+                });
+            } catch (error) {
+                console.error('🚛 CARGO_PERSIST: ❌ Error saving to DataManager', error);
+                this.log('SYSTEM', 'Session Save', 'Error saving to DataManager', { error: error.message }, 'ERROR');
+            }
+        } else {
+            console.warn('🚛 CARGO_PERSIST: ⚠️ No DataManager available - cargo will not persist!');
+        }
+        
+        // Also save to browser storage as backup
         if (!this.storage) {
-            this.log('SYSTEM', 'Session Save', 'No storage available, skipping save');
             return;
         }
         
@@ -97,12 +143,12 @@ class PlayerCargoManager {
             
             this.storage.setItem(sessionKey, JSON.stringify(dataToSave));
             
-            this.log('SYSTEM', 'Session Save', 'Cargo session data saved', {
+            this.log('SYSTEM', 'Session Save', 'Cargo also backed up to browser storage', {
                 cargoItems: this.playerCargo.length,
                 sessionId: dataToSave.sessionData.sessionId
             });
         } catch (error) {
-            this.log('SYSTEM', 'Session Save', 'Error saving session data', { error: error.message }, 'ERROR');
+            this.log('SYSTEM', 'Session Save', 'Error saving to browser storage', { error: error.message }, 'ERROR');
         }
     }
 
@@ -122,9 +168,9 @@ class PlayerCargoManager {
      * @param {number} quantity - Quantity in Encumbrance Points
      * @param {string} quality - Quality level (poor, average, good, excellent)
      * @param {Object} additionalData - Additional cargo data (purchaseLocation, etc.)
-     * @returns {Object} - Result of add operation
+     * @returns {Promise<Object>} - Result of add operation
      */
-    addCargo(cargoType, quantity, quality = 'average', additionalData = {}) {
+    async addCargo(cargoType, quantity, quality = 'average', additionalData = {}) {
         this.log('USER_ACTION', 'Add Cargo', `Adding cargo: ${quantity} EP of ${cargoType} (${quality})`, {
             cargoType,
             quantity,
@@ -188,7 +234,7 @@ class PlayerCargoManager {
         }
 
         // Save session and trigger UI update
-        this.saveSessionData();
+        await this.saveSessionData();
         this.triggerCargoUpdate();
 
         return { 
@@ -202,9 +248,9 @@ class PlayerCargoManager {
      * Remove cargo from player inventory
      * @param {string} cargoId - ID of cargo to remove
      * @param {number} quantity - Quantity to remove (optional, removes all if not specified)
-     * @returns {Object} - Result of remove operation
+     * @returns {Promise<Object>} - Result of remove operation
      */
-    removeCargo(cargoId, quantity = null) {
+    async removeCargo(cargoId, quantity = null) {
         const cargo = this.playerCargo.find(c => c.id === cargoId);
         
         if (!cargo) {
@@ -248,7 +294,7 @@ class PlayerCargoManager {
         }
 
         // Save session and trigger UI update
-        this.saveSessionData();
+        await this.saveSessionData();
         this.triggerCargoUpdate();
 
         return { 
@@ -262,9 +308,9 @@ class PlayerCargoManager {
      * Modify existing cargo (quantity, quality, or other properties)
      * @param {string} cargoId - ID of cargo to modify
      * @param {Object} modifications - Object containing properties to modify
-     * @returns {Object} - Result of modify operation
+     * @returns {Promise<Object>} - Result of modify operation
      */
-    modifyCargo(cargoId, modifications) {
+    async modifyCargo(cargoId, modifications) {
         const cargo = this.playerCargo.find(c => c.id === cargoId);
         
         if (!cargo) {
@@ -295,7 +341,7 @@ class PlayerCargoManager {
         });
 
         // Save session and trigger UI update
-        this.saveSessionData();
+        await this.saveSessionData();
         this.triggerCargoUpdate();
 
         return { success: true, updatedCargo: { ...cargo } };
@@ -356,9 +402,9 @@ class PlayerCargoManager {
 
     /**
      * Clear all player cargo
-     * @returns {Object} - Result of clear operation
+     * @returns {Promise<Object>} - Result of clear operation
      */
-    clearAllCargo() {
+    async clearAllCargo() {
         const itemCount = this.playerCargo.length;
         const totalQuantity = this.getTotalCargoQuantity();
         
@@ -368,7 +414,7 @@ class PlayerCargoManager {
         });
 
         this.playerCargo = [];
-        this.saveSessionData();
+        await this.saveSessionData();
         this.triggerCargoUpdate();
 
         return { success: true, itemsCleared: itemCount, quantityCleared: totalQuantity };

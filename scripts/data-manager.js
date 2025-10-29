@@ -5,6 +5,9 @@
 
 console.log('🔧 Loading data-manager.js...');
 
+// Import DatasetPersistence class
+import { DatasetPersistence } from './dataset-persistence.js';
+
 const MODULE_ID = "fvtt-trading-places";
 
 let CurrencyUtils = null;
@@ -25,15 +28,26 @@ if (_window && _window.TradingPlacesCurrencyUtils) {
     console.error('❌ window.TradingPlacesCurrencyUtils not found at data-manager load time');
 }
 
-const SETTLEMENT_FILES = [
-    'Averland.json', 'Hochland.json', 'Middenland.json', 'Moot.json',
-    'Nordland.json', 'Ostermark.json', 'Ostland.json', 'Reikland.json',
-    'Stirland.json', 'Sudenland.json', 'Sylvania.json', 'Talabecland.json',
-    'Wasteland.json', 'Wissenland.json'
-];
+// DatasetPersistence is now imported at the top via ES6 import
+// Also expose via window for backward compatibility
+console.log('🔍 DatasetPersistence imported:', typeof DatasetPersistence);
+
+// Function to get DatasetPersistence (checks both import and window)
+function getDatasetPersistenceClass() {
+    // First try the ES6 import
+    if (typeof DatasetPersistence !== 'undefined') {
+        return DatasetPersistence;
+    }
+    // Fall back to window object
+    if (_window && _window.TradingPlacesDatasetPersistence) {
+        return _window.TradingPlacesDatasetPersistence;
+    }
+    return null;
+}
 
 /**
  * Data Manager class for handling settlement and cargo data
+ * Now uses DatasetPersistence for loading and storing datasets
  */
 class DataManager {
     constructor() {
@@ -45,56 +59,193 @@ class DataManager {
         this.logger = null; // Will be set by integration
         this.moduleId = MODULE_ID;
         this.activeDatasetName = null;
-        this.dataPath = null;
-        this.datasetPointer = null;
-        this.datasetPointerPath = `modules/${this.moduleId}/datasets/system-pointer.json`;
         this.sourceFlags = {};
         this.tradingConfig = {};
         this.normalizedCurrencyConfig = null;
         this.currencyContextCache = null;
+        this.datasetPersistence = null; // Will be initialized when needed
+        this.currentDataset = null; // The active dataset object
+        this.cargo = []; // Cargo inventory for active dataset
+        this.history = []; // Transaction history for active dataset
     }
 
-    normalizeDatasetName(datasetName, pointer = null) {
-        if (!datasetName) {
-            return { folderName: null, entry: null };
+    /**
+     * Get or create the dataset persistence manager
+     * @returns {DatasetPersistence} - Dataset persistence instance
+     */
+    getDatasetPersistence() {
+        if (!this.datasetPersistence) {
+            const DatasetPersistenceClass = getDatasetPersistenceClass();
+            if (DatasetPersistenceClass) {
+                this.datasetPersistence = new DatasetPersistenceClass();
+                console.log('✅ DatasetPersistence instance created');
+            } else {
+                console.error('❌ DatasetPersistence class not found on window object');
+            }
         }
-
-        const pointerData = pointer || this.datasetPointer;
-        const systems = Array.isArray(pointerData?.systems) ? pointerData.systems : [];
-
-        const findEntry = (identifier) => systems.find(system =>
-            system.id === identifier ||
-            system.path === identifier ||
-            system.name === identifier ||
-            system.label === identifier
-        ) || null;
-
-        let entry = findEntry(datasetName);
-
-        if (!entry && typeof datasetName === 'string' && datasetName.endsWith('-default')) {
-            entry = findEntry(datasetName.replace(/-default$/, ''));
-        }
-
-        const folderName = entry?.path || entry?.id || (typeof datasetName === 'string' && datasetName.endsWith('-default')
-            ? datasetName.replace(/-default$/, '')
-            : datasetName);
-
-        return {
-            folderName,
-            entry
-        };
+        return this.datasetPersistence;
     }
 
     setModuleId(moduleId) {
         if (!moduleId) {
             return;
         }
-
         this.moduleId = moduleId;
-        this.datasetPointerPath = `modules/${this.moduleId}/datasets/system-pointer.json`;
-        if (this.activeDatasetName) {
-            this.dataPath = `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
+        if (this.datasetPersistence) {
+            this.datasetPersistence.moduleId = moduleId;
         }
+    }
+
+    /**
+     * Initialize data manager and load datasets
+     * This replaces the old file-based loading system
+     * @returns {Promise<void>}
+     */
+    async initialize() {
+        console.log('🔧 DataManager: Initializing...');
+        
+        // Check if DatasetPersistence is available
+        const DatasetPersistenceClass = getDatasetPersistenceClass();
+        if (!DatasetPersistenceClass) {
+            console.error('❌ DatasetPersistence not available');
+            console.error('Available on window:', Object.keys(window).filter(k => k.includes('Trading')));
+            throw new Error('DatasetPersistence module not loaded. Check module.json loading order.');
+        }
+        
+        const persistence = this.getDatasetPersistence();
+        if (!persistence) {
+            console.error('❌ Failed to create DatasetPersistence instance');
+            throw new Error('DatasetPersistence instantiation failed');
+        }
+
+        // Initialize datasets (loads from files on first launch, or from flags)
+        await persistence.initialize();
+
+        // Load the active dataset
+        await this.loadActiveDataset();
+
+        console.log('✅ DataManager initialized');
+    }
+
+    /**
+     * Load the active dataset based on settings or default
+     * @returns {Promise<void>}
+     */
+    async loadActiveDataset() {
+        const persistence = this.getDatasetPersistence();
+        
+        // Determine which dataset to load
+        let datasetId = 'wfrp4e'; // Default
+        
+        try {
+            if (typeof game !== 'undefined' && game.settings) {
+                datasetId = game.settings.get(this.moduleId, 'activeDataset') || 'wfrp4e';
+            }
+        } catch (error) {
+            console.warn('Could not read activeDataset setting, using default:', datasetId);
+        }
+
+        console.log('📦 Loading dataset:', datasetId);
+        
+        // Load the dataset
+        const dataset = await persistence.getDataset(datasetId);
+        
+        console.log('📦 Dataset retrieved from persistence:', {
+            found: !!dataset,
+            datasetId,
+            type: dataset?.type
+        });
+        
+        if (!dataset) {
+            console.error(`📦 Dataset ${datasetId} not found, falling back to wfrp4e`);
+            
+            // List available datasets for debugging
+            const available = await persistence.listDatasets();
+            console.error('📦 Available datasets:', available.map(d => d.id));
+            
+            this.currentDataset = await persistence.getDataset('wfrp4e');
+            this.activeDatasetName = 'wfrp4e';
+        } else {
+            this.currentDataset = dataset;
+            this.activeDatasetName = datasetId;
+        }
+
+        // Load dataset components into memory
+        this.settlements = this.currentDataset?.settlements || [];
+        this.cargoTypes = this.currentDataset?.cargoTypes || [];
+        this.config = this.currentDataset?.config || {};
+        this.tradingConfig = this.currentDataset?.tradingConfig || {};
+        this.sourceFlags = this.currentDataset?.sourceFlags || {};
+        this.cargo = this.currentDataset?.cargo || [];
+        this.history = this.currentDataset?.history || [];
+
+        console.log(`📦 Loaded dataset: ${this.activeDatasetName}`, {
+            settlements: this.settlements.length,
+            cargoTypes: this.cargoTypes.length,
+            cargo: this.cargo.length
+        });
+    }
+
+    /**
+     * Switch to a different dataset
+     * @param {string} datasetId - Dataset identifier
+     * @param {boolean} skipSave - Skip saving current dataset (use when current was deleted)
+     * @returns {Promise<void>}
+     */
+    async switchDataset(datasetId, skipSave = false) {
+        console.log(`🔄 Switching to dataset: ${datasetId}`, { skipSave });
+        
+        // Save current dataset before switching (unless it was just deleted)
+        if (!skipSave) {
+            await this.saveCurrentDataset();
+        }
+
+        // Update settings
+        if (typeof game !== 'undefined' && game.settings) {
+            await game.settings.set(this.moduleId, 'activeDataset', datasetId);
+        }
+
+        // Load new dataset
+        this.activeDatasetName = datasetId;
+        await this.loadActiveDataset();
+    }
+
+    /**
+     * Save the current dataset back to world flags
+     * @returns {Promise<void>}
+     */
+    async saveCurrentDataset() {
+        console.log('🚛 CARGO_PERSIST: saveCurrentDataset called', {
+            hasCurrentDataset: !!this.currentDataset,
+            activeDatasetName: this.activeDatasetName,
+            cargoCount: this.cargo?.length || 0,
+            historyCount: this.history?.length || 0
+        });
+        
+        if (!this.currentDataset || !this.activeDatasetName) {
+            console.warn('🚛 CARGO_PERSIST: ⚠️ No active dataset to save');
+            return;
+        }
+
+        // Update dataset object with current state
+        this.currentDataset.settlements = this.settlements;
+        this.currentDataset.cargoTypes = this.cargoTypes;
+        this.currentDataset.config = this.config;
+        this.currentDataset.tradingConfig = this.tradingConfig;
+        this.currentDataset.sourceFlags = this.sourceFlags;
+        this.currentDataset.cargo = this.cargo;
+        this.currentDataset.history = this.history;
+
+        console.log('🚛 CARGO_PERSIST: Updated currentDataset object', {
+            cargoCount: this.currentDataset.cargo?.length || 0,
+            historyCount: this.currentDataset.history?.length || 0
+        });
+
+        // Persist to world flags
+        const persistence = this.getDatasetPersistence();
+        await persistence.updateDataset(this.activeDatasetName, this.currentDataset);
+        
+        console.log(`🚛 CARGO_PERSIST: ✅ Dataset ${this.activeDatasetName} saved to settings`);
     }
 
     /**
@@ -122,105 +273,7 @@ class DataManager {
         };
     }
 
-    async loadDatasetPointer() {
-        if (this.datasetPointer) {
-            return this.datasetPointer;
-        }
-
-        try {
-            // Dynamically discover available datasets by scanning the datasets directory
-            const datasets = await this.discoverAvailableDatasets();
-            this.datasetPointer = {
-                activeSystem: 'wfrp4e',
-                systems: datasets
-            };
-        } catch (error) {
-            // Fallback to hardcoded WFRP4e dataset if discovery fails
-            this.datasetPointer = {
-                activeSystem: 'wfrp4e',
-                systems: [
-                    {
-                        id: 'wfrp4e',
-                        path: 'wfrp4e',
-                        label: 'Warhammer Fantasy Roleplay 4th Edition'
-                    }
-                ],
-                error
-            };
-        }
-
-        return this.datasetPointer;
-    }
-
-    async resolveActiveDatasetName() {
-        if (this.activeDatasetName) {
-            return this.activeDatasetName;
-        }
-
-        let datasetFromSettings = null;
-        try {
-            if (typeof game !== 'undefined' && game.settings) {
-                datasetFromSettings = await game.settings.get(this.moduleId, 'activeDataset');
-            }
-        } catch (error) {
-            // Ignore settings access issues (likely outside Foundry)
-        }
-
-        const pointer = await this.loadDatasetPointer();
-
-        if (datasetFromSettings) {
-            // First check if this is a user dataset
-            if (typeof game !== 'undefined' && game.settings) {
-                const userDatasets = game.settings.get(this.moduleId, 'userDatasets') || [];
-                if (userDatasets.includes(datasetFromSettings)) {
-                    // It's a user dataset, use it directly
-                    this.activeDatasetName = datasetFromSettings;
-                    this.dataPath = null; // User datasets don't have file paths
-                    return this.activeDatasetName;
-                }
-            }
-
-            // It's not a user dataset, validate against system pointer
-            const { folderName, entry } = this.normalizeDatasetName(datasetFromSettings, pointer);
-            // Only use the dataset from settings if it exists in the pointer's systems
-            if (entry) {
-                this.activeDatasetName = folderName;
-                this.dataPath = folderName
-                    ? `modules/${this.moduleId}/datasets/${folderName}`
-                    : null;
-                return this.activeDatasetName;
-            } else {
-                console.warn(`Dataset '${datasetFromSettings}' from settings not found in system pointer, falling back to default`);
-            }
-        }
-
-        const pointerDataset = pointer?.activeSystem || pointer?.activeDataset || pointer?.active || 'wfrp4e';
-        const { folderName } = this.normalizeDatasetName(pointerDataset, pointer);
-        this.activeDatasetName = folderName || 'wfrp4e';
-        this.dataPath = `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
-        return this.activeDatasetName;
-    }
-
-    async ensureDatasetPath() {
-        if (this.dataPath) {
-            return this.dataPath;
-        }
-
-        const datasetName = await this.resolveActiveDatasetName();
-        this.dataPath = `modules/${this.moduleId}/datasets/${datasetName}`;
-        return this.dataPath;
-    }
-
-    getDatasetPath() {
-        if (this.dataPath) {
-            return this.dataPath;
-        }
-
-        if (this.activeDatasetName) {
-            return `modules/${this.moduleId}/datasets/${this.activeDatasetName}`;
-        }
-
-        return `modules/${this.moduleId}/datasets/wfrp4e`;
+    /**
     }
 
     /**
@@ -1031,7 +1084,7 @@ class DataManager {
     }
 
     /**
-     * Update settlement data (placeholder - would typically save to file system)
+     * Update settlement data - now persists to world flags
      * @param {Object} settlement - Settlement object to update
      * @returns {Promise<boolean>} - Success flag
      */
@@ -1071,7 +1124,8 @@ class DataManager {
                 }
             }, 100);
 
-            await this._persistUserDatasetChanges();
+            // Persist to world flags
+            await this.saveCurrentDataset();
             
             return true;
         } catch (error) {
@@ -1081,7 +1135,7 @@ class DataManager {
     }
 
     /**
-     * Update cargo type data (placeholder - would typically save to file system)
+     * Update cargo type data - now persists to world flags
      * @param {Object} cargoType - Cargo type object to update
      * @returns {Promise<boolean>} - Success flag
      */
@@ -1102,7 +1156,10 @@ class DataManager {
             }
 
             console.log(`Cargo type '${cargoType.name}' updated successfully`);
-            await this._persistUserDatasetChanges();
+            
+            // Persist to world flags
+            await this.saveCurrentDataset();
+            
             return true;
         } catch (error) {
             console.error('Failed to update cargo type:', error);
@@ -1111,98 +1168,76 @@ class DataManager {
     }
 
     /**
-     * Create a new user dataset
-     * @param {string} datasetName - Name of the dataset to create
+     * Create a new user dataset - now uses DatasetPersistence
+     * @param {string} datasetId - Dataset identifier
+     * @param {string} label - Dataset display label
+     * @returns {Promise<Object>} - Newly created dataset
+     */
+    async createUserDataset(datasetId, label) {
+        const persistence = this.getDatasetPersistence();
+        const dataset = await persistence.createUserDataset(datasetId, label);
+        console.log(`✅ User dataset ${datasetId} created`);
+        return dataset;
+    }
+
+    /**
+     * Delete a dataset - now uses DatasetPersistence
+     * @param {string} datasetId - Dataset identifier
      * @returns {Promise<boolean>} - Success flag
      */
-    async createUserDataset(datasetName) {
-        try {
-            if (!datasetName) {
-                throw new Error('Dataset name is required');
-            }
-
-            if (typeof game === 'undefined' || !game.settings) {
-                throw new Error('FoundryVTT environment required for user datasets');
-            }
-
-            // Check if dataset already exists
-            const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
-            if (userDatasets.includes(datasetName)) {
-                throw new Error(`User dataset '${datasetName}' already exists`);
-            }
-
-            // Add to user datasets list
-            userDatasets.push(datasetName);
-            await game.settings.set(MODULE_ID, 'userDatasets', userDatasets);
-
-            // Ensure we have a proper trading config with cargoSlots
-            let tradingConfig = this.tradingConfig;
-            if (!tradingConfig || !tradingConfig.cargoSlots) {
-                console.log('Current trading config is missing or incomplete, loading from built-in dataset');
-                try {
-                    tradingConfig = await this.loadBuiltInTradingConfig();
-                } catch (error) {
-                    console.warn('Failed to load built-in trading config, using fallback:', error);
-                    // Fallback trading config with essential cargoSlots
-                    tradingConfig = {
-                        cargoSlots: {
-                            basePerSize: { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5 },
-                            populationMultiplier: 0.0001,
-                            sizeMultiplier: 1.5,
-                            flagMultipliers: { "trade": 1.5 },
-                            hardCap: 10
-                        }
-                    };
-                }
-            }
-
-            // Create initial dataset data with empty arrays - user datasets should start clean
-            const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
-            const datasetData = {
-                name: datasetName,
-                settlements: [],
-                cargoTypes: [],
-                config: foundry.utils.deepClone(this.config || {}),
-                tradingConfig: foundry.utils.deepClone(tradingConfig),
-                sourceFlags: {} // Start with empty sourceFlags for new user datasets
-            };
-
-            // Always add dummy data for new user datasets to ensure minimum functionality
-            console.log(`Creating dummy settlement for new dataset '${datasetName}'`);
-            datasetData.settlements = [{
-                name: "Example Settlement",
-                region: "Example Region",
-                size: "T",
-                wealth: 3,
-                population: 5000,
-                ruler: "Example Ruler",
-                notes: "This is a placeholder settlement. Edit or delete this settlement and add your own settlements using the Data Management interface.",
-                source: ["trade", "agriculture"]
-            }];
-
-            console.log(`Creating dummy cargo type for new dataset '${datasetName}'`);
-            datasetData.cargoTypes = [{
-                name: "Example Cargo",
-                category: "Trade Goods",
-                basePrices: {
-                    spring: 100,
-                    summer: 120,
-                    autumn: 110,
-                    winter: 130
-                },
-                description: "This is a placeholder cargo type. Edit or delete this cargo type and add your own cargo types using the Data Management interface."
-            }];
-
-            userDatasetsData[datasetName] = datasetData;
-            await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
-
-            console.log(`User dataset '${datasetName}' created successfully`);
-            return true;
-        } catch (error) {
-            console.error('Failed to create user dataset:', error);
-            throw error;
+    async deleteDataset(datasetId) {
+        const persistence = this.getDatasetPersistence();
+        const result = await persistence.deleteDataset(datasetId);
+        
+        // If we deleted the active dataset, switch to wfrp4e WITHOUT saving
+        if (result && datasetId === this.activeDatasetName) {
+            await this.switchDataset('wfrp4e', true); // skipSave = true
         }
+        
+        return result;
     }
+
+    /**
+     * Get list of all available datasets
+     * @returns {Promise<Array>} - Array of dataset info objects
+     */
+    async listDatasets() {
+        const persistence = this.getDatasetPersistence();
+        return await persistence.listDatasets();
+    }
+
+    /**
+     * Delete a settlement from the active dataset
+     * @param {string} settlementName - Name of the settlement to delete
+     * @returns {Promise<boolean>} - Success flag
+     */
+    async deleteSettlement(settlementName) {
+        const index = this.settlements.findIndex(s => s.name === settlementName);
+        if (index >= 0) {
+            this.settlements.splice(index, 1);
+            await this.saveCurrentDataset();
+            console.log(`Settlement '${settlementName}' deleted`);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Delete a cargo type from the active dataset
+     * @param {string} cargoName - Name of the cargo type to delete
+     * @returns {Promise<boolean>} - Success flag
+     */
+    async deleteCargoType(cargoName) {
+        const index = this.cargoTypes.findIndex(c => c.name === cargoName);
+        if (index >= 0) {
+            this.cargoTypes.splice(index, 1);
+            await this.saveCurrentDataset();
+            console.log(`Cargo type '${cargoName}' deleted`);
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * Delete settlement by name (placeholder - would typically remove from file system)
@@ -1279,39 +1314,6 @@ class DataManager {
      * Delete a user dataset
      * @param {string} datasetName - Name of the dataset to delete
      * @returns {Promise<boolean>} - Success flag
-     */
-    async deleteUserDataset(datasetName) {
-        try {
-            if (!datasetName) {
-                throw new Error('Dataset name is required');
-            }
-
-            if (typeof game === 'undefined' || !game.settings) {
-                throw new Error('FoundryVTT environment required for user datasets');
-            }
-
-            // Check if dataset exists
-            const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
-            if (!userDatasets.includes(datasetName)) {
-                throw new Error(`User dataset '${datasetName}' not found`);
-            }
-
-            // Remove from user datasets list
-            const updatedUserDatasets = userDatasets.filter(name => name !== datasetName);
-            await game.settings.set(MODULE_ID, 'userDatasets', updatedUserDatasets);
-
-            // Remove from user datasets data
-            const userDatasetsData = game.settings.get(MODULE_ID, 'userDatasetsData') || {};
-            delete userDatasetsData[datasetName];
-            await game.settings.set(MODULE_ID, 'userDatasetsData', userDatasetsData);
-
-            console.log(`User dataset '${datasetName}' deleted successfully`);
-            return true;
-        } catch (error) {
-            console.error('Failed to delete user dataset:', error);
-            throw error;
-        }
-    }
 
     /**
      * Persist user dataset changes back to Foundry settings
@@ -1350,118 +1352,7 @@ class DataManager {
             throw error;
         }
     }
-    async _loadDatasetFromPath(datasetPath) {
-        if (typeof fetch === 'undefined') {
-            throw new Error('Dataset loading requires FoundryVTT environment with fetch support');
-        }
 
-        // Extract dataset name from path (e.g., "modules/trading-places/datasets/wfrp4e" -> "wfrp4e")
-        const datasetName = datasetPath.split('/').pop();
-
-        const [cargoResponse, configResponse, tradingConfigResponse, sourceFlagsResponse] = await Promise.all([
-            fetch(`${datasetPath}/cargo-types.json`, { cache: 'no-store' }),
-            fetch(`${datasetPath}/config.json`, { cache: 'no-store' }),
-            fetch(`${datasetPath}/trading-config.json`, { cache: 'no-store' }),
-            fetch(`${datasetPath}/source-flags.json`, { cache: 'no-store' })
-        ]);
-
-        if (!cargoResponse.ok) {
-            throw new Error(`Failed to load cargo types (${cargoResponse.status} ${cargoResponse.statusText})`);
-        }
-
-        if (!configResponse.ok) {
-            throw new Error(`Failed to load dataset config (${configResponse.status} ${configResponse.statusText})`);
-        }
-
-        if (!tradingConfigResponse.ok) {
-            throw new Error(`Failed to load trading config (${tradingConfigResponse.status} ${tradingConfigResponse.statusText})`);
-        }
-
-        if (!sourceFlagsResponse.ok) {
-            throw new Error(`Failed to load source flags (${sourceFlagsResponse.status} ${sourceFlagsResponse.statusText})`);
-        }
-
-        const cargoData = await cargoResponse.json();
-        const configData = await configResponse.json();
-        const tradingConfigData = await tradingConfigResponse.json();
-        const sourceFlagsData = await sourceFlagsResponse.json();
-
-        const settlementPromises = SETTLEMENT_FILES.map(file =>
-            fetch(`${datasetPath}/settlements/${file}`, { cache: 'no-store' })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .catch(error => {
-                    console.warn(`Failed to load settlement file ${file}:`, error);
-                    return [];
-                })
-        );
-
-        const settlementDataArray = await Promise.all(settlementPromises);
-
-        this.settlements = [];
-        settlementDataArray.forEach(data => {
-            if (Array.isArray(data)) {
-                this.settlements.push(...data);
-            }
-        });
-
-        this.cargoTypes = cargoData.cargoTypes || [];
-        this.config = configData;
-        this.tradingConfig = tradingConfigData;
-        this.sourceFlags = sourceFlagsData;
-        this.normalizedCurrencyConfig = null;
-        this.currencyContextCache = null;        const dataset = {
-            name: this.activeDatasetName,
-            settlements: this.settlements,
-            cargoTypes: this.cargoTypes,
-            config: this.config,
-            tradingConfig: this.tradingConfig,
-            sourceFlags: this.sourceFlags
-        };
-
-        const validation = this.validateDatasetCompleteness(dataset);
-        if (!validation.valid) {
-            throw new Error(`Dataset validation failed: ${validation.errors.join(', ')}`);
-        }
-
-        console.log(`Loaded ${this.settlements.length} settlements and ${this.cargoTypes.length} cargo types from ${datasetPath}`);
-        return dataset;
-    }
-
-    /**
-     * Load active dataset based on pointer/settings
-     * @returns {Promise<Object>} - Loaded dataset object
-     */
-    async loadActiveDataset() {
-        try {
-            const datasetPath = await this.ensureDatasetPath();
-            const datasetName = this.activeDatasetName;
-
-            // Check if this is a user dataset
-            if (typeof game !== 'undefined' && game.settings) {
-                const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
-                if (userDatasets.includes(datasetName)) {
-                    // Load user dataset from settings
-                    return await this.loadUserDataset(datasetName);
-                }
-            }
-
-            // Load built-in dataset from files
-            const result = await this._loadDatasetFromPath(datasetPath);
-            
-            // Load custom data from settings
-            await this.loadCustomData();
-            
-            return result;
-        } catch (error) {
-            console.error('Failed to load active dataset:', error);
-            throw error;
-        }
-    }
 
     /**
      * Load custom settlements and cargo types from Foundry settings
@@ -1503,80 +1394,6 @@ class DataManager {
             }
         } catch (error) {
             console.error('Trading Places | Failed to load custom data:', error);
-        }
-    }
-
-    /**
-     * Switch to a different dataset
-     * @param {string} datasetName - Name of the dataset directory
-     * @returns {Promise<Object>} - Loaded dataset object
-     */
-    async switchDataset(datasetName) {
-        try {
-            if (!datasetName) {
-                throw new Error('Dataset name is required');
-            }
-
-            // First check if this is a user dataset
-            if (typeof game !== 'undefined' && game.settings) {
-                const userDatasets = game.settings.get(MODULE_ID, 'userDatasets') || [];
-                if (userDatasets.includes(datasetName)) {
-                    // It's a user dataset, load it directly
-                    this.activeDatasetName = datasetName;
-                    this.normalizedCurrencyConfig = null;
-                    this.currencyContextCache = null;
-
-                    const result = await this.loadUserDataset(datasetName);
-
-                    // Persist the active dataset setting
-                    await game.settings.set(this.moduleId, 'activeDataset', datasetName);
-
-                    // Emit dataset change hook
-                    if (typeof Hooks !== 'undefined') {
-                        Hooks.callAll(`${MODULE_ID}.datasetChanged`, {
-                            newDataset: datasetName,
-                            datasetType: 'user',
-                            timestamp: new Date().toISOString()
-                        });
-                    }
-
-                    return result;
-                }
-            }
-
-            // It's not a user dataset, validate against system pointer
-            const pointer = await this.loadDatasetPointer();
-            const { folderName, entry } = this.normalizeDatasetName(datasetName, pointer);
-
-            if (!entry) {
-                throw new Error(`Dataset '${datasetName}' not found in system pointer. Available datasets: ${Object.keys(pointer.systems || {}).join(', ')}`);
-            }
-
-            this.activeDatasetName = folderName;
-            this.normalizedCurrencyConfig = null;
-            this.currencyContextCache = null;
-
-            // Load built-in dataset from files
-            this.dataPath = `modules/${this.moduleId}/datasets/${folderName}`;
-            const result = await this._loadDatasetFromPath(this.dataPath);
-
-            if (typeof game !== 'undefined' && game.settings) {
-                await game.settings.set(this.moduleId, 'activeDataset', folderName);
-            }
-
-            // Emit dataset change hook
-            if (typeof Hooks !== 'undefined') {
-                Hooks.callAll(`${MODULE_ID}.datasetChanged`, {
-                    newDataset: folderName,
-                    datasetType: 'built-in',
-                    timestamp: new Date().toISOString()
-                });
-            }
-
-            return result;
-        } catch (error) {
-            console.error(`Failed to switch to dataset '${datasetName}':`, error);
-            throw error;
         }
     }
 

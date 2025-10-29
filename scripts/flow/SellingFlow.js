@@ -58,10 +58,14 @@ export class SellingFlow {
             return;
         }
 
-        // Get current cargo
-        const datasetId = this.dataManager?.activeDatasetName || 'default';
-        const allCargoData = await game.settings.get(this.MODULE_ID, "currentCargo") || {};
-        const currentCargo = allCargoData[datasetId] || [];
+        // Get current cargo from DataManager
+        console.log('🚛 CARGO_PERSIST: Loading cargo for selling from DataManager');
+        const currentCargo = this.dataManager?.cargo || [];
+        console.log('🚛 CARGO_PERSIST: Current cargo:', {
+            cargoCount: currentCargo.length,
+            cargo: currentCargo
+        });
+        
         if (!currentCargo.length) {
             ui.notifications.warn('You have no cargo to sell');
             return;

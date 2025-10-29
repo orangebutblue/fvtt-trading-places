@@ -45,40 +45,67 @@ export class TradingPlacesSettings {
             default: ''
         });
 
-        // Custom settlements
+        // Active dataset (NEW - replaces old dataset system)
+        game.settings.register(this.MODULE_ID, 'activeDataset', {
+            name: 'Active Dataset',
+            hint: 'Currently active trading dataset',
+            type: String,
+            default: 'wfrp4e',
+            scope: 'world',
+            config: false
+        });
+
+        // Dataset persistence settings
+        game.settings.register(this.MODULE_ID, 'datasetsInitialized', {
+            name: 'Datasets Initialized',
+            hint: 'Flag indicating if datasets have been loaded from files',
+            type: Boolean,
+            default: false,
+            scope: 'world',
+            config: false
+        });
+
+        game.settings.register(this.MODULE_ID, 'datasets', {
+            name: 'Datasets',
+            hint: 'All trading datasets (file-based and user-created)',
+            type: Object,
+            default: {},
+            scope: 'world',
+            config: false
+        });
+
+        // DEPRECATED: Old settings kept for backward compatibility
+        // These are no longer used - datasets are now stored in world flags
         game.settings.register(this.MODULE_ID, 'customSettlements', {
-            name: 'Custom Settlements',
-            hint: 'User-created settlements from data management',
+            name: 'Custom Settlements (DEPRECATED)',
+            hint: 'User-created settlements from data management - no longer used',
             type: Array,
             default: [],
             scope: 'world',
             config: false
         });
 
-        // Custom cargo types
         game.settings.register(this.MODULE_ID, 'customCargoTypes', {
-            name: 'Custom Cargo Types',
-            hint: 'User-created cargo types from data management',
+            name: 'Custom Cargo Types (DEPRECATED)',
+            hint: 'User-created cargo types from data management - no longer used',
             type: Array,
             default: [],
             scope: 'world',
             config: false
         });
 
-        // User datasets
         game.settings.register(this.MODULE_ID, 'userDatasets', {
-            name: 'User Datasets',
-            hint: 'List of user-created dataset names',
+            name: 'User Datasets (DEPRECATED)',
+            hint: 'List of user-created dataset names - no longer used',
             type: Array,
             default: [],
             scope: 'world',
             config: false
         });
 
-        // User dataset data
         game.settings.register(this.MODULE_ID, 'userDatasetsData', {
-            name: 'User Datasets Data',
-            hint: 'Data for all user-created datasets',
+            name: 'User Datasets Data (DEPRECATED)',
+            hint: 'Data for all user-created datasets - no longer used',
             type: Object,
             default: {},
             scope: 'world',

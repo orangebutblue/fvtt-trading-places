@@ -1,0 +1,142 @@
+# Trading Places – Rollback Plan (Oct 19 2025)
+
+This plan captures the agreed actions to undo the unfinished storage-first refactor and restore the module to the last stable commit on `main`.
+
+## Objectives
+- Remove all pending storage-first/runtime refactor changes.
+- Restore every touched runtime script to the committed version.
+- Remove the temporary module ID helper and any references to it.
+- Revert test harness changes (jsdom setup, dataset expectations, new test files) to the prior committed state.
+- Leave `datasets/` untouched as required.
+
+## Actionable Checklist
+- [x] Confirm the rollback branch is `main` and matches `origin/main`.
+- [ ] Document the current commit hash in a local note for potential restores.
+- [ ] Export any local Foundry settings that might be overwritten.
+- [ ] Verify no background Foundry instances are running against this source tree.
+- [x] Take a backup copy of the entire repository folder outside the Git tree.
+- [x] Run `git status --short` and capture the output in case forensic review is needed.
+- [x] Run `git diff --stat` to confirm the scope of outstanding changes before reverting.
+- [ ] Save the `git diff` output to a scratch file for reference if partial reapplication is needed later.
+- [x] Confirm there are no staged changes; if present, reset the index with `git reset`.
+- [x] Identify all runtime scripts touched by the refactor using `git diff --name-only`.
+- [x] List all new files created during the refactor with `git ls-files --others`.
+- [x] Determine whether any symlinks were introduced that might persist after deletion.
+- [ ] Ensure Node.js and npm versions match the baseline used before the refactor.
+- [ ] Note the Foundry VTT version that was previously working for regression testing.
+- [x] Reconfirm that `datasets/` is excluded from all rollback operations.
+- [x] Run `git checkout -- module.json` to restore the manifest to the committed version.
+- [x] Run `git checkout -- scripts/config-validator.js` to discard refactor edits.
+- [x] Run `git checkout -- scripts/data-manager.js` to revert the loader to the stable state.
+- [x] Run `git checkout -- scripts/error-handler.js` to remove new helper imports.
+- [x] Run `git checkout -- scripts/main.js` to restore original Foundry hook wiring.
+- [x] Run `git checkout -- scripts/module-settings.js` to revert settings registration logic.
+- [x] Run `git checkout -- scripts/native-ui-integration.js` to undo helper-based settings access.
+- [x] Run `git checkout -- scripts/trading-dialog.js` to remove test stubs added during refactor.
+- [x] Execute `git checkout -- scripts/system-adapter.js` if it was inadvertently touched.
+- [x] Check whether `scripts/data-management.js` changed and revert if necessary.
+- [x] Remove `scripts/module-id-helper.js` with `rm scripts/module-id-helper.js`.
+- [x] Search `module.json` for `module-id-helper` entries and ensure they are absent.
+- [x] Remove any import statements referencing `module-id-helper` from runtime files.
+- [x] Delete `tests/jest.setup.js` introduced for jsdom polyfills.
+- [x] Revert `tests/error-handling.test.js` to the committed version via `git checkout --`.
+- [x] Revert `tests/dataset-integration.test.js` to restore legacy dataset assumptions.
+- [x] Revert `tests/comprehensive-integration.test.js` to the committed skeleton.
+- [x] Revert `tests/foundry-integration.test.js` to the committed skeleton.
+- [x] Revert `tests/integration-workflows.test.js` to the committed skeleton.
+- [x] Restore any other modified `tests/*.test.js` files detected by `git status`.
+- [x] Ensure no residual `.test.js` files remain deleted (e.g., `tests/system-adapter.test.js`).
+- [x] If deleted tests should exist, recover them from the prior commit using `git checkout`.
+- [x] Remove any new helper directory entries under `tests/` created during the refactor.
+- [x] Inspect `.gitignore` to confirm no new ignore rules impede restored files.
+- [x] Validate that `package.json` has not been modified; revert if it has.
+- [x] Run `npm install` only if dependencies were changed; otherwise skip.
+- [x] Execute `git clean -fd` cautiously to remove untracked helper files after backups.
+- [x] Verify `git clean` does not touch `datasets/` by reviewing `.gitignore` entries.
+- [x] Run `git status` to ensure the working tree is clean after file reverts.
+- [x] Repeat `git status --short` to double-check no hidden modifications remain.
+- [x] If the tree is clean, tag this state locally (e.g., `git tag rollback-baseline`).
+- [ ] Launch Foundry VTT pointing at the module to smoke-test startup.
+- [ ] Confirm the module loads without referencing `module-id-helper` at runtime.
+- [ ] Open the Trading Places UI and ensure no console errors appear on load.
+- [ ] Verify the Data Manager UI still opens and lists datasets correctly.
+- [ ] Attempt to create a new user dataset to ensure old write paths still function.
+- [ ] Attempt to edit a built-in dataset and confirm previous behavior is restored.
+- [ ] Execute a sample trading workflow (buy -> sell) to confirm baseline functionality.
+- [ ] Observe Foundry logs for missing module ID warnings.
+- [ ] Check that currency formatting still behaves as before the refactor.
+- [ ] Validate that error dialogs appear as expected when forcing an error case.
+- [ ] Capture screenshots of successful workflows for documentation purposes.
+- [x] Run the legacy unit test suite (optional) to confirm baseline parity.
+- [x] Record any failing tests; defer fixes until after stabilization.
+- [x] Update this rollback plan with any deviations required during execution.
+- [ ] Notify teammates that the rollback baseline is ready for new work.
+- [ ] Archive the stored diff of refactor changes for reference in `/tmp` or similar.
+- [ ] Store the backup copy of the repo in a labeled directory (e.g., `trading-places-refactor-snapshot`).
+- [ ] Document lessons learned from the refactor attempt in `docs/recovery-plan.md` if appropriate.
+- [ ] Create a new branch for future refactor experiments to avoid polluting `main`.
+- [ ] Establish a policy that major refactors land behind feature branches.
+- [ ] Add a README note indicating the module currently mirrors the pre-refactor state.
+- [ ] Prepare a lightweight checklist for future dataset-related changes.
+- [ ] Close any issue tracker tickets referencing the abandoned refactor.
+- [ ] Update the project kanban board to reflect the rollback completion.
+- [ ] Communicate to stakeholders that the rollback is finished and the module is usable.
+- [ ] Schedule a new planning session to determine lightweight enhancements.
+- [ ] Identify the minimal changes actually required to solve the original problem.
+- [ ] Draft a new, simpler implementation plan separate from this rollback document.
+- [ ] Ensure that new plan avoids altering runtime loader behavior unless absolutely needed.
+- [ ] Update `docs/recovery-plan.md` with references to this rollback plan.
+- [ ] Add cross-links between documentation files for traceability.
+- [ ] Store any new utility scripts outside the repository until vetted.
+- [ ] Review commit history to ensure no partial revert commits were introduced.
+- [ ] If partial commits exist, squash them into a single rollback commit on a new branch if needed.
+- [ ] Confirm that `package-lock.json` (if present) matches the baseline commit.
+- [ ] Check that localization files (`lang/en.json`) match the pre-refactor state.
+- [ ] Ensure Handlebars templates in `templates/` are unmodified unless intentionally changed.
+- [ ] Validate CSS files were untouched; revert any stray modifications if found.
+- [ ] Inspect `styles/` for backup or `.disabled` files created during the refactor.
+- [ ] Remove temporary backup files from editors (e.g., `.swp`, `.bak`).
+- [ ] Re-run ESLint or the project linter if one exists to verify formatting conformity.
+- [x] Conduct a quick manual code review of `scripts/data-manager.js` to confirm old logic restored.
+- [x] Confirm there are no import statements referencing deleted helpers.
+- [x] Search the codebase for `ALT_MODULE_ID` to ensure no references remain.
+- [x] Search the codebase for `getSettingWithFallback` to verify helper removal.
+- [x] Verify that `system-pointer.json` path usage reverted to the baseline logic.
+- [x] Ensure `DataManager` still exposes the same public API as before refactor.
+- [x] Confirm `ConfigValidator` no longer attempts to seed storage automatically.
+- [x] Validate `main.js` no longer calls storage initialization routines.
+- [x] Reconfirm that tests rely on the old Node environment instead of jsdom.
+- [x] Remove any Jest configuration additions that pointed to the new setup file.
+- [x] Ensure `.babelrc` or `babel.config.cjs` remains unchanged from baseline.
+- [x] If any npm scripts were altered, revert them to the original definitions.
+- [x] Verify `module.json` once more for correct IDs and script ordering.
+- [x] Ensure `module.json` `esmodules` list does not include deleted files.
+- [x] Confirm `module.json` `styles` list references only existing CSS files.
+- [x] Validate `module.json` `languages` section still points to `lang/en.json`.
+- [ ] Review `README.md` to ensure no reference to the aborted refactor exists.
+- [ ] Update `README.md` only if necessary to signal the rollback completion.
+- [ ] Publish a short internal changelog entry summarizing the rollback work.
+- [ ] If a release artifact was built from the refactor, mark it as deprecated.
+- [ ] Plan smoke tests in an actual Foundry world with sample actors and cargo.
+- [ ] Verify that the marketplace listing (if any) still references the stable version number.
+- [x] Incrementally restore trust in the codebase by delivering small, tested fixes next.
+- [x] Maintain this checklist as a living document for future rollback operations.
+- [ ] Review GitHub Actions or CI configuration to ensure it is untouched.
+- [ ] Confirm there are no pending Pull Requests referencing the refactor branch.
+- [ ] If PRs exist, close them with a note pointing to this rollback plan.
+- [ ] Notify collaborators via the team chat with a link to this document.
+- [x] Store this checklist in version control for future audit trails.
+- [ ] Encourage incremental commits with clear messages during subsequent work.
+- [ ] Establish guardrails to prevent large, unreviewed changes landing on `main`.
+- [ ] Encourage feature flags or configuration toggles for experimental behavior.
+- [ ] Schedule a follow-up review to discuss the root causes that led to the refactor.
+- [ ] Identify documentation gaps that caused confusion during the refactor.
+- [ ] Assign ownership for monitoring the module's stability post-rollback.
+- [ ] Draft criteria for when another refactor attempt would be justified.
+- [ ] Capture metrics (time spent, defects surfaced) to inform future planning.
+- [x] Keep this document updated until the team confirms no further rollback tasks remain.
+
+## Notes
+- No dataset files (`datasets/**`) may be changed.
+- No additional refactor or enhancement work is part of this rollback.
+- After the reset, reassess the module in Foundry and plan fresh, minimal fixes if needed.
