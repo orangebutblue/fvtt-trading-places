@@ -1,4 +1,4 @@
-/* WFRP Trading Places - Modern Unified UI Styles */
+/* Trading Places - Modern Unified UI Styles */
 @import url('./availability-status-banner.css');
 
 .trading-places {

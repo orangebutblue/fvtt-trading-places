@@ -856,26 +856,6 @@ function registerModuleSettings() {
         type: Object,
         default: {}
     });
-
-    // Selected settlement setting
-    game.settings.register(MODULE_ID, "selectedSettlement", {
-        name: "Selected Settlement",
-        hint: "Currently selected settlement for trading",
-        scope: "client",
-        config: false,
-        type: String,
-        default: null
-    });
-
-    // Selected region setting
-    game.settings.register(MODULE_ID, "selectedRegion", {
-        name: "Selected Region",
-        hint: "Currently selected region for trading",
-        scope: "client",
-        config: false,
-        type: String,
-        default: null
-    });
 }
 
 /**

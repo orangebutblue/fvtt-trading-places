@@ -20,6 +20,60 @@ export class TradingPlacesSettings {
             default: false
         });
 
+        game.settings.register(this.MODULE_ID, 'hideContrabandStatus', {
+            name: 'Hide Contraband Status in Chat',
+            hint: 'When posting cargo to chat, hide contraband status indicators.',
+            scope: 'client',
+            config: false, // Hidden from normal settings, controlled via checkbox in UI
+            type: Boolean,
+            default: false
+        });
+
+        game.settings.register(this.MODULE_ID, 'selectedSettlement', {
+            name: 'Selected Settlement',
+            hint: 'Currently selected settlement for trading',
+            scope: 'client',
+            config: false,
+            type: String,
+            default: ''
+        });
+
+        game.settings.register(this.MODULE_ID, 'selectedRegion', {
+            name: 'Selected Region',
+            hint: 'Currently selected region for trading',
+            scope: 'client',
+            config: false,
+            type: String,
+            default: ''
+        });
+
+        game.settings.register(this.MODULE_ID, 'cargoCapacity', {
+            name: 'Cargo Capacity',
+            hint: 'Maximum cargo capacity in EP',
+            scope: 'client',
+            config: false,
+            type: Number,
+            default: 400
+        });
+
+        game.settings.register(this.MODULE_ID, 'chatVisibility', {
+            name: 'Chat Message Visibility',
+            hint: 'Visibility setting for chat messages (gm or null)',
+            scope: 'client',
+            config: false,
+            type: String,
+            default: ''
+        });
+
+        game.settings.register(this.MODULE_ID, 'currentCargo', {
+            name: 'Current Cargo',
+            hint: 'Player current cargo inventory',
+            scope: 'world',
+            config: false,
+            type: Object,
+            default: {}
+        });
+
         // Trading Settings
         game.settings.register(this.MODULE_ID, 'merchantDishonestyChance', {
             name: 'Merchant Dishonesty Chance',

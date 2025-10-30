@@ -111,6 +111,11 @@ export class TradingUIEventHandlers {
      * @private
      */
     _attachContentListeners(html) {
+        // Initialize tooltip system now that element exists
+        if (this.app.renderer) {
+            this.app.renderer._initializeTooltipSystem();
+        }
+        
         // Settlement selection
         const settlementSelector = html.querySelector('.settlement-selector');
         if (settlementSelector) {
@@ -328,8 +333,7 @@ export class TradingUIEventHandlers {
                     targetContent.classList.add('active');
                     targetContent.style.display = 'block'; // Explicitly show
                     
-                    // Re-attach tooltip handlers for the newly visible tab content
-                    this._attachTooltipHandlersForTab(targetContent);
+                    // No need to attach tooltip handlers - unified system handles all tooltips
                 }
                 
                 this._logDebug('UI Interaction', 'Switched to tab:', targetTab);
@@ -385,52 +389,15 @@ export class TradingUIEventHandlers {
             debugToggle.addEventListener('change', this._onDebugToggle.bind(this));
         }
 
-        this._logDebug('Event Listeners', 'Unified UI listeners attached');
-    }
-
-    /**
-     * Attach tooltip handlers for info indicators within a specific tab content
-     * @param {HTMLElement} tabContent - The tab content element
-     * @private
-     */
-    _attachTooltipHandlersForTab(tabContent) {
-        if (!tabContent || !this.app.renderer) {
-            return;
+        // Hide contraband status checkbox
+        const hideContrabandCheckbox = html.querySelector('#hide-contraband-status');
+        if (hideContrabandCheckbox) {
+            hideContrabandCheckbox.addEventListener('change', this._onHideContrabandChange.bind(this));
+            // Load saved state
+            this._loadHideContrabandState();
         }
 
-        // Find all info indicators within this tab content
-        const infoIndicators = tabContent.querySelectorAll('.info-indicator');
-        
-        this._logDebug('Tooltip Handlers', `Found ${infoIndicators.length} info indicators in tab`, {
-            tabId: tabContent.id,
-            indicators: infoIndicators.length
-        });
-
-        infoIndicators.forEach((indicator, index) => {
-            // Remove any existing listeners to avoid duplicates
-            const existingHandler = indicator._tooltipHandler;
-            if (existingHandler) {
-                indicator.removeEventListener('click', existingHandler);
-            }
-
-            // Create new handler
-            const handler = (event) => {
-                event.stopPropagation();
-                const tooltip = event.target.dataset.infoTooltip;
-                if (tooltip && this.app.renderer._showInfoTooltip) {
-                    this.app.renderer._showInfoTooltip(tooltip, event.target);
-                }
-            };
-
-            // Store handler reference and attach
-            indicator._tooltipHandler = handler;
-            indicator.addEventListener('click', handler);
-            
-            this._logDebug('Tooltip Handlers', `Attached tooltip handler ${index + 1}`, {
-                hasTooltip: !!indicator.dataset.infoTooltip,
-                tooltipLength: indicator.dataset.infoTooltip?.length || 0
-            });
-        });
+        this._logDebug('Event Listeners', 'Unified UI listeners attached');
     }
 
     /**
@@ -672,6 +639,40 @@ export class TradingUIEventHandlers {
         this._logDebug('Event Handler', 'Debug toggle', { value: event.target.checked });
     }
 
+    /**
+     * Handle hide contraband status checkbox change
+     * @param {Event} event - Change event
+     * @private
+     */
+    async _onHideContrabandChange(event) {
+        const hideContraband = event.target.checked;
+        
+        try {
+            // Save the checkbox state to Foundry settings
+            await game.settings.set(MODULE_ID, "hideContrabandStatus", hideContraband);
+            this._logDebug('UI Settings', 'Hide contraband status setting saved', { hideContraband });
+        } catch (error) {
+            this._logError('UI Settings', 'Failed to save hide contraband status setting', { error: error.message });
+        }
+    }
+
+    /**
+     * Load the saved state of the hide contraband checkbox
+     * @private
+     */
+    async _loadHideContrabandState() {
+        try {
+            const hideContrabandCheckbox = this.app.element.querySelector('#hide-contraband-status');
+            if (hideContrabandCheckbox) {
+                const savedState = await game.settings.get(MODULE_ID, "hideContrabandStatus") || false;
+                hideContrabandCheckbox.checked = savedState;
+                this._logDebug('UI Settings', 'Hide contraband status setting loaded', { savedState });
+            }
+        } catch (error) {
+            this._logError('UI Settings', 'Failed to load hide contraband status setting', { error: error.message });
+        }
+    }
+
     _onClearDebugLog(event) {
         this._logDebug('Event Handler', 'Clear debug log');
     }
@@ -755,7 +756,39 @@ export class TradingUIEventHandlers {
                 // Update the cargo card to reflect reduced availability
                 this._updateBuyingCargoCard(cargo, quantity);
                 
-                // Just update the app's cargo data and let it re-render naturally
+                // Create transaction object with merchant information
+                // Find the merchant info from the successful cargo data
+                const successfulCargoItem = this.app.successfulCargo?.find(sc => 
+                    sc.name === cargo.name && 
+                    sc.category === cargo.category
+                );
+                const merchantName = successfulCargoItem?.merchant?.name || 'Unknown Merchant';
+                
+                const transaction = this._augmentTransaction({
+                    cargo: cargo.name,
+                    category: cargo.category,
+                    quantity: quantity,
+                    pricePerEP: totalCost / quantity,
+                    totalCost: totalCost,
+                    settlement: this.app.selectedSettlement.name,
+                    season: this.app.currentSeason,
+                    date: new Date().toISOString(),
+                    discountPercent: discountPercent,
+                    isSale: false,
+                    contraband: cargo.contraband || false,
+                    merchant: merchantName
+                });
+                
+                // Add to transaction history
+                if (!this.app.transactionHistory) {
+                    this.app.transactionHistory = [];
+                }
+                this.app.transactionHistory.unshift(transaction);
+                
+                // Add cargo to inventory with merchant information
+                await this._addCargoToInventory(transaction);
+                
+                // Update the app's cargo data and let it re-render naturally
                 const datasetId = this.app.dataManager.activeDatasetName;
                 const allCargoData = await game.settings.get(MODULE_ID, "currentCargo") || {};
                 const updatedCargo = allCargoData[datasetId] || [];
@@ -768,6 +801,7 @@ export class TradingUIEventHandlers {
                     quantity,
                     totalCost,
                     discountPercent,
+                    merchant: merchantName,
                     remainingEP: (cargo.totalEP ?? cargo.quantity ?? 0) - quantity
                 });
             } else {
@@ -1414,6 +1448,7 @@ export class TradingUIEventHandlers {
             existingCargo.totalCost = totalCost;
             existingCargo.pricePerEP = totalCost / totalQuantity;
             existingCargo.date = transaction.date; // Update to latest purchase date
+            existingCargo.merchant = transaction.merchant || existingCargo.merchant || 'Unknown Merchant'; // Keep latest merchant
             
             // Add formatted currency fields
             existingCargo.formattedPricePerEP = this._formatCurrencyFromDenomination(existingCargo.pricePerEP);
@@ -1435,6 +1470,7 @@ export class TradingUIEventHandlers {
                 season: transaction.season,
                 date: transaction.date,
                 contraband: transaction.contraband || false,
+                merchant: transaction.merchant || 'Unknown Merchant',
                 // Copy formatted fields from transaction
                 formattedPricePerEP: transaction.formattedPricePerEP || this._formatCurrencyFromDenomination(transaction.pricePerEP),
                 formattedTotalCost: transaction.formattedTotalCost || this._formatCurrencyFromDenomination(transaction.totalCost),
@@ -2234,6 +2270,7 @@ export class TradingUIEventHandlers {
                         <div class="cargo-title"><strong>${cargo.cargo}</strong> (${cargo.category}): <strong>${cargo.quantity} EP</strong></div>
                         <div class="cargo-cost">Cost: ${formattedTotal} (${formattedPrice} per EP)</div>
                         <div class="cargo-origin">${cargo.settlement}</div>
+                        <div class="cargo-merchant">Merchant: ${cargo.merchant || 'Unknown'}</div>
                         ${contrabandStatus ? `<div class="cargo-contraband">${contrabandStatus}</div>` : ''}
                     </td>
                 </tr>`;

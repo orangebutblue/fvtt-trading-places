@@ -541,22 +541,14 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         });
         context.playerCargo = this.playerCargo;
 
-        // Cargo data for the cargo tab - ensure we use the most current data
-        // Check if currentCargo exists on the app instance first, otherwise load from settings
-        if (this.currentCargo && Array.isArray(this.currentCargo) && this.currentCargo.length > 0) {
-            this.currentCargo = this._prepareCurrentCargoList(this.currentCargo);
-            context.currentCargo = this.currentCargo;
-            console.log('🚛 CARGO DEBUG: Using currentCargo from app instance', {
-                length: this.currentCargo.length
-            });
-        } else {
-            context.currentCargo = await this._getCurrentCargoData();
-            // Also update the app instance with the loaded data
-            this.currentCargo = context.currentCargo;
-            console.log('🚛 CARGO DEBUG: Loaded currentCargo from settings', {
-                length: context.currentCargo.length
-            });
-        }
+        // Cargo data for the cargo tab - ALWAYS reload from DataManager to ensure fresh data
+        context.currentCargo = await this._getCurrentCargoData();
+        // Also update the app instance with the loaded data
+        this.currentCargo = context.currentCargo;
+        console.log('🚛 CARGO DEBUG: Loaded currentCargo from DataManager', {
+            length: context.currentCargo.length,
+            firstItem: context.currentCargo[0]
+        });
         context.cargoCapacity = await game.settings.get(MODULE_ID, "cargoCapacity") || 400;
         context.currentLoad = this._calculateCurrentLoad(context.currentCargo);
         context.capacityPercentage = Math.min((context.currentLoad / context.cargoCapacity) * 100, 100);
@@ -736,22 +728,22 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         this._logInfo('Application Lifecycle', 'Application rendered successfully');
 
         // Debug: Log the actual HTML structure
-        console.log('WFRP Trading | Application element:', this.element);
-        console.log('WFRP Trading | Application classes:', this.element?.className);
-        console.log('WFRP Trading | Parent element:', this.element?.parentElement);
-        console.log('WFRP Trading | Window element:', this.element?.closest('.app'));
+        console.log('Trading Places | Application element:', this.element);
+        console.log('Trading Places | Application classes:', this.element?.className);
+        console.log('Trading Places | Parent element:', this.element?.parentElement);
+        console.log('Trading Places | Window element:', this.element?.closest('.app'));
         
         // Force background styles for debugging
         if (this.element) {
             this.element.style.backgroundColor = '#2c2c2c';
             this.element.style.border = '2px solid #333';
-            console.log('WFRP Trading | Forced styles applied to element');
+            console.log('Trading Places | Forced styles applied to element');
             
             const windowElement = this.element.closest('.app');
             if (windowElement) {
                 windowElement.style.backgroundColor = '#2c2c2c';
                 windowElement.style.border = '2px solid #333';
-                console.log('WFRP Trading | Forced styles applied to window element');
+                console.log('Trading Places | Forced styles applied to window element');
             }
         }
 

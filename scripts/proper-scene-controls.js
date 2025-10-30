@@ -85,7 +85,7 @@ class WFRPProperSceneControls {
                         // Use FoundryVTT's expected structure with tools array
                         const tradingControl = {
                             name: 'trading-places',
-                            title: 'WFRP Trading Places',
+                            title: 'Trading Places',
                             icon: 'fas fa-coins',
                             layer: 'TokenLayer',
                             visible: true,
@@ -96,23 +96,23 @@ class WFRPProperSceneControls {
                                 icon: 'fas fa-store',
                                 button: true,
                                 onClick: () => {
-                                    console.log('WFRP Trading | Trading tool clicked!');
+                                    console.log('Trading Places | Trading tool clicked!');
                                     try {
                                         if (window.TradingPlacesApplication) {
-                                            console.log('WFRP Trading | Opening TradingPlacesApplication...');
+                                            console.log('Trading Places | Opening TradingPlacesApplication...');
                                             const app = new window.TradingPlacesApplication();
                                             app.render(true);
-                                            console.log('WFRP Trading | TradingPlacesApplication opened successfully');
+                                            console.log('Trading Places | TradingPlacesApplication opened successfully');
                                         } else if (window.WFRPSimpleTradingV2) {
-                                            console.log('WFRP Trading | Opening WFRPSimpleTradingV2...');
+                                            console.log('Trading Places | Opening WFRPSimpleTradingV2...');
                                             window.WFRPSimpleTradingV2.openDialog();
-                                            console.log('WFRP Trading | WFRPSimpleTradingV2 opened successfully');
+                                            console.log('Trading Places | WFRPSimpleTradingV2 opened successfully');
                                         } else {
-                                            console.log('WFRP Trading | No trading applications available');
+                                            console.log('Trading Places | No trading applications available');
                                             ui.notifications.info('Trading interface clicked! Applications are available.');
                                         }
                                     } catch (error) {
-                                        console.error('WFRP Trading | Error opening trading interface:', error);
+                                        console.error('Trading Places | Error opening trading interface:', error);
                                         ui.notifications.error('Error opening trading interface. Check console for details.');
                                     }
                                 }
@@ -165,7 +165,7 @@ class WFRPProperSceneControls {
                             
                             if (tradingButton.length > 0) {
                                 tradingButton.off('click').on('click', (event) => {
-                                    console.log('WFRP Trading | Button clicked via direct handler!');
+                                    console.log('Trading Places | Button clicked via direct handler!');
                                     event.preventDefault();
                                     event.stopPropagation();
                                     this.openTradingInterface();
@@ -183,7 +183,7 @@ class WFRPProperSceneControls {
                         // Set up persistent click handler using event delegation
                         console.log('Trading Places | Setting up persistent click handler...');
                         $(document).off('click.trading-places').on('click.trading-places', '[data-tool="open-trading"]', (event) => {
-                            console.log('WFRP Trading | Button clicked via document delegation!');
+                            console.log('Trading Places | Button clicked via document delegation!');
                             event.preventDefault();
                             event.stopPropagation();
                             this.openTradingInterface();
@@ -221,7 +221,7 @@ class WFRPProperSceneControls {
         
         // Safety check - make sure controls is a valid array
         if (!controls || !Array.isArray(controls)) {
-            console.log('WFRP Trading | Controls is not a valid array in addTradingControls:', typeof controls);
+            console.log('Trading Places | Controls is not a valid array in addTradingControls:', typeof controls);
             return;
         }
         
@@ -251,41 +251,41 @@ class WFRPProperSceneControls {
      * Called when the scene controls button is clicked
      */
     openTradingInterface() {
-        console.log('WFRP Trading | openTradingInterface called');
+        console.log('Trading Places | openTradingInterface called');
         this.log('Scene controls trading button clicked - opening interface');
         
         try {
-            console.log('WFRP Trading | Checking for TradingPlacesApplication...');
-            console.log('WFRP Trading | window.TradingPlacesApplication:', typeof window.TradingPlacesApplication);
+            console.log('Trading Places | Checking for TradingPlacesApplication...');
+            console.log('Trading Places | window.TradingPlacesApplication:', typeof window.TradingPlacesApplication);
             
             // Try to open the trading interface using the proper application
             if (window.TradingPlacesApplication) {
-                console.log('WFRP Trading | Creating TradingPlacesApplication instance...');
+                console.log('Trading Places | Creating TradingPlacesApplication instance...');
                 const app = new window.TradingPlacesApplication();
-                console.log('WFRP Trading | App created:', app);
-                console.log('WFRP Trading | Calling app.render(true)...');
+                console.log('Trading Places | App created:', app);
+                console.log('Trading Places | Calling app.render(true)...');
                 app.render(true);
-                console.log('WFRP Trading | app.render(true) completed');
+                console.log('Trading Places | app.render(true) completed');
                 this.log('Trading interface opened successfully');
             } else {
                 // Fallback to simple trading if main app not available
-                console.log('WFRP Trading | TradingPlacesApplication not available, trying fallback');
+                console.log('Trading Places | TradingPlacesApplication not available, trying fallback');
                 this.log('Main trading app not available, trying fallback');
-                console.log('WFRP Trading | window.WFRPSimpleTradingV2:', typeof window.WFRPSimpleTradingV2);
+                console.log('Trading Places | window.WFRPSimpleTradingV2:', typeof window.WFRPSimpleTradingV2);
                 
                 if (window.WFRPSimpleTradingV2) {
-                    console.log('WFRP Trading | Calling WFRPSimpleTradingV2.openDialog()...');
+                    console.log('Trading Places | Calling WFRPSimpleTradingV2.openDialog()...');
                     window.WFRPSimpleTradingV2.openDialog();
-                    console.log('WFRP Trading | WFRPSimpleTradingV2.openDialog() completed');
+                    console.log('Trading Places | WFRPSimpleTradingV2.openDialog() completed');
                 } else {
-                    console.log('WFRP Trading | No trading applications available');
+                    console.log('Trading Places | No trading applications available');
                     ui.notifications.error("Trading interface not available.");
                     this.log('No trading interface available');
                 }
             }
-            console.log('WFRP Trading | openTradingInterface completed successfully');
+            console.log('Trading Places | openTradingInterface completed successfully');
         } catch (error) {
-            console.error('WFRP Trading | Error in openTradingInterface:', error);
+            console.error('Trading Places | Error in openTradingInterface:', error);
             this.log('Error opening trading interface', error);
             ui.notifications.error("Error opening trading interface. Check console for details.");
         }

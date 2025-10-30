@@ -31,10 +31,52 @@ export default class TradingUIRenderer {
             quantity: '📊'
         };
 
-    // Tooltip management
-    this._currentTooltip = null;
-    this._currentTrigger = null;
-    this._handleGlobalPointerDown = this._handleGlobalPointerDown.bind(this);
+        // Tooltip management - simple state
+        this._currentTooltip = null;
+        this._tooltipSystemInitialized = false;
+    }
+
+    /**
+     * Initialize the unified tooltip system using event delegation
+     * This runs once and handles ALL tooltips in the application
+     * @private
+     */
+    _initializeTooltipSystem() {
+        // Only initialize once
+        if (this._tooltipSystemInitialized) return;
+        if (!this.app.element) return; // Element must exist
+        
+        this._tooltipSystemInitialized = true;
+        
+        // Use event delegation on the app element to catch all info-indicator clicks
+        this.app.element.addEventListener('click', (event) => {
+            const indicator = event.target.closest('.info-indicator');
+            if (!indicator) return;
+            
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const tooltip = indicator.dataset.infoTooltip;
+            if (!tooltip) return;
+            
+            // Toggle: if clicking the same indicator, hide tooltip
+            if (this._currentTooltip && this._currentTooltip.trigger === indicator) {
+                this._hideTooltip();
+            } else {
+                this._showTooltip(tooltip, indicator);
+            }
+        });
+        
+        // Hide tooltip when clicking anywhere else
+        document.addEventListener('click', (event) => {
+            if (!this._currentTooltip) return;
+            
+            // Don't hide if clicking the tooltip itself or the trigger
+            if (this._currentTooltip.element.contains(event.target)) return;
+            if (this._currentTooltip.trigger === event.target || this._currentTooltip.trigger.contains(event.target)) return;
+            
+            this._hideTooltip();
+        }, true);
     }
 
     _getCurrencyContext() {
@@ -214,22 +256,7 @@ export default class TradingUIRenderer {
             }
             return;
         }
-
-        const infoIndicators = settlementInfoSection.querySelectorAll('.info-indicator');
-        console.log('🔍 DEBUG: Found info indicators:', infoIndicators.length);
-
-        infoIndicators.forEach((indicator, index) => {
-            // Remove existing listeners to avoid duplicates is unnecessary for inline handlers
-            // Add the click handler with proper binding
-            indicator.addEventListener('click', (event) => {
-                console.log('🔍 DEBUG: Info indicator clicked:', index, event.target.dataset.infoTooltip);
-                event.stopPropagation();
-                const tooltip = event.target.dataset.infoTooltip;
-                if (tooltip) {
-                    this._showInfoTooltip(tooltip, event.target);
-                }
-            });
-        });
+        // Tooltips handled by unified system in constructor
     }
 
     _showAvailabilityResults({ availabilityResult, availableCargo = [], pipelineResult = null } = {}) {
@@ -344,19 +371,7 @@ export default class TradingUIRenderer {
         `;
 
         resultsContainer.style.display = 'block';
-
-        const infoIndicators = resultsContainer.querySelectorAll('.info-indicator');
-        console.log('🔍 DEBUG: Found cargo info indicators:', infoIndicators.length);
-        infoIndicators.forEach((indicator, index) => {
-            indicator.addEventListener('click', (event) => {
-                console.log('🔍 DEBUG: Cargo info indicator clicked:', index, indicator.dataset.infoTooltip);
-                event.stopPropagation();
-                const tooltip = indicator.dataset.infoTooltip;
-                if (tooltip) {
-                    this._showInfoTooltip(tooltip, indicator);
-                }
-            });
-        });
+        // Tooltips handled by unified system in constructor
     }
 
     _createInfoIndicator(tooltip, classes = 'info-indicator') {
@@ -813,20 +828,7 @@ export default class TradingUIRenderer {
 
         // Add event listeners for the buying interface
         this._attachBuyingInterfaceListeners(card, cargo);
-
-        // Add tooltip handlers for info indicators in this cargo card
-        const infoIndicators = card.querySelectorAll('.info-indicator');
-        console.log('🔍 DEBUG: Found cargo card info indicators:', infoIndicators.length);
-        infoIndicators.forEach((indicator, index) => {
-            indicator.addEventListener('click', (event) => {
-                console.log('🔍 DEBUG: Cargo card info indicator clicked:', index, indicator.dataset.infoTooltip);
-                event.stopPropagation();
-                const tooltip = indicator.dataset.infoTooltip;
-                if (tooltip) {
-                    this._showInfoTooltip(tooltip, indicator);
-                }
-            });
-        });
+        // Tooltips handled by unified system in constructor
 
         return card;
     }
@@ -1011,6 +1013,7 @@ export default class TradingUIRenderer {
             discountPercent: discountPercent,
             isSale: false,
             contraband: cargo.slotInfo?.contraband?.contraband || false,
+            merchant: cargo.merchant?.name || cargo.merchant || 'Unknown Merchant',
             isManualEntry: false
         });
         
@@ -1416,99 +1419,58 @@ export default class TradingUIRenderer {
      * @param {HTMLElement} triggerElement - The element that triggered the tooltip
      * @private
      */
-    _showInfoTooltip(content, triggerElement) {
-        // Toggle off if the same indicator is clicked while tooltip is visible
-        if (this._currentTooltip && this._currentTrigger === triggerElement) {
-            this._hideInfoTooltip();
-            return;
-        }
+    /**
+     * Show a tooltip near the trigger element
+     * @param {string} content - Tooltip content
+     * @param {HTMLElement} triggerElement - Element that triggered the tooltip
+     * @private
+     */
+    _showTooltip(content, triggerElement) {
+        this._hideTooltip();
 
-        // Hide any existing tooltip first
-        this._hideInfoTooltip();
-
-        // Create tooltip element
         const tooltip = document.createElement('div');
         tooltip.className = 'info-tooltip';
         tooltip.innerHTML = `<p>${content.replace(/\n/g, '<br>')}</p>`;
 
-        // Position the tooltip near the trigger element
         const rect = triggerElement.getBoundingClientRect();
         const appRect = this.app.element.getBoundingClientRect();
 
-        // Try to position below the trigger element first
         let left = rect.left - appRect.left;
         let top = rect.bottom - appRect.top + 5;
 
-        // If it would go off the right edge, position it to the left
         if (left + 300 > appRect.width) {
             left = appRect.width - 300 - 5;
         }
-
-        // If it would go off the bottom, position it above
         if (top + 200 > appRect.height) {
             top = rect.top - appRect.top - 200 - 5;
         }
 
-        // Ensure it doesn't go off the edges
         left = Math.max(5, Math.min(left, appRect.width - 300 - 5));
         top = Math.max(5, top);
 
-        tooltip.style.left = `${left}px`;
-        tooltip.style.top = `${top}px`;
-        tooltip.style.position = 'absolute';
-
-        // Add to the app element instead of document.body
+        tooltip.style.cssText = `left: ${left}px; top: ${top}px; position: absolute; z-index: 10000;`;
         this.app.element.appendChild(tooltip);
-
-        // Show with animation
         requestAnimationFrame(() => tooltip.classList.add('show'));
 
-        // Store reference for cleanup and attach global listener
-        this._currentTooltip = tooltip;
-        this._currentTrigger = triggerElement;
-
-        document.addEventListener('pointerdown', this._handleGlobalPointerDown, true);
-    }
-
-    _handleGlobalPointerDown(event) {
-        if (!this._currentTooltip) {
-            return;
-        }
-
-        const target = event.target;
-
-        if (this._currentTooltip.contains(target)) {
-            return;
-        }
-
-        if (this._currentTrigger && (target === this._currentTrigger || this._currentTrigger.contains(target))) {
-            return;
-        }
-
-        if (target.closest('.info-indicator')) {
-            return;
-        }
-
-        this._hideInfoTooltip();
+        this._currentTooltip = { element: tooltip, trigger: triggerElement };
     }
 
     /**
-     * Hide the current info tooltip
+     * Hide the current tooltip
      * @private
      */
-    _hideInfoTooltip() {
-        if (this._currentTooltip) {
-            const tooltip = this._currentTooltip;
-            tooltip.classList.remove('show');
-            setTimeout(() => {
-                if (tooltip && tooltip.parentNode) {
-                    tooltip.parentNode.removeChild(tooltip);
-                }
-            }, 200); // Wait for animation
-        }
+    _hideTooltip() {
+        if (!this._currentTooltip) return;
+        
+        const tooltip = this._currentTooltip.element;
+        tooltip.classList.remove('show');
+        setTimeout(() => {
+            if (tooltip && tooltip.parentNode) {
+                tooltip.parentNode.removeChild(tooltip);
+            }
+        }, 200);
+        
         this._currentTooltip = null;
-        this._currentTrigger = null;
-        document.removeEventListener('pointerdown', this._handleGlobalPointerDown, true);
     }
 
     /**
