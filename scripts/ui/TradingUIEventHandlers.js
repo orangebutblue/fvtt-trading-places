@@ -290,6 +290,13 @@ export class TradingUIEventHandlers {
             this._logDebug('Event Listeners', 'Attached data management button listener');
         }
 
+        // Post Cargo to Chat Button
+        const postCargoToChatBtn = html.querySelector('#post-cargo-to-chat');
+        if (postCargoToChatBtn) {
+            postCargoToChatBtn.addEventListener('click', this._onPostCargoToChat.bind(this));
+            this._logDebug('Event Listeners', 'Attached post cargo to chat button listener');
+        }
+
 
         this._logDebug('Event Listeners', 'Content listeners attached');
     }
@@ -2180,6 +2187,85 @@ export class TradingUIEventHandlers {
             console.error('Failed to open data management UI:', error);
             this._logError('Data Management', 'Failed to open data management UI', error);
             ui.notifications.error('Failed to open data management interface');
+        }
+    }
+
+    /**
+     * Handle posting cargo contents to chat
+     * @param {Event} event - Click event
+     * @private
+     */
+    async _onPostCargoToChat(event) {
+        event.preventDefault();
+
+        try {
+            // Get current cargo data
+            const currentCargo = await this._getCurrentCargo();
+
+            if (!currentCargo || currentCargo.length === 0) {
+                ui.notifications.warn('No cargo to post to chat');
+                return;
+            }
+
+            // Check if contraband status should be hidden
+            const hideContrabandCheckbox = this.app.element.querySelector('#hide-contraband-status');
+            const hideContraband = hideContrabandCheckbox?.checked || false;
+
+            // Calculate total load and capacity
+            const cargoCapacity = await game.settings.get(MODULE_ID, "cargoCapacity") || 400;
+            const currentLoad = currentCargo.reduce((total, cargo) => total + (cargo.quantity || 0), 0);
+            const capacityPercentage = Math.min((currentLoad / cargoCapacity) * 100, 100);
+
+            // Build structured chat message content
+            let content = `<div class="trading-places-cargo-chat">
+                <div class="cargo-header">
+                    📦 <strong>Cargo Manifest</strong> (${currentLoad}/${cargoCapacity} EP - ${capacityPercentage.toFixed(1)}% capacity)
+                </div>
+                <table class="cargo-table">`;
+
+            // Add each cargo item as a table row
+            currentCargo.forEach(cargo => {
+                const formattedPrice = cargo.formattedPricePerEP || this._formatCurrencyFromDenomination(cargo.pricePerEP, '--');
+                const formattedTotal = cargo.formattedTotalCost || this._formatCurrencyFromDenomination(cargo.totalCost, '--');
+                const contrabandStatus = (!hideContraband && cargo.contraband) ? '⚠️ Contraband' : '';
+
+                content += `<tr class="cargo-item-row">
+                    <td class="cargo-item-cell">
+                        <div class="cargo-title"><strong>${cargo.cargo}</strong> (${cargo.category}): <strong>${cargo.quantity} EP</strong></div>
+                        <div class="cargo-cost">Cost: ${formattedTotal} (${formattedPrice} per EP)</div>
+                        <div class="cargo-origin">${cargo.settlement}</div>
+                        ${contrabandStatus ? `<div class="cargo-contraband">${contrabandStatus}</div>` : ''}
+                    </td>
+                </tr>`;
+            });
+
+            content += `</table></div>`;
+
+            // Get chat visibility setting
+            const chatVisibility = game.settings.get(MODULE_ID, "chatVisibility");
+            const whisperTargets = chatVisibility === "gm" ? [game.user.id] : null;
+
+            // Post to chat
+            await ChatMessage.create({
+                content: content,
+                whisper: whisperTargets,
+                speaker: {
+                    alias: game.user.name,
+                    actor: game.user.character?.id || null
+                }
+            });
+
+            ui.notifications.info('Cargo manifest posted to chat');
+            this._logInfo('Chat Integration', 'Cargo contents posted to chat', {
+                cargoCount: currentCargo.length,
+                totalLoad: currentLoad,
+                visibility: chatVisibility,
+                hideContraband: hideContraband
+            });
+
+        } catch (error) {
+            this._logError('Chat Integration', 'Failed to post cargo to chat', { error: error.message });
+            ui.notifications.error(`Failed to post cargo to chat: ${error.message}`);
         }
     }
 
