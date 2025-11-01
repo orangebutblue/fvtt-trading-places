@@ -5,12 +5,12 @@
     "size": 4,
     "wealth": 5,
     "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
-    "produces": [
-      "Trade",
-      "Government"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "trade",
+      "government"
+    ],
     "garrison": {
       "a": 1800
     },
@@ -28,7 +28,7 @@
     "ruler": "Emperor",
     "produces": [
       "Timber",
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -60,7 +60,7 @@
     "wealth": 1,
     "ruler": "Emperor",
     "produces": [
-      "Luxuries (Textiles)"
+      "Textiles"
     ],
     "demands": [],
     "flags": [],
@@ -76,7 +76,7 @@
     "wealth": 1,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -94,7 +94,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -110,7 +110,7 @@
     "wealth": 1,
     "ruler": "Emperor",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Wool"
     ],
     "demands": [],
@@ -126,11 +126,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "Emperor",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {},
     "notes": "",
@@ -144,7 +144,7 @@
     "ruler": "Emperor",
     "produces": [
       "Timber",
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -160,7 +160,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -176,7 +176,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -194,7 +194,7 @@
     "wealth": 1,
     "ruler": "Emperor",
     "produces": [
-      "Luxuries (Pottery)"
+      "Pottery"
     ],
     "demands": [],
     "flags": [],
@@ -210,7 +210,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -226,7 +226,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -241,11 +241,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "Emperor",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {
       "b": 10
@@ -259,11 +259,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "Emperor",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {},
     "notes": "",
@@ -276,7 +276,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Wine"
     ],
     "demands": [],
@@ -293,7 +293,7 @@
     "wealth": 1,
     "ruler": "Emperor",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Wine"
     ],
     "demands": [],
@@ -309,11 +309,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "Emperor",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {
       "c": 5
@@ -329,7 +329,7 @@
     "ruler": "Emperor",
     "produces": [
       "Bricks",
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -344,11 +344,11 @@
     "size": 3,
     "wealth": 4,
     "ruler": "Emperor",
-    "produces": [
-      "Government"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "government"
+    ],
     "garrison": {
       "c": 200
     },
@@ -363,7 +363,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Wool"
     ],
     "demands": [],
@@ -383,11 +383,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "Emperor",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {},
     "notes": "Ferry",
@@ -399,11 +399,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "Emperor",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {},
     "notes": "Ferry",
@@ -415,11 +415,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "Emperor",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {},
     "notes": "Ferry",
@@ -432,7 +432,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -450,7 +450,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -467,11 +467,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "Emperor",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {
       "c": 10
@@ -486,7 +486,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -504,7 +504,7 @@
     "wealth": 3,
     "ruler": "Graf Johann von Hardenburg",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Wine"
     ],
     "demands": [],
@@ -524,12 +524,12 @@
     "size": 3,
     "wealth": 2,
     "ruler": "Emperor",
-    "produces": [
-      "Trade",
-      "Boatbuilding"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "trade",
+      "boatbuilding"
+    ],
     "garrison": {
       "b": 25
     },
@@ -545,11 +545,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "Emperor",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {},
     "notes": "Ferry",
@@ -563,7 +563,7 @@
     "ruler": "Emperor",
     "produces": [
       "Timber",
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -581,7 +581,7 @@
     "wealth": 1,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -597,7 +597,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Wool"
     ],
     "demands": [],
@@ -616,7 +616,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -635,12 +635,13 @@
     "ruler": "Town Council",
     "produces": [
       "Armaments",
-      "Trade",
       "Wine",
       "Brandy"
     ],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "trade"
+    ],
     "garrison": {
       "b": 20
     },
@@ -657,7 +658,7 @@
     "wealth": 2,
     "ruler": "Kemperbad Town Council",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -677,7 +678,7 @@
     "produces": [
       "Wine",
       "Brandy",
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -752,11 +753,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "Graf von Falkenhayn",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {
       "c": 10
@@ -770,11 +771,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "G. von Falkenhayn",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {},
     "notes": "Ferry",
@@ -786,11 +787,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "G. von Falkenhayn",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {
       "c": 10
@@ -804,11 +805,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "G. von Falkenhayn",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {
       "c": 5
@@ -824,12 +825,18 @@
     "ruler": "Emperor",
     "produces": [
       "Armaments",
-      "Trade",
-      "Metal",
-      "Metalworking"
+      "Copper",
+      "Iron",
+      "Lead",
+      "Silver",
+      "Gold",
+      "Tin"
     ],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "trade",
+      "metalworking"
+    ],
     "garrison": {
       "b": 40
     },
@@ -846,7 +853,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Wool"
     ],
     "demands": [],
@@ -865,7 +872,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -883,7 +890,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -900,11 +907,11 @@
     "size": 1,
     "wealth": 1,
     "ruler": "Emperor",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
     "militia": {},
     "notes": "",
@@ -917,7 +924,12 @@
     "wealth": 3,
     "ruler": "Emperor",
     "produces": [
-      "Metal"
+      "Copper",
+      "Iron",
+      "Lead",
+      "Silver",
+      "Gold",
+      "Tin"
     ],
     "demands": [],
     "flags": [],
@@ -937,7 +949,7 @@
     "wealth": 3,
     "ruler": "Emperor",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Armaments"
     ],
     "demands": [],
@@ -956,7 +968,7 @@
     "wealth": 2,
     "ruler": "Emperor",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -974,11 +986,23 @@
     "wealth": 2,
     "ruler": "Emperor (ruled by Gruber family)",
     "produces": [
-      "Trade",
-      "Luxuries"
+      "Cheese",
+      "Pottery",
+      "Textiles",
+      "Books",
+      "Tobacco",
+      "Tourmaline",
+      "Glass",
+      "Spices",
+      "Silks",
+      "Jewelry",
+      "Fine Art",
+      "Carpets"
     ],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "trade"
+    ],
     "garrison": {},
     "militia": {},
     "notes": "Ferry, Lock House on Altdorf Canal",
@@ -990,11 +1014,11 @@
     "size": 2,
     "wealth": 1,
     "ruler": "Baroness Magritta von Wittgentsien",
-    "produces": [
-      "Subsistence"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {
       "b": 25
     },
@@ -1009,12 +1033,13 @@
     "wealth": 3,
     "ruler": "Graf Wilhelm von Saponatheim",
     "produces": [
-      "Trade",
       "Wine",
       "Timber"
     ],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "trade"
+    ],
     "garrison": {},
     "militia": {
       "c": 500
@@ -1029,7 +1054,7 @@
     "wealth": 2,
     "ruler": "Graf von Saponatheim",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Wool"
     ],
     "demands": [],
@@ -1048,7 +1073,7 @@
     "wealth": 3,
     "ruler": "Graf von Saponatheim",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Wine",
       "Wool"
     ],
@@ -1068,7 +1093,7 @@
     "wealth": 2,
     "ruler": "Graf von Saponatheim",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
     "flags": [],
@@ -1101,11 +1126,11 @@
     "size": 2,
     "wealth": 4,
     "ruler": "Graf von Saponatheim",
-    "produces": [
-      "Government"
-    ],
+    "produces": [],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "government"
+    ],
     "garrison": {
       "a": 50,
       "b": 100
@@ -1121,11 +1146,17 @@
     "wealth": 3,
     "ruler": "Graf Ferdinand von Wallenstein",
     "produces": [
-      "Trade",
-      "Metal"
+      "Copper",
+      "Iron",
+      "Lead",
+      "Silver",
+      "Gold",
+      "Tin"
     ],
     "demands": [],
-    "flags": [],
+    "flags": [
+      "trade"
+    ],
     "garrison": {
       "b": 50
     },
@@ -1142,7 +1173,7 @@
     "wealth": 2,
     "ruler": "Graf von Wallenstein",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Wool"
     ],
     "demands": [],
@@ -1178,7 +1209,12 @@
     "ruler": "Graf von Wallenstein",
     "produces": [
       "Armaments",
-      "Metal"
+      "Copper",
+      "Iron",
+      "Lead",
+      "Silver",
+      "Gold",
+      "Tin"
     ],
     "demands": [],
     "flags": [],
@@ -1199,8 +1235,13 @@
     "ruler": "Graf von Wallenstein",
     "produces": [
       "Armaments",
-      "Grain",
-      "Metal"
+      "Sustenance",
+      "Copper",
+      "Iron",
+      "Lead",
+      "Silver",
+      "Gold",
+      "Tin"
     ],
     "demands": [],
     "flags": [],
@@ -1218,8 +1259,8 @@
     "wealth": 2,
     "ruler": "Graf von Wallenstein",
     "produces": [
-      "Grain",
-      "Luxuries (Cheese)"
+      "Sustenance",
+      "Cheese"
     ],
     "demands": [],
     "flags": [],
@@ -1237,7 +1278,7 @@
     "wealth": 2,
     "ruler": "Graf von Wallenstein",
     "produces": [
-      "Grain",
+      "Sustenance",
       "Wool"
     ],
     "demands": [],
