@@ -320,9 +320,8 @@ class DataManager {
             result.errors.push(`Missing required fields: ${missingFields.join(', ')}`);
         }
 
-        // Validate numeric fields
+        // Validate numeric fields (exclude wealth - has special validation)
         const numericFields = [
-            { field: 'wealth', min: 1, max: 5 },
             { field: 'population', min: 0, max: 999999999 }
         ];
         
@@ -409,9 +408,13 @@ class DataManager {
 
         // Enhanced wealth validation (maintain backward compatibility)
         if (settlement.hasOwnProperty('wealth')) {
-            if (typeof settlement.wealth !== 'number' || settlement.wealth < 1 || settlement.wealth > 5) {
+            const population = settlement.population || 0;
+            if (typeof settlement.wealth !== 'number' ||
+                (settlement.wealth < 1 && population > 0) ||
+                (settlement.wealth < 0) ||
+                settlement.wealth > 5) {
                 result.valid = false;
-                result.errors.push('Wealth must be a number between 1-5');
+                result.errors.push('Wealth must be a number between 1-5 (0 only allowed for settlements with population 0)');
             }
         }
 
@@ -439,13 +442,16 @@ class DataManager {
         if (settlement.hasOwnProperty('size')) {
             const validSizes = ['CS', 'C', 'T', 'ST', 'V', 'F', 'M'];
             const validNumericSizes = [1, 2, 3, 4, 5];
+            const population = settlement.population || 0;
 
             if (typeof settlement.size === 'string' && !validSizes.includes(settlement.size)) {
                 result.valid = false;
-                result.errors.push(`Size must be one of: ${validSizes.join(', ')} or a number 1-5`);
-            } else if (typeof settlement.size === 'number' && !validNumericSizes.includes(settlement.size)) {
+                result.errors.push(`Size must be one of: ${validSizes.join(', ')} or a number 1-5 (0 only allowed for settlements with population 0)`);
+            } else if (typeof settlement.size === 'number' &&
+                      !validNumericSizes.includes(settlement.size) &&
+                      !(settlement.size === 0 && population === 0)) {
                 result.valid = false;
-                result.errors.push(`Size must be one of: ${validSizes.join(', ')} or a number 1-5`);
+                result.errors.push(`Size must be one of: ${validSizes.join(', ')} or a number 1-5 (0 only allowed for settlements with population 0)`);
             }
         }
 

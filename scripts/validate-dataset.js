@@ -130,8 +130,8 @@ class DatasetValidator {
         }
 
         if (settlement.wealth !== undefined) {
-            if (typeof settlement.wealth !== 'number' || settlement.wealth < 1 || settlement.wealth > 5) {
-                this.errors.push(`${context}: Wealth must be a number between 1-5`);
+            if (typeof settlement.wealth !== 'number' || (settlement.wealth < 0 || settlement.wealth > 5) || (settlement.wealth < 1 && settlement.population !== 0)) {
+                this.errors.push(`${context}: Wealth must be a number between 0-5 (0 only allowed for settlements with population 0)`);
             }
         }
 
@@ -146,12 +146,12 @@ class DatasetValidator {
 
         // Validate size (can be string enum or number)
         const validSizes = ['CS', 'C', 'T', 'ST', 'V', 'F', 'M'];
-        const validNumericSizes = [1, 2, 3, 4, 5];
+        const validNumericSizes = [0, 1, 2, 3, 4, 5]; // Allow 0 for destroyed settlements
         if (settlement.size !== undefined) {
             const isValidString = typeof settlement.size === 'string' && validSizes.includes(settlement.size);
             const isValidNumber = typeof settlement.size === 'number' && validNumericSizes.includes(settlement.size);
             if (!isValidString && !isValidNumber) {
-                this.errors.push(`${context}: Invalid size '${settlement.size}'. Must be one of: ${validSizes.join(', ')} or a number 1-5`);
+                this.errors.push(`${context}: Invalid size '${settlement.size}'. Must be one of: ${validSizes.join(', ')} or a number 0-5 (0 only for settlements with population 0)`);
             }
         }
     }

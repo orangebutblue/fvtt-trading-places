@@ -968,9 +968,9 @@ class ConfigValidator {
                 result.errors.push(`Settlement ${index} (${settlement.name || 'unnamed'}): Population must be a positive number`);
             }
 
-            if (settlement.wealth !== undefined && (typeof settlement.wealth !== 'number' || settlement.wealth < 1 || settlement.wealth > 5)) {
+            if (settlement.wealth !== undefined && (typeof settlement.wealth !== 'number' || (settlement.wealth < 0 || settlement.wealth > 5) || (settlement.wealth < 1 && settlement.population !== 0))) {
                 result.valid = false;
-                result.errors.push(`Settlement ${index} (${settlement.name || 'unnamed'}): Wealth must be a number between 1-5`);
+                result.errors.push(`Settlement ${index} (${settlement.name || 'unnamed'}): Wealth must be a number between 0-5 (0 only allowed for settlements with population 0)`);
             }
 
             const productionList = settlement.source ?? settlement.produces;

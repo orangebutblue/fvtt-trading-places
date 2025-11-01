@@ -1,361 +1,1293 @@
 [
   {
+    "name": "Altdorf",
     "region": "Reikland",
-    "name": "ALTDORF",
-    "population": 105000,
-    "size": 5,
-    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "size": 4,
     "wealth": 5,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
     "flags": [
       "trade",
       "government"
     ],
-    "produces": [],
-    "demands": [
-      "Luxuries"
-    ],
     "garrison": {
-      "a": 500,
-      "c": 8000
+      "a": 1800
     },
-    "notes": "Imperial Capital, Great Cathedral of Sigmar, University of Altdorf, Schools of Wizardry"
+    "militia": {
+      "b": 26000
+    },
+    "notes": "Imperial Capital, Great Cathedral of Sigmar",
+    "population": 1000000
   },
   {
-    "region": "Reikland",
     "name": "Autler",
-    "population": 81,
-    "size": 1,
-    "ruler": "Emperor",
+    "region": "Reikland",
+    "size": 2,
     "wealth": 2,
-    "flags": [],
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [
       "Timber",
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
-    "garrison": {
+    "flags": [],
+    "garrison": {},
+    "militia": {
       "c": 10
     },
-    "notes": "Ferry across River Reik"
+    "notes": "Ferry",
+    "population": 124
   },
   {
-    "region": "Reikland",
     "name": "Blutroch",
-    "population": 0,
-    "size": 2,
-    "ruler": "Emperor",
-    "wealth": 1,
-    "flags": [],
+    "region": "Reikland",
+    "size": 0,
+    "wealth": 0,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [],
     "demands": [],
+    "flags": [],
     "garrison": {},
-    "notes": "Wiped out by Red Pox in 2511"
+    "militia": {},
+    "notes": "Wiped out by Red Pox in 2511",
+    "population": 0
   },
   {
-    "region": "Reikland",
     "name": "Braunwurt",
-    "population": 52,
+    "region": "Reikland",
     "size": 1,
-    "ruler": "Emperor",
     "wealth": 1,
-    "flags": [],
-    "produces": [],
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Textiles"
+    ],
     "demands": [],
+    "flags": [],
     "garrison": {},
-    "notes": " "
+    "militia": {},
+    "notes": "",
+    "population": 75
   },
   {
-    "region": "Reikland",
     "name": "Bundesmarkt",
-    "population": 77,
-    "size": 1,
-    "ruler": "Emperor",
+    "region": "Reikland",
+    "size": 2,
     "wealth": 1,
-    "flags": [
-      "agriculture"
-    ],
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
-    "garrison": {
+    "flags": [],
+    "garrison": {},
+    "militia": {
       "c": 5
     },
-    "notes": " "
+    "notes": "",
+    "population": 105
   },
   {
-    "region": "Reikland",
     "name": "Dorchen",
-    "population": 75,
-    "size": 1,
-    "ruler": "Emperor",
+    "region": "Reikland",
+    "size": 2,
     "wealth": 2,
-    "flags": [
-      "agriculture"
-    ],
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
+    "flags": [],
     "garrison": {},
-    "notes": " "
+    "militia": {},
+    "notes": "",
+    "population": 105
   },
   {
-    "region": "Reikland",
     "name": "Frederheim",
-    "population": 75,
-    "size": 1,
-    "ruler": "Emperor",
+    "region": "Reikland",
+    "size": 2,
     "wealth": 1,
-    "flags": [
-      "agriculture"
-    ],
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [
-      "Grain"
+      "Sustenance",
+      "Wool"
     ],
     "demands": [],
+    "flags": [],
     "garrison": {},
-    "notes": "Great Hospice of Shallya nearby treats Insanity."
+    "militia": {},
+    "notes": "Great Hospice of Shallya nearby",
+    "population": 116
   },
   {
+    "name": "Furtdil",
     "region": "Reikland",
-    "name": "Furtild",
-    "population": 53,
     "size": 1,
-    "ruler": "Emperor",
     "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
     "flags": [
       "subsistence"
     ],
-    "produces": [],
-    "demands": [
-      "Grain"
-    ],
     "garrison": {},
-    "notes": "On Altdorf-Middenheim Road"
+    "militia": {},
+    "notes": "",
+    "population": 90
   },
   {
-    "region": "Reikland",
     "name": "Geldrecht",
-    "population": 49,
+    "region": "Reikland",
     "size": 1,
-    "ruler": "Emperor",
     "wealth": 1,
-    "flags": [],
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [
       "Timber",
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
+    "flags": [],
     "garrison": {},
-    "notes": "Ferry across River Reik"
+    "militia": {},
+    "notes": "Ferry on River Reik",
+    "population": 56
   },
   {
-    "region": "Reikland",
     "name": "Gluckshalt",
-    "population": 72,
+    "region": "Reikland",
     "size": 1,
-    "ruler": "Emperor",
     "wealth": 2,
-    "flags": [
-      "agriculture"
-    ],
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
+    "flags": [],
     "garrison": {},
-    "notes": " "
+    "militia": {},
+    "notes": "",
+    "population": 87
   },
   {
-    "region": "Reikland",
     "name": "Grossbad",
-    "population": 69,
+    "region": "Reikland",
     "size": 1,
-    "ruler": "Emperor",
     "wealth": 2,
-    "flags": [
-      "agriculture"
-    ],
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [
-      "Grain"
+      "Sustenance"
     ],
     "demands": [],
-    "garrison": {
+    "flags": [],
+    "garrison": {},
+    "militia": {
       "c": 10
     },
-    "notes": " "
+    "notes": "",
+    "population": 83
   },
   {
-    "region": "Reikland",
     "name": "Hartsklein",
-    "population": 65,
+    "region": "Reikland",
     "size": 1,
-    "ruler": "Emperor",
     "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Pottery"
+    ],
+    "demands": [],
     "flags": [],
+    "garrison": {},
+    "militia": {},
+    "notes": "",
+    "population": 78
+  },
+  {
+    "name": "Heiligen",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {},
+    "notes": "",
+    "population": 70
+  },
+  {
+    "name": "Hochloff",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {},
+    "notes": "",
+    "population": 98
+  },
+  {
+    "name": "Kaldach",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [],
     "demands": [],
+    "flags": [
+      "subsistence"
+    ],
     "garrison": {},
-    "notes": " "
+    "militia": {
+      "b": 10
+    },
+    "notes": "Ferry",
+    "population": 63
   },
   {
+    "name": "Rechtlich",
     "region": "Reikland",
-    "name": "Heiligen",
-    "population": 58,
     "size": 1,
-    "ruler": "Emperor",
-    "wealth": 2,
+    "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
     "flags": [
-      "agriculture"
+      "subsistence"
     ],
+    "garrison": {},
+    "militia": {},
+    "notes": "",
+    "population": 51
+  },
+  {
+    "name": "Rottefach",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [
-      "Grain"
+      "Sustenance",
+      "Wine"
     ],
     "demands": [],
+    "flags": [],
     "garrison": {},
-    "notes": " "
+    "militia": {},
+    "notes": "Ferry",
+    "population": 105
   },
   {
+    "name": "Schlafebild",
     "region": "Reikland",
-    "name": "Hochloff",
-    "population": 81,
     "size": 1,
-    "ruler": "Emperor",
-    "wealth": 2,
-    "flags": [
-      "agriculture"
-    ],
+    "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [
-      "Grain"
+      "Sustenance",
+      "Wine"
     ],
     "demands": [],
+    "flags": [],
     "garrison": {},
-    "notes": " "
+    "militia": {},
+    "notes": "",
+    "population": 46
   },
   {
+    "name": "Teufelfeuer",
     "region": "Reikland",
-    "name": "Kemperbad",
-    "population": 1800,
+    "size": 1,
+    "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "subsistence"
+    ],
+    "garrison": {},
+    "militia": {
+      "c": 5
+    },
+    "notes": "Once burnt to the ground by the Witch Hunter Fabergus Heinzdork",
+    "population": 55
+  },
+  {
+    "name": "Walfen",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Bricks",
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {},
+    "notes": "Ferry",
+    "population": 181
+  },
+  {
+    "name": "Castle Reikguard",
+    "region": "Reikland",
     "size": 3,
-    "ruler": "Emperor",
+    "wealth": 4,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "government"
+    ],
+    "garrison": {
+      "c": 200
+    },
+    "militia": {},
+    "notes": "Seat of the Grand Prince, fortress",
+    "population": 300
+  },
+  {
+    "name": "Dunkelburg",
+    "region": "Reikland",
+    "size": 3,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance",
+      "Wool"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {
+      "b": 20
+    },
+    "militia": {
+      "c": 150
+    },
+    "notes": "",
+    "population": 8900
+  },
+  {
+    "name": "Barfsheim",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "subsistence"
+    ],
+    "garrison": {},
+    "militia": {},
+    "notes": "Ferry",
+    "population": 77
+  },
+  {
+    "name": "Gemusenbad",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "subsistence"
+    ],
+    "garrison": {},
+    "militia": {},
+    "notes": "Ferry",
+    "population": 56
+  },
+  {
+    "name": "Harke",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "subsistence"
+    ],
+    "garrison": {},
+    "militia": {},
+    "notes": "Ferry",
+    "population": 37
+  },
+  {
+    "name": "Ruhfurt",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 10
+    },
+    "notes": "",
+    "population": 90
+  },
+  {
+    "name": "Schattental",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "b": 15
+    },
+    "notes": "",
+    "population": 86
+  },
+  {
+    "name": "Steindorf",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "subsistence"
+    ],
+    "garrison": {},
+    "militia": {
+      "c": 10
+    },
+    "notes": "Ferry",
+    "population": 70
+  },
+  {
+    "name": "DIESDORF",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 25
+    },
+    "notes": "",
+    "population": 210
+  },
+  {
+    "name": "EILHART",
+    "region": "Reikland",
+    "size": 3,
     "wealth": 3,
+    "ruler": "Graf Johann von Hardenburg",
+    "produces": [
+      "Sustenance",
+      "Wine"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {
+      "b": 25
+    },
+    "militia": {
+      "c": 125
+    },
+    "notes": "",
+    "population": 3200
+  },
+  {
+    "name": "GRÜNBURG",
+    "region": "Reikland",
+    "size": 3,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
     "flags": [
       "trade",
-      "wine_quality"
+      "boatbuilding"
     ],
+    "garrison": {
+      "b": 25
+    },
+    "militia": {
+      "c": 100
+    },
+    "notes": "Ferry",
+    "population": 2900
+  },
+  {
+    "name": "Aussen",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "subsistence"
+    ],
+    "garrison": {},
+    "militia": {},
+    "notes": "Ferry",
+    "population": 95
+  },
+  {
+    "name": "Hornlach",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
     "produces": [
+      "Timber",
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "b": 5
+    },
+    "notes": "Ferry",
+    "population": 120
+  },
+  {
+    "name": "Kleindorf",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {},
+    "notes": "Ferry",
+    "population": 40
+  },
+  {
+    "name": "Silberwurt",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance",
+      "Wool"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 10
+    },
+    "notes": "",
+    "population": 110
+  },
+  {
+    "name": "Wörlitz",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 10
+    },
+    "notes": "",
+    "population": 105
+  },
+  {
+    "name": "KEMPERBAD",
+    "region": "Reikland",
+    "size": 3,
+    "wealth": 4,
+    "ruler": "Town Council",
+    "produces": [
+      "Armaments",
       "Wine",
       "Brandy"
     ],
     "demands": [],
+    "flags": [
+      "trade"
+    ],
     "garrison": {
-      "c": 50
+      "b": 20
     },
-    "notes": "Famous wine-producing town known for exceptional vintages"
+    "militia": {
+      "b": 500
+    },
+    "notes": "Ferry. Finest Brandy in Empire; Freistadt status",
+    "population": 9600
   },
   {
+    "name": "Berghof",
     "region": "Reikland",
-    "name": "Kaldach",
-    "population": 52,
     "size": 1,
-    "ruler": "Emperor",
+    "wealth": 2,
+    "ruler": "Kemperbad Town Council",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 20
+    },
+    "notes": "",
+    "population": 85
+  },
+  {
+    "name": "Brandenburg",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 3,
+    "ruler": "Kemperbad Town Council",
+    "produces": [
+      "Wine",
+      "Brandy",
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "b": 20
+    },
+    "notes": "“Echte Brandenburger,” Emperor Karl-Franz I Holswig-Schliestein’s favourite brandy; Ferry",
+    "population": 95
+  },
+  {
+    "name": "Jungbach",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 3,
+    "ruler": "Kemperbad Town Council",
+    "produces": [
+      "Brandy",
+      "Wine"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "b": 15
+    },
+    "notes": "Ferry",
+    "population": 105
+  },
+  {
+    "name": "Ostwald",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 3,
+    "ruler": "Kemperbad Town Council",
+    "produces": [
+      "Brandy",
+      "Wine"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "b": 15
+    },
+    "notes": "",
+    "population": 88
+  },
+  {
+    "name": "Stockhausen",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 3,
+    "ruler": "Kemperbad Town Council",
+    "produces": [
+      "Brandy",
+      "Wine",
+      "Wool"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "b": 30
+    },
+    "notes": "",
+    "population": 117
+  },
+  {
+    "name": "Merretheim",
+    "region": "Reikland",
+    "size": 1,
     "wealth": 1,
+    "ruler": "Graf von Falkenhayn",
+    "produces": [],
+    "demands": [],
     "flags": [
       "subsistence"
     ],
+    "garrison": {},
+    "militia": {
+      "c": 10
+    },
+    "notes": "",
+    "population": 67
+  },
+  {
+    "name": "Misthausen",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 1,
+    "ruler": "G. von Falkenhayn",
     "produces": [],
-    "demands": [
-      "Grain"
+    "demands": [],
+    "flags": [
+      "subsistence"
+    ],
+    "garrison": {},
+    "militia": {},
+    "notes": "Ferry",
+    "population": 43
+  },
+  {
+    "name": "Naffdorf",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 1,
+    "ruler": "G. von Falkenhayn",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "subsistence"
+    ],
+    "garrison": {},
+    "militia": {
+      "c": 10
+    },
+    "notes": "Ferry",
+    "population": 75
+  },
+  {
+    "name": "Pfeiffer",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 1,
+    "ruler": "G. von Falkenhayn",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "subsistence"
+    ],
+    "garrison": {},
+    "militia": {
+      "c": 5
+    },
+    "notes": "",
+    "population": 60
+  },
+  {
+    "name": "UBERSREIK",
+    "region": "Reikland",
+    "size": 3,
+    "wealth": 4,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Armaments",
+      "Copper",
+      "Iron",
+      "Lead",
+      "Silver",
+      "Gold",
+      "Tin"
+    ],
+    "demands": [],
+    "flags": [
+      "trade",
+      "metalworking"
     ],
     "garrison": {
+      "b": 40
+    },
+    "militia": {
+      "c": 500
+    },
+    "notes": "Ferry",
+    "population": 7500
+  },
+  {
+    "name": "Buchedorf",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance",
+      "Wool"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 10
+    },
+    "notes": "Ferry",
+    "population": 158
+  },
+  {
+    "name": "Flussberg",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 15
+    },
+    "notes": "Ferry",
+    "population": 95
+  },
+  {
+    "name": "Geissbach",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 10
+    },
+    "notes": "",
+    "population": 66
+  },
+  {
+    "name": "Halheim",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 1,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "subsistence"
+    ],
+    "garrison": {},
+    "militia": {},
+    "notes": "",
+    "population": 49
+  },
+  {
+    "name": "Hugeldal",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 3,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Copper",
+      "Iron",
+      "Lead",
+      "Silver",
+      "Gold",
+      "Tin"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {
+      "b": 50
+    },
+    "militia": {
+      "c": 75
+    },
+    "notes": "",
+    "population": 316
+  },
+  {
+    "name": "Messingen",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 3,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance",
+      "Armaments"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "b": 20
+    },
+    "notes": "By Hugeldal Mine",
+    "population": 111
+  },
+  {
+    "name": "Wurfel",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 15
+    },
+    "notes": "",
+    "population": 75
+  },
+  {
+    "name": "WEISSBRUCK",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 2,
+    "ruler": "Emperor Karl-Franz I Holswig-Schliestein (ruled by Gruber family)",
+    "produces": [
+      "Cheese",
+      "Pottery",
+      "Textiles",
+      "Books",
+      "Tobacco",
+      "Tourmaline",
+      "Glass",
+      "Spices",
+      "Silks",
+      "Jewelry",
+      "Fine Art",
+      "Carpets"
+    ],
+    "demands": [],
+    "flags": [
+      "trade"
+    ],
+    "garrison": {},
+    "militia": {},
+    "notes": "Ferry, Lock House on Altdorf Canal",
+    "population": 359
+  },
+  {
+    "name": "Wittgendorf",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 1,
+    "ruler": "Baroness Magritta von Wittgentsien",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "subsistence"
+    ],
+    "garrison": {
+      "b": 25
+    },
+    "militia": {},
+    "notes": "",
+    "population": 150
+  },
+  {
+    "name": "Bögenhafen",
+    "region": "Reikland",
+    "size": 3,
+    "wealth": 3,
+    "ruler": "Graf Wilhelm von Saponatheim",
+    "produces": [
+      "Wine",
+      "Timber"
+    ],
+    "demands": [],
+    "flags": [
+      "trade"
+    ],
+    "garrison": {},
+    "militia": {
+      "c": 500
+    },
+    "notes": "Local market centre",
+    "population": 10500
+  },
+  {
+    "name": "Ardlich",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 2,
+    "ruler": "Graf von Saponatheim",
+    "produces": [
+      "Sustenance",
+      "Wool"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 5
+    },
+    "notes": "",
+    "population": 155
+  },
+  {
+    "name": "Finsterbad",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 3,
+    "ruler": "Graf von Saponatheim",
+    "produces": [
+      "Sustenance",
+      "Wine",
+      "Wool"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 10
+    },
+    "notes": "Ferry",
+    "population": 140
+  },
+  {
+    "name": "Grubevon",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 2,
+    "ruler": "Graf von Saponatheim",
+    "produces": [
+      "Sustenance"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 5
+    },
+    "notes": "",
+    "population": 90
+  },
+  {
+    "name": "Herzhald",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 2,
+    "ruler": "Graf von Saponatheim",
+    "produces": [
+      "Timber"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {},
+    "notes": "",
+    "population": 140
+  },
+  {
+    "name": "Castle Grauenburg",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 4,
+    "ruler": "Graf von Saponatheim",
+    "produces": [],
+    "demands": [],
+    "flags": [
+      "government"
+    ],
+    "garrison": {
+      "a": 50,
+      "b": 100
+    },
+    "militia": {},
+    "notes": "Seat of the von Saponatheim lands, fortress",
+    "population": 350
+  },
+  {
+    "name": "Auerswald",
+    "region": "Reikland",
+    "size": 3,
+    "wealth": 3,
+    "ruler": "Graf Ferdinand von Wallenstein",
+    "produces": [
+      "Copper",
+      "Iron",
+      "Lead",
+      "Silver",
+      "Gold",
+      "Tin"
+    ],
+    "demands": [],
+    "flags": [
+      "trade"
+    ],
+    "garrison": {
+      "b": 50
+    },
+    "militia": {
+      "c": 400
+    },
+    "notes": "Ferry",
+    "population": 5000
+  },
+  {
+    "name": "Dresschler",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 2,
+    "ruler": "Graf von Wallenstein",
+    "produces": [
+      "Sustenance",
+      "Wool"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
       "b": 10
     },
-    "notes": "Ferry across River Reik"
+    "notes": "Ferry",
+    "population": 76
   },
   {
+    "name": "Gladisch",
     "region": "Reikland",
-    "name": "Rechtlich",
-    "population": 42,
     "size": 1,
-    "ruler": "Emperor",
     "wealth": 1,
-    "flags": [
-      "subsistence"
-    ],
-    "produces": [],
-    "demands": [
-      "Grain"
-    ],
-    "garrison": {},
-    "notes": " "
-  },
-  {
-    "region": "Reikland",
-    "name": "Rottefach",
-    "population": 88,
-    "size": 1,
-    "ruler": "Emperor",
-    "wealth": 2,
-    "flags": [
-      "agriculture"
-    ],
+    "ruler": "Graf von Wallenstein",
     "produces": [
-      "Grain",
-      "Wine/Brandy"
+      "Wool"
     ],
     "demands": [],
-    "garrison": {},
-    "notes": "Ferry across River Reik"
-  },
-  {
-    "region": "Reikland",
-    "name": "Schlafebild",
-    "population": 38,
-    "size": 1,
-    "ruler": "Emperor",
-    "wealth": 1,
-    "flags": [
-      "agriculture"
-    ],
-    "produces": [
-      "Grain",
-      "Wine/Brandy"
-    ],
-    "demands": [],
-    "garrison": {},
-    "notes": " "
-  },
-  {
-    "region": "Reikland",
-    "name": "Teufelfeuer",
-    "population": 0,
-    "size": 1,
-    "ruler": "Emperor",
-    "wealth": 2,
     "flags": [],
-    "produces": [
-      "Wine/Brandy"
-    ],
-    "demands": [],
     "garrison": {},
-    "notes": "Burnt by Witch-Hunter in 2511."
+    "militia": {},
+    "notes": "Ferry",
+    "population": 50
   },
   {
+    "name": "Hahnbrandt",
     "region": "Reikland",
-    "name": "Walfen",
-    "population": 152,
     "size": 2,
-    "ruler": "Emperor",
-    "wealth": 2,
-    "flags": [
-      "agriculture"
-    ],
+    "wealth": 3,
+    "ruler": "Graf von Wallenstein",
     "produces": [
-      "Grain"
+      "Armaments",
+      "Copper",
+      "Iron",
+      "Lead",
+      "Silver",
+      "Gold",
+      "Tin"
     ],
     "demands": [],
+    "flags": [],
+    "garrison": {
+      "b": 50
+    },
+    "militia": {
+      "c": 75
+    },
+    "notes": "",
+    "population": 250
+  },
+  {
+    "name": "Koch",
+    "region": "Reikland",
+    "size": 2,
+    "wealth": 2,
+    "ruler": "Graf von Wallenstein",
+    "produces": [
+      "Armaments",
+      "Sustenance",
+      "Copper",
+      "Iron",
+      "Lead",
+      "Silver",
+      "Gold",
+      "Tin"
+    ],
+    "demands": [],
+    "flags": [],
     "garrison": {},
-    "notes": "Ferry across River Reik"
+    "militia": {
+      "b": 20
+    },
+    "notes": "Near Hahnbrandt Mine in the Hagerrybs",
+    "population": 115
+  },
+  {
+    "name": "Sprinthof",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 2,
+    "ruler": "Graf von Wallenstein",
+    "produces": [
+      "Sustenance",
+      "Cheese"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 10
+    },
+    "notes": "Coaching inn, best smoked cheese in Reikland",
+    "population": 87
+  },
+  {
+    "name": "Steche",
+    "region": "Reikland",
+    "size": 1,
+    "wealth": 2,
+    "ruler": "Graf von Wallenstein",
+    "produces": [
+      "Sustenance",
+      "Wool"
+    ],
+    "demands": [],
+    "flags": [],
+    "garrison": {},
+    "militia": {
+      "c": 15
+    },
+    "notes": "Ferry",
+    "population": 75
   }
 ]

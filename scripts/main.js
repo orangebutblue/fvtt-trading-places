@@ -875,33 +875,30 @@ function registerSettingsChangeHandlers() {
             return;
         }
 
-        // Find the activeDataset setting row
+        // Find a visible Trading Places setting row to attach buttons after
         const $html = $(html);
-        console.log('Trading Places | Looking for activeDataset setting...');
+        console.log('Trading Places | Looking for visible Trading Places setting...');
 
-        // Try different selectors for Foundry v13
-        let activeDatasetRow = $html.find('[data-setting-id="trading-places.activeDataset"]').closest('.form-group');
-        if (!activeDatasetRow.length) {
-            console.log('Trading Places | Primary selector failed, trying alternatives...');
-            // Try alternative selectors
-            activeDatasetRow = $html.find('select[name="trading-places.activeDataset"]').closest('.form-group');
-        }
-        if (!activeDatasetRow.length) {
-            console.log('Trading Places | Alternative selector failed, trying broader search...');
-            // Try finding any trading-places setting
-            activeDatasetRow = $html.find('[data-setting-id*="trading-places"]').closest('.form-group').first();
-        }
-
-        console.log('Trading Places | Found activeDataset row:', activeDatasetRow.length, activeDatasetRow);
-
-        if (!activeDatasetRow.length) {
-            console.log('Trading Places | Could not find activeDataset setting row, available settings:', $html.find('[data-setting-id]').map((i, el) => $(el).attr('data-setting-id')).get());
+        // Check if dataset management buttons already exist to prevent duplicates
+        if ($html.find('.dataset-management-buttons').length > 0) {
+            console.log('Trading Places | Dataset management buttons already exist, skipping duplicate addition');
             return;
         }
 
+        // Try different selectors for Foundry v13 - look for any visible trading-places setting
+        let targetRow = $html.find('[data-setting-id*="trading-places"]').closest('.form-group').first();
+        
+        if (!targetRow.length) {
+            console.log('Trading Places | Primary selector failed, trying alternative...');
+            // Try finding settings by name pattern
+            targetRow = $html.find('input[name*="trading-places"], select[name*="trading-places"], textarea[name*="trading-places"]').closest('.form-group').first();
+        }
+
+        console.log('Trading Places | Found target row:', targetRow.length, targetRow);
+
         console.log('Trading Places | Adding dataset management buttons...');
 
-        // Add buttons after the activeDataset setting
+        // Add buttons after the target setting
         const buttonsHtml = `
             <div class="form-group dataset-management-buttons" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">
                 <label>Dataset Management</label>
@@ -910,16 +907,20 @@ function registerSettingsChangeHandlers() {
                         <i class="fas fa-plus"></i>
                         Add Dataset
                     </button>
-                    <button type="button" class="delete-dataset-btn">
+                    <button type="button" class="delete-dataset-btn" style="margin-right: 10px;">
                         <i class="fas fa-trash"></i>
                         Delete Selected Dataset
                     </button>
+                    <button type="button" class="reimport-datasets-btn" style="margin-right: 10px;">
+                        <i class="fas fa-sync"></i>
+                        Re-import File Datasets
+                    </button>
                 </div>
-                <p class="notes">Add new datasets or delete the currently selected dataset. Built-in datasets cannot be deleted.</p>
+                <p class="notes">Add new datasets or delete the currently selected dataset. Built-in datasets cannot be deleted. Re-import will reload file-based datasets from the module files.</p>
             </div>
         `;
 
-        activeDatasetRow.after(buttonsHtml);
+        targetRow.after(buttonsHtml);
         console.log('Trading Places | Dataset management buttons added');
 
         // Add event listeners to the buttons
@@ -933,6 +934,12 @@ function registerSettingsChangeHandlers() {
             event.preventDefault();
             console.log('Trading Places | Delete dataset button clicked');
             handleDeleteDataset();
+        });
+
+        $html.find('.reimport-datasets-btn').on('click', (event) => {
+            event.preventDefault();
+            console.log('Trading Places | Re-import datasets button clicked');
+            handleReimportDatasets();
         });
 
         console.log('Trading Places | Event listeners attached');
@@ -1118,6 +1125,104 @@ async function handleDeleteDataset() {
             } catch (error) {
                 ui.notifications.error(`Failed to delete dataset: ${error.message}`);
                 console.error('Dataset deletion error:', error);
+            }
+        },
+        no: () => {}
+    });
+}
+
+/**
+ * Handle re-import datasets button click in settings
+ */
+async function handleReimportDatasets() {
+    const content = `
+        <div class="dataset-reimport-dialog">
+            <p>This will re-import all file-based datasets from the module files.</p>
+            <p><strong>What this does:</strong></p>
+            <ul>
+                <li>Reloads built-in datasets (like WFRP4e) from the module's dataset files</li>
+                <li>Updates any changes made to the shipped dataset files</li>
+                <li>Preserves all user-created datasets</li>
+            </ul>
+            <p><strong>Warning:</strong> This will overwrite any modifications you may have made to built-in datasets through the Data Management interface.</p>
+            <p style="color: #ffa500;">Note: User-created datasets will not be affected.</p>
+        </div>
+    `;
+
+    Dialog.confirm({
+        title: 'Re-import File-based Datasets',
+        content: content,
+        yes: async () => {
+            try {
+                ui.notifications.info('Re-importing file-based datasets...');
+
+                // Use the DatasetPersistence class to reset and reload
+                if (window.TradingPlacesDatasetPersistence) {
+                    const persistence = new window.TradingPlacesDatasetPersistence();
+                    
+                    // Get current datasets to preserve user-created ones
+                    const currentDatasets = await persistence.loadFromSettings();
+                    const userDatasets = {};
+                    
+                    // Extract user-created datasets
+                    Object.keys(currentDatasets).forEach(datasetId => {
+                        const dataset = currentDatasets[datasetId];
+                        if (dataset.type === 'user-created') {
+                            userDatasets[datasetId] = dataset;
+                        }
+                    });
+                    
+                    // Reset file-based datasets
+                    await persistence.resetAllDatasets();
+                    
+                    // Restore user-created datasets
+                    if (Object.keys(userDatasets).length > 0) {
+                        const updatedDatasets = await persistence.loadFromSettings();
+                        Object.assign(updatedDatasets, userDatasets);
+                        await persistence.persistDatasetsToSettings(updatedDatasets);
+                        console.log(`Trading Places | Restored ${Object.keys(userDatasets).length} user-created datasets after re-import`);
+                    }
+                    
+                    ui.notifications.info('File-based datasets re-imported successfully. User-created datasets preserved.');
+                    
+                    // Refresh the settings page to update the dropdown
+                    const selectElement = document.querySelector('select[name="trading-places.activeDataset"]');
+                    if (selectElement) {
+                        // Clear existing options
+                        selectElement.innerHTML = '';
+                        
+                        // Get updated choices
+                        const choices = getAvailableDatasets();
+                        
+                        // Add options
+                        Object.entries(choices).forEach(([value, label]) => {
+                            const option = document.createElement('option');
+                            option.value = value;
+                            option.textContent = label;
+                            selectElement.appendChild(option);
+                        });
+                    }
+                    
+                    // If DataManager is available, reload the active dataset
+                    if (dataManager) {
+                        try {
+                            await dataManager.initialize();
+                            const activeDataset = game.settings.get(MODULE_ID, 'activeDataset');
+                            if (activeDataset) {
+                                await dataManager.switchDataset(activeDataset);
+                            }
+                        } catch (reloadError) {
+                            console.warn('Trading Places | Could not reload active dataset after re-import:', reloadError);
+                        }
+                    }
+                    
+                } else {
+                    ui.notifications.error('Dataset persistence system not available');
+                }
+
+            } catch (error) {
+                ui.notifications.error(`Failed to re-import datasets: ${error.message}`);
+                console.error('Dataset re-import error:', error);
             }
         },
         no: () => {}

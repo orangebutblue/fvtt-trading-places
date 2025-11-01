@@ -582,7 +582,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         // Get all settlements and filter by region if one is selected
         const allSettlements = this.dataManager?.getAllSettlements() || [];
         context.settlements = this.selectedRegion 
-            ? allSettlements.filter(s => s.region === this.selectedRegion)
+            ? allSettlements.filter(s => s.region === this.selectedRegion).sort((a, b) => a.name.localeCompare(b.name))
             : [];
         context.allSettlements = allSettlements;
 
