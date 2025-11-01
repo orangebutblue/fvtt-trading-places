@@ -1,8 +1,8 @@
 {
     "cargoTypes": [
         {
-            "name": "Grain",
-            "category": "Bulk Goods",
+            "name": "Sustenance",
+            "category": "Provisions",
             "description": "A collective term for all kinds of agricultural products (fish, barley, wheat, legumes, root vegetables, dried meat). The price is lowest at harvest time.",
             "basePrice": 120,
             "seasonalModifiers": {
@@ -21,18 +21,6 @@
                 "spring": 1.2,
                 "summer": 1,
                 "autumn": 0.8,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Luxuries",
-            "category": "Luxury Goods",
-            "description": "A collective term for locally produced (textiles, pottery, glass, bricks) or imported luxury goods (spices, silks).",
-            "basePrice": 6000,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
                 "winter": 1
             }
         },
@@ -61,34 +49,10 @@
             }
         },
         {
-            "name": "Agriculture",
-            "category": "Agriculture",
-            "description": "Agricultural products and farming goods.",
-            "basePrice": 96,
-            "seasonalModifiers": {
-                "spring": 1.2,
-                "summer": 0.6,
-                "autumn": 0.3,
-                "winter": 0.7
-            }
-        },
-        {
             "name": "Ale",
             "category": "Brews",
             "description": "Fermented beverage made from grains.",
             "basePrice": 180,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Silk",
-            "category": "Natural Resources",
-            "description": "Luxurious fabric from silkworms.",
-            "basePrice": 4800,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -106,18 +70,6 @@
                 "summer": 1,
                 "autumn": 1,
                 "winter": 1
-            }
-        },
-        {
-            "name": "Boatbuilding",
-            "category": "Manufactured Goods",
-            "description": "Ship construction and maritime supplies.",
-            "basePrice": 2160,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1.2,
-                "autumn": 1,
-                "winter": 0.8
             }
         },
         {
@@ -159,7 +111,7 @@
         },
         {
             "name": "Cheese",
-            "category": "Food",
+            "category": "Luxuries",
             "description": "Dairy product made from curdled milk.",
             "basePrice": 240,
             "seasonalModifiers": {
@@ -206,18 +158,6 @@
             }
         },
         {
-            "name": "Fishing",
-            "category": "Natural Resources",
-            "description": "Fish and fishing-related products.",
-            "basePrice": 240,
-            "seasonalModifiers": {
-                "spring": 1.2,
-                "summer": 1.5,
-                "autumn": 1.3,
-                "winter": 0.8
-            }
-        },
-        {
             "name": "Forestry",
             "category": "Natural Resources",
             "description": "Forest products and timber processing.",
@@ -226,18 +166,6 @@
                 "spring": 1,
                 "summer": 1,
                 "autumn": 1.2,
-                "winter": 1.5
-            }
-        },
-        {
-            "name": "Fur",
-            "category": "Natural Resources",
-            "description": "Animal pelts and fur products.",
-            "basePrice": 1440,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1.3,
                 "winter": 1.5
             }
         },
@@ -255,7 +183,7 @@
         },
         {
             "name": "Gems",
-            "category": "Natural Resources",
+            "category": "Luxuries",
             "description": "Precious stones used in jewelry.",
             "basePrice": 6000,
             "seasonalModifiers": {
@@ -278,20 +206,8 @@
             }
         },
         {
-            "name": "Government",
-            "category": "Services",
-            "description": "Government-related goods and services.",
-            "basePrice": 600,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
             "name": "Herbs",
-            "category": "Food",
+            "category": "Natural Resources",
             "description": "Medicinal and culinary herbs.",
             "basePrice": 360,
             "seasonalModifiers": {
@@ -386,18 +302,6 @@
             }
         },
         {
-            "name": "Metalworking",
-            "category": "Manufactured Goods",
-            "description": "Metal processing and smithing.",
-            "basePrice": 1800,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
             "name": "Mining",
             "category": "Raw Materials",
             "description": "Mining equipment and minerals.",
@@ -435,7 +339,7 @@
         },
         {
             "name": "Pottery",
-            "category": "Manufactured Goods",
+            "category": "Luxuries",
             "description": "Ceramic goods and pottery.",
             "basePrice": 360,
             "seasonalModifiers": {
@@ -458,10 +362,10 @@
             }
         },
         {
-            "name": "Quarry",
+            "name": "Cut Stone",
             "category": "Raw Materials",
-            "description": "Stone quarrying and stone products.",
-            "basePrice": 480,
+            "description": "Cut and shaped stone blocks for construction and masonry.",
+            "basePrice": 600,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -486,18 +390,6 @@
             "category": "Food",
             "description": "Salt for preservation and seasoning.",
             "basePrice": 180,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Salvaging",
-            "category": "Services",
-            "description": "Recovered goods and salvage operations.",
-            "basePrice": 360,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -566,44 +458,8 @@
             }
         },
         {
-            "name": "Stonecutting",
-            "category": "Manufactured Goods",
-            "description": "Stone masonry and carving.",
-            "basePrice": 960,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Stonework",
-            "category": "Manufactured Goods",
-            "description": "Stone construction and masonry.",
-            "basePrice": 1200,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Subsistence",
-            "category": "Food",
-            "description": "Basic goods for survival.",
-            "basePrice": 60,
-            "seasonalModifiers": {
-                "spring": 1.3,
-                "summer": 0.6,
-                "autumn": 0.4,
-                "winter": 0.8
-            }
-        },
-        {
             "name": "Textiles",
-            "category": "Manufactured Goods",
+            "category": "Luxuries",
             "description": "Fabric and textile products.",
             "basePrice": 600,
             "seasonalModifiers": {
@@ -639,7 +495,7 @@
         },
         {
             "name": "Tobacco",
-            "category": "Food",
+            "category": "Luxuries",
             "description": "Tobacco leaves and smoking products.",
             "basePrice": 960,
             "seasonalModifiers": {
@@ -654,18 +510,6 @@
             "category": "Raw Materials",
             "description": "Tourmaline gemstone.",
             "basePrice": 2160,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Transport",
-            "category": "Services",
-            "description": "Transportation services and goods.",
-            "basePrice": 480,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -744,6 +588,138 @@
                 "summer": 1.5,
                 "autumn": 2,
                 "winter": 3
+            }
+        },
+        {
+            "name": "Glass",
+            "category": "Luxuries",
+            "description": "Glass products and glassware.",
+            "basePrice": 400,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
+            }
+        },
+        {
+            "name": "Bricks",
+            "category": "Luxuries",
+            "description": "Bricks and building materials.",
+            "basePrice": 200,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
+            }
+        },
+        {
+            "name": "Spices",
+            "category": "Luxuries",
+            "description": "Exotic spices and seasonings.",
+            "basePrice": 900,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
+            }
+        },
+        {
+            "name": "Silks",
+            "category": "Luxuries",
+            "description": "Silk fabrics and luxury textiles.",
+            "basePrice": 1000,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
+            }
+        },
+        {
+            "name": "Jewelry",
+            "category": "Luxuries",
+            "description": "Finished jewelry and precious adornments.",
+            "basePrice": 5000,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
+            }
+        },
+        {
+            "name": "Fine Art",
+            "category": "Luxuries",
+            "description": "Paintings, sculptures, and tapestries from skilled artisans.",
+            "basePrice": 2500,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
+            }
+        },
+        {
+            "name": "Carpets",
+            "category": "Luxuries",
+            "description": "Woven rugs and carpets from distant lands.",
+            "basePrice": 1000,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
+            }
+        },
+        {
+            "name": "Oils",
+            "category": "Provisions",
+            "description": "Cooking oils and lubricants from various sources.",
+            "basePrice": 300,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
+            }
+        },
+        {
+            "name": "Vinegar",
+            "category": "Provisions",
+            "description": "Fermented vinegar for cooking and preservation.",
+            "basePrice": 120,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
+            }
+        },
+        {
+            "name": "Firewood",
+            "category": "Provisions",
+            "description": "Wood for fuel and heating.",
+            "basePrice": 60,
+            "seasonalModifiers": {
+                "spring": 1.5,
+                "summer": 0.75,
+                "autumn": 1,
+                "winter": 1.75
+            }
+        },
+        {
+            "name": "Containers",
+            "category": "Provisions",
+            "description": "Barrels, crates, and other storage containers.",
+            "basePrice": 240,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
             }
         }
     ]

@@ -1,48 +1,70 @@
 {
   "trade": {
     "description": "Busy market crossroad that attracts merchants from surrounding regions.",
-    "supplyTransfer": 0.3,
+    "increase": {
+      "supply": {
+        "overall": 0.3,
+        "cargo-category": {
+          "Luxury Goods": 0.2,
+          "Bulk Goods": 0.1
+        }
+      }
+    },
     "availabilityBonus": {
       "producers": 0.25,
       "seekers": 0.25
-    },
-    "categorySupplyTransfer": {
-      "Luxury Goods": 0.2,
-      "Bulk Goods": 0.1
     }
   },
   "government": {
     "description": "Seat of administration with regulated trade and permit requirements.",
-    "demandTransfer": 0.2,
+    "increase": {
+      "demand": {
+        "overall": 0.2,
+        "cargo-category": {
+          "Luxury Goods": 0.15,
+          "Military": 0.15
+        }
+      }
+    },
     "availabilityBonus": {
       "producers": -0.1,
       "seekers": -0.1
-    },
-    "categoryDemandTransfer": {
-      "Luxury Goods": 0.15,
-      "Military": 0.15
     }
   },
   "metalworking": {
     "description": "Skilled forges and workshops raise metal throughput and quality.",
-    "supplyTransfer": 0.25,
-    "categorySupplyTransfer": {
-      "Raw Materials": 0.35,
-      "Manufactured": 0.2
-    },
-    "quality": 1.5
+    "increase": {
+      "supply": {
+        "overall": 0.25,
+        "cargo-category": {
+          "Raw Materials": 0.35,
+          "Manufactured": 0.2
+        }
+      },
+      "quality": {
+        "overall": 1.5
+      }
+    }
   },
   "boatbuilding": {
     "description": "Shipyards and docks requiring constant timber and tool supplies.",
-    "demandTransfer": 0.25,
-    "categoryDemandTransfer": {
-      "Raw Materials": 0.3,
-      "Manufactured": 0.15
+    "increase": {
+      "demand": {
+        "overall": 0.25,
+        "cargo-category": {
+          "Raw Materials": 0.3,
+          "Manufactured": 0.15
+        }
+      }
     }
   },
   "subsistence": {
     "description": "Local production barely covers resident needs; little surplus for trade.",
-    "demandTransfer": 0.4,
+    "increase": {
+      "demand": {
+        "overall": 0.4
+      }
+    },
     "availabilityBonus": {
       "producers": -0.3,
       "seekers": -0.15
@@ -50,31 +72,47 @@
   },
   "mine": {
     "description": "Active mining operations generating bulk ore shipments.",
-    "supplyTransfer": 0.4,
-    "categorySupplyTransfer": {
-      "Raw Materials": 0.45,
-      "Bulk Goods": 0.15
+    "increase": {
+      "supply": {
+        "overall": 0.4,
+        "cargo-category": {
+          "Raw Materials": 0.45,
+          "Bulk Goods": 0.15
+        }
+      }
     }
   },
   "agriculture": {
     "description": "Extensive farmland providing consistent harvest commodities.",
-    "supplyTransfer": 0.3,
-    "categorySupplyTransfer": {
-      "Bulk Goods": 0.4,
-      "Luxury Goods": -0.1
+    "increase": {
+      "supply": {
+        "overall": 0.3,
+        "cargo-category": {
+          "Bulk Goods": 0.4,
+          "Luxury Goods": -0.1
+        }
+      }
     }
   },
   "fort": {
     "description": "Military garrisons demanding arms, armor, and provisions.",
-    "demandTransfer": 0.35,
-    "categoryDemandTransfer": {
-      "Military": 0.45,
-      "Bulk Goods": 0.1
+    "increase": {
+      "demand": {
+        "overall": 0.35,
+        "cargo-category": {
+          "Military": 0.45,
+          "Bulk Goods": 0.1
+        }
+      }
     }
   },
   "smuggling": {
     "description": "Shadow markets deal in illicit goods and cut-rate prices.",
-    "supplyTransfer": 0.2,
+    "increase": {
+      "supply": {
+        "overall": 0.2
+      }
+    },
     "contrabandChance": 0.5,
     "availabilityBonus": {
       "producers": 0.1
@@ -83,21 +121,80 @@
   },
   "piracy": {
     "description": "Coastal raiders moving hot cargo through back channels.",
-    "supplyTransfer": 0.15,
-    "demandTransfer": 0.15,
-    "categorySupplyTransfer": {
-      "Luxury Goods": 0.2
-    },
-    "categoryDemandTransfer": {
-      "Military": 0.1
+    "increase": {
+      "supply": {
+        "overall": 0.15,
+        "cargo-category": {
+          "Luxury Goods": 0.2
+        }
+      },
+      "demand": {
+        "overall": 0.15,
+        "cargo-category": {
+          "Military": 0.1
+        }
+      }
     },
     "contrabandChance": 0.35
   },
   "wine_quality": {
     "description": "Region known for producing high-quality wines and spirits.",
-    "qualityBonus": {
-      "Wine": 2,
-      "Brandy": 2
+    "increase": {
+      "quality": {
+        "cargo-types": {
+          "Wine": 2,
+          "Brandy": 2
+        }
+      }
+    }
+  },
+  "transport": {
+    "description": "Major trade routes and transport hubs facilitate the flow of goods.",
+    "increase": {
+      "supply": {
+        "overall": 0.2
+      },
+      "demand": {
+        "overall": 0.1
+      }
+    },
+    "availabilityBonus": {
+      "producers": 0.1,
+      "seekers": 0.05
+    }
+  },
+  "fishing": {
+    "description": "Coastal communities with rich fishing grounds providing abundant fresh seafood.",
+    "increase": {
+      "supply": {
+        "overall": 0.25
+      },
+      "quality": {
+        "cargo-types": {
+          "Sustenance": 1.3
+        }
+      }
+    }
+  },
+  "quarry": {
+    "description": "Active stone quarries providing abundant raw stone materials.",
+    "increase": {
+      "supply": {
+        "overall": 0.4,
+        "cargo-types": {
+          "Cut Stone": 0.5
+        }
+      }
+    }
+  },
+  "stonework": {
+    "description": "Skilled stone masons and workshops producing high-quality stonework.",
+    "increase": {
+      "quality": {
+        "cargo-types": {
+          "Cut Stone": 1.5
+        }
+      }
     }
   }
 }

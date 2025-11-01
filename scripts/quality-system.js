@@ -159,8 +159,8 @@ export class QualitySystem {
             const sourceFlags = this.dataManager.sourceFlags || {};
             const wineQualityFlag = sourceFlags.wine_quality;
             
-            if (wineQualityFlag?.qualityBonus?.[cargoName]) {
-                const bonus = wineQualityFlag.qualityBonus[cargoName];
+            if (wineQualityFlag?.increase?.quality?.['cargo-types']?.[cargoName]) {
+                const bonus = wineQualityFlag.increase.quality['cargo-types'][cargoName];
                 bonuses.total += bonus;
                 bonuses.details.push({
                     source: 'wine_quality flag',

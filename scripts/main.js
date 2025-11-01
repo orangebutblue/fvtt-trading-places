@@ -356,11 +356,11 @@ function registerHandlebarsHelpers() {
             const effects = [];
 
             // Add transfer effects
-            if (flagData.supplyTransfer) {
-                effects.push(`• +${Math.round(flagData.supplyTransfer * 100)}% supply transfer rate`);
+            if (flagData.increase?.supply?.overall) {
+                effects.push(`• +${Math.round(flagData.increase.supply.overall * 100)}% supply transfer rate`);
             }
-            if (flagData.demandTransfer) {
-                effects.push(`• +${Math.round(flagData.demandTransfer * 100)}% demand transfer rate`);
+            if (flagData.increase?.demand?.overall) {
+                effects.push(`• +${Math.round(flagData.increase.demand.overall * 100)}% demand transfer rate`);
             }
 
             // Add availability bonuses
@@ -378,14 +378,14 @@ function registerHandlebarsHelpers() {
             }
 
             // Add category transfer effects
-            if (flagData.categorySupplyTransfer) {
-                Object.entries(flagData.categorySupplyTransfer).forEach(([category, value]) => {
+            if (flagData.increase?.supply?.['cargo-category']) {
+                Object.entries(flagData.increase.supply['cargo-category']).forEach(([category, value]) => {
                     const sign = value > 0 ? '+' : '';
                     effects.push(`• ${sign}${Math.round(value * 100)}% ${category} supply transfer`);
                 });
             }
-            if (flagData.categoryDemandTransfer) {
-                Object.entries(flagData.categoryDemandTransfer).forEach(([category, value]) => {
+            if (flagData.increase?.demand?.['cargo-category']) {
+                Object.entries(flagData.increase.demand['cargo-category']).forEach(([category, value]) => {
                     const sign = value > 0 ? '+' : '';
                     effects.push(`• ${sign}${Math.round(value * 100)}% ${category} demand transfer`);
                 });

@@ -109,8 +109,8 @@ class EquilibriumCalculator {
                 const flagData = this.sourceFlags[flag];
                 if (flagData) {
                     // Apply general supply/demand transfers
-                    if (flagData.supplyTransfer) {
-                        const transfer = Math.floor(demand * flagData.supplyTransfer);
+                    if (flagData.increase?.supply?.overall) {
+                        const transfer = Math.floor(demand * flagData.increase.supply.overall);
                         supply += transfer;
                         demand -= transfer;
                         
@@ -123,8 +123,8 @@ class EquilibriumCalculator {
                         });
                     }
 
-                    if (flagData.demandTransfer) {
-                        const transfer = Math.floor(supply * flagData.demandTransfer);
+                    if (flagData.increase?.demand?.overall) {
+                        const transfer = Math.floor(supply * flagData.increase.demand.overall);
                         demand += transfer;
                         supply -= transfer;
                         
@@ -142,8 +142,8 @@ class EquilibriumCalculator {
                     if (cargoData && cargoData.category) {
                         const category = cargoData.category;
                         
-                        if (flagData.categorySupplyTransfer && flagData.categorySupplyTransfer[category]) {
-                            const transfer = Math.floor(demand * flagData.categorySupplyTransfer[category]);
+                        if (flagData.increase?.supply?.['cargo-category']?.[category]) {
+                            const transfer = Math.floor(demand * flagData.increase.supply['cargo-category'][category]);
                             supply += transfer;
                             demand -= transfer;
                             
@@ -157,8 +157,8 @@ class EquilibriumCalculator {
                             });
                         }
 
-                        if (flagData.categoryDemandTransfer && flagData.categoryDemandTransfer[category]) {
-                            const transfer = Math.floor(supply * flagData.categoryDemandTransfer[category]);
+                        if (flagData.increase?.demand?.['cargo-category']?.[category]) {
+                            const transfer = Math.floor(supply * flagData.increase.demand['cargo-category'][category]);
                             demand += transfer;
                             supply -= transfer;
                             
