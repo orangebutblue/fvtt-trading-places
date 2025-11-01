@@ -4,7 +4,7 @@
             "name": "Sustenance",
             "category": "Provisions",
             "description": "A collective term for all kinds of agricultural products (fish, barley, wheat, legumes, root vegetables, dried meat). The price is lowest at harvest time.",
-            "basePrice": 120,
+            "basePrice": 24,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 0.5,
@@ -16,7 +16,7 @@
             "name": "Armaments",
             "category": "Military",
             "description": "Finished weapons and armor for militias or standing armies (typically hand weapons, leather armor, bolts).",
-            "basePrice": 1200,
+            "basePrice": 240,
             "seasonalModifiers": {
                 "spring": 1.2,
                 "summer": 1,
@@ -28,7 +28,7 @@
             "name": "Metal",
             "category": "Raw Materials",
             "description": "Valuable ore or processed bars (copper, iron, steel). The price is generally stable throughout the year.",
-            "basePrice": 960,
+            "basePrice": 190,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -40,7 +40,7 @@
             "name": "Timber",
             "category": "Raw Materials",
             "description": "Building materials from the great forests of the Empire.",
-            "basePrice": 240,
+            "basePrice": 48,
             "seasonalModifiers": {
                 "spring": 1.5,
                 "summer": 0.75,
@@ -52,7 +52,7 @@
             "name": "Ale",
             "category": "Brews",
             "description": "Fermented beverage made from grains.",
-            "basePrice": 180,
+            "basePrice": 110,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -64,7 +64,7 @@
             "name": "Beer",
             "category": "Brews",
             "description": "Fermented beverage made from hops and grains.",
-            "basePrice": 144,
+            "basePrice": 120,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -125,7 +125,7 @@
             "name": "Cloth",
             "category": "Manufactured Goods",
             "description": "Woven fabric for clothing and other uses.",
-            "basePrice": 480,
+            "basePrice": 260,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -137,7 +137,7 @@
             "name": "Coal",
             "category": "Natural Resources",
             "description": "Black rock used as fuel.",
-            "basePrice": 96,
+            "basePrice": 60,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -158,22 +158,10 @@
             }
         },
         {
-            "name": "Forestry",
-            "category": "Natural Resources",
-            "description": "Forest products and timber processing.",
-            "basePrice": 480,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1.2,
-                "winter": 1.5
-            }
-        },
-        {
             "name": "Furs",
             "category": "Natural Resources",
             "description": "Animal pelts used for clothing and trade.",
-            "basePrice": 1440,
+            "basePrice": 280,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -182,22 +170,10 @@
             }
         },
         {
-            "name": "Gems",
-            "category": "Luxuries",
-            "description": "Precious stones used in jewelry.",
-            "basePrice": 6000,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
             "name": "Goats",
             "category": "Livestock",
             "description": "Goat livestock and products.",
-            "basePrice": 1200,
+            "basePrice": 100,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -209,7 +185,7 @@
             "name": "Herbs",
             "category": "Natural Resources",
             "description": "Medicinal and culinary herbs.",
-            "basePrice": 360,
+            "basePrice": 180,
             "seasonalModifiers": {
                 "spring": 1.5,
                 "summer": 0.7,
@@ -221,7 +197,7 @@
             "name": "Hogs",
             "category": "Livestock",
             "description": "Pig livestock and pork products.",
-            "basePrice": 1440,
+            "basePrice": 80,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -233,7 +209,19 @@
             "name": "Horses",
             "category": "Livestock",
             "description": "Equine livestock and horse-related products.",
-            "basePrice": 2400,
+            "basePrice": 200,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1.1,
+                "winter": 0.9
+            }
+        },
+        {
+            "name": "Sheep",
+            "category": "Livestock",
+            "description": "Sheep livestock and wool products.",
+            "basePrice": 110,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -245,7 +233,7 @@
             "name": "Iron",
             "category": "Raw Materials",
             "description": "Iron ore and metal products.",
-            "basePrice": 720,
+            "basePrice": 160,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -257,103 +245,31 @@
             "name": "Lead",
             "category": "Raw Materials",
             "description": "Lead metal and products.",
-            "basePrice": 480,
+            "basePrice": 120,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
                 "autumn": 1,
                 "winter": 1
-            }
-        },
-        {
-            "name": "Livestock",
-            "category": "Livestock",
-            "description": "Various types of farm animals.",
-            "basePrice": 1800,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1.2,
-                "winter": 0.9
             }
         },
         {
             "name": "Malachite",
             "category": "Raw Materials",
             "description": "Green copper carbonate mineral.",
-            "basePrice": 1440,
+            "basePrice": 200,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
                 "autumn": 1,
                 "winter": 1
-            }
-        },
-        {
-            "name": "Metal",
-            "category": "Raw Materials",
-            "description": "Various metals and metal products.",
-            "basePrice": 1200,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Mining",
-            "category": "Raw Materials",
-            "description": "Mining equipment and minerals.",
-            "basePrice": 960,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Ore",
-            "category": "Raw Materials",
-            "description": "Raw mineral deposits.",
-            "basePrice": 600,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Pigs",
-            "category": "Livestock",
-            "description": "Pig livestock and pork products.",
-            "basePrice": 1440,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1.3,
-                "winter": 0.8
             }
         },
         {
             "name": "Pottery",
             "category": "Luxuries",
             "description": "Ceramic goods and pottery.",
-            "basePrice": 360,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Precious",
-            "category": "Raw Materials",
-            "description": "Precious metals and valuables.",
-            "basePrice": 3600,
+            "basePrice": 200,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -365,7 +281,7 @@
             "name": "Cut Stone",
             "category": "Raw Materials",
             "description": "Cut and shaped stone blocks for construction and masonry.",
-            "basePrice": 600,
+            "basePrice": 40,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -377,7 +293,7 @@
             "name": "Quartz",
             "category": "Raw Materials",
             "description": "Quartz mineral and products.",
-            "basePrice": 360,
+            "basePrice": 150,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -389,7 +305,7 @@
             "name": "Salt",
             "category": "Food",
             "description": "Salt for preservation and seasoning.",
-            "basePrice": 180,
+            "basePrice": 144,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -398,22 +314,22 @@
             }
         },
         {
-            "name": "Sheep",
-            "category": "Livestock",
-            "description": "Sheep livestock and wool products.",
-            "basePrice": 1200,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1.1,
-                "winter": 0.9
-            }
-        },
-        {
             "name": "Silver",
             "category": "Raw Materials",
             "description": "Silver metal and products.",
-            "basePrice": 3000,
+            "basePrice": 300,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
+            }
+        },
+        {
+            "name": "Gold",
+            "category": "Raw Materials",
+            "description": "Silver metal and products.",
+            "basePrice": 480,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -425,7 +341,7 @@
             "name": "Slate",
             "category": "Raw Materials",
             "description": "Slate stone and roofing material.",
-            "basePrice": 360,
+            "basePrice": 45,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -434,22 +350,10 @@
             }
         },
         {
-            "name": "Slavery",
+            "name": "Slaves",
             "category": "Services",
             "description": "Slave trade and related goods.",
-            "basePrice": 2400,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Smelting",
-            "category": "Manufactured Goods",
-            "description": "Metal smelting and processing.",
-            "basePrice": 1440,
+            "basePrice": 300,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -461,7 +365,7 @@
             "name": "Textiles",
             "category": "Luxuries",
             "description": "Fabric and textile products.",
-            "basePrice": 600,
+            "basePrice": 260,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -473,7 +377,7 @@
             "name": "Books",
             "category": "Manufactured Goods",
             "description": "Written works and tomes.",
-            "basePrice": 1440,
+            "basePrice": 300,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -485,7 +389,7 @@
             "name": "Tin",
             "category": "Raw Materials",
             "description": "Tin metal and products.",
-            "basePrice": 840,
+            "basePrice": 160,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -497,7 +401,7 @@
             "name": "Tobacco",
             "category": "Luxuries",
             "description": "Tobacco leaves and smoking products.",
-            "basePrice": 960,
+            "basePrice": 240,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -509,31 +413,7 @@
             "name": "Tourmaline",
             "category": "Raw Materials",
             "description": "Tourmaline gemstone.",
-            "basePrice": 2160,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Spice",
-            "category": "Natural Resources",
-            "description": "Exotic seasonings and flavorings.",
-            "basePrice": 1800,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Armaments",
-            "category": "Manufactured Goods",
-            "description": "Weapons and armor.",
-            "basePrice": 3000,
+            "basePrice": 280,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -555,30 +435,6 @@
             "qualitySystem": "wine_brandy"
         },
         {
-            "name": "Woodcarving",
-            "category": "Manufactured Goods",
-            "description": "Wood carving and craftsmanship.",
-            "basePrice": 840,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Woodcraft",
-            "category": "Manufactured Goods",
-            "description": "Woodworking and forest crafts.",
-            "basePrice": 720,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
             "name": "Wool",
             "category": "Raw Materials",
             "description": "Sheep wool and textile products.",
@@ -594,7 +450,7 @@
             "name": "Glass",
             "category": "Luxuries",
             "description": "Glass products and glassware.",
-            "basePrice": 400,
+            "basePrice": 220,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -606,7 +462,7 @@
             "name": "Bricks",
             "category": "Luxuries",
             "description": "Bricks and building materials.",
-            "basePrice": 200,
+            "basePrice": 150,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -618,7 +474,7 @@
             "name": "Spices",
             "category": "Luxuries",
             "description": "Exotic spices and seasonings.",
-            "basePrice": 900,
+            "basePrice": 340,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -630,7 +486,7 @@
             "name": "Silks",
             "category": "Luxuries",
             "description": "Silk fabrics and luxury textiles.",
-            "basePrice": 1000,
+            "basePrice": 320,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -642,7 +498,7 @@
             "name": "Jewelry",
             "category": "Luxuries",
             "description": "Finished jewelry and precious adornments.",
-            "basePrice": 5000,
+            "basePrice": 480,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -654,7 +510,7 @@
             "name": "Fine Art",
             "category": "Luxuries",
             "description": "Paintings, sculptures, and tapestries from skilled artisans.",
-            "basePrice": 2500,
+            "basePrice": 360,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -666,7 +522,7 @@
             "name": "Carpets",
             "category": "Luxuries",
             "description": "Woven rugs and carpets from distant lands.",
-            "basePrice": 1000,
+            "basePrice": 280,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -678,7 +534,7 @@
             "name": "Oils",
             "category": "Provisions",
             "description": "Cooking oils and lubricants from various sources.",
-            "basePrice": 300,
+            "basePrice": 180,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
@@ -702,7 +558,7 @@
             "name": "Firewood",
             "category": "Provisions",
             "description": "Wood for fuel and heating.",
-            "basePrice": 60,
+            "basePrice": 40,
             "seasonalModifiers": {
                 "spring": 1.5,
                 "summer": 0.75,
@@ -714,7 +570,7 @@
             "name": "Containers",
             "category": "Provisions",
             "description": "Barrels, crates, and other storage containers.",
-            "basePrice": 240,
+            "basePrice": 60,
             "seasonalModifiers": {
                 "spring": 1,
                 "summer": 1,
