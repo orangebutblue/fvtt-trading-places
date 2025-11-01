@@ -26,7 +26,7 @@
         },
         {
             "name": "Timber",
-            "category": "Raw Materials",
+            "category": "Natural Resources",
             "description": "Building materials from the great forests of the Empire.",
             "basePrice": 48,
             "seasonalModifiers": {
@@ -412,7 +412,7 @@
         },
         {
             "name": "Wool",
-            "category": "Raw Materials",
+            "category": "Livestock",
             "description": "Sheep wool and textile products.",
             "basePrice": 120,
             "seasonalModifiers": {

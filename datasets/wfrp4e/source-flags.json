@@ -3,32 +3,36 @@
     "description": "Busy market crossroad that attracts merchants from surrounding regions.",
     "increase": {
       "supply": {
-        "overall": 0.3,
+        "overall": 0.4,
         "cargo-category": {
-          "Luxury Goods": 0.2,
-          "Bulk Goods": 0.1
+          "Luxuries": 0.2,
+          "Provisions": 0.1
+        }
+      },
+      "demand": {
+        "overall": 0.25,
+        "cargo-category": {
+          "Manufactured Goods": 0.15
         }
       }
-    },
-    "availabilityBonus": {
-      "producers": 0.25,
-      "seekers": 0.25
     }
   },
   "government": {
     "description": "Seat of administration with regulated trade and permit requirements.",
     "increase": {
       "demand": {
-        "overall": 0.2,
+        "overall": 0.1,
         "cargo-category": {
-          "Luxury Goods": 0.15,
-          "Military": 0.15
+          "Luxuries": 0.15,
+          "Manufactured Goods": 0.2
+        },
+        "cargo-types": {
+          "Armaments": 0.15
         }
+      },
+      "quality": {
+        "overall": -0.1
       }
-    },
-    "availabilityBonus": {
-      "producers": -0.1,
-      "seekers": -0.1
     }
   },
   "metalworking": {
@@ -37,8 +41,13 @@
       "supply": {
         "overall": 0.25,
         "cargo-category": {
-          "Raw Materials": 0.35,
-          "Manufactured": 0.2
+          "Manufactured Goods": 0.3
+        }
+      },
+      "demand": {
+        "cargo-category": {
+          "Natural Resources": 0.3,
+          "Metal": 0.3
         }
       },
       "quality": {
@@ -49,11 +58,16 @@
   "boatbuilding": {
     "description": "Shipyards and docks requiring constant timber and tool supplies.",
     "increase": {
+      "supply": {
+        "cargo-category": {
+          "Manufactured Goods": 0.3
+        }
+      },
       "demand": {
         "overall": 0.25,
         "cargo-category": {
-          "Raw Materials": 0.3,
-          "Manufactured": 0.15
+          "Natural Resources": 0.3,
+          "Manufactured Goods": 0.15
         }
       }
     }
@@ -61,13 +75,15 @@
   "subsistence": {
     "description": "Local production barely covers resident needs; little surplus for trade.",
     "increase": {
+      "supply": {
+        "overall": -0.15
+      },
       "demand": {
-        "overall": 0.4
+        "overall": 0.1,
+        "cargo-category": {
+          "Provisions": 0.2
+        }
       }
-    },
-    "availabilityBonus": {
-      "producers": -0.3,
-      "seekers": -0.15
     }
   },
   "mine": {
@@ -76,8 +92,13 @@
       "supply": {
         "overall": 0.4,
         "cargo-category": {
-          "Raw Materials": 0.45,
-          "Bulk Goods": 0.15
+          "Metal": 0.45,
+          "Stones and Minerals": 0.25
+        }
+      },
+      "demand": {
+        "cargo-category": {
+          "Manufactured Goods": 0.2
         }
       }
     }
@@ -88,8 +109,13 @@
       "supply": {
         "overall": 0.3,
         "cargo-category": {
-          "Bulk Goods": 0.4,
-          "Luxury Goods": -0.1
+          "Provisions": 0.4,
+          "Luxuries": -0.1
+        }
+      },
+      "demand": {
+        "cargo-category": {
+          "Manufactured Goods": 0.15
         }
       }
     }
@@ -100,8 +126,11 @@
       "demand": {
         "overall": 0.35,
         "cargo-category": {
-          "Military": 0.45,
-          "Bulk Goods": 0.1
+          "Provisions": 0.1,
+          "Metal": 0.2
+        },
+        "cargo-types": {
+          "Armaments": 0.45
         }
       }
     }
@@ -110,14 +139,15 @@
     "description": "Shadow markets deal in illicit goods and cut-rate prices.",
     "increase": {
       "supply": {
-        "overall": 0.2
+        "overall": 0.3
+      },
+      "demand": {
+        "cargo-category": {
+          "Luxuries": 0.2
+        }
       }
     },
-    "contrabandChance": 0.5,
-    "availabilityBonus": {
-      "producers": 0.1
-    },
-    "uiTags": ["secret"]
+    "contrabandChance": 0.5
   },
   "piracy": {
     "description": "Coastal raiders moving hot cargo through back channels.",
@@ -125,14 +155,20 @@
       "supply": {
         "overall": 0.15,
         "cargo-category": {
-          "Luxury Goods": 0.2
+          "Luxuries": 0.2
         }
       },
       "demand": {
         "overall": 0.15,
         "cargo-category": {
-          "Military": 0.1
+          "Manufactured Goods": 0.1
+        },
+        "cargo-types": {
+          "Armaments": 0.1
         }
+      },
+      "quality": {
+        "overall": -0.3
       }
     },
     "contrabandChance": 0.35
@@ -152,15 +188,17 @@
     "description": "Major trade routes and transport hubs facilitate the flow of goods.",
     "increase": {
       "supply": {
-        "overall": 0.2
+        "overall": 0.3,
+        "cargo-category": {
+          "Provisions": 0.1
+        }
       },
       "demand": {
-        "overall": 0.1
+        "overall": 0.15,
+        "cargo-category": {
+          "Manufactured Goods": 0.2
+        }
       }
-    },
-    "availabilityBonus": {
-      "producers": 0.1,
-      "seekers": 0.05
     }
   },
   "fishing": {
@@ -168,6 +206,11 @@
     "increase": {
       "supply": {
         "overall": 0.25
+      },
+      "demand": {
+        "cargo-category": {
+          "Manufactured Goods": 0.15
+        }
       },
       "quality": {
         "cargo-types": {
@@ -184,12 +227,22 @@
         "cargo-types": {
           "Cut Stone": 0.5
         }
+      },
+      "demand": {
+        "cargo-category": {
+          "Manufactured Goods": 0.2
+        }
       }
     }
   },
   "stonework": {
     "description": "Skilled stone masons and workshops producing high-quality stonework.",
     "increase": {
+      "demand": {
+        "cargo-category": {
+          "Stones and Minerals": 0.15
+        }
+      },
       "quality": {
         "cargo-types": {
           "Cut Stone": 1.5
