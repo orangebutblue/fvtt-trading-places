@@ -14,25 +14,13 @@
         },
         {
             "name": "Armaments",
-            "category": "Military",
+            "category": "Manufactured Goods",
             "description": "Finished weapons and armor for militias or standing armies (typically hand weapons, leather armor, bolts).",
             "basePrice": 240,
             "seasonalModifiers": {
                 "spring": 1.2,
                 "summer": 1,
                 "autumn": 0.8,
-                "winter": 1
-            }
-        },
-        {
-            "name": "Metal",
-            "category": "Raw Materials",
-            "description": "Valuable ore or processed bars (copper, iron, steel). The price is generally stable throughout the year.",
-            "basePrice": 190,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
                 "winter": 1
             }
         },
@@ -86,18 +74,6 @@
             "qualitySystem": "wine_brandy"
         },
         {
-            "name": "Brewing",
-            "category": "Brews",
-            "description": "Equipment and supplies for brewing beverages.",
-            "basePrice": 960,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            }
-        },
-        {
             "name": "Cattle",
             "category": "Livestock",
             "description": "Livestock and cattle products.",
@@ -135,7 +111,7 @@
         },
         {
             "name": "Coal",
-            "category": "Natural Resources",
+            "category": "Stones and Minerals",
             "description": "Black rock used as fuel.",
             "basePrice": 60,
             "seasonalModifiers": {
@@ -147,7 +123,7 @@
         },
         {
             "name": "Copper",
-            "category": "Raw Materials",
+            "category": "Metal",
             "description": "Reddish metal used in various applications.",
             "basePrice": 960,
             "seasonalModifiers": {
@@ -231,7 +207,7 @@
         },
         {
             "name": "Iron",
-            "category": "Raw Materials",
+            "category": "Metal",
             "description": "Iron ore and metal products.",
             "basePrice": 160,
             "seasonalModifiers": {
@@ -243,7 +219,7 @@
         },
         {
             "name": "Lead",
-            "category": "Raw Materials",
+            "category": "Metal",
             "description": "Lead metal and products.",
             "basePrice": 120,
             "seasonalModifiers": {
@@ -255,7 +231,7 @@
         },
         {
             "name": "Malachite",
-            "category": "Raw Materials",
+            "category": "Stones and Minerals",
             "description": "Green copper carbonate mineral.",
             "basePrice": 200,
             "seasonalModifiers": {
@@ -279,7 +255,7 @@
         },
         {
             "name": "Cut Stone",
-            "category": "Raw Materials",
+            "category": "Stones and Minerals",
             "description": "Cut and shaped stone blocks for construction and masonry.",
             "basePrice": 40,
             "seasonalModifiers": {
@@ -291,7 +267,7 @@
         },
         {
             "name": "Quartz",
-            "category": "Raw Materials",
+            "category": "Stones and Minerals",
             "description": "Quartz mineral and products.",
             "basePrice": 150,
             "seasonalModifiers": {
@@ -303,7 +279,7 @@
         },
         {
             "name": "Salt",
-            "category": "Food",
+            "category": "Provisions",
             "description": "Salt for preservation and seasoning.",
             "basePrice": 144,
             "seasonalModifiers": {
@@ -315,7 +291,7 @@
         },
         {
             "name": "Silver",
-            "category": "Raw Materials",
+            "category": "Metal",
             "description": "Silver metal and products.",
             "basePrice": 300,
             "seasonalModifiers": {
@@ -327,8 +303,8 @@
         },
         {
             "name": "Gold",
-            "category": "Raw Materials",
-            "description": "Silver metal and products.",
+            "category": "Metal",
+            "description": "Gold metal and products.",
             "basePrice": 480,
             "seasonalModifiers": {
                 "spring": 1,
@@ -339,7 +315,7 @@
         },
         {
             "name": "Slate",
-            "category": "Raw Materials",
+            "category": "Stones and Minerals",
             "description": "Slate stone and roofing material.",
             "basePrice": 45,
             "seasonalModifiers": {
@@ -351,7 +327,7 @@
         },
         {
             "name": "Slaves",
-            "category": "Services",
+            "category": "Livestock",
             "description": "Slave trade and related goods.",
             "basePrice": 300,
             "seasonalModifiers": {
@@ -387,7 +363,7 @@
         },
         {
             "name": "Tin",
-            "category": "Raw Materials",
+            "category": "Metal",
             "description": "Tin metal and products.",
             "basePrice": 160,
             "seasonalModifiers": {
@@ -411,7 +387,7 @@
         },
         {
             "name": "Tourmaline",
-            "category": "Raw Materials",
+            "category": "Stones and Minerals",
             "description": "Tourmaline gemstone.",
             "basePrice": 280,
             "seasonalModifiers": {
@@ -460,7 +436,7 @@
         },
         {
             "name": "Bricks",
-            "category": "Luxuries",
+            "category": "Manufactured Goods",
             "description": "Bricks and building materials.",
             "basePrice": 150,
             "seasonalModifiers": {
@@ -568,7 +544,7 @@
         },
         {
             "name": "Containers",
-            "category": "Provisions",
+            "category": "Manufactured Goods",
             "description": "Barrels, crates, and other storage containers.",
             "basePrice": 60,
             "seasonalModifiers": {
