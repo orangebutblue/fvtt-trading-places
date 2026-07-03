@@ -270,16 +270,6 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         }
 
         const context = this._getCurrencyContext();
-        console.log('💱 _prepareCurrencyRecord called', {
-            hasCargo: !!record.cargo,
-            hasContext: !!context,
-            pricePerEP: record.pricePerEP,
-            totalCost: record.totalCost,
-            alreadyFormatted: {
-                price: !!record.formattedPricePerEP,
-                total: !!record.formattedTotalCost
-            }
-        });
         const normalized = { ...record };
 
         const quantity = this._coerceNumber(normalized.quantity);
@@ -332,14 +322,6 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 }
             }
         }
-
-        console.log('💱 _prepareCurrencyRecord result', {
-            cargo: normalized.cargo,
-            formattedPricePerEP: normalized.formattedPricePerEP,
-            formattedTotalCost: normalized.formattedTotalCost,
-            pricePerEP: normalized.pricePerEP,
-            totalCost: normalized.totalCost
-        });
 
         return normalized;
     }
@@ -506,21 +488,9 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         // Load season before trying to load cargo
         await this._loadCurrentSeason();
 
-        console.log('🔄 CARGO PERSISTENCE: In _prepareContext, settlement and season loaded', {
-            hasSettlement: !!this.selectedSettlement,
-            settlementName: this.selectedSettlement?.name,
-            hasSeason: !!this.currentSeason,
-            season: this.currentSeason
-        });
-
         // Load cargo availability data if settlement and season are selected
         if (this.selectedSettlement && this.currentSeason) {
-            console.log('🔄 CARGO PERSISTENCE: Loading cargo data in _prepareContext');
             await this._loadAndRestoreCargoAvailability();
-            
-            // Note: Seller offers restoration moved to _onRender to ensure DOM is ready
-        } else {
-            console.log('🔄 CARGO PERSISTENCE: Not loading cargo data - missing settlement or season');
         }
 
         // Add trading-specific data for templates
@@ -534,50 +504,20 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
     context.slotAvailabilityResults = availableCargo;
         this.transactionHistory = this._prepareTransactionHistory(this.transactionHistory || []);
         context.transactionHistory = this.transactionHistory;
-        console.log('🎨 Template context - transactionHistory:', {
-            length: this.transactionHistory?.length || 0,
-            firstTransaction: this.transactionHistory?.[0] || null,
-            allTransactions: this.transactionHistory || []
-        });
+        // Transaction history prepared
         context.playerCargo = this.playerCargo;
 
         // Cargo data for the cargo tab - ALWAYS reload from DataManager to ensure fresh data
         context.currentCargo = await this._getCurrentCargoData();
+        
         // Also update the app instance with the loaded data
         this.currentCargo = context.currentCargo;
-        console.log('🚛 CARGO DEBUG: Loaded currentCargo from DataManager', {
-            length: context.currentCargo.length,
-            firstItem: context.currentCargo[0]
-        });
         context.cargoCapacity = await game.settings.get(MODULE_ID, "cargoCapacity") || 400;
         context.currentLoad = this._calculateCurrentLoad(context.currentCargo);
         context.capacityPercentage = Math.min((context.currentLoad / context.cargoCapacity) * 100, 100);
         context.isOverCapacity = context.currentLoad > context.cargoCapacity;
         
-        // Debug logging for cargo data
-        console.log('🚛 CARGO DEBUG: Cargo data prepared for template', {
-            currentCargoLength: context.currentCargo?.length || 0,
-            cargoCapacity: context.cargoCapacity,
-            currentLoad: context.currentLoad,
-            capacityPercentage: context.capacityPercentage,
-            isOverCapacity: context.isOverCapacity,
-            currentCargo: context.currentCargo
-        });
 
-        console.log('🔄 CARGO PERSISTENCE: Context prepared with cargo data', {
-            successfulCargoCount: successfulCargo.length,
-            availableCargoCount: availableCargo.length,
-            firstSuccessfulCargo: successfulCargo[0] ? {
-                name: successfulCargo[0].name,
-                quantity: successfulCargo[0].quantity,
-                hasFailed: successfulCargo[0].hasFailed
-            } : null,
-            firstAvailableCargo: availableCargo[0] ? {
-                name: availableCargo[0].name,
-                quantity: availableCargo[0].quantity,
-                hasFailed: availableCargo[0].hasFailed
-            } : null
-        });
         
         // Get all settlements and filter by region if one is selected
         const allSettlements = this.dataManager?.getAllSettlements() || [];
@@ -659,20 +599,6 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             sellableCargoTypes: context.sellableCargoTypes.length
         });
 
-        console.log('🔄 CARGO PERSISTENCE: Final context for template', {
-            availableCargoLength: context.availableCargo.length,
-            successfulCargoLength: context.successfulCargo.length,
-            hasCargoData: context.availableCargo.length > 0,
-            firstAvailableCargo: context.availableCargo[0] ? {
-                name: context.availableCargo[0].name,
-                isSlotAvailable: context.availableCargo[0].isSlotAvailable,
-                quantity: context.availableCargo[0].quantity,
-                currentPrice: context.availableCargo[0].currentPrice,
-                category: context.availableCargo[0].category,
-                hasFailure: !!context.availableCargo[0].failure
-            } : null
-        });
-
         return context;
     }
 
@@ -685,21 +611,8 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
      */
     async _getCurrentCargoData() {
         try {
-            console.log('🚛 CARGO_PERSIST: Loading cargo from DataManager for display');
             const currentCargo = this.dataManager?.cargo || [];
-            
-            console.log('🚛 CARGO_PERSIST: Raw cargo data from DataManager', {
-                length: currentCargo.length,
-                data: currentCargo
-            });
-            
             const processedCargo = this._prepareCurrentCargoList(currentCargo);
-            
-            console.log('🚛 CARGO_PERSIST: Processed cargo data', {
-                length: processedCargo.length,
-                data: processedCargo
-            });
-            
             return processedCargo;
         } catch (error) {
             this._logError('Cargo Management', 'Failed to load current cargo data', { error: error.message });
@@ -727,17 +640,11 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
 
         this._logInfo('Application Lifecycle', 'Application rendered successfully');
 
-        // Debug: Log the actual HTML structure
-        console.log('Trading Places | Application element:', this.element);
-        console.log('Trading Places | Application classes:', this.element?.className);
-        console.log('Trading Places | Parent element:', this.element?.parentElement);
-        console.log('Trading Places | Window element:', this.element?.closest('.app'));
-        
         // Force background styles for debugging
         if (this.element) {
             this.element.style.backgroundColor = '#2c2c2c';
             this.element.style.border = '2px solid #333';
-            console.log('Trading Places | Forced styles applied to element');
+
             
             const windowElement = this.element.closest('.app');
             if (windowElement) {
@@ -813,15 +720,12 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
 
             // Ensure eventHandlers and sellingFlow are available
             if (!this.eventHandlers || !this.eventHandlers.sellingFlow) {
-                console.log('🔄 SELLER PERSISTENCE: SellingFlow not available for restoration');
                 return;
             }
 
-            console.log('🔄 SELLER PERSISTENCE: Attempting to restore seller offers after render');
             await this.eventHandlers.sellingFlow.restoreSellerOffers();
             
         } catch (error) {
-            console.error('🔄 SELLER PERSISTENCE: Failed to restore seller offers after render', error);
             this._logError('Seller Persistence', 'Failed to restore seller offers after render', { error: error.message });
         }
     }
@@ -945,23 +849,15 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             }
 
             // Load saved transaction history from DataManager
-            console.log('🚛 CARGO_PERSIST: Loading transaction history from DataManager');
             const savedTransactionHistory = this.dataManager?.history || [];
             if (savedTransactionHistory && Array.isArray(savedTransactionHistory)) {
                 this.transactionHistory = this._prepareTransactionHistory(savedTransactionHistory);
-                console.log('🚛 CARGO_PERSIST: Loaded transaction history', { 
-                    transactionCount: this.transactionHistory.length 
-                });
                 this._logDebug('Saved Selections', 'Loaded saved transaction history', { 
                     transactionCount: this.transactionHistory.length 
                 });
-            } else {
-                this.transactionHistory = [];
-                console.log('🚛 CARGO_PERSIST: No transaction history found, initialized empty array');
-                this._logDebug('Saved Selections', 'No saved transaction history found, initialized empty array');
-            }
-
-        } catch (error) {
+        } else {
+            this.transactionHistory = [];
+        }        } catch (error) {
             this._logError('Saved Selections', 'Failed to load saved selections', { error: error.message });
         }
     }
@@ -972,25 +868,9 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
      */
     async _loadAndRestoreCargoAvailability() {
         try {
-            console.log('🔄 CARGO PERSISTENCE: Starting cargo restoration');
             const cargoData = await this._loadCargoAvailability();
 
             if (cargoData) {
-                console.log('🔄 CARGO PERSISTENCE: Loaded cargo data:', {
-                    settlement: cargoData.settlement,
-                    season: cargoData.season,
-                    availableCargoCount: cargoData.availableCargo?.length || 0,
-                    successfulCargoCount: cargoData.successfulCargo?.length || 0,
-                    firstAvailableCargo: cargoData.availableCargo?.[0] ? {
-                        name: cargoData.availableCargo[0].name,
-                        isSlotAvailable: cargoData.availableCargo[0].isSlotAvailable,
-                        hasFailure: !!cargoData.availableCargo[0].failure,
-                        failureMessage: cargoData.availableCargo[0].failure?.message,
-                        quantity: cargoData.availableCargo[0].quantity,
-                        currentPrice: cargoData.availableCargo[0].currentPrice,
-                        category: cargoData.availableCargo[0].category
-                    } : null
-                });
                 this.availableCargo = cargoData.availableCargo || [];
                 this.successfulCargo = cargoData.successfulCargo || [];
 
@@ -1015,7 +895,6 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             }
 
         } catch (error) {
-            console.error('🔄 CARGO PERSISTENCE: Failed to load and restore cargo availability', error);
             this._logError('Cargo Persistence', 'Failed to load and restore cargo availability', { error: error.message });
             this.availableCargo = [];
             this.successfulCargo = [];
@@ -1034,32 +913,18 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
      */
     async _saveCargoAvailability(availableCargo, successfulCargo, pipelineResult, availabilityResult) {
         try {
-            if (!this.selectedSettlement || !this.currentSeason) {
-                console.log('🔄 CARGO PERSISTENCE: Cannot save - missing settlement or season');
-                this._logDebug('Cargo Persistence', 'Cannot save cargo availability - missing settlement or season');
-                return;
-            }
-
-            const datasetId = this.dataManager?.activeDatasetName || 'default';
+        if (!this.selectedSettlement || !this.currentSeason) {
+            return;
+        }            const datasetId = this.dataManager?.activeDatasetName || 'default';
             const cargoData = {
                 settlement: this.selectedSettlement.name,
-                season: this.currentSeason,
-                timestamp: Date.now(),
-                availableCargo: availableCargo,
-                successfulCargo: successfulCargo,
-                pipelineResult: pipelineResult,
-                availabilityResult: availabilityResult
-            };
-
-            console.log('🔄 CARGO PERSISTENCE: Saving cargo data', {
-                dataset: datasetId,
-                settlement: this.selectedSettlement.name,
-                season: this.currentSeason,
-                availableCargoCount: availableCargo?.length || 0,
-                successfulCargoCount: successfulCargo?.length || 0
-            });
-
-            // Get existing cargo availability data and add/update this entry
+            season: this.currentSeason,
+            timestamp: Date.now(),
+            availableCargo: availableCargo,
+            successfulCargo: successfulCargo,
+            pipelineResult: pipelineResult,
+            availabilityResult: availabilityResult
+        };            // Get existing cargo availability data and add/update this entry
             const allCargoData = await game.settings.get(MODULE_ID, "cargoAvailabilityData") || {};
             if (!allCargoData[datasetId]) {
                 allCargoData[datasetId] = {};
@@ -1070,8 +935,6 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
 
             await game.settings.set(MODULE_ID, "cargoAvailabilityData", allCargoData);
 
-            console.log('🔄 CARGO PERSISTENCE: Cargo data saved successfully');
-
             this._logDebug('Cargo Persistence', 'Cargo availability data saved', {
                 dataset: datasetId,
                 settlement: this.selectedSettlement.name,
@@ -1080,7 +943,6 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             });
 
         } catch (error) {
-            console.error('🔄 CARGO PERSISTENCE: Failed to save cargo availability data', error);
             this._logError('Cargo Persistence', 'Failed to save cargo availability data', { error: error.message });
         }
     }
@@ -1092,21 +954,12 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
      */
     async _loadCargoAvailability() {
         try {
-            if (!this.selectedSettlement || !this.currentSeason) {
-                console.log('🔄 CARGO PERSISTENCE: Cannot load - missing settlement or season', {
-                    hasSettlement: !!this.selectedSettlement,
-                    hasSeason: !!this.currentSeason
-                });
-                this._logDebug('Cargo Persistence', 'Cannot load cargo availability - missing settlement or season');
-                return null;
-            }
-
-            const datasetId = this.dataManager?.activeDatasetName || 'default';
+        if (!this.selectedSettlement || !this.currentSeason) {
+            return null;
+        }            const datasetId = this.dataManager?.activeDatasetName || 'default';
             const allCargoData = await game.settings.get(MODULE_ID, "cargoAvailabilityData") || {};
             const datasetCargoData = allCargoData[datasetId] || {};
-            console.log('🔄 CARGO PERSISTENCE: Retrieved all cargo data from settings:', Object.keys(datasetCargoData));
             const storageKey = `${this.selectedSettlement.name}_${this.currentSeason}`;
-            console.log('🔄 CARGO PERSISTENCE: Looking for storage key:', storageKey);
 
             const cargoData = datasetCargoData[storageKey];
 
@@ -1116,35 +969,16 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
                 return null;
             }
 
-            // Validate that the data is still relevant
-            if (cargoData.settlement !== this.selectedSettlement.name ||
-                cargoData.season !== this.currentSeason) {
-                console.log('🔄 CARGO PERSISTENCE: Cargo data mismatch', {
-                    saved: { settlement: cargoData.settlement, season: cargoData.season },
-                    current: { settlement: this.selectedSettlement.name, season: this.currentSeason }
-                });
-                this._logDebug('Cargo Persistence', 'Saved cargo data is for different settlement/season, ignoring');
-                return null;
-            }
-
-            // Check if data is not too old (optional - could be configurable)
-            const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-            if (Date.now() - cargoData.timestamp > maxAge) {
-                console.log('🔄 CARGO PERSISTENCE: Cargo data is too old, ignoring');
-                this._logDebug('Cargo Persistence', 'Saved cargo data is too old, ignoring');
-                // Don't delete old data, just ignore it
-                return null;
-            }
-
-            console.log('🔄 CARGO PERSISTENCE: Successfully loaded cargo data', {
-                dataset: datasetId,
-                settlement: cargoData.settlement,
-                season: cargoData.season,
-                availableCargoCount: cargoData.availableCargo?.length || 0,
-                successfulCargoCount: cargoData.successfulCargo?.length || 0
-            });
-
-            this._logDebug('Cargo Persistence', 'Cargo availability data loaded', {
+        // Validate that the data is still relevant
+        if (cargoData.settlement !== this.selectedSettlement.name ||
+            cargoData.season !== this.currentSeason) {
+            return null;
+        }        // Check if data is not too old (optional - could be configurable)
+        const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        if (Date.now() - cargoData.timestamp > maxAge) {
+            // Don't delete old data, just ignore it
+            return null;
+        }            this._logDebug('Cargo Persistence', 'Cargo availability data loaded', {
                 dataset: datasetId,
                 settlement: cargoData.settlement,
                 season: cargoData.season,
@@ -1155,7 +989,6 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             return cargoData;
 
         } catch (error) {
-            console.error('🔄 CARGO PERSISTENCE: Failed to load cargo availability data', error);
             this._logError('Cargo Persistence', 'Failed to load cargo availability data', { error: error.message });
             return null;
         }
@@ -1307,45 +1140,25 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
      */
     async refreshUI({ focusTab = null, force = true } = {}) {
         try {
-            console.log('🔄 UI_REFRESH: ========== STARTING REFRESH ==========');
-            console.log('🔄 UI_REFRESH: Options:', { focusTab, force });
-            
             const desiredTab = focusTab || this.renderer.getActiveTabName();
-            console.log('🔄 UI_REFRESH: Desired tab:', desiredTab);
 
             // Reload cargo data from DataManager
-            console.log('🔄 UI_REFRESH: DataManager cargo before reload:', this.dataManager?.cargo?.length || 0);
-            this.currentCargo = await this._getCurrentCargoData();
-            this.playerCargo = Array.isArray(this.currentCargo) ? [...this.currentCargo] : [];
-            console.log('🔄 UI_REFRESH: Cargo reloaded:', {
-                currentCargoCount: this.currentCargo.length,
-                playerCargoCount: this.playerCargo.length
-            });
-            
-            // Reload transaction history from DataManager
-            console.log('🔄 UI_REFRESH: DataManager history before reload:', this.dataManager?.history?.length || 0);
-            this.transactionHistory = this._prepareTransactionHistory(this.dataManager?.history || []);
-            console.log('🔄 UI_REFRESH: History reloaded:', this.transactionHistory.length);
+        this.currentCargo = await this._getCurrentCargoData();
+        this.playerCargo = Array.isArray(this.currentCargo) ? [...this.currentCargo] : [];
+        
+        // Reload transaction history from DataManager
+        this.transactionHistory = this._prepareTransactionHistory(this.dataManager?.history || []);
 
-            // Force a complete re-render
-            console.log('🔄 UI_REFRESH: Calling render() with force =', force);
-            await this.render(force);
-            console.log('🔄 UI_REFRESH: Render complete');
+        // Force a complete re-render
+        await this.render(force);
 
-            // Switch to the desired tab after render completes
-            const tabToActivate = desiredTab || 'buying';
-            console.log('🔄 UI_REFRESH: Switching to tab:', tabToActivate);
-            
-            // Use a small delay to ensure render is complete
+        // Switch to the desired tab after render completes
+        const tabToActivate = desiredTab || 'buying';            // Use a small delay to ensure render is complete
             setTimeout(() => {
                 this.renderer.setActiveTab(tabToActivate);
-                console.log('🔄 UI_REFRESH: ========== REFRESH COMPLETE ==========');
             }, 50);
             
         } catch (error) {
-            console.error('🔄 UI_REFRESH: ========== REFRESH FAILED ==========');
-            console.error('🔄 UI_REFRESH: Error:', error);
-            console.error('🔄 UI_REFRESH: Stack:', error.stack);
             this._logError('UI Refresh', 'Failed to refresh UI', { error: error.message });
         }
     }

@@ -169,7 +169,7 @@ export default class TradingUIRenderer {
      * @private
      */
     _updateUIState() {
-        console.log('🔍 DEBUG: _updateUIState called');
+
         // Update season display
         if (this.app.currentSeason) {
             const seasonSelect = this.app.element.querySelector('#current-season');
@@ -656,19 +656,11 @@ export default class TradingUIRenderer {
      * @private
      */
     _updateCargoDisplay(cargoList) {
-        console.log('🎨 UI RENDERER: _updateCargoDisplay called with', cargoList.length, 'items');
         const cargoGrid = this.app.element.querySelector('#buying-cargo-grid');
         if (!cargoGrid) {
             console.error('🎨 UI RENDERER: Cannot find #buying-cargo-grid element');
             return;
         }
-        
-        // Debug: Log what cargo we're displaying
-        console.log('🎨 UI RENDERER RECEIVING CARGO:', cargoList.map(c => ({
-            slot: c.slotNumber,
-            available: c.isSlotAvailable,
-            name: c.name || null
-        })));
         
         // Show the cargo grid
         cargoGrid.style.display = 'block';
@@ -991,8 +983,6 @@ export default class TradingUIRenderer {
             return;
         }
 
-        console.log(`🛒 PURCHASING: ${purchaseQuantity} EP of ${cargo.name} with ${discountPercent >= 0 ? '+' : ''}${discountPercent}% adjustment`);
-
         const pricePerEP = this._getPricePerEP(cargo);
         const discountMultiplier = 1 + (discountPercent / 100);
         const adjustedPricePerEP = pricePerEP * discountMultiplier;
@@ -1014,7 +1004,13 @@ export default class TradingUIRenderer {
             isSale: false,
             contraband: cargo.slotInfo?.contraband?.contraband || false,
             merchant: cargo.merchant?.name || cargo.merchant || 'Unknown Merchant',
-            isManualEntry: false
+            isManualEntry: false,
+            // Include quality information
+            // BuyingFlow creates: quality (fake tier shown), actualTier (real tier), dishonest (bool)
+            quality: cargo.actualTier || cargo.quality || 'Average',  // REAL quality for mechanics
+            merchantQuality: (cargo.dishonest && cargo.quality) ? cargo.quality : undefined,  // What merchant claimed
+            dishonest: cargo.dishonest || false,
+            system: cargo.system || 'standard'
         });
         
         // Add to transaction history
@@ -1032,17 +1028,13 @@ export default class TradingUIRenderer {
             }
         }
         
-        console.log('💰 Transaction created:', transaction);
-        console.log('💰 Transaction history now has:', this.app.transactionHistory.length, 'items');
-        console.log('💰 First transaction:', this.app.transactionHistory[0]);
-        
         // Save transaction history to Foundry settings for persistence
         try {
             const datasetId = this.app.dataManager?.activeDatasetName || 'default';
             const allTransactionData = await game.settings.get(MODULE_ID, "transactionHistory") || {};
             allTransactionData[datasetId] = this.app.transactionHistory;
             await game.settings.set(MODULE_ID, "transactionHistory", allTransactionData);
-            console.log('💰 Transaction history saved successfully');
+
         } catch (error) {
             console.error('💰 Failed to save transaction history:', error);
         }
@@ -1085,12 +1077,7 @@ export default class TradingUIRenderer {
         }
 
         // Re-render to update all tabs with the new transaction
-        this.app.render(false).then(() => {
-            setTimeout(() => {
-                this._switchToCargoTab();
-                console.log('🛒 Automatically switched to cargo tab after purchase');
-            }, 100);
-        });
+        await this.app.refreshUI({ focusTab: 'cargo' });
     }
 
     _applyPurchaseToAvailability(cargo, purchaseQuantity, pricePerEP) {

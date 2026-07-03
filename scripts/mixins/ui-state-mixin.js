@@ -128,12 +128,6 @@ const UIStateMixin = {
 
             // Update UI with restored cargo data if available
             if (this.availableCargo && this.availableCargo.length > 0) {
-                console.log('🔄 CARGO PERSISTENCE: Updating UI renderer with restored cargo data after render', {
-                    availableCargoLength: this.availableCargo.length,
-                    successfulCargoLength: this.successfulCargo.length,
-                    hasRenderer: !!this.renderer,
-                    hasUpdateMethod: !!(this.renderer && typeof this.renderer._updateCargoDisplay === 'function')
-                });
                 if (this.renderer && typeof this.renderer._updateCargoDisplay === 'function') {
                     this.renderer._updateCargoDisplay(this.availableCargo);
                     
@@ -141,8 +135,6 @@ const UIStateMixin = {
                     if (typeof this.renderer._updateTransactionButtons === 'function') {
                         this.renderer._updateTransactionButtons();
                     }
-                } else {
-                    console.warn('🔄 CARGO PERSISTENCE: UI renderer not available or missing _updateCargoDisplay method');
                 }
             } else {
                 console.log('🔄 CARGO PERSISTENCE: No cargo data to update UI with', {

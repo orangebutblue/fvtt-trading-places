@@ -32,13 +32,14 @@ class CargoDistributionCharts {
                 return { entries: [], totalWeight: 0 };
             }
 
-            // Calculate percentages
-            const totalWeight = candidateTable.totalWeight || candidateTable.entries.reduce((sum, entry) => sum + (entry.weight || 0), 0);
+            // Calculate percentages based on count of cargo types per category for chart display
+            const totalCount = candidateTable.entries.length;
+            const totalWeight = totalCount; // For return compatibility
             const distributionData = candidateTable.entries.map(entry => ({
                 name: entry.name,
                 category: entry.category,
-                weight: entry.weight || 0,
-                percentage: totalWeight > 0 ? ((entry.weight || 0) / totalWeight * 100) : 0,
+                weight: entry.weight || 0, // Keep actual weight for reasons
+                percentage: totalCount > 0 ? 100 / totalCount : 0, // Equal weight per type for chart
                 reasons: entry.reasons || []
             }));
 
@@ -57,84 +58,46 @@ class CargoDistributionCharts {
     }
 
     /**
-     * Consolidate identical probabilities by grouping into categories
+     * Consolidate entries by grouping into categories
      * @param {Array} entries - Distribution entries
-     * @returns {Array} Consolidated chart data
+     * @returns {Array} Consolidated chart data by category
      */
-    _consolidateIdenticalProbabilities(entries) {
+    _consolidateByCategory(entries) {
         if (!entries || entries.length === 0) {
             return [];
         }
 
-        // Group entries by rounded percentage (to handle floating point precision)
-        const percentageGroups = new Map();
+        // Group entries by category
+        const categoryGroups = new Map();
+        
         entries.forEach(entry => {
-            const roundedPercentage = Math.round(entry.percentage * 1000) / 1000; // Round to 3 decimal places
-            if (!percentageGroups.has(roundedPercentage)) {
-                percentageGroups.set(roundedPercentage, []);
+            const category = entry.category || 'Uncategorized';
+            if (!categoryGroups.has(category)) {
+                categoryGroups.set(category, {
+                    entries: [],
+                    totalPercentage: 0,
+                    totalWeight: 0
+                });
             }
-            percentageGroups.get(roundedPercentage).push(entry);
+            const catGroup = categoryGroups.get(category);
+            catGroup.entries.push(entry);
+            catGroup.totalPercentage += entry.percentage;
+            catGroup.totalWeight += entry.weight;
         });
 
-        // Find the largest group with identical percentages (>1 member)
-        let largestIdenticalGroup = null;
-        let largestGroupSize = 1;
-
-        for (const [percentage, group] of percentageGroups) {
-            if (group.length > largestGroupSize) {
-                largestIdenticalGroup = { percentage, group };
-                largestGroupSize = group.length;
-            }
-        }
-
+        // Create chart data from category groups
         const chartData = [];
-
-        // Process each percentage group
-        for (const [percentage, group] of percentageGroups) {
-            if (group === largestIdenticalGroup?.group && largestGroupSize > 1) {
-                // This is the largest identical group - consolidate by category
-                const categoryGroups = new Map();
-                
-                group.forEach(entry => {
-                    const category = entry.category || 'Uncategorized';
-                    if (!categoryGroups.has(category)) {
-                        categoryGroups.set(category, {
-                            entries: [],
-                            totalPercentage: 0,
-                            totalWeight: 0
-                        });
-                    }
-                    const catGroup = categoryGroups.get(category);
-                    catGroup.entries.push(entry);
-                    catGroup.totalPercentage += entry.percentage;
-                    catGroup.totalWeight += entry.weight;
-                });
-
-                // Add category groups to chart data
-                for (const [categoryName, catGroup] of categoryGroups) {
-                    chartData.push({
-                        name: `${categoryName} (${catGroup.entries.length} types)`,
-                        category: categoryName,
-                        percentage: catGroup.totalPercentage,
-                        weight: catGroup.totalWeight,
-                        reasons: [
-                            `Combined ${catGroup.entries.length} cargo types:`,
-                            ...catGroup.entries.map(e => `• ${e.name} (${e.percentage.toFixed(1)}%)`)
-                        ]
-                    });
-                }
-            } else {
-                // Keep individual entries for non-consolidated groups
-                group.forEach(entry => {
-                    chartData.push({
-                        name: entry.name,
-                        category: entry.category,
-                        percentage: entry.percentage,
-                        weight: entry.weight,
-                        reasons: entry.reasons || []
-                    });
-                });
-            }
+        for (const [categoryName, catGroup] of categoryGroups) {
+            chartData.push({
+                name: `${categoryName} (${catGroup.entries.length} types)`,
+                category: categoryName,
+                percentage: catGroup.totalPercentage,
+                weight: catGroup.totalWeight,
+                reasons: [
+                    `Combined ${catGroup.entries.length} cargo types:`,
+                    ...catGroup.entries.map(e => `• ${e.name} (${e.percentage.toFixed(1)}%)`)
+                ]
+            });
         }
 
         // Sort by percentage (highest first)
@@ -152,7 +115,7 @@ class CargoDistributionCharts {
                 category: 'Various',
                 percentage: smallTotal,
                 weight: smallEntries.reduce((sum, entry) => sum + entry.weight, 0),
-                reasons: [`${smallEntries.length} items with <1% chance each`]
+                reasons: [`${smallEntries.length} categories with <1% chance each`]
             });
         }
 
@@ -222,8 +185,8 @@ class CargoDistributionCharts {
             return;
         }
 
-        // Group entries by percentage to consolidate identical probabilities
-        const chartData = this._consolidateIdenticalProbabilities(entries);
+        // Group entries by category to consolidate
+        const chartData = this._consolidateByCategory(entries);
 
         const colors = this.generateColors(chartData.length);
         

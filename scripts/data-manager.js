@@ -215,12 +215,7 @@ class DataManager {
      * @returns {Promise<void>}
      */
     async saveCurrentDataset() {
-        console.log('🚛 CARGO_PERSIST: saveCurrentDataset called', {
-            hasCurrentDataset: !!this.currentDataset,
-            activeDatasetName: this.activeDatasetName,
-            cargoCount: this.cargo?.length || 0,
-            historyCount: this.history?.length || 0
-        });
+        // Saving current dataset
         
         if (!this.currentDataset || !this.activeDatasetName) {
             console.warn('🚛 CARGO_PERSIST: ⚠️ No active dataset to save');
@@ -245,7 +240,7 @@ class DataManager {
         const persistence = this.getDatasetPersistence();
         await persistence.updateDataset(this.activeDatasetName, this.currentDataset);
         
-        console.log(`🚛 CARGO_PERSIST: ✅ Dataset ${this.activeDatasetName} saved to settings`);
+        // Dataset saved
     }
 
     /**
@@ -1937,114 +1932,8 @@ class DataManager {
         }
     }
 
-    /**
-     * Set current season and persist to FoundryVTT settings
-     * @param {string} season - Season name (spring, summer, autumn, winter)
-     * @returns {Promise<boolean>} - Success status
-     */
-    async setCurrentSeason(season) {
-        try {
-            // Validate season
-            const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
-            if (!validSeasons.includes(season)) {
-                throw new Error(`Invalid season: ${season}. Must be one of: ${validSeasons.join(', ')}`);
-            }
-
-            const oldSeason = this.currentSeason;
-            this.currentSeason = season;
-
-            // Persist to FoundryVTT settings
-            if (typeof game !== 'undefined' && game.settings) {
-                await game.settings.set(MODULE_ID, "currentSeason", season);
-            }
-
-            // Notify season change
-            this.notifySeasonChange(season, oldSeason);
-
-            console.log(`Season changed from ${oldSeason || 'unset'} to ${season}`);
-            return true;
-        } catch (error) {
-            console.error('Failed to set current season:', error);
-            return false;
-        }
-    }
-
-    /**
-     * Reset current season to null
-     * @returns {Promise<boolean>} - Success status
-     */
-    async resetSeason() {
-        try {
-            const oldSeason = this.currentSeason;
-            this.currentSeason = null;
-
-            // Clear from FoundryVTT settings
-            if (typeof game !== 'undefined' && game.settings) {
-                await game.settings.set(MODULE_ID, "currentSeason", null);
-            }
-
-            // Notify season change
-            this.notifySeasonChange(null, oldSeason);
-
-            console.log(`Season reset from ${oldSeason || 'unset'} to unset`);
-            return true;
-        } catch (error) {
-            console.error('Failed to reset season:', error);
-            return false;
-        }
-    }
-
-    /**
-     * Notify about season change and update prices
-     * @param {string} newSeason - New season
-     * @param {string|null} oldSeason - Previous season
-     */
-    notifySeasonChange(newSeason, oldSeason) {
-        try {
-            // Note: Season change notification handled by application, not here to avoid duplicates
-
-            // Console notification for testing
-            console.log(`Season change notification: ${oldSeason || 'unset'} → ${newSeason}`);
-
-            // Trigger price updates (this would be used by UI components)
-            this.updatePricingForSeason(newSeason);
-
-            // Emit custom event for other modules to listen to
-            if (typeof Hooks !== 'undefined') {
-                Hooks.callAll(`${MODULE_ID}.seasonChanged`, {
-                    newSeason: newSeason,
-                    oldSeason: oldSeason,
-                    timestamp: new Date().toISOString()
-                });
-            }
-        } catch (error) {
-            console.error('Failed to notify season change:', error);
-        }
-    }
-
-    /**
-     * Update pricing for current season
-     * @param {string} season - Season to update pricing for
-     */
-    updatePricingForSeason(season) {
-        try {
-            if (!season) {
-                console.warn('Cannot update pricing: no season specified');
-                return;
-            }
-
-            // This method would trigger UI updates in a real FoundryVTT environment
-            // For now, we just log the update
-            console.log(`Pricing updated for season: ${season}`);
-
-            // In a full implementation, this would:
-            // 1. Update any cached price calculations
-            // 2. Refresh open trading dialogs
-            // 3. Update any displayed price information
-        } catch (error) {
-            console.error('Failed to update pricing for season:', error);
-        }
-    }
+    // Removed duplicate setCurrentSeason and resetSeason methods - see lines 2655 and 2687 for active implementations
+    // Removed duplicate notifySeasonChange and updatePricingForSeason methods - see lines 2653 and 2683 for active implementations
 
     /**
      * Validate season before trading operations
@@ -2673,8 +2562,6 @@ class DataManager {
 
             // Notify season change
             this.notifySeasonChange(season, oldSeason);
-
-            console.log(`Season changed from ${oldSeason || 'unset'} to ${season}`);
             return true;
         } catch (error) {
             console.error('Failed to set current season:', error);
@@ -2714,10 +2601,10 @@ class DataManager {
      */
     notifySeasonChange(newSeason, oldSeason) {
         try {
+            // Don't spam logs if season hasn't actually changed
+            if (newSeason === oldSeason) return;
+            
             // Note: Season change notification handled by application, not here to avoid duplicates
-
-            // Console notification for testing
-            console.log(`Season change notification: ${oldSeason || 'unset'} → ${newSeason}`);
 
             // Trigger price updates (this would be used by UI components)
             this.updatePricingForSeason(newSeason);

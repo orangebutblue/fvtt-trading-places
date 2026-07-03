@@ -275,6 +275,13 @@ Slot Calculation:
                         <div class="cargo-minimal-item" data-category="{{category}}" data-contraband="{{contraband}}">
                             <span class="cargo-minimal-name">{{cargo}}</span>
                             <span class="cargo-minimal-quantity">{{quantity}} EP</span>
+                            {{#if quality}}
+                                {{#if dishonest}}
+                                    <span class="cargo-quality dishonest-quality" title="Merchant claimed {{merchantQuality}} but it's actually {{quality}}">{{merchantQuality}} (actually {{quality}})</span>
+                                {{else}}
+                                    <span class="cargo-quality">{{quality}}</span>
+                                {{/if}}
+                            {{/if}}
                         </div>
                         {{/each}}
                     </div>
@@ -410,6 +417,13 @@ Slot Calculation:
                                 <div class="cargo-info">
                                     <span class="cargo-name">{{cargo}}</span>
                                     <span class="cargo-category">{{category}}</span>
+                                    {{#if quality}}
+                                        {{#if dishonest}}
+                                            <span class="cargo-quality dishonest-quality" title="Merchant claimed {{merchantQuality}} but it's actually {{quality}}">{{merchantQuality}} (actually {{quality}})</span>
+                                        {{else}}
+                                            <span class="cargo-quality">{{quality}}</span>
+                                        {{/if}}
+                                    {{/if}}
                                     {{#if contraband}}
                                         <span class="contraband-badge">Contraband</span>
                                     {{/if}}

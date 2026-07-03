@@ -71,7 +71,36 @@
                 "autumn": 1,
                 "winter": 1
             },
-            "qualitySystem": "wine_brandy"
+            "qualitySystem": "wine_brandy",
+            "qualityTiers": {
+                "swill": 0.5,
+                "passable": 1.0,
+                "average": 1.5,
+                "good": 3.0,
+                "excellent": 6.0,
+                "top_shelf": 12.0
+            }
+        },
+        {
+            "name": "Wine/Brandy",
+            "category": "Brews",
+            "description": "Fermented grape beverage or distilled spirit made from fermented fruit. Quality varies widely.",
+            "basePrice": 0,
+            "seasonalModifiers": {
+                "spring": 1,
+                "summer": 1,
+                "autumn": 1,
+                "winter": 1
+            },
+            "qualitySystem": "wine_brandy",
+            "qualityTiers": {
+                "swill": 0.5,
+                "passable": 1.0,
+                "average": 1.5,
+                "good": 3.0,
+                "excellent": 6.0,
+                "top_shelf": 12.0
+            }
         },
         {
             "name": "Cattle",
@@ -408,7 +437,15 @@
                 "autumn": 1,
                 "winter": 1
             },
-            "qualitySystem": "wine_brandy"
+            "qualitySystem": "wine_brandy",
+            "qualityTiers": {
+                "swill": 0.5,
+                "passable": 1.0,
+                "average": 1.5,
+                "good": 3.0,
+                "excellent": 6.0,
+                "top_shelf": 12.0
+            }
         },
         {
             "name": "Wool",

@@ -163,13 +163,15 @@ export class SellingFlow {
      * @private
      */
     _calculateOfferPrice(cargo, settlement, season) {
-        // Placeholder: Get base price from cargo type or use fallback
+        // Get base price from cargo type or use fallback
         let basePrice = 1.0; // Default fallback
 
         try {
             const cargoType = this.dataManager.getCargoType(cargo.cargo);
-            if (cargoType && cargoType.basePrices && cargoType.basePrices[season]) {
-                basePrice = cargoType.basePrices[season] / 10; // Convert from per-10-EP to per-EP
+            if (cargoType) {
+                // Use the cargo's quality tier for pricing (default to 'average' if not set)
+                const qualityTier = cargo.quality || 'average';
+                basePrice = this.dataManager.getSeasonalPrice(cargoType, season, qualityTier);
             }
         } catch (error) {
             console.warn('Could not get cargo type price, using fallback:', error.message);
@@ -306,6 +308,9 @@ export class SellingFlow {
             <div class="cargo-header">
                 <div class="trading-places-cargo-name">${offer.cargo.cargo}</div>
                 <div class="cargo-category">${offer.cargo.category || 'Goods'}</div>
+                ${offer.cargo.quality ? (offer.cargo.dishonest ? 
+                    `<div class="cargo-quality">${offer.cargo.quality} (${offer.cargo.actualTier})</div>` : 
+                    `<div class="cargo-quality">${offer.cargo.quality}</div>`) : ''}
             </div>
             <div class="trading-places-cargo-details">`;
 
@@ -743,19 +748,15 @@ export class SellingFlow {
             const allSellerData = await game.settings.get(this.MODULE_ID, "sellerOffersData") || {};
             const storageKey = `${this.app.selectedSettlement.name}_${this.app.currentSeason}`;
 
-            console.log('🔄 SELLER PERSISTENCE: Looking for seller data with key:', storageKey);
-
             const sellerData = allSellerData[storageKey];
 
             if (!sellerData) {
-                console.log('🔄 SELLER PERSISTENCE: No saved seller data found');
                 return null;
             }
 
             // Validate that the data is still relevant
             if (sellerData.settlement !== this.app.selectedSettlement.name ||
                 sellerData.season !== this.app.currentSeason) {
-                console.log('🔄 SELLER PERSISTENCE: Seller data mismatch');
                 return null;
             }
 

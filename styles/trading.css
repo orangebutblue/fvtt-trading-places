@@ -2431,6 +2431,25 @@
     min-width: 0; /* Allow text truncation */
 }
 
+.trading-places #cargo-tab .cargo-quality {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-right: 8px;
+    display: inline-block;
+}
+
+.trading-places #cargo-tab .cargo-quality.dishonest {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+}
+
 .trading-places #cargo-tab .transaction-summary {
     display: flex;
     align-items: center;

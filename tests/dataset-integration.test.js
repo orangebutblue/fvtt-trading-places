@@ -135,8 +135,8 @@ describe('Complete WFRP Dataset Integration', () => {
             const wineCargo = cargoData.cargoTypes.find(c => c.name === 'Wine/Brandy');
             expect(wineCargo).toBeDefined();
             expect(wineCargo).toHaveProperty('qualityTiers');
-            expect(Array.isArray(wineCargo.qualityTiers)).toBe(true);
-            expect(wineCargo.qualityTiers.length).toBe(6); // Should have 6 quality tiers
+            expect(typeof wineCargo.qualityTiers).toBe('object');
+            expect(Object.keys(wineCargo.qualityTiers).length).toBe(6); // Should have 6 quality tiers
         });
 
         test('should have seasonal pricing for all non-wine cargo', () => {

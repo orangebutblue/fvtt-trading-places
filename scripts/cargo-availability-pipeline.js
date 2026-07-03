@@ -239,11 +239,7 @@ class CargoAvailabilityPipeline {
     }
 
     _buildCandidateTable(props, flags, season) {
-    console.log('CARGO-AVAILABILITY: Building candidate table for settlement:', props.name);
-    console.log('CARGO-AVAILABILITY: Settlement flags:', flags);
-    console.log('CARGO-AVAILABILITY: Settlement produces:', props.produces);
-    console.log('CARGO-AVAILABILITY: Settlement demands:', props.demands);
-    console.log('CARGO-AVAILABILITY: Available cargo types count:', (this.dataManager.cargoTypes || []).length);        const weightsConfig = this.tradingConfig.candidateWeights || {};
+        const weightsConfig = this.tradingConfig.candidateWeights || {};
         const baseline = weightsConfig.baseline ?? 1;
         const producesBonus = weightsConfig.producesBonus ?? weightsConfig.producesWeight ?? 0;
         const demandsBonus = weightsConfig.demandsBonus ?? weightsConfig.demandsWeight ?? 0;
@@ -254,10 +250,6 @@ class CargoAvailabilityPipeline {
         const producesSet = new Set((props.produces || []).map(name => String(name)));
         const demandsSet = new Set((props.demands || []).map(name => String(name)));
         const seasonalShifts = this.tradingConfig.equilibrium?.seasonalShifts?.[season] || {};
-
-        console.log('CARGO-AVAILABILITY: Produces set:', Array.from(producesSet));
-        console.log('CARGO-AVAILABILITY: Demands set:', Array.from(demandsSet));
-        console.log('CARGO-AVAILABILITY: Seasonal shifts for', season, ':', seasonalShifts);
 
         const entries = [];
         let totalWeight = 0;
@@ -318,9 +310,6 @@ class CargoAvailabilityPipeline {
             });
             totalWeight += weight;
         });
-
-        console.log('CARGO-AVAILABILITY: Candidate table entries count:', entries.length);
-        console.log('CARGO-AVAILABILITY: Total weight:', totalWeight);
 
         entries.sort((a, b) => b.weight - a.weight);
         entries.forEach(entry => {

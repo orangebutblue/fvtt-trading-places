@@ -235,9 +235,7 @@ export class TradingUIEventHandlers {
 
         // Cargo action buttons - use event delegation for dynamically added buttons
         const sellCargoButtons = html.querySelectorAll('.sell-cargo-btn');
-        console.log('Found sell cargo buttons:', sellCargoButtons.length);
         sellCargoButtons.forEach(btn => {
-            console.log('Attaching click listener to sell button:', btn);
             btn.addEventListener('click', this._onSellCargo.bind(this));
         });
         
@@ -776,7 +774,12 @@ export class TradingUIEventHandlers {
                     discountPercent: discountPercent,
                     isSale: false,
                     contraband: cargo.contraband || false,
-                    merchant: merchantName
+                    merchant: merchantName,
+                    // Include quality information
+                    quality: cargo.quality?.tier || 'Average',
+                    actualTier: cargo.quality?.actualTier,
+                    dishonest: cargo.quality?.dishonest || false,
+                    system: cargo.quality?.system || 'standard'
                 });
                 
                 // Add to transaction history
@@ -1002,17 +1005,13 @@ export class TradingUIEventHandlers {
                 await this._removeCargoFromInventory(transaction);
             }
             
-            console.log('🚛 CARGO_PERSIST: Adding transaction to history', {
-                type: transactionType,
-                cargo: transaction.cargo,
-                historyLength: this.app.transactionHistory.length
-            });
+            // Adding transaction to history
             
             // Save to DataManager
             this.app.dataManager.history = this.app.transactionHistory;
             await this.app.dataManager.saveCurrentDataset();
             
-            console.log('🚛 CARGO_PERSIST: Transaction history saved to dataset');
+            // Transaction saved
             
             // Clear and collapse the form
             this._clearManualTransactionForm();
@@ -1230,16 +1229,13 @@ export class TradingUIEventHandlers {
             if (this.app.transactionHistory && this.app.transactionHistory.length > transactionIndex) {
                 this.app.transactionHistory.splice(transactionIndex, 1);
                 
-                console.log('🚛 CARGO_PERSIST: Deleting transaction from history', {
-                    transactionIndex,
-                    remainingTransactions: this.app.transactionHistory.length
-                });
+                // Deleting transaction
                 
                 // Save updated history to DataManager
                 this.app.dataManager.history = this.app.transactionHistory;
                 await this.app.dataManager.saveCurrentDataset();
                 
-                console.log('🚛 CARGO_PERSIST: Updated history saved to dataset');
+                // History updated
                 
                 await this.app.refreshUI({ focusTab: 'history' });
                 
@@ -1398,16 +1394,13 @@ export class TradingUIEventHandlers {
         // Remove from inventory
         currentCargo.splice(cargoIndex, 1);
         
-        console.log('🚛 CARGO_PERSIST: Deleting cargo', {
-            cargoId,
-            remainingCargo: currentCargo.length
-        });
+        // Deleting cargo
         
         // Update DataManager and save to dataset
         this.app.dataManager.cargo = currentCargo;
         await this.app.dataManager.saveCurrentDataset();
         
-        console.log('🚛 CARGO_PERSIST: Cargo deleted and dataset saved');
+        // Cargo deleted
         
         this.app.currentCargo = currentCargo;
 
@@ -1429,13 +1422,16 @@ export class TradingUIEventHandlers {
     async _addCargoToInventory(transaction) {
         const currentCargo = await this._getCurrentCargo();
         
-        // Check if we already have this cargo type - if so, combine quantities
+        // Check if we already have this cargo type with the same quality attributes - if so, combine quantities
         const existingCargoIndex = currentCargo.findIndex(cargo => 
             cargo.cargo === transaction.cargo && 
             cargo.category === transaction.category &&
             cargo.settlement === transaction.settlement &&
             cargo.season === transaction.season &&
-            cargo.contraband === transaction.contraband
+            cargo.contraband === transaction.contraband &&
+            (cargo.quality || 'Average') === (transaction.quality || 'Average') &&
+            (cargo.merchantQuality || null) === (transaction.merchantQuality || null) &&
+            (cargo.dishonest || false) === (transaction.dishonest || false)
         );
         
         if (existingCargoIndex !== -1) {
@@ -1449,6 +1445,7 @@ export class TradingUIEventHandlers {
             existingCargo.pricePerEP = totalCost / totalQuantity;
             existingCargo.date = transaction.date; // Update to latest purchase date
             existingCargo.merchant = transaction.merchant || existingCargo.merchant || 'Unknown Merchant'; // Keep latest merchant
+            // Quality information should already match since we checked it above
             
             // Add formatted currency fields
             existingCargo.formattedPricePerEP = this._formatCurrencyFromDenomination(existingCargo.pricePerEP);
@@ -1471,6 +1468,11 @@ export class TradingUIEventHandlers {
                 date: transaction.date,
                 contraband: transaction.contraband || false,
                 merchant: transaction.merchant || 'Unknown Merchant',
+                // Include quality information - ALL fields from transaction
+                quality: transaction.quality,
+                merchantQuality: transaction.merchantQuality,
+                dishonest: transaction.dishonest,
+                system: transaction.system,
                 // Copy formatted fields from transaction
                 formattedPricePerEP: transaction.formattedPricePerEP || this._formatCurrencyFromDenomination(transaction.pricePerEP),
                 formattedTotalCost: transaction.formattedTotalCost || this._formatCurrencyFromDenomination(transaction.totalCost),
@@ -1481,26 +1483,21 @@ export class TradingUIEventHandlers {
             currentCargo.push(newCargo);
         }
         
-        console.log('🚛 CARGO_PERSIST: Adding cargo to inventory', {
-            cargo: transaction.cargo,
-            quantity: transaction.quantity,
-            totalCargoItems: currentCargo.length,
-            currentHistoryLength: this.app.transactionHistory?.length || 0
-        });
+        // Cargo added to inventory
         
         // Update DataManager with both cargo AND history (in case history was already updated)
         this.app.dataManager.cargo = currentCargo;
         this.app.dataManager.history = this.app.transactionHistory || [];
+        
         await this.app.dataManager.saveCurrentDataset();
         
-        console.log('🚛 CARGO_PERSIST: Cargo and history saved to dataset', {
-            cargoCount: currentCargo.length,
-            historyCount: this.app.transactionHistory?.length || 0
-        });
+        // Cargo and history saved
         
         this._logDebug('Cargo Management', 'Cargo added to inventory', {
             cargo: transaction.cargo,
             quantity: transaction.quantity,
+            quality: transaction.quality,
+            dishonest: transaction.dishonest,
             totalCargoItems: currentCargo.length
         });
     }
@@ -1531,22 +1528,14 @@ export class TradingUIEventHandlers {
                 cargo.totalCost = cargo.quantity * cargo.pricePerEP; // Recalculate total cost
             }
             
-            console.log('🚛 CARGO_PERSIST: Removing cargo after sale', {
-                cargo: transaction.cargo,
-                quantitySold: transaction.quantity,
-                remainingCargo: currentCargo.length,
-                currentHistoryLength: this.app.transactionHistory?.length || 0
-            });
+            // Removing cargo after sale
             
             // Update DataManager with both cargo AND history (in case history was already updated)
             this.app.dataManager.cargo = currentCargo;
             this.app.dataManager.history = this.app.transactionHistory || [];
             await this.app.dataManager.saveCurrentDataset();
             
-            console.log('🚛 CARGO_PERSIST: Cargo and history saved to dataset', {
-                cargoCount: currentCargo.length,
-                historyCount: this.app.transactionHistory?.length || 0
-            });
+            // Cargo and history saved
             
             this.app.currentCargo = currentCargo;
             
@@ -1564,9 +1553,7 @@ export class TradingUIEventHandlers {
      * @private
      */
     async _getCurrentCargo() {
-        console.log('🚛 CARGO_PERSIST: Loading cargo from DataManager');
         const rawCargo = this.app.dataManager.cargo || [];
-        console.log('🚛 _getCurrentCargo: Loading cargo', { count: rawCargo.length, firstItem: rawCargo[0] });
         // Normalize cargo with formatted currency fields
         return rawCargo.map(cargo => {
             if (!cargo.formattedPricePerEP && typeof cargo.pricePerEP === 'number') {
@@ -1583,17 +1570,7 @@ export class TradingUIEventHandlers {
                 const canonical = this._convertDenominationToCanonical(cargo.totalCost);
                 if (canonical !== null) cargo.totalCostCanonical = canonical;
             }
-            console.log('🚛 _getCurrentCargo: Normalized cargo item', {
-                cargo: cargo.cargo,
-                hasFormatted: {
-                    price: !!cargo.formattedPricePerEP,
-                    total: !!cargo.formattedTotalCost
-                },
-                values: {
-                    formattedPrice: cargo.formattedPricePerEP,
-                    formattedTotal: cargo.formattedTotalCost
-                }
-            });
+            // Normalized cargo
             return cargo;
         });
     }
@@ -2237,6 +2214,17 @@ export class TradingUIEventHandlers {
         try {
             // Get current cargo data
             const currentCargo = await this._getCurrentCargo();
+            
+            console.log('📦 CARGO MANIFEST:', {
+                cargoCount: currentCargo.length,
+                items: currentCargo.map(c => ({
+                    cargo: c.cargo,
+                    quantity: c.quantity,
+                    quality: c.quality,
+                    pricePerEP: c.pricePerEP,
+                    totalCost: c.totalCost
+                }))
+            });
 
             if (!currentCargo || currentCargo.length === 0) {
                 ui.notifications.warn('No cargo to post to chat');
