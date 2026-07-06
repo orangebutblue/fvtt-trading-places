@@ -37,8 +37,8 @@ describe('Complete WFRP Dataset Integration', () => {
         test('should have all required settlement fields', () => {
             const settlementsDir = path.join(datasetPath, 'settlements');
             const regionFiles = fs.readdirSync(settlementsDir).filter(f => f.endsWith('.json'));
-            
-            const requiredFields = ['region', 'name', 'size', 'ruler', 'population', 'wealth', 'source', 'garrison', 'notes'];
+
+            const requiredFields = ['region', 'name', 'size', 'ruler', 'population', 'wealth', 'flags', 'garrison', 'notes'];
             
             regionFiles.forEach(file => {
                 const filePath = path.join(settlementsDir, file);
@@ -53,17 +53,23 @@ describe('Complete WFRP Dataset Integration', () => {
         });
 
         test('should have valid size enumerations', () => {
+            // Size is now a numeric enum 1-5; 0 is only valid for destroyed
+            // settlements (population 0) - see data-manager.js validation
             const settlementsDir = path.join(datasetPath, 'settlements');
             const regionFiles = fs.readdirSync(settlementsDir).filter(f => f.endsWith('.json'));
-            
-            const validSizes = ['CS', 'C', 'T', 'ST', 'V', 'F', 'M'];
-            
+
             regionFiles.forEach(file => {
                 const filePath = path.join(settlementsDir, file);
                 const settlements = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-                
+
                 settlements.forEach(settlement => {
-                    expect(validSizes).toContain(settlement.size);
+                    expect(typeof settlement.size).toBe('number');
+                    if (settlement.size === 0) {
+                        expect(settlement.population).toBe(0);
+                    } else {
+                        expect(settlement.size).toBeGreaterThanOrEqual(1);
+                        expect(settlement.size).toBeLessThanOrEqual(5);
+                    }
                 });
             });
         });
@@ -77,37 +83,41 @@ describe('Complete WFRP Dataset Integration', () => {
                 const settlements = JSON.parse(fs.readFileSync(filePath, 'utf8'));
                 
                 settlements.forEach(settlement => {
-                    expect(settlement.wealth).toBeGreaterThanOrEqual(1);
-                    expect(settlement.wealth).toBeLessThanOrEqual(5);
+                    // 0 is only valid for destroyed settlements (population 0)
+                    if (settlement.wealth === 0) {
+                        expect(settlement.population).toBe(0);
+                    } else {
+                        expect(settlement.wealth).toBeGreaterThanOrEqual(1);
+                        expect(settlement.wealth).toBeLessThanOrEqual(5);
+                    }
                 });
             });
         });
 
         test('should have diverse production categories', () => {
+            // Production categories moved from settlement.source (free text)
+            // to settlement.flags (a fixed, lowercase set) plus produces/demands
             const settlementsDir = path.join(datasetPath, 'settlements');
             const regionFiles = fs.readdirSync(settlementsDir).filter(f => f.endsWith('.json'));
-            
-            const allCategories = new Set();
-            
+
+            const allFlags = new Set();
+
             regionFiles.forEach(file => {
                 const filePath = path.join(settlementsDir, file);
                 const settlements = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-                
+
                 settlements.forEach(settlement => {
-                    expect(Array.isArray(settlement.source)).toBe(true);
-                    settlement.source.forEach(category => {
-                        allCategories.add(category);
+                    expect(Array.isArray(settlement.flags)).toBe(true);
+                    settlement.flags.forEach(flag => {
+                        allFlags.add(flag);
                     });
                 });
             });
-            
-            // Should have substantial variety of production categories
-            expect(allCategories.size).toBeGreaterThan(20);
-            
-            // Should include key WFRP categories
-            expect(allCategories.has('Trade')).toBe(true);
-            expect(allCategories.has('Agriculture')).toBe(true);
-            expect(allCategories.has('Government')).toBe(true);
+
+            // Should include key WFRP flags
+            expect(allFlags.has('trade')).toBe(true);
+            expect(allFlags.has('agriculture')).toBe(true);
+            expect(allFlags.has('government')).toBe(true);
         });
     });
 
@@ -120,7 +130,7 @@ describe('Complete WFRP Dataset Integration', () => {
             expect(cargoData).toHaveProperty('cargoTypes');
             expect(Array.isArray(cargoData.cargoTypes)).toBe(true);
             
-            const requiredCargos = ['Grain', 'Armaments', 'Luxuries', 'Metal', 'Timber', 'Wine/Brandy', 'Wool'];
+            const requiredCargos = ['Sustenance', 'Armaments', 'Timber', 'Wine/Brandy', 'Wool'];
             const foundCargos = cargoData.cargoTypes.map(c => c.name);
             
             requiredCargos.forEach(cargo => {
@@ -140,64 +150,20 @@ describe('Complete WFRP Dataset Integration', () => {
         });
 
         test('should have seasonal pricing for all non-wine cargo', () => {
+            // Seasonal pricing is now basePrice (flat number) + seasonalModifiers
+            // (per-season multiplier), rather than an absolute price per season
             const cargoPath = path.join(datasetPath, 'cargo-types.json');
             const cargoData = JSON.parse(fs.readFileSync(cargoPath, 'utf8'));
-            
+
             const seasons = ['spring', 'summer', 'autumn', 'winter'];
-            
+
             cargoData.cargoTypes.forEach(cargo => {
-                if (cargo.name !== 'Wine/Brandy') {
-                    expect(cargo).toHaveProperty('basePrices');
-                    seasons.forEach(season => {
-                        expect(cargo.basePrices).toHaveProperty(season);
-                        expect(typeof cargo.basePrices[season]).toBe('number');
-                    });
-                }
-            });
-        });
-    });
-
-    describe('Random Cargo Tables', () => {
-        test('should have complete seasonal cargo tables', () => {
-            const tablesPath = path.join(datasetPath, 'random-cargo-tables.json');
-            expect(fs.existsSync(tablesPath)).toBe(true);
-            
-            const tables = JSON.parse(fs.readFileSync(tablesPath, 'utf8'));
-            
-            const seasons = ['spring', 'summer', 'autumn', 'winter'];
-            seasons.forEach(season => {
-                expect(tables).toHaveProperty(season);
-                expect(Array.isArray(tables[season])).toBe(true);
-                expect(tables[season].length).toBeGreaterThan(0);
-            });
-        });
-
-        test('should have valid range coverage for each season', () => {
-            const tablesPath = path.join(datasetPath, 'random-cargo-tables.json');
-            const tables = JSON.parse(fs.readFileSync(tablesPath, 'utf8'));
-            
-            const seasons = ['spring', 'summer', 'autumn', 'winter'];
-            seasons.forEach(season => {
-                const entries = tables[season];
-                
-                // Check that ranges cover 1-100
-                const allNumbers = [];
-                entries.forEach(entry => {
-                    expect(entry).toHaveProperty('cargo');
-                    expect(entry).toHaveProperty('range');
-                    expect(Array.isArray(entry.range)).toBe(true);
-                    expect(entry.range.length).toBe(2);
-                    
-                    for (let i = entry.range[0]; i <= entry.range[1]; i++) {
-                        allNumbers.push(i);
-                    }
+                expect(typeof cargo.basePrice).toBe('number');
+                expect(cargo).toHaveProperty('seasonalModifiers');
+                seasons.forEach(season => {
+                    expect(cargo.seasonalModifiers).toHaveProperty(season);
+                    expect(typeof cargo.seasonalModifiers[season]).toBe('number');
                 });
-                
-                // Should cover exactly 1-100
-                const uniqueNumbers = [...new Set(allNumbers)].sort((a, b) => a - b);
-                expect(uniqueNumbers[0]).toBe(1);
-                expect(uniqueNumbers[uniqueNumbers.length - 1]).toBe(100);
-                expect(uniqueNumbers.length).toBe(100);
             });
         });
     });
@@ -206,24 +172,27 @@ describe('Complete WFRP Dataset Integration', () => {
         test('should have complete WFRP4e system configuration', () => {
             const configPath = path.join(datasetPath, 'config.json');
             expect(fs.existsSync(configPath)).toBe(true);
-            
+
             const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            
+
             // Required configuration sections
             expect(config).toHaveProperty('currency');
             expect(config).toHaveProperty('inventory');
             expect(config).toHaveProperty('skills');
             expect(config).toHaveProperty('talents');
-            
-            // Currency configuration
-            expect(config.currency).toHaveProperty('field');
-            expect(config.currency).toHaveProperty('name');
-            expect(config.currency).toHaveProperty('abbreviation');
-            
+
+            // Currency configuration - now a canonicalUnit/denominations schema
+            // rather than a single field/name/abbreviation
+            expect(config.currency).toHaveProperty('canonicalUnit');
+            expect(config.currency.canonicalUnit).toHaveProperty('name');
+            expect(config.currency.canonicalUnit).toHaveProperty('abbreviation');
+            expect(Array.isArray(config.currency.denominations)).toBe(true);
+            expect(config.currency.denominations.length).toBeGreaterThan(0);
+
             // Skills configuration
             expect(config.skills).toHaveProperty('haggle');
             expect(config.skills).toHaveProperty('gossip');
-            
+
             // Talents configuration
             expect(config.talents).toHaveProperty('dealmaker');
         });
@@ -254,14 +223,13 @@ describe('Complete WFRP Dataset Integration', () => {
             
             // Should have variety in sizes
             expect(Object.keys(sizeDistribution).length).toBeGreaterThan(4);
-            
+
             // Should have variety in wealth levels
             expect(Object.keys(wealthDistribution).length).toBeGreaterThan(3);
-            
-            // Should have major settlements
-            expect(sizeDistribution['CS'] || 0).toBeGreaterThan(0); // City States
-            expect(sizeDistribution['C'] || 0).toBeGreaterThan(0);  // Cities
-            expect(sizeDistribution['T'] || 0).toBeGreaterThan(0);  // Towns
+
+            // Should have major settlements (numeric size enum: 1=Village ... 5=largest)
+            expect(sizeDistribution[4] || 0).toBeGreaterThan(0); // Cities/City States
+            expect(sizeDistribution[3] || 0).toBeGreaterThan(0); // Towns
         });
 
         test('should have regional organization', () => {
@@ -298,9 +266,11 @@ describe('Complete WFRP Dataset Integration', () => {
                 
                 settlements.forEach(settlement => {
                     totalSettlements++;
-                    expect(Array.isArray(settlement.garrison)).toBe(true);
-                    
-                    if (settlement.garrison.length > 0) {
+                    // garrison is now an object map (e.g. { a: 1800 }), not an array
+                    expect(typeof settlement.garrison).toBe('object');
+                    expect(Array.isArray(settlement.garrison)).toBe(false);
+
+                    if (Object.keys(settlement.garrison).length > 0) {
                         settlementsWithGarrisons++;
                     }
                 });

@@ -52,6 +52,10 @@ class MockDataManager {
         return this.settlements.find(s => s.name === name) || null;
     }
 
+    getAllSettlements() {
+        return this.settlements;
+    }
+
     getSettlementProperties(settlement) {
         const sizeMapping = {
             'CS': { numeric: 4, description: 'City State' },
@@ -192,13 +196,15 @@ describe('SettlementSelector', () => {
         });
 
         test('should log region extraction', () => {
+            // getAllRegions() is a pure computation now; the log happens in
+            // populateRegionDropdown(), which initialize() already triggered
             selector.getAllRegions();
-            
+
             const log = logger.getLastLog();
             expect(log.type).toBe('system');
             expect(log.category).toBe('Settlement Selector');
-            expect(log.message).toBe('Extracted regions from settlement data');
-            expect(log.data.uniqueRegions).toBe(2);
+            expect(log.message).toBe('Populated region dropdown');
+            expect(log.data.regionsAdded).toBe(2);
             expect(log.data.regions).toEqual(['Middenland', 'Reikland']);
         });
     });
@@ -456,15 +462,10 @@ describe('SettlementSelector', () => {
             
             const selector2 = new SettlementSelector(emptyDataManager, logger);
             const regions = selector2.getAllRegions();
-            
+
+            // getAllRegions() is now a pure computation: it silently returns
+            // [] for empty data rather than logging a warning
             expect(regions).toEqual([]);
-            
-            // Check that empty data was logged
-            const emptyDataLogs = logger.logs.filter(log => 
-                log.category === 'Settlement Selector' && 
-                log.message === 'No settlement data available'
-            );
-            expect(emptyDataLogs.length).toBeGreaterThan(0);
         });
     });
 });

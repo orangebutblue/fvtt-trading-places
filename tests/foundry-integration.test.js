@@ -630,6 +630,18 @@ describe('FoundryVTT Integration Components Tests', () => {
                 type: Object,
                 default: null
             });
+
+            // DataManager itself persists under the real module ID
+            // 'fvtt-trading-places', not the 'trading-places' namespace this
+            // mock otherwise uses - register it too so real persistence
+            // calls (e.g. TradingEngine.setCurrentSeason) have somewhere to write
+            global.foundryMock.registerSetting('fvtt-trading-places', 'currentSeason', {
+                name: 'Current Season',
+                scope: 'world',
+                config: false,
+                type: String,
+                default: 'spring'
+            });
     });
 
     describe('SystemAdapter Currency and Inventory Manipulation', () => {
@@ -640,13 +652,15 @@ describe('FoundryVTT Integration Components Tests', () => {
             const initialCurrency = systemAdapter.getCurrencyValue(testActor);
             expect(initialCurrency).toBe(GC_TO_BP(1000));
             
-            // Test currency deduction
-            const deductResult = await systemAdapter.deductCurrency(testActor, GC_TO_BP(250), 'Test purchase');
-            
+            // Test currency deduction. Note: deductCurrency's `amount` param
+            // is denominated in GC (converted internally to canonical BP),
+            // so pass the raw GC amount here, not GC_TO_BP(...)
+            const deductResult = await systemAdapter.deductCurrency(testActor, 250, 'Test purchase');
+
             expect(deductResult.success).toBe(true);
             expect(deductResult.currentAmount).toBe(GC_TO_BP(1000));
             expect(deductResult.newAmount).toBe(GC_TO_BP(750));
-            expect(deductResult.amountDeducted).toBe(GC_TO_BP(250));
+            expect(deductResult.amountDeducted).toBe(250);
             
             // Verify actor was actually updated
             expect(testActor.system.money.gc).toBe(750);
@@ -663,17 +677,17 @@ describe('FoundryVTT Integration Components Tests', () => {
                 }
             });
             
-            // Test currency addition
-            const addResult = await systemAdapter.addCurrency(testActor, GC_TO_BP(150), 'Test sale');
-            
+            // Test currency addition (amount is also GC-denominated)
+            const addResult = await systemAdapter.addCurrency(testActor, 150, 'Test sale');
+
             expect(addResult.success).toBe(true);
-            expect(addResult.amountAdded).toBe(GC_TO_BP(150));
+            expect(addResult.amountAdded).toBe(150);
             expect(testActor.system.money.gc).toBe(900);
             expect(testActor.system.money.ss || 0).toBe(0);
             expect(testActor.system.money.bp || 0).toBe(0);
-            
+
             // Test insufficient funds
-            const insufficientResult = await systemAdapter.deductCurrency(testActor, GC_TO_BP(1500), 'Expensive item');
+            const insufficientResult = await systemAdapter.deductCurrency(testActor, 1500, 'Expensive item');
             
             expect(insufficientResult.success).toBe(false);
             expect(insufficientResult.error).toContain('Insufficient currency');
@@ -963,7 +977,10 @@ describe('FoundryVTT Integration Components Tests', () => {
             // Requirements: 6.1, 5.1, 5.2
             
             // Test initial default values
-            expect(global.foundryMock.getSetting('trading-places', 'activeDataset')).toBe('wfrp4e-default');
+            // A second registerSetting() call for 'activeDataset' in beforeEach
+            // (the "Internal" variant) overrides the first registration's
+            // default, so the effective default is 'wfrp4e', not 'wfrp4e-default'
+            expect(global.foundryMock.getSetting('trading-places', 'activeDataset')).toBe('wfrp4e');
             expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('spring');
             expect(global.foundryMock.getSetting('trading-places', 'chatVisibility')).toBe('gm');
             
@@ -977,11 +994,13 @@ describe('FoundryVTT Integration Components Tests', () => {
             await global.foundryMock.setSetting('trading-places', 'activeDataset', 'custom-dataset');
             expect(global.foundryMock.getSetting('trading-places', 'activeDataset')).toBe('custom-dataset');
             
-            // Test season persistence in trading engine
+            // Test season persistence in trading engine. Note: DataManager
+            // persists using the real module ID 'fvtt-trading-places', not
+            // the 'trading-places' namespace this test uses for its own
+            // direct settings above.
             await tradingEngine.setCurrentSeason('autumn');
             expect(tradingEngine.getCurrentSeason()).toBe('autumn');
-            expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('autumn');
-            expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('winter');
+            expect(global.foundryMock.getSetting('fvtt-trading-places', 'currentSeason')).toBe('autumn');
             
             // Simulate module reload by creating new trading engine
             const newTradingEngine = new TradingEngine(dataManager);
@@ -1026,19 +1045,14 @@ describe('FoundryVTT Integration Components Tests', () => {
             expect(changeNotifications[1].newValue).toBe('all');
             expect(changeNotifications[1].oldValue).toBe('gm');
             
-            // Test season change notifications in UI
-            const initialNotificationCount = global.foundryMock.notifications.length;
-            
+            // Season changes no longer post a ui.notifications call directly
+            // from TradingEngine/DataManager - that responsibility moved to
+            // the application layer to fix a duplicate-notifications bug
+            // (see notifySeasonChange's comment in data-manager.js). Verify
+            // the season change itself takes effect instead.
             await tradingEngine.setCurrentSeason('winter');
-            
-            // Should have triggered a notification
-            expect(global.foundryMock.notifications.length).toBeGreaterThan(initialNotificationCount);
-            
-            const seasonNotification = global.foundryMock.notifications.find(n => 
-                n.message.includes('Trading season changed to winter')
-            );
-            expect(seasonNotification).toBeDefined();
-            expect(seasonNotification.type).toBe('info');
+
+            expect(tradingEngine.getCurrentSeason()).toBe('winter');
         });
 
         test('should handle setting migration and validation', async () => {

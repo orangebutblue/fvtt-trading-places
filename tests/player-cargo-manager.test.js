@@ -134,8 +134,8 @@ describe('PlayerCargoManager', () => {
     });
 
     describe('Add Cargo Operations', () => {
-        test('should add new cargo successfully', () => {
-            const result = cargoManager.addCargo('Grain', 100, 'average');
+        test('should add new cargo successfully', async () => {
+            const result = await cargoManager.addCargo('Grain', 100, 'average');
             
             expect(result.success).toBe(true);
             expect(result.totalItems).toBe(1);
@@ -146,9 +146,9 @@ describe('PlayerCargoManager', () => {
             expect(cargoManager.playerCargo[0].quality).toBe('average');
         });
 
-        test('should merge cargo of same type and quality', () => {
-            cargoManager.addCargo('Grain', 100, 'average');
-            const result = cargoManager.addCargo('Grain', 50, 'average');
+        test('should merge cargo of same type and quality', async () => {
+            await cargoManager.addCargo('Grain', 100, 'average');
+            const result = await cargoManager.addCargo('Grain', 50, 'average');
             
             expect(result.success).toBe(true);
             expect(result.totalItems).toBe(1);
@@ -165,22 +165,22 @@ describe('PlayerCargoManager', () => {
             expect(cargoManager.getTotalCargoQuantity()).toBe(150);
         });
 
-        test('should validate cargo input', () => {
-            const result = cargoManager.addCargo('', 100, 'average');
+        test('should validate cargo input', async () => {
+            const result = await cargoManager.addCargo('', 100, 'average');
             
             expect(result.success).toBe(false);
             expect(result.error).toContain('Cargo type is required');
         });
 
-        test('should validate quantity is positive integer', () => {
-            const result = cargoManager.addCargo('Grain', -10, 'average');
+        test('should validate quantity is positive integer', async () => {
+            const result = await cargoManager.addCargo('Grain', -10, 'average');
             
             expect(result.success).toBe(false);
             expect(result.error).toContain('Quantity must be a positive integer');
         });
 
-        test('should validate quality options', () => {
-            const result = cargoManager.addCargo('Grain', 100, 'invalid');
+        test('should validate quality options', async () => {
+            const result = await cargoManager.addCargo('Grain', 100, 'invalid');
             
             expect(result.success).toBe(false);
             expect(result.error).toContain('Quality must be one of');
@@ -201,8 +201,8 @@ describe('PlayerCargoManager', () => {
             );
         });
 
-        test('should trigger cargo update event', () => {
-            cargoManager.addCargo('Grain', 100, 'average');
+        test('should trigger cargo update event', async () => {
+            await cargoManager.addCargo('Grain', 100, 'average');
             
             expect(window.dispatchEvent).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -217,47 +217,47 @@ describe('PlayerCargoManager', () => {
     });
 
     describe('Remove Cargo Operations', () => {
-        beforeEach(() => {
-            cargoManager.addCargo('Grain', 100, 'average');
-            cargoManager.addCargo('Metal', 50, 'good');
+        beforeEach(async () => {
+            await cargoManager.addCargo('Grain', 100, 'average');
+            await cargoManager.addCargo('Metal', 50, 'good');
         });
 
-        test('should remove partial quantity', () => {
+        test('should remove partial quantity', async () => {
             const cargoId = cargoManager.playerCargo[0].id;
-            const result = cargoManager.removeCargo(cargoId, 30);
-            
+            const result = await cargoManager.removeCargo(cargoId, 30);
+
             expect(result.success).toBe(true);
             expect(cargoManager.playerCargo[0].quantity).toBe(70);
             expect(cargoManager.getTotalCargoQuantity()).toBe(120);
         });
 
-        test('should remove entire cargo when quantity equals total', () => {
+        test('should remove entire cargo when quantity equals total', async () => {
             const cargoId = cargoManager.playerCargo[0].id;
-            const result = cargoManager.removeCargo(cargoId, 100);
-            
+            const result = await cargoManager.removeCargo(cargoId, 100);
+
             expect(result.success).toBe(true);
             expect(cargoManager.playerCargo).toHaveLength(1);
             expect(cargoManager.getTotalCargoQuantity()).toBe(50);
         });
 
-        test('should remove entire cargo when no quantity specified', () => {
+        test('should remove entire cargo when no quantity specified', async () => {
             const cargoId = cargoManager.playerCargo[0].id;
-            const result = cargoManager.removeCargo(cargoId);
-            
+            const result = await cargoManager.removeCargo(cargoId);
+
             expect(result.success).toBe(true);
             expect(cargoManager.playerCargo).toHaveLength(1);
         });
 
-        test('should handle non-existent cargo ID', () => {
-            const result = cargoManager.removeCargo('non-existent-id', 10);
-            
+        test('should handle non-existent cargo ID', async () => {
+            const result = await cargoManager.removeCargo('non-existent-id', 10);
+
             expect(result.success).toBe(false);
             expect(result.error).toBe('Cargo not found');
         });
 
-        test('should log cargo removal', () => {
+        test('should log cargo removal', async () => {
             const cargoId = cargoManager.playerCargo[0].id;
-            cargoManager.removeCargo(cargoId, 30);
+            await cargoManager.removeCargo(cargoId, 30);
             
             expect(mockDebugLogger.log).toHaveBeenCalledWith(
                 'USER_ACTION', 'Remove Cargo',
@@ -273,51 +273,51 @@ describe('PlayerCargoManager', () => {
     });
 
     describe('Modify Cargo Operations', () => {
-        beforeEach(() => {
-            cargoManager.addCargo('Grain', 100, 'average');
+        beforeEach(async () => {
+            await cargoManager.addCargo('Grain', 100, 'average');
         });
 
-        test('should modify cargo properties', () => {
+        test('should modify cargo properties', async () => {
             const cargoId = cargoManager.playerCargo[0].id;
-            const result = cargoManager.modifyCargo(cargoId, {
+            const result = await cargoManager.modifyCargo(cargoId, {
                 quantity: 150,
                 quality: 'good',
                 notes: 'High quality grain'
             });
-            
+
             expect(result.success).toBe(true);
             expect(cargoManager.playerCargo[0].quantity).toBe(150);
             expect(cargoManager.playerCargo[0].quality).toBe('good');
             expect(cargoManager.playerCargo[0].notes).toBe('High quality grain');
         });
 
-        test('should not modify protected fields', () => {
+        test('should not modify protected fields', async () => {
             const cargoId = cargoManager.playerCargo[0].id;
             const originalId = cargoManager.playerCargo[0].id;
             const originalCreated = cargoManager.playerCargo[0].created;
-            
-            cargoManager.modifyCargo(cargoId, {
+
+            await cargoManager.modifyCargo(cargoId, {
                 id: 'new-id',
                 created: 'new-date'
             });
-            
+
             expect(cargoManager.playerCargo[0].id).toBe(originalId);
             expect(cargoManager.playerCargo[0].created).toBe(originalCreated);
         });
 
-        test('should handle non-existent cargo ID', () => {
-            const result = cargoManager.modifyCargo('non-existent-id', { quantity: 200 });
-            
+        test('should handle non-existent cargo ID', async () => {
+            const result = await cargoManager.modifyCargo('non-existent-id', { quantity: 200 });
+
             expect(result.success).toBe(false);
             expect(result.error).toBe('Cargo not found');
         });
     });
 
     describe('Cargo Retrieval Operations', () => {
-        beforeEach(() => {
-            cargoManager.addCargo('Grain', 100, 'average');
-            cargoManager.addCargo('Grain', 50, 'good');
-            cargoManager.addCargo('Metal', 75, 'average');
+        beforeEach(async () => {
+            await cargoManager.addCargo('Grain', 100, 'average');
+            await cargoManager.addCargo('Grain', 50, 'good');
+            await cargoManager.addCargo('Metal', 75, 'average');
         });
 
         test('should get all cargo', () => {
@@ -375,22 +375,22 @@ describe('PlayerCargoManager', () => {
     });
 
     describe('Clear Operations', () => {
-        beforeEach(() => {
-            cargoManager.addCargo('Grain', 100, 'average');
-            cargoManager.addCargo('Metal', 50, 'good');
+        beforeEach(async () => {
+            await cargoManager.addCargo('Grain', 100, 'average');
+            await cargoManager.addCargo('Metal', 50, 'good');
         });
 
-        test('should clear all cargo', () => {
-            const result = cargoManager.clearAllCargo();
-            
+        test('should clear all cargo', async () => {
+            const result = await cargoManager.clearAllCargo();
+
             expect(result.success).toBe(true);
             expect(result.itemsCleared).toBe(2);
             expect(result.quantityCleared).toBe(150);
             expect(cargoManager.playerCargo).toHaveLength(0);
         });
 
-        test('should log clear operation', () => {
-            cargoManager.clearAllCargo();
+        test('should log clear operation', async () => {
+            await cargoManager.clearAllCargo();
             
             expect(mockDebugLogger.log).toHaveBeenCalledWith(
                 'USER_ACTION', 'Clear All Cargo', 'Clearing all player cargo',
@@ -488,8 +488,8 @@ describe('PlayerCargoManager', () => {
             );
         });
 
-        test('should include cargo data in events', () => {
-            cargoManager.addCargo('Grain', 100, 'average');
+        test('should include cargo data in events', async () => {
+            await cargoManager.addCargo('Grain', 100, 'average');
             
             const lastCall = window.dispatchEvent.mock.calls[window.dispatchEvent.mock.calls.length - 1];
             const event = lastCall[0];

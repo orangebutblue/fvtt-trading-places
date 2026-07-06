@@ -134,7 +134,7 @@ describe('DataManager Settlement Validation', () => {
 
             const result = dataManager.validateSettlement(settlement);
             expect(result.valid).toBe(false);
-            expect(result.errors).toContain('Wealth must be a number between 1-5');
+            expect(result.errors).toContain('Wealth must be a number between 1-5 (0 only allowed for settlements with population 0)');
         });
 
         test('should fail validation for non-array source', () => {

@@ -130,8 +130,8 @@ describe('PlayerCargoManager Integration', () => {
             expect(availableTypes[0]).toHaveProperty('category');
         });
 
-        test('should handle unknown cargo types gracefully', () => {
-            const result = cargoManager.addCargo('UnknownCargo', 100, 'average');
+        test('should handle unknown cargo types gracefully', async () => {
+            const result = await cargoManager.addCargo('UnknownCargo', 100, 'average');
             
             expect(result.success).toBe(true); // Should still add cargo
             expect(mockDataManager.getCargoType).toHaveBeenCalledWith('UnknownCargo');
@@ -164,8 +164,8 @@ describe('PlayerCargoManager Integration', () => {
     });
 
     describe('Event System Integration', () => {
-        test('should dispatch events for UI updates', () => {
-            cargoManager.addCargo('Grain', 100, 'average');
+        test('should dispatch events for UI updates', async () => {
+            await cargoManager.addCargo('Grain', 100, 'average');
             
             expect(global.window.dispatchEvent).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -178,9 +178,9 @@ describe('PlayerCargoManager Integration', () => {
             );
         });
 
-        test('should include complete cargo data in events', () => {
-            cargoManager.addCargo('Grain', 100, 'average');
-            cargoManager.addCargo('Metal', 50, 'good');
+        test('should include complete cargo data in events', async () => {
+            await cargoManager.addCargo('Grain', 100, 'average');
+            await cargoManager.addCargo('Metal', 50, 'good');
             
             const lastCall = global.window.dispatchEvent.mock.calls[global.window.dispatchEvent.mock.calls.length - 1];
             const event = lastCall[0];
@@ -193,7 +193,7 @@ describe('PlayerCargoManager Integration', () => {
     });
 
     describe('Trading Workflow Integration', () => {
-        test('should support buying workflow integration', () => {
+        test('should support buying workflow integration', async () => {
             // Simulate buying cargo (would come from buying algorithm)
             const purchaseData = {
                 type: 'Grain',
@@ -203,8 +203,8 @@ describe('PlayerCargoManager Integration', () => {
                 purchasePrice: 300,
                 purchaseDate: new Date().toISOString()
             };
-            
-            const result = cargoManager.addCargo(
+
+            const result = await cargoManager.addCargo(
                 purchaseData.type,
                 purchaseData.quantity,
                 purchaseData.quality,
@@ -222,30 +222,30 @@ describe('PlayerCargoManager Integration', () => {
             expect(addedCargo.purchasePrice).toBe(300);
         });
 
-        test('should support selling workflow integration', () => {
+        test('should support selling workflow integration', async () => {
             // Add cargo first
-            cargoManager.addCargo('Grain', 200, 'average');
-            cargoManager.addCargo('Metal', 100, 'good');
-            
+            await cargoManager.addCargo('Grain', 200, 'average');
+            await cargoManager.addCargo('Metal', 100, 'good');
+
             // Get cargo for selling
             const grainCargo = cargoManager.getCargoByType('Grain', 'average');
             expect(grainCargo).toHaveLength(1);
-            
+
             // Simulate selling part of the cargo
             const sellQuantity = 75;
-            const result = cargoManager.removeCargo(grainCargo[0].id, sellQuantity);
+            const result = await cargoManager.removeCargo(grainCargo[0].id, sellQuantity);
             
             expect(result.success).toBe(true);
             expect(cargoManager.getTotalCargoQuantity()).toBe(225); // 125 + 100
         });
 
-        test('should handle quality modifications during transport', () => {
-            cargoManager.addCargo('Grain', 100, 'average');
-            
+        test('should handle quality modifications during transport', async () => {
+            await cargoManager.addCargo('Grain', 100, 'average');
+
             const cargo = cargoManager.getAllCargo()[0];
-            
+
             // Simulate quality improvement/degradation
-            const result = cargoManager.modifyCargo(cargo.id, {
+            const result = await cargoManager.modifyCargo(cargo.id, {
                 quality: 'good',
                 notes: 'Quality improved during careful transport'
             });
@@ -257,38 +257,38 @@ describe('PlayerCargoManager Integration', () => {
     });
 
     describe('Error Handling Integration', () => {
-        test('should handle data manager errors gracefully', () => {
+        test('should handle data manager errors gracefully', async () => {
             // Mock data manager to throw error
             mockDataManager.getCargoType.mockImplementation(() => {
                 throw new Error('Data manager error');
             });
-            
-            const result = cargoManager.addCargo('Grain', 100, 'average');
-            
+
+            const result = await cargoManager.addCargo('Grain', 100, 'average');
+
             // Should still succeed despite data manager error
             expect(result.success).toBe(true);
         });
 
-        test('should handle session storage errors gracefully', () => {
+        test('should handle session storage errors gracefully', async () => {
             // Mock session storage to throw error
             mockSessionStorage.setItem.mockImplementation(() => {
                 throw new Error('Storage quota exceeded');
             });
-            
-            const result = cargoManager.addCargo('Grain', 100, 'average');
-            
+
+            const result = await cargoManager.addCargo('Grain', 100, 'average');
+
             // Should still succeed despite storage error
             expect(result.success).toBe(true);
         });
 
-        test('should validate input across all operations', () => {
+        test('should validate input across all operations', async () => {
             // Test various invalid inputs
-            expect(cargoManager.addCargo('', 100, 'average').success).toBe(false);
-            expect(cargoManager.addCargo('Grain', -10, 'average').success).toBe(false);
-            expect(cargoManager.addCargo('Grain', 100, 'invalid').success).toBe(false);
-            
-            expect(cargoManager.removeCargo('invalid-id', 10).success).toBe(false);
-            expect(cargoManager.modifyCargo('invalid-id', {}).success).toBe(false);
+            expect((await cargoManager.addCargo('', 100, 'average')).success).toBe(false);
+            expect((await cargoManager.addCargo('Grain', -10, 'average')).success).toBe(false);
+            expect((await cargoManager.addCargo('Grain', 100, 'invalid')).success).toBe(false);
+
+            expect((await cargoManager.removeCargo('invalid-id', 10)).success).toBe(false);
+            expect((await cargoManager.modifyCargo('invalid-id', {})).success).toBe(false);
         });
     });
 

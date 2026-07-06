@@ -184,8 +184,8 @@ describe('HagglingMechanics', () => {
 
     describe('performSkillTest', () => {
         test('should validate base skill parameter', async () => {
-            await expect(hagglingMechanics.performSkillTest(-5)).rejects.toThrow('Base skill must be a number between 0 and 100');
-            await expect(hagglingMechanics.performSkillTest(105)).rejects.toThrow('Base skill must be a number between 0 and 100');
+            await expect(hagglingMechanics.performSkillTest(-5)).rejects.toThrow('Player skill must be a number between 0 and 100');
+            await expect(hagglingMechanics.performSkillTest(105)).rejects.toThrow('Player skill must be a number between 0 and 100');
         });
 
         test('should apply modifiers correctly', async () => {

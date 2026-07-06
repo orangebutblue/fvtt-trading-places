@@ -99,7 +99,7 @@ describe('Season Management', () => {
         test('should persist season to settings', async () => {
             await dataManager.setCurrentSeason('autumn');
             
-            const settingValue = await global.game.settings.get('trading-places', 'currentSeason');
+            const settingValue = await global.game.settings.get('fvtt-trading-places', 'currentSeason');
             expect(settingValue).toBe('autumn');
         });
 
@@ -153,41 +153,47 @@ describe('Season Management', () => {
 
     describe('getSeasonalPrices', () => {
         test('should return prices for all cargo types in given season', () => {
+            // Cargo names/schema changed: Grain -> Sustenance, Wine -> Wine/Brandy,
+            // and prices are now basePrice * seasonalModifiers rather than a flat
+            // per-season value. Sustenance basePrice=24, spring modifier=1 -> 24.
+            // Cattle basePrice=2160, spring modifier=1 -> 2160.
             const springPrices = dataManager.getSeasonalPrices('spring');
-            
-            expect(springPrices).toHaveProperty('Grain');
-            expect(springPrices).toHaveProperty('Wine');
+
+            expect(springPrices).toHaveProperty('Sustenance');
+            expect(springPrices).toHaveProperty('Wine/Brandy');
             expect(springPrices).toHaveProperty('Cattle');
-            
-            expect(springPrices.Grain.basePrice).toBe(2);
-            expect(springPrices.Wine.basePrice).toBe(15);
-            expect(springPrices.Cattle.basePrice).toBe(25);
+
+            expect(springPrices.Sustenance.basePrice).toBe(24);
+            expect(springPrices.Cattle.basePrice).toBe(2160);
         });
 
         test('should include quality tiers when available', () => {
+            // Wine/Brandy's quality tiers are swill/passable/average/good/
+            // excellent/top_shelf, not the old poor/average/good/excellent
             const springPrices = dataManager.getSeasonalPrices('spring');
-            
-            expect(springPrices.Wine.qualityTiers).toHaveProperty('poor');
-            expect(springPrices.Wine.qualityTiers).toHaveProperty('average');
-            expect(springPrices.Wine.qualityTiers).toHaveProperty('good');
-            expect(springPrices.Wine.qualityTiers).toHaveProperty('excellent');
+
+            expect(springPrices['Wine/Brandy'].qualityTiers).toHaveProperty('swill');
+            expect(springPrices['Wine/Brandy'].qualityTiers).toHaveProperty('average');
+            expect(springPrices['Wine/Brandy'].qualityTiers).toHaveProperty('good');
+            expect(springPrices['Wine/Brandy'].qualityTiers).toHaveProperty('excellent');
+            expect(springPrices['Wine/Brandy'].qualityTiers).toHaveProperty('top_shelf');
         });
     });
 
     describe('compareSeasonalPrices', () => {
         test('should compare prices across all seasons for a cargo type', () => {
-            const comparison = dataManager.compareSeasonalPrices('Grain');
-            
-            expect(comparison).toHaveProperty('cargoName', 'Grain');
+            const comparison = dataManager.compareSeasonalPrices('Sustenance');
+
+            expect(comparison).toHaveProperty('cargoName', 'Sustenance');
             expect(comparison).toHaveProperty('prices');
             expect(comparison).toHaveProperty('bestSeason');
             expect(comparison).toHaveProperty('worstSeason');
             expect(comparison).toHaveProperty('priceRange');
-            
-            // Grain prices: spring=2, summer=3, autumn=1, winter=4
-            expect(comparison.bestSeason).toBe('autumn'); // Lowest price (1)
-            expect(comparison.worstSeason).toBe('winter'); // Highest price (4)
-            expect(comparison.priceRange).toBe(3); // 4 - 1 = 3
+
+            // Sustenance (basePrice=24): spring=24, summer=12, autumn=6, winter=12
+            expect(comparison.bestSeason).toBe('autumn'); // Lowest price (6)
+            expect(comparison.worstSeason).toBe('spring'); // Highest price (24)
+            expect(comparison.priceRange).toBe(18); // 24 - 6 = 18
         });
 
         test('should return null for non-existent cargo', () => {
@@ -199,16 +205,16 @@ describe('Season Management', () => {
     describe('getTradingRecommendations', () => {
         test('should provide buy/sell recommendations for all cargo types', () => {
             const recommendations = dataManager.getTradingRecommendations();
-            
-            expect(recommendations).toHaveProperty('Grain');
-            expect(recommendations).toHaveProperty('Wine');
+
+            expect(recommendations).toHaveProperty('Sustenance');
+            expect(recommendations).toHaveProperty('Wine/Brandy');
             expect(recommendations).toHaveProperty('Cattle');
-            
-            const grainRec = recommendations.Grain;
-            expect(grainRec).toHaveProperty('bestBuySeason', 'autumn'); // Lowest price
-            expect(grainRec).toHaveProperty('bestSellSeason', 'winter'); // Highest price
-            expect(grainRec).toHaveProperty('priceVariation', 3);
-            expect(grainRec).toHaveProperty('profitPotential', '300.0%'); // (4-1)/1 * 100
+
+            const sustenanceRec = recommendations.Sustenance;
+            expect(sustenanceRec).toHaveProperty('bestBuySeason', 'autumn'); // Lowest price
+            expect(sustenanceRec).toHaveProperty('bestSellSeason', 'spring'); // Highest price
+            expect(sustenanceRec).toHaveProperty('priceVariation', 18);
+            expect(sustenanceRec).toHaveProperty('profitPotential', '300.0%'); // (24-6)/6 * 100
         });
     });
 
@@ -242,27 +248,44 @@ describe('Season Management', () => {
         test('should call notifySeasonChange when season is set', async () => {
             // Mock console.log to capture notifications
             const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-            
+
             await dataManager.setCurrentSeason('spring');
-            
-            expect(consoleSpy).toHaveBeenCalledWith('Season change notification: unset → spring');
+
+            // The "Season change notification: ..." log was intentionally
+            // removed (see notifySeasonChange's comment) to fix a duplicate-
+            // notification bug - the application layer handles user-facing
+            // notifications now, not DataManager itself.
             expect(consoleSpy).toHaveBeenCalledWith('Pricing updated for season: spring');
-            
+
             consoleSpy.mockRestore();
         });
     });
 
     describe('seasonal price calculations', () => {
         test('should calculate correct seasonal prices with quality tiers', () => {
-            const wine = dataManager.getCargoType('Wine');
-            expect(wine).not.toBeNull();
-            
-            // Test spring wine prices with different quality tiers
-            const poorWinePrice = dataManager.getSeasonalPrice(wine, 'spring', 'poor');
-            const averageWinePrice = dataManager.getSeasonalPrice(wine, 'spring', 'average');
-            const goodWinePrice = dataManager.getSeasonalPrice(wine, 'spring', 'good');
-            const excellentWinePrice = dataManager.getSeasonalPrice(wine, 'spring', 'excellent');
-            
+            // The real Wine/Brandy dataset entry has basePrice: 0 (its actual
+            // sale price comes from a different mechanism), which would make
+            // this test degenerate (0 * any tier = 0). Use a synthetic cargo
+            // object with the current basePrice+seasonalModifiers schema to
+            // actually exercise quality tier multiplication, same pattern as
+            // data-manager.test.js's equivalent test.
+            const wineCargo = {
+                name: 'Wine',
+                basePrice: 15,
+                seasonalModifiers: { spring: 1, summer: 1, autumn: 1, winter: 1 },
+                qualityTiers: {
+                    poor: 0.5,
+                    average: 1.0,
+                    good: 1.5,
+                    excellent: 2.0
+                }
+            };
+
+            const poorWinePrice = dataManager.getSeasonalPrice(wineCargo, 'spring', 'poor');
+            const averageWinePrice = dataManager.getSeasonalPrice(wineCargo, 'spring', 'average');
+            const goodWinePrice = dataManager.getSeasonalPrice(wineCargo, 'spring', 'good');
+            const excellentWinePrice = dataManager.getSeasonalPrice(wineCargo, 'spring', 'excellent');
+
             expect(poorWinePrice).toBe(7.5); // 15 * 0.5
             expect(averageWinePrice).toBe(15); // 15 * 1.0
             expect(goodWinePrice).toBe(22.5); // 15 * 1.5
@@ -270,11 +293,12 @@ describe('Season Management', () => {
         });
 
         test('should handle cargo without quality tiers', () => {
-            const grain = dataManager.getCargoType('Grain');
-            expect(grain).not.toBeNull();
-            
-            const grainPrice = dataManager.getSeasonalPrice(grain, 'autumn');
-            expect(grainPrice).toBe(1); // Base price for autumn
+            const sustenance = dataManager.getCargoType('Sustenance');
+            expect(sustenance).not.toBeNull();
+
+            // basePrice=24, autumn modifier=0.25 -> 6
+            const sustenancePrice = dataManager.getSeasonalPrice(sustenance, 'autumn');
+            expect(sustenancePrice).toBe(6);
         });
     });
 });

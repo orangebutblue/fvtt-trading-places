@@ -21,12 +21,12 @@ global.ui = {
     }
 };
 
-// Mock browser window with addEventListener
-global.window = {
-    addEventListener: jest.fn(),
-    Dialog: function() {},
-    ChatMessage: function() {}
-};
+// Mock browser window APIs. Under jsdom, `window` is the global object itself
+// and can't be wholesale-reassigned (global.window = {...} silently no-ops),
+// so mutate the existing window instead.
+global.window.addEventListener = jest.fn();
+global.window.Dialog = function() {};
+global.window.ChatMessage = function() {};
 
 global.Dialog = global.window.Dialog;
 global.ChatMessage = global.window.ChatMessage;
@@ -68,18 +68,26 @@ describe('Configuration Validation', () => {
     describe('System Compatibility Validation', () => {
         test('should validate WFRP4e system compatibility', () => {
             const result = configValidator.validateSystemCompatibility();
-            
+
             expect(result.valid).toBe(true);
             expect(result.systemInfo.id).toBe('wfrp4e');
-            expect(result.compatibility.fullSupport).toBe(true);
+            // fullSupport is now always false - automatic compatibility
+            // profiles were removed in favor of dedicated per-system checks
+            // (e.g. validateWFRP4eCompatibility) run separately below
+            expect(result.compatibility.fullSupport).toBe(false);
+            expect(result.compatibility.notes).toEqual(expect.stringContaining('No automatic compatibility profile'));
         });
 
-        test('should warn about unsupported system', () => {
+        test('should not run WFRP4e-specific checks for an unsupported system', () => {
             game.system.id = 'unknown-system';
-            
+
             const result = configValidator.validateSystemCompatibility();
-            
-            expect(result.warnings.some(warning => warning.includes('not officially supported'))).toBe(true);
+
+            // There's no generic "not officially supported" warning anymore;
+            // unsupported systems simply skip the WFRP4e-specific validation
+            expect(result.valid).toBe(true);
+            expect(result.systemInfo.id).toBe('unknown-system');
+            expect(result.compatibility.fullSupport).toBe(false);
         });
     });
 
@@ -132,7 +140,12 @@ describe('Configuration Validation', () => {
     describe('Dataset Structure Validation', () => {
         test('should validate correct config structure', () => {
             const config = {
-                currency: { field: 'system.money.gc' },
+                currency: {
+                    canonicalUnit: { name: 'Brass Penny', abbreviation: 'BP', value: 1 },
+                    denominations: [
+                        { name: 'Gold Crown', abbreviation: 'GC', value: 240 }
+                    ]
+                },
                 inventory: { field: 'items' }
             };
 
@@ -381,7 +394,8 @@ describe('Runtime Error Handling', () => {
             expect(fallbackFunction).toHaveBeenCalled();
             expect(result).toBe('fallback result');
             expect(ui.notifications.info).toHaveBeenCalledWith(
-                expect.stringContaining('TestFeature is using reduced functionality')
+                expect.stringContaining('TestFeature is using reduced functionality'),
+                expect.anything()
             );
         });
 
@@ -393,7 +407,8 @@ describe('Runtime Error Handling', () => {
             
             expect(result).toBeNull();
             expect(ui.notifications.error).toHaveBeenCalledWith(
-                expect.stringContaining('TestFeature is temporarily unavailable')
+                expect.stringContaining('TestFeature is temporarily unavailable'),
+                expect.anything()
             );
         });
     });

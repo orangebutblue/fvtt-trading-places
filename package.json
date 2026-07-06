@@ -21,7 +21,7 @@
     "open": "^8.4.0"
   },
   "jest": {
-    "testEnvironment": "node",
+    "testEnvironment": "jsdom",
     "testMatch": [
       "**/tests/**/*.test.js"
     ],

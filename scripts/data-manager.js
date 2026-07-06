@@ -1997,9 +1997,10 @@ class DataManager {
 
         try {
             this.cargoTypes.forEach(cargo => {
-                if (cargo.basePrices && cargo.basePrices.hasOwnProperty(season)) {
+                const basePrice = this._getSeasonalBasePrice(cargo, season);
+                if (basePrice !== null) {
                     seasonalPrices[cargo.name] = {
-                        basePrice: cargo.basePrices[season],
+                        basePrice: basePrice,
                         qualityTiers: cargo.qualityTiers || { average: 1.0 }
                     };
                 }
@@ -2012,13 +2013,30 @@ class DataManager {
     }
 
     /**
+     * Compute the seasonal price for a cargo type before quality is applied.
+     * Supports both the current basePrice+seasonalModifiers schema and the
+     * legacy basePrices-per-season schema.
+     * @param {Object} cargo - Cargo type object
+     * @param {string} season - Season name
+     * @returns {number|null} - Seasonal price, or null if no price data available
+     */
+    _getSeasonalBasePrice(cargo, season) {
+        if (cargo.basePrice !== undefined && cargo.seasonalModifiers && cargo.seasonalModifiers.hasOwnProperty(season)) {
+            return cargo.basePrice * cargo.seasonalModifiers[season];
+        } else if (cargo.basePrices && cargo.basePrices.hasOwnProperty(season)) {
+            return cargo.basePrices[season];
+        }
+        return null;
+    }
+
+    /**
      * Compare prices between seasons for a cargo type
      * @param {string} cargoName - Name of cargo type
      * @returns {Object} - Object with price comparison data
      */
     compareSeasonalPrices(cargoName) {
         const cargo = this.getCargoType(cargoName);
-        if (!cargo || !cargo.basePrices) {
+        if (!cargo || (cargo.basePrice === undefined && !cargo.basePrices)) {
             return null;
         }
 
@@ -2035,8 +2053,8 @@ class DataManager {
         let maxPrice = -Infinity;
 
         seasons.forEach(season => {
-            if (cargo.basePrices.hasOwnProperty(season)) {
-                const price = cargo.basePrices[season];
+            const price = this._getSeasonalBasePrice(cargo, season);
+            if (price !== null) {
                 comparison.prices[season] = price;
 
                 if (price < minPrice) {
@@ -2708,9 +2726,10 @@ class DataManager {
 
         try {
             this.cargoTypes.forEach(cargo => {
-                if (cargo.basePrices && cargo.basePrices.hasOwnProperty(season)) {
+                const basePrice = this._getSeasonalBasePrice(cargo, season);
+                if (basePrice !== null) {
                     seasonalPrices[cargo.name] = {
-                        basePrice: cargo.basePrices[season],
+                        basePrice: basePrice,
                         qualityTiers: cargo.qualityTiers || { average: 1.0 }
                     };
                 }
@@ -2723,13 +2742,30 @@ class DataManager {
     }
 
     /**
+     * Compute the seasonal price for a cargo type before quality is applied.
+     * Supports both the current basePrice+seasonalModifiers schema and the
+     * legacy basePrices-per-season schema.
+     * @param {Object} cargo - Cargo type object
+     * @param {string} season - Season name
+     * @returns {number|null} - Seasonal price, or null if no price data available
+     */
+    _getSeasonalBasePrice(cargo, season) {
+        if (cargo.basePrice !== undefined && cargo.seasonalModifiers && cargo.seasonalModifiers.hasOwnProperty(season)) {
+            return cargo.basePrice * cargo.seasonalModifiers[season];
+        } else if (cargo.basePrices && cargo.basePrices.hasOwnProperty(season)) {
+            return cargo.basePrices[season];
+        }
+        return null;
+    }
+
+    /**
      * Compare prices between seasons for a cargo type
      * @param {string} cargoName - Name of cargo type
      * @returns {Object} - Object with price comparison data
      */
     compareSeasonalPrices(cargoName) {
         const cargo = this.getCargoType(cargoName);
-        if (!cargo || !cargo.basePrices) {
+        if (!cargo || (cargo.basePrice === undefined && !cargo.basePrices)) {
             return null;
         }
 
@@ -2746,8 +2782,8 @@ class DataManager {
         let maxPrice = -Infinity;
 
         seasons.forEach(season => {
-            if (cargo.basePrices.hasOwnProperty(season)) {
-                const price = cargo.basePrices[season];
+            const price = this._getSeasonalBasePrice(cargo, season);
+            if (price !== null) {
                 comparison.prices[season] = price;
 
                 if (price < minPrice) {

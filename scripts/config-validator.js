@@ -1291,7 +1291,7 @@ class ConfigValidator {
             const errorLower = error.toLowerCase();
             
             for (const [pattern, procedure] of Object.entries(errorPatterns)) {
-                if (errorLower.includes(pattern)) {
+                if (errorLower.includes(pattern.toLowerCase())) {
                     procedures.specific[error] = procedure;
                     
                     // Update overall priority

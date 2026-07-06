@@ -71,6 +71,10 @@ class IntegrationDataManager {
         return this.settlements.find(s => s.name === name) || null;
     }
 
+    getAllSettlements() {
+        return this.settlements;
+    }
+
     getSettlementProperties(settlement) {
         const sizeMapping = {
             'CS': { numeric: 4, description: 'City State' },
