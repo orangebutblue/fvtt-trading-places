@@ -9,12 +9,16 @@
         <div class="header-controls">
             <div class="season-control">
                 <label>Current Season:</label>
+                {{#if isGM}}
                 <select id="season-select">
                     <option value="spring" {{#if (eq currentSeason "spring")}}selected{{/if}}>Spring</option>
                     <option value="summer" {{#if (eq currentSeason "summer")}}selected{{/if}}>Summer</option>
                     <option value="autumn" {{#if (eq currentSeason "autumn")}}selected{{/if}}>Autumn</option>
                     <option value="winter" {{#if (eq currentSeason "winter")}}selected{{/if}}>Winter</option>
                 </select>
+                {{else}}
+                <span class="season-display">{{currentSeason}}</span>
+                {{/if}}
             </div>
         </div>
         {{#if debugLoggingEnabled}}
@@ -33,6 +37,7 @@
         <!-- Sidebar -->
         <div class="trading-sidebar">
             <!-- Location Selection -->
+            {{#if isGM}}
             <div class="section">
                 <h2 class="section-title">
                     <i class="fas fa-map-marker-alt"></i>
@@ -63,6 +68,7 @@
                     </select>
                 </div>
             </div>
+            {{/if}}
 
             <!-- Settlement Info Section -->
             {{#if selectedSettlement}}
@@ -123,26 +129,34 @@
         <div class="main-panel">
             <!-- Tabs -->
             <div class="tabs">
-                <button class="trading-places-tab active" data-tab="buying">
+                {{#if isGM}}
+                <button class="trading-places-tab {{#if (eq activeTab "buying")}}active{{/if}}" data-tab="buying">
                     <i class="fas fa-shopping-cart"></i>
                     Buying
                 </button>
-                <button class="trading-places-tab" data-tab="selling">
+                <button class="trading-places-tab {{#if (eq activeTab "selling")}}active{{/if}}" data-tab="selling">
                     <i class="fas fa-hand-holding-usd"></i>
                     Selling
                 </button>
-                <button class="trading-places-tab" data-tab="cargo">
+                <button class="trading-places-tab {{#if (eq activeTab "cargo")}}active{{/if}}" data-tab="cargo">
                     <i class="fas fa-boxes"></i>
                     Cargo
                 </button>
-                <button class="trading-places-tab" data-tab="history">
+                {{else}}
+                <button class="trading-places-tab {{#if (eq activeTab "cargo")}}active{{/if}}" data-tab="cargo">
+                    <i class="fas fa-boxes"></i>
+                    Cargo
+                </button>
+                {{/if}}
+                <button class="trading-places-tab {{#if (eq activeTab "history")}}active{{/if}}" data-tab="history">
                     <i class="fas fa-history"></i>
                     History
                 </button>
             </div>
 
             <!-- Buying Tab -->
-            <div class="trading-places-tab-content active" id="buying-tab">
+            {{#if isGM}}
+            <div class="trading-places-tab-content {{#if (eq activeTab "buying")}}active{{/if}}" id="buying-tab" {{#if (eq activeTab "buying")}}style="display: block;"{{else}}style="display: none;"{{/if}}>
                 <!-- Error Display -->
                 <div class="error-display" id="buying-error-display">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -189,13 +203,15 @@ Slot Calculation:
                 </div>
                 {{/if}}
 
-                <!-- Check Availability Section -->
+                <!-- Check Availability Section (GM only) -->
+                {{#if isGM}}
                 <div class="availability-check-section">
                     <button class="btn btn-primary check-availability" id="check-availability" style="width: 100%; margin-bottom: 24px;" {{#unless hasSettlement}}disabled{{/unless}}>
                         <i class="fas fa-search"></i>
                         Check Cargo Availability
                     </button>
                 </div>
+                {{/if}}
 
                 <!-- Availability Results Section -->
                 <div class="availability-section">
@@ -217,9 +233,11 @@ Slot Calculation:
                     <!-- Cargo cards will be populated by JavaScript -->
                 </div>
             </div>
+            {{/if}}
 
             <!-- Selling Tab -->
-            <div class="trading-places-tab-content" id="selling-tab">
+            {{#if isGM}}
+            <div class="trading-places-tab-content {{#if (eq activeTab "selling")}}active{{/if}}" id="selling-tab" {{#if (eq activeTab "selling")}}style="display: block;"{{else}}style="display: none;"{{/if}}>
                 <!-- Error Display -->
                 <div class="error-display" id="selling-error-display">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -326,14 +344,19 @@ Slot Calculation:
                 </div>
                 {{/unless}}
             </div>
+            {{/if}}
 
             <!-- Cargo Tab -->
-            <div class="trading-places-tab-content" id="cargo-tab" style="display: none;">
+            <div class="trading-places-tab-content {{#if (eq activeTab "cargo")}}active{{/if}}" id="cargo-tab" {{#if (eq activeTab "cargo")}}style="display: block;"{{else}}style="display: none;"{{/if}}>
                 <div class="cargo-header">
                     <div class="capacity-section">
                         <div class="capacity-controls">
                             <label for="cargo-capacity">Maximum Capacity:</label>
+                            {{#if isGM}}
                             <input type="number" id="cargo-capacity" value="{{cargoCapacity}}" min="0" step="1" />
+                            {{else}}
+                            <span class="cargo-capacity-display">{{cargoCapacity}}</span>
+                            {{/if}}
                             <span class="capacity-unit">EP</span>
                         </div>
                         <div class="capacity-display">
@@ -353,6 +376,7 @@ Slot Calculation:
                             </div>
                         </div>
                     </div>
+                    {{#if isGM}}
                     <div class="cargo-actions">
                         <label class="hide-contraband-label">
                             <input type="checkbox" id="hide-contraband-status" />
@@ -363,9 +387,11 @@ Slot Calculation:
                             Post to Chat
                         </button>
                     </div>
+                    {{/if}}
                 </div>
 
-                <!-- Collapsible Add Cargo Section -->
+                <!-- Collapsible Add Cargo Section (GM only) -->
+                {{#if isGM}}
                 <div class="add-cargo-section">
                     <button class="add-cargo-toggle" type="button">
                         <i class="fas fa-plus-circle"></i>
@@ -392,7 +418,10 @@ Slot Calculation:
                             </div>
                             
                             <div class="add-cargo-row">
-                                <input type="text" id="add-cargo-settlement" placeholder="Settlement (optional)" value="{{#if selectedSettlement}}{{selectedSettlement.name}}{{/if}}" />
+                                <input type="text" id="add-cargo-settlement" placeholder="Settlement (optional)" value="{{#if selectedSettlement}}{{selectedSettlement.name}}{{/if}}" list="add-cargo-settlements-datalist" />
+                                <datalist id="add-cargo-settlements-datalist">
+                                    <!-- Settlement options will be populated dynamically -->
+                                </datalist>
                                 <select id="add-cargo-season">
                                     <option value="spring" {{#if (eq currentSeason 'spring')}}selected{{/if}}>Spring</option>
                                     <option value="summer" {{#if (eq currentSeason 'summer')}}selected{{/if}}>Summer</option>
@@ -408,6 +437,7 @@ Slot Calculation:
                         </div>
                     </div>
                 </div>
+                {{/if}}
 
                 <div class="cargo-list">
                     {{#if currentCargo.length}}
@@ -424,9 +454,9 @@ Slot Calculation:
                                             <span class="cargo-quality">{{quality}}</span>
                                         {{/if}}
                                     {{/if}}
-                                    {{#if contraband}}
+                                    {{#if isGM}}{{#if contraband}}
                                         <span class="contraband-badge">Contraband</span>
-                                    {{/if}}
+                                    {{/if}}{{/if}}
                                 </div>
                                 <div class="transaction-summary">
                                     <div class="quantity-display">{{quantity}} EP</div>
@@ -470,8 +500,9 @@ Slot Calculation:
             </div>
 
             <!-- History Tab -->
-            <div class="trading-places-tab-content" id="history-tab">
-                <!-- Collapsible Manual Entry -->
+            <div class="trading-places-tab-content {{#if (eq activeTab "history")}}active{{/if}}" id="history-tab" {{#if (eq activeTab "history")}}style="display: block;"{{else}}style="display: none;"{{/if}}>
+                <!-- Collapsible Manual Entry (GM only) -->
+                {{#if isGM}}
                 <div class="manual-entry-section">
                     <button class="manual-entry-toggle" type="button">
                         <i class="fas fa-plus-circle"></i>
@@ -506,7 +537,10 @@ Slot Calculation:
                             </div>
                             
                             <div class="manual-entry-row">
-                                <input type="text" id="manual-settlement" placeholder="Settlement" value="{{#if selectedSettlement}}{{selectedSettlement.name}}{{/if}}" />
+                                <input type="text" id="manual-settlement" placeholder="Settlement" value="{{#if selectedSettlement}}{{selectedSettlement.name}}{{/if}}" list="manual-settlements-datalist" />
+                                <datalist id="manual-settlements-datalist">
+                                    <!-- Settlement options will be populated dynamically -->
+                                </datalist>
                                 <select id="manual-season">
                                     <option value="spring" {{#if (eq currentSeason 'spring')}}selected{{/if}}>Spring</option>
                                     <option value="summer" {{#if (eq currentSeason 'summer')}}selected{{/if}}>Summer</option>
@@ -522,6 +556,7 @@ Slot Calculation:
                         </div>
                     </div>
                 </div>
+                {{/if}}
 
                 {{#if transactionHistory.length}}
                 <div class="transaction-list">

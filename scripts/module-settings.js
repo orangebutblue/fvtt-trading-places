@@ -32,7 +32,7 @@ export class TradingPlacesSettings {
         game.settings.register(this.MODULE_ID, 'selectedSettlement', {
             name: 'Selected Settlement',
             hint: 'Currently selected settlement for trading',
-            scope: 'client',
+            scope: 'world',
             config: false,
             type: String,
             default: ''
@@ -41,7 +41,7 @@ export class TradingPlacesSettings {
         game.settings.register(this.MODULE_ID, 'selectedRegion', {
             name: 'Selected Region',
             hint: 'Currently selected region for trading',
-            scope: 'client',
+            scope: 'world',
             config: false,
             type: String,
             default: ''

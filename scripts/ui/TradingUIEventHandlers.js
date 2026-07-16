@@ -230,7 +230,7 @@ export class TradingUIEventHandlers {
         // Cargo tab event listeners
         const cargoCapacityInput = html.querySelector('#cargo-capacity');
         if (cargoCapacityInput) {
-            cargoCapacityInput.addEventListener('input', this._onCargoCapacityChange.bind(this));
+            cargoCapacityInput.addEventListener('change', this._onCargoCapacityChange.bind(this));
         }
 
         // Cargo action buttons - use event delegation for dynamically added buttons
@@ -283,6 +283,12 @@ export class TradingUIEventHandlers {
             addCargoNameInput.addEventListener('change', this._onAddCargoInputChange.bind(this));
         }
 
+        // Filter cargo list when category is chosen
+        const addCargoCategorySelect = html.querySelector('#add-cargo-category');
+        if (addCargoCategorySelect) {
+            addCargoCategorySelect.addEventListener('change', this._onAddCargoCategoryChange.bind(this));
+        }
+
         // Populate cargo types for add cargo autocomplete
         this._populateAddCargoAutocomplete();
 
@@ -332,6 +338,10 @@ export class TradingUIEventHandlers {
                     targetContent.style.display = 'block'; // Explicitly show
                     
                     // No need to attach tooltip handlers - unified system handles all tooltips
+                }
+
+                if (this.app) {
+                    this.app.activeTab = targetTab;
                 }
                 
                 this._logDebug('UI Interaction', 'Switched to tab:', targetTab);
@@ -1812,6 +1822,7 @@ export class TradingUIEventHandlers {
             const categorySelect = this.app.element.querySelector('#add-cargo-category');
             if (categorySelect) {
                 categorySelect.value = matchingCargo.category;
+                this._filterAddCargoDatalist(matchingCargo.category);
                 
                 this._logDebug('Add Cargo Auto-Select', 'Category auto-selected for cargo', {
                     cargo: cargoName,
@@ -1819,6 +1830,49 @@ export class TradingUIEventHandlers {
                 });
             }
         }
+    }
+
+    /**
+     * Handle category change in add cargo form to filter datalist
+     * @param {Event} event - Change event
+     * @private
+     */
+    _onAddCargoCategoryChange(event) {
+        const selectedCategory = event.target.value;
+        this._filterAddCargoDatalist(selectedCategory);
+    }
+
+    /**
+     * Filter cargo datalist suggestions by category
+     * @param {string} category - Category to filter by
+     * @private
+     */
+    _filterAddCargoDatalist(category) {
+        const datalist = this.app.element.querySelector('#add-cargo-datalist');
+        if (!datalist || !this.addCargoTypesData || !this.addCargoTypesData.cargoTypes) {
+            return;
+        }
+
+        // Clear existing options
+        datalist.innerHTML = '';
+
+        // Filter and add options
+        const cargoData = this.addCargoTypesData.cargoTypes;
+        const filteredCargo = category 
+            ? cargoData.filter(cargo => cargo.category.toLowerCase() === category.toLowerCase())
+            : cargoData;
+
+        filteredCargo.forEach(cargo => {
+            const option = document.createElement('option');
+            option.value = cargo.name;
+            option.textContent = `${cargo.name} (${cargo.category})`;
+            datalist.appendChild(option);
+        });
+
+        this._logDebug('Add Cargo Datalist', 'Filtered cargo suggestions', {
+            category,
+            count: filteredCargo.length
+        });
     }
 
     /**
@@ -1884,8 +1938,34 @@ export class TradingUIEventHandlers {
                 });
             }
             
-            this._logDebug('Add Cargo Autocomplete', 'Populated cargo types and categories', {
+            // Populate settlements autocomplete datalists
+            const settlementsData = dataManager.getAllSettlements() || [];
+            
+            const addCargoSettlementsDatalist = this.app.element.querySelector('#add-cargo-settlements-datalist');
+            if (addCargoSettlementsDatalist && settlementsData.length > 0) {
+                addCargoSettlementsDatalist.innerHTML = '';
+                settlementsData.forEach(settlement => {
+                    const option = document.createElement('option');
+                    option.value = settlement.name;
+                    option.textContent = `${settlement.name} (${settlement.region})`;
+                    addCargoSettlementsDatalist.appendChild(option);
+                });
+            }
+
+            const manualSettlementsDatalist = this.app.element.querySelector('#manual-settlements-datalist');
+            if (manualSettlementsDatalist && settlementsData.length > 0) {
+                manualSettlementsDatalist.innerHTML = '';
+                settlementsData.forEach(settlement => {
+                    const option = document.createElement('option');
+                    option.value = settlement.name;
+                    option.textContent = `${settlement.name} (${settlement.region})`;
+                    manualSettlementsDatalist.appendChild(option);
+                });
+            }
+            
+            this._logDebug('Add Cargo Autocomplete', 'Populated cargo types, categories, and settlements', {
                 cargoCount: cargoData.length,
+                settlementCount: settlementsData.length,
                 categoryCount: categorySelect ? categorySelect.options.length - 1 : 0 // -1 for default option
             });
             
@@ -1994,7 +2074,7 @@ export class TradingUIEventHandlers {
             this.app.transactionHistory.unshift(transaction);
             
             console.log('🚛 CARGO_PERSIST: Manual cargo addition', {
-                cargo: cargoType,
+                cargo: cargoName,
                 quantity: quantity,
                 totalCargo: this.app.currentCargo.length
             });
@@ -2064,6 +2144,9 @@ export class TradingUIEventHandlers {
         form.querySelector('#add-cargo-category').value = '';
         form.querySelector('#add-cargo-quantity').value = '';
         form.querySelector('#add-cargo-price').value = '';
+        
+        // Reset autocomplete datalist options
+        this._filterAddCargoDatalist('');
         
         // Reset cost preview
         const costPreview = form.querySelector('.total-cost-preview strong');

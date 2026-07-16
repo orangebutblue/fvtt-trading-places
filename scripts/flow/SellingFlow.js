@@ -92,8 +92,10 @@ export class SellingFlow {
             let slotNumber = 1;
 
             for (let slot = 0; slot < availableSlots; slot++) {
-                // Roll for buyer presence (80% chance)
-                const buyerRoll = Math.floor(Math.random() * 100) + 1;
+                // Roll for buyer presence (80% chance) using Foundry's Roll system
+                const roll = new Roll("1d100");
+                await roll.evaluate();
+                const buyerRoll = roll.total;
                 const buyerPresent = buyerRoll <= 80;
 
                 console.log(`🎲 SLOT ${slotNumber}: Buyer Roll: ${buyerRoll} ${buyerPresent ? '≤ 80 = SUCCESS' : '> 80 = FAILURE'}`);
@@ -113,7 +115,7 @@ export class SellingFlow {
                     const maxEP = Math.floor(Math.random() * (selectedCargo.quantity + 1)); // 0 to quantity inclusive
 
                     // Step 6: Assign skill rating (same as buying algorithm)
-                    const skillRating = this._generateSkillRating();
+                    const skillRating = await this._generateSkillRating();
 
                     const offer = {
                         slotNumber,
@@ -189,13 +191,25 @@ export class SellingFlow {
      * @returns {number} Skill rating (1-100)
      * @private
      */
-    _generateSkillRating() {
+    async _generateSkillRating() {
         // Simple distribution: 40% low skill (1-30), 40% medium skill (31-70), 20% high skill (71-100)
-        const roll = Math.floor(Math.random() * 100) + 1;
+        const rollObj = new Roll("1d100");
+        await rollObj.evaluate();
+        const roll = rollObj.total;
 
-        if (roll <= 40) return Math.floor(Math.random() * 30) + 1;      // 1-30
-        if (roll <= 80) return Math.floor(Math.random() * 40) + 31;     // 31-70
-        return Math.floor(Math.random() * 30) + 71;                     // 71-100
+        if (roll <= 40) {
+            const lowRoll = new Roll("1d30");
+            await lowRoll.evaluate();
+            return lowRoll.total;
+        }
+        if (roll <= 80) {
+            const medRoll = new Roll("1d40");
+            await medRoll.evaluate();
+            return medRoll.total + 30;
+        }
+        const highRoll = new Roll("1d30");
+        await highRoll.evaluate();
+        return highRoll.total + 70;
     }
 
     /**

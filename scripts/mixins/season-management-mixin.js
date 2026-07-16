@@ -145,9 +145,6 @@ const SeasonManagementMixin = {
     _notifySeasonChange(season) {
         ui.notifications.info(`Trading season changed to ${season}. All prices updated.`);
 
-        // Post to chat if enabled
-        this._postSeasonChangeToChat(season);
-
         this._logInfo('Season Management', 'Season change notification sent', { season });
     },
 

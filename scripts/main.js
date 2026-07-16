@@ -771,20 +771,22 @@ function registerModuleSettings() {
     game.settings.register(MODULE_ID, "selectedRegion", {
         name: "Selected Region",
         hint: "Stores the last selected region in the trading interface",
-        scope: "client",
+        scope: "world",
         config: false,
         type: String,
-        default: ""
+        default: "",
+        onChange: () => rerenderOpenTradingWindows()
     });
 
     // Selected settlement setting (for persistence)
     game.settings.register(MODULE_ID, "selectedSettlement", {
         name: "Selected Settlement",
         hint: "Stores the last selected settlement in the trading interface",
-        scope: "client",
+        scope: "world",
         config: false,
         type: String,
-        default: ""
+        default: "",
+        onChange: () => rerenderOpenTradingWindows()
     });
 
     // Cargo availability data setting (for persistence)
@@ -824,7 +826,8 @@ function registerModuleSettings() {
         scope: "world",
         config: false,
         type: Number,
-        default: 400
+        default: 400,
+        onChange: () => rerenderOpenTradingWindows()
     });
 
     // Current cargo inventory setting
@@ -834,7 +837,8 @@ function registerModuleSettings() {
         scope: "world",
         config: false,
         type: Object,
-        default: {}
+        default: {},
+        onChange: () => rerenderOpenTradingWindows()
     });
 
     // Transaction history setting
@@ -844,7 +848,8 @@ function registerModuleSettings() {
         scope: "world",
         config: false,
         type: Object,
-        default: {}
+        default: {},
+        onChange: () => rerenderOpenTradingWindows()
     });
 
     // Cargo availability data setting
@@ -854,7 +859,8 @@ function registerModuleSettings() {
         scope: "world",
         config: false,
         type: Object,
-        default: {}
+        default: {},
+        onChange: () => rerenderOpenTradingWindows()
     });
 }
 
@@ -1389,6 +1395,31 @@ async function onActiveDatasetChange(newValue) {
  * Handle current season setting change
  * @param {string} newValue - New season name
  */
+/**
+ * Re-render all currently open TradingPlacesApplication windows.
+ * Called on all clients whenever the GM writes a world-scope setting so that
+ * players see the updated state without having to close and reopen the window.
+ *
+ * NOTE: TradingPlacesApplication extends ApplicationV2, which does NOT register
+ * itself in ui.windows (that is ApplicationV1-only). ApplicationV2 instances are
+ * tracked in foundry.applications.instances, keyed by the app's static `id`.
+ */
+function rerenderOpenTradingWindows() {
+    // ApplicationV2 path: look up the singleton by its registered id.
+    const appId = "trading-places";
+    const app = foundry.applications?.instances?.get(appId);
+    if (app) {
+        app.render(false);
+        return;
+    }
+    // ApplicationV1 fallback (in case a legacy wrapper is ever open).
+    for (const win of Object.values(ui.windows)) {
+        if (win.constructor.name === 'TradingPlacesApplication') {
+            win.render(false);
+        }
+    }
+}
+
 async function onCurrentSeasonChange(newValue) {
     console.log(`Trading Places | Current season changed to: ${newValue}`);
 
@@ -1405,10 +1436,12 @@ async function onCurrentSeasonChange(newValue) {
             tradingEngine.setCurrentSeason(newValue);
         }
 
-        // Note: Season change notification handled by application, not here to avoid duplicates
+        // Re-render all open Trading Places windows on every client so players
+        // immediately see the new season without needing to reopen the window.
+        rerenderOpenTradingWindows();
 
-        // Post chat message about season change
-        if (typeof ChatMessage !== 'undefined') {
+        // Post chat message about season change (only once, from the GM client)
+        if (game.user.isGM && typeof ChatMessage !== 'undefined') {
             await ChatMessage.create({
                 content: `<div class="season-change"><h3>Season Changed</h3><p>Trading season is now <strong>${newValue}</strong>. All cargo prices have been updated accordingly.</p></div>`,
                 whisper: game.settings.get(MODULE_ID, "chatVisibility") === "gm" ? [game.user.id] : null

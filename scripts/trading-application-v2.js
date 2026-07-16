@@ -94,7 +94,8 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         this.successfulCargo = [];
         this.transactionHistory = [];
         this.playerCargo = [];
-    this.sellerOffers = null;
+        this.sellerOffers = null;
+        this.activeTab = null;
 
         // Get module components with validation
         this.dataManager = window.TradingPlaces?.getDataManager();
@@ -482,6 +483,20 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
 
         this._logDebug('Template Context', 'Preparing template context data');
 
+        // Save current active tab name from DOM before it gets replaced
+        if (this.renderer && typeof this.renderer.getActiveTabName === 'function') {
+            const currentTab = this.renderer.getActiveTabName();
+            if (currentTab) {
+                this.activeTab = currentTab;
+            }
+        }
+        if (!this.activeTab) {
+            this.activeTab = game.user.isGM ? 'buying' : 'cargo';
+        }
+        if (!game.user.isGM && (this.activeTab === 'buying' || this.activeTab === 'selling')) {
+            this.activeTab = 'cargo';
+        }
+
         // Load saved selections first (including cargo data)
         await this._loadSavedSelections();
 
@@ -497,6 +512,7 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         context.currentSeason = this.getCurrentSeason();
         context.selectedSettlement = this.selectedSettlement;
         context.selectedRegion = this.selectedRegion || '';
+        context.activeTab = this.activeTab;
     const successfulCargo = Array.isArray(this.successfulCargo) ? this.successfulCargo : [];
     const availableCargo = Array.isArray(this.availableCargo) ? this.availableCargo : [];
     context.availableCargo = availableCargo;
@@ -665,6 +681,11 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         
         // Restore seller offers if they exist (after DOM is ready)
         this._restoreSellerOffersAfterRender();
+
+        // Restore active tab
+        if (this.activeTab && this.renderer && typeof this.renderer.setActiveTab === 'function') {
+            this.renderer.setActiveTab(this.activeTab);
+        }
     }
 
     /**
@@ -837,14 +858,23 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             // Load saved settlement
             const savedSettlementName = await game.settings.get(MODULE_ID, "selectedSettlement");
             if (savedSettlementName && this.dataManager) {
+                const settlementsList = this.dataManager.settlements;
+                const hasSettlementsLoaded = Array.isArray(settlementsList) && settlementsList.length > 0;
+                
                 const settlement = this.dataManager.getSettlement(savedSettlementName);
                 if (settlement) {
                     this.selectedSettlement = settlement;
                     this._logDebug('Saved Selections', 'Loaded saved settlement', { settlement: savedSettlementName });
-                } else {
+                } else if (hasSettlementsLoaded) {
+                    // Only clear if the data manager actually has settlements loaded, meaning this is a genuinely invalid settlement name
                     this._logError('Saved Selections', 'Saved settlement not found in data', { settlementName: savedSettlementName });
                     // Clear invalid saved settlement
                     await game.settings.set(MODULE_ID, "selectedSettlement", null);
+                } else {
+                    this._logInfo('Saved Selections', 'Settlements data not loaded yet, keeping saved selection', { settlementName: savedSettlementName });
+                    // Keep the saved name as a fallback string so that it doesn't get wiped out.
+                    // When the data manager eventually initializes and the app re-renders, it will find it.
+                    this.selectedSettlement = { name: savedSettlementName };
                 }
             }
 
@@ -1097,9 +1127,6 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
     _notifySeasonChange(season) {
         ui.notifications.info(`Trading season changed to ${season}. All prices updated.`);
 
-        // Post to chat if enabled
-        this._postSeasonChangeToChat(season);
-
         this._logInfo('Season Management', 'Season change notification sent', { season });
     }
 
@@ -1153,7 +1180,8 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         await this.render(force);
 
         // Switch to the desired tab after render completes
-        const tabToActivate = desiredTab || 'buying';            // Use a small delay to ensure render is complete
+        const isGM = game.user.isGM;
+        const tabToActivate = desiredTab || (isGM ? 'buying' : 'cargo');            // Use a small delay to ensure render is complete
             setTimeout(() => {
                 this.renderer.setActiveTab(tabToActivate);
             }, 50);

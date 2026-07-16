@@ -63,21 +63,14 @@ class CargoAvailabilityPipeline {
 
         // Create roll function that uses Foundry's dice system
         const createFoundryRollFunction = (slotNumber) => {
-            return async ({ description, postToChat = true }) => {
+            return async ({ description, postToChat = false }) => {
                 // Always create unique rolls per slot for proper randomization
                 // The rollPercentile parameter is for testing/deterministic behavior only
                 const roll = new Roll("1d100");
                 await roll.evaluate();
 
-                if (postToChat && typeof game !== 'undefined' && game.settings) {
-                    const chatVisibility = game.settings.get(this.MODULE_ID, "chatVisibility");
-                    if (chatVisibility !== "disabled") {
-                        await roll.toMessage({
-                            speaker: ChatMessage.getSpeaker(),
-                            flavor: `${description} (Slot ${slotNumber} - ${settlement.name})`
-                        });
-                    }
-                }
+                // Roll is evaluated silently to prevent chat spam and 3D dice lag.
+                // A single consolidated summary message will be posted at the end of the process.
 
                 console.log(`🎲 Slot ${slotNumber} ${description}: ${roll.total}`);
                 return roll.total;
@@ -87,16 +80,52 @@ class CargoAvailabilityPipeline {
         const slots = [];
         for (let index = 0; index < cargoSlotPlan.producerSlots; index += 1) {
             const slotRollFunction = createFoundryRollFunction(index + 1);
-            slots.push(
-                await this._processSlot({
+            
+            // Calculate base availability chance
+            const sizeRating = settlementProps.sizeNumeric || 1;
+            const wealthRating = settlementProps.wealthRating || 3;
+            const finalChance = Math.min((sizeRating + wealthRating) * 10, 100);
+            
+            // Roll availability check first
+            const availabilityRoll = await slotRollFunction({
+                description: `Cargo slot ${index + 1} availability check`,
+                postToChat: true
+            });
+            const isAvailable = availabilityRoll <= finalChance;
+            
+            if (!isAvailable) {
+                // If not available, skip generating the rest of the attributes
+                slots.push({
                     slotNumber: index + 1,
-                    settlementProps,
-                    settlementFlags,
-                    candidateTable,
                     season: normalizedSeason,
-                    rollFunction: slotRollFunction
-                })
-            );
+                    isSlotAvailable: false,
+                    availability: {
+                        roll: availabilityRoll,
+                        chance: finalChance,
+                        success: false
+                    }
+                });
+                continue;
+            }
+            
+            // If available, generate cargo details
+            const slotDetails = await this._processSlot({
+                slotNumber: index + 1,
+                settlementProps,
+                settlementFlags,
+                candidateTable,
+                season: normalizedSeason,
+                rollFunction: slotRollFunction
+            });
+            
+            slotDetails.isSlotAvailable = true;
+            slotDetails.availability = {
+                roll: availabilityRoll,
+                chance: finalChance,
+                success: true
+            };
+            
+            slots.push(slotDetails);
         }
 
         return {

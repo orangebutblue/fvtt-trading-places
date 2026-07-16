@@ -93,19 +93,12 @@ export class BuyingFlow {
             });
 
             // Create a simple roll function that uses Foundry's dice system
-            const foundryRollFunction = async ({ description, postToChat = true }) => {
+            const foundryRollFunction = async ({ description, postToChat = false }) => {
                 const roll = new Roll("1d100");
                 await roll.evaluate();
 
-                if (postToChat && typeof game !== 'undefined' && game.settings) {
-                    const chatVisibility = game.settings.get(this.MODULE_ID, "chatVisibility");
-                    if (chatVisibility !== "disabled") {
-                        await roll.toMessage({
-                            speaker: ChatMessage.getSpeaker(),
-                            flavor: `${description} in ${this.app.selectedSettlement.name}`
-                        });
-                    }
-                }
+                // Roll is evaluated silently to avoid chat spam.
+                // A single consolidated summary message will be posted at the end of the process.
 
                 console.log(`🎲 ${description}: ${roll.total}`);
                 return roll.total;
@@ -144,12 +137,10 @@ export class BuyingFlow {
                 const currencyContext = this._getCurrencyContext();
 
                 for (const slot of pipelineResult.slots) {
-                    // Use the same roll function as the pipeline for consistency
-                    const slotRoll = await foundryRollFunction({ 
-                        description: `Cargo slot ${slot.slotNumber} availability check`, 
-                        postToChat: true 
-                    });
-                    const slotSuccessful = slotRoll <= finalChance;
+                    const slotRoll = slot.availability.roll;
+                    const slotSuccessful = slot.availability.success;
+                    const finalChance = slot.availability.chance;
+
                     slotOutcomes.push({
                         slotNumber: slot.slotNumber,
                         roll: slotRoll,
@@ -160,8 +151,8 @@ export class BuyingFlow {
                     const baseEntry = {
                         slotNumber: slot.slotNumber,
                         potentialCargo: {
-                            name: slot.cargo?.name,
-                            category: slot.cargo?.category
+                            name: slot.cargo?.name || null,
+                            category: slot.cargo?.category || null
                         },
                         isSlotAvailable: slotSuccessful,
                         availability: {

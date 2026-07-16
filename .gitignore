@@ -5,3 +5,7 @@ node_modules/*
 .kilocode/*
 AGENTS.md
 module.zip
+.agents/
+foundry-docs/
+questions-books/
+questions.txt*
