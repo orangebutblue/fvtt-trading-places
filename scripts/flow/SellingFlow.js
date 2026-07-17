@@ -111,8 +111,8 @@ export class SellingFlow {
                     const basePrice = this._calculateOfferPrice(selectedCargo, this.app.selectedSettlement, this.app.currentSeason);
                     const offerPricePerEP = basePrice;
 
-                    // Step 5: Generate maximum EP buyer will purchase (0 to available quantity)
-                    const maxEP = Math.floor(Math.random() * (selectedCargo.quantity + 1)); // 0 to quantity inclusive
+                    // Step 5: Generate maximum EP buyer will purchase (1 to available quantity)
+                    const maxEP = Math.floor(Math.random() * selectedCargo.quantity) + 1; // 1 to quantity inclusive
 
                     // Step 6: Assign skill rating (same as buying algorithm)
                     const skillRating = await this._generateSkillRating();
@@ -575,11 +575,35 @@ export class SellingFlow {
             
             // Update app's transaction history to keep UI in sync
             this.app.transactionHistory = transactionHistory;
+            this.dataManager.history = transactionHistory;
+
+            // Remove cargo from actor inventory and add currency at the system/actor level
+            const controlledTokens = canvas.tokens?.controlled || [];
+            const actor = controlledTokens[0]?.actor || game.user?.character;
+            if (actor && this.app.systemAdapter) {
+                // Find matching item in actor's inventory
+                const matchingItems = this.app.systemAdapter.findCargoInInventory(actor, offer.cargo.cargo, {
+                    quality: offer.cargo.quality
+                });
+                
+                if (matchingItems.length > 0) {
+                    const itemToRemove = matchingItems[0];
+                    await this.app.systemAdapter.removeCargoFromInventory(actor, itemToRemove.id, quantity);
+                }
+
+                // Add currency to actor (expects GC, finalPrice is BP)
+                const schema = this.app.systemAdapter.getCurrencySchema();
+                const primaryDenom = schema.denominations.find(d => d.abbreviation === 'GC');
+                const primaryDenomValue = primaryDenom?.value || 240;
+                const priceInPrimary = finalPrice / primaryDenomValue;
+                
+                await this.app.systemAdapter.addCurrency(actor, priceInPrimary, `Sold ${quantity} EP of ${offer.cargo.cargo}`);
+            }
 
             // Update cargo in settings
             const allCargoData = await game.settings.get(this.MODULE_ID, "currentCargo") || {};
             const currentCargo = allCargoData[datasetId] || [];
-            const cargoIndex = currentCargo.findIndex(c => c.cargo === offer.cargo.cargo);
+            const cargoIndex = currentCargo.findIndex(c => c.id === offer.cargo.id);
             if (cargoIndex !== -1) {
                 if (currentCargo[cargoIndex].quantity <= quantity) {
                     currentCargo.splice(cargoIndex, 1);
@@ -588,8 +612,14 @@ export class SellingFlow {
                 }
                 allCargoData[datasetId] = currentCargo;
                 await game.settings.set(this.MODULE_ID, "currentCargo", allCargoData);
+                
+                // Keep dataManager and app state in sync
+                this.dataManager.cargo = currentCargo;
                 this.app.currentCargo = currentCargo;
             }
+
+            // Save dataset changes to ensure persistence across tab shifts and reloads
+            await this.dataManager.saveCurrentDataset();
 
             // Show success message
             ui.notifications.success(`Sold ${quantity} EP of ${offer.cargo.cargo} for ${this._formatCurrencyFromDenomination(finalPrice)}`);

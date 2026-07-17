@@ -978,6 +978,105 @@ class SystemAdapter {
     }
 
     /**
+     * Validate a purchase transaction for the active actor
+     * @param {Object} settlement - Settlement object
+     * @param {Object} cargo - Cargo data
+     * @param {number} quantity - Quantity to purchase
+     * @param {number} totalCost - Total cost in canonical units (BP)
+     * @returns {Promise<Object>} - Validation result
+     */
+    async validatePurchase(settlement, cargo, quantity, totalCost) {
+        if (!this.isFoundryEnvironment) {
+            return { valid: true };
+        }
+        
+        // Find active actor
+        const controlledTokens = canvas.tokens?.controlled || [];
+        const actor = controlledTokens[0]?.actor || game.user?.character;
+        if (!actor) {
+            return { valid: false, error: 'No active character or controlled token found to perform the trade' };
+        }
+
+        const result = this.validateTransaction(actor, 'purchase', {
+            totalPrice: totalCost,
+            cargoName: cargo.name || cargo.cargo || '',
+            quantity: quantity
+        });
+
+        return {
+            valid: result.valid,
+            error: result.errors.join(', ')
+        };
+    }
+
+    /**
+     * Perform a purchase transaction (deduct currency and add cargo to inventory)
+     * @param {Object} settlement - Settlement object
+     * @param {Object} cargo - Cargo data
+     * @param {number} quantity - Quantity to purchase
+     * @param {number} totalCost - Total cost in canonical units (BP)
+     * @returns {Promise<Object>} - Purchase result
+     */
+    async performPurchase(settlement, cargo, quantity, totalCost) {
+        if (!this.isFoundryEnvironment) {
+            return { success: true };
+        }
+        
+        // Find active actor
+        const controlledTokens = canvas.tokens?.controlled || [];
+        const actor = controlledTokens[0]?.actor || game.user?.character;
+        if (!actor) {
+            return { success: false, error: 'No active character or controlled token found to perform the trade' };
+        }
+
+        // Deduct currency (expects amount in primary currency (GC))
+        const schema = this.getCurrencySchema();
+        const primaryDenom = schema.denominations.find(d => d.abbreviation === 'GC');
+        const primaryDenomValue = primaryDenom?.value || 240;
+        const costInPrimary = totalCost / primaryDenomValue;
+
+        const currencyResult = await this.deductCurrency(
+            actor, 
+            costInPrimary, 
+            `Purchased ${quantity} EP of ${cargo.name || cargo.cargo}`
+        );
+
+        if (!currencyResult.success) {
+            return { success: false, error: currencyResult.error };
+        }
+
+        // Add cargo to inventory
+        const inventoryResult = await this.addCargoToInventory(
+            actor,
+            cargo.name || cargo.cargo,
+            quantity,
+            cargo,
+            {
+                totalPrice: totalCost,
+                pricePerUnit: totalCost / quantity,
+                quality: cargo.actualTier || cargo.quality?.tier || cargo.quality || 'average',
+                season: this.config.season,
+                settlement: settlement?.name || 'Unknown'
+            }
+        );
+
+        if (!inventoryResult.success) {
+            // Rollback currency deduction
+            await this.addCurrency(
+                actor,
+                costInPrimary,
+                `Rollback: Purchase failed for ${cargo.name || cargo.cargo}`
+            );
+            return { success: false, error: inventoryResult.error };
+        }
+
+        return {
+            success: true,
+            itemId: inventoryResult.itemId
+        };
+    }
+
+    /**
      * Validate user permissions for trading operations
      * @param {Object} user - FoundryVTT User object
      * @param {string} operation - Operation to check ('modify-settings', 'execute-trade', etc.)
