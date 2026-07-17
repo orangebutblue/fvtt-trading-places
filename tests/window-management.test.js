@@ -197,7 +197,7 @@ describe('Window Management', () => {
     });
 
     describe('Window State Persistence', () => {
-        test('should load saved window state on initialization', async () => {
+        test('should load saved window state on initialization', () => {
             const savedState = {
                 width: 1400,
                 height: 900,
@@ -206,16 +206,16 @@ describe('Window Management', () => {
                 timestamp: Date.now()
             };
 
-            mockSettings.get.mockResolvedValue(savedState);
+            mockSettings.get.mockReturnValue(savedState);
 
-            await application._loadWindowState();
+            application._loadWindowState();
 
             expect(mockSettings.get).toHaveBeenCalledWith("fvtt-trading-places", "windowState");
             expect(application.options.position.width).toBe(1400);
             expect(application.options.position.height).toBe(900);
         });
 
-        test('should enforce landscape orientation when loading saved state', async () => {
+        test('should enforce landscape orientation when loading saved state', () => {
             const savedState = {
                 width: 600,  // Portrait orientation
                 height: 800,
@@ -223,16 +223,16 @@ describe('Window Management', () => {
                 top: 150
             };
 
-            mockSettings.get.mockResolvedValue(savedState);
+            mockSettings.get.mockReturnValue(savedState);
 
-            await application._loadWindowState();
+            application._loadWindowState();
 
             const { width, height } = application.options.position;
             expect(width).toBeGreaterThan(height);
             expect(width / height).toBeGreaterThanOrEqual(1.2);
         });
 
-        test('should ensure window stays on screen when loading saved position', async () => {
+        test('should ensure window stays on screen when loading saved position', () => {
             const savedState = {
                 width: 1200,
                 height: 800,
@@ -240,9 +240,9 @@ describe('Window Management', () => {
                 top: -100     // Off screen
             };
 
-            mockSettings.get.mockResolvedValue(savedState);
+            mockSettings.get.mockReturnValue(savedState);
 
-            await application._loadWindowState();
+            application._loadWindowState();
 
             const { left, top } = application.options.position;
             expect(left).toBeGreaterThanOrEqual(0);
@@ -386,10 +386,10 @@ describe('Window Management', () => {
             );
         });
 
-        test('should log window state loading', async () => {
-            mockSettings.get.mockResolvedValue({});
+        test('should log window state loading', () => {
+            mockSettings.get.mockReturnValue({});
 
-            await application._loadWindowState();
+            application._loadWindowState();
 
             expect(global.wfrpLogger.logDebug).toHaveBeenCalledWith(
                 'Window Management', 
@@ -430,10 +430,12 @@ describe('Window Management', () => {
             );
         });
 
-        test('should handle settings errors gracefully', async () => {
-            mockSettings.get.mockRejectedValue(new Error('Settings error'));
+        test('should handle settings errors gracefully', () => {
+            mockSettings.get.mockImplementation(() => {
+                throw new Error('Settings error');
+            });
 
-            await application._loadWindowState();
+            application._loadWindowState();
 
             expect(global.wfrpLogger.logError).toHaveBeenCalledWith(
                 'Window Management', 

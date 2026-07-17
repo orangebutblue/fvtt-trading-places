@@ -26,9 +26,9 @@ const WindowManagementMixin = {
      * Load saved window position and size from settings
      * @private
      */
-    async _loadWindowState() {
+    _loadWindowState() {
         try {
-            const savedState = await game.settings.get(MODULE_ID, "windowState");
+            const savedState = game.settings.get(MODULE_ID, "windowState");
 
             if (savedState && typeof savedState === 'object') {
                 this._logDebug('Window Management', 'Loading saved window state', savedState);
