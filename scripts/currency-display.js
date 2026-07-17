@@ -47,7 +47,14 @@ function convertDenominationToCanonical(value, context, options = {}) {
         return null;
     }
 
-    // Prices are already in canonical unit (BP), no conversion needed
+    if (CurrencyUtils && context && context.denominationKey) {
+        try {
+            return CurrencyUtils.convertToCanonical({ [context.denominationKey]: value }, context.config, options);
+        } catch (error) {
+            console.error('CurrencyDisplay: Failed to convert denomination to canonical', { value, error });
+        }
+    }
+
     return value;
 }
 
@@ -81,12 +88,12 @@ function formatDenominationValue(value, context, options = {}) {
         throw new Error('CURRENCY CONTEXT IS NULL! Cannot format denomination value: ' + value);
     }
 
-    // Value is already in BP (canonical), just format it
-    return formatCanonicalValue(value, context, options);
+    const canonical = convertDenominationToCanonical(value, context, options);
+    if (canonical !== null) {
+        return formatCanonicalValue(canonical, context, options);
+    }
 
-    const label = options.label || getCurrencyLabel(context);
-    const decimals = options.decimals ?? 2;
-    return `${value.toFixed(decimals)} ${label}`.trim();
+    return formatCanonicalValue(value, context, options);
 }
 
 function enrichPricing(pricing, quantity, context) {

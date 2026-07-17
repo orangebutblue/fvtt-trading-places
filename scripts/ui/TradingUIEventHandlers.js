@@ -1455,6 +1455,7 @@ export class TradingUIEventHandlers {
             existingCargo.pricePerEP = totalCost / totalQuantity;
             existingCargo.date = transaction.date; // Update to latest purchase date
             existingCargo.merchant = transaction.merchant || existingCargo.merchant || 'Unknown Merchant'; // Keep latest merchant
+            existingCargo.actualTier = transaction.actualTier || existingCargo.actualTier;
             // Quality information should already match since we checked it above
             
             // Add formatted currency fields
@@ -1480,6 +1481,7 @@ export class TradingUIEventHandlers {
                 merchant: transaction.merchant || 'Unknown Merchant',
                 // Include quality information - ALL fields from transaction
                 quality: transaction.quality,
+                actualTier: transaction.actualTier,
                 merchantQuality: transaction.merchantQuality,
                 dishonest: transaction.dishonest,
                 system: transaction.system,

@@ -322,7 +322,7 @@ export class SellingFlow {
             <div class="cargo-header">
                 <div class="trading-places-cargo-name">${offer.cargo.cargo}</div>
                 <div class="cargo-category">${offer.cargo.category || 'Goods'}</div>
-                ${offer.cargo.quality ? (offer.cargo.dishonest ? 
+                ${offer.cargo.quality ? (offer.cargo.dishonest && offer.cargo.actualTier ? 
                     `<div class="cargo-quality">${offer.cargo.quality} (${offer.cargo.actualTier})</div>` : 
                     `<div class="cargo-quality">${offer.cargo.quality}</div>`) : ''}
             </div>
