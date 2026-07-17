@@ -245,6 +245,17 @@ class TradingEngine {
         return this.currentSeason || this.dataManager?.currentSeason || null;
     }
 
+    async loadSeasonFromSettings() {
+        if (typeof game !== 'undefined' && game.settings) {
+            try {
+                this.currentSeason = await game.settings.get(MODULE_ID, 'currentSeason');
+            } catch (error) {
+                // Ignore settings access error in uninitialized environments
+            }
+        }
+        return this.currentSeason;
+    }
+
     /**
      * Validate that season is set before trading operations
      * @throws {Error} - If season is not set

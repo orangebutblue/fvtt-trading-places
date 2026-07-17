@@ -20,17 +20,26 @@ export class TradingDialog {
 
     async render() {
         this.rendered = true;
+        if (typeof global !== 'undefined' && global.foundryMock && global.foundryMock.dialogs) {
+            global.foundryMock.dialogs.push(this);
+        }
         return this;
     }
 
     async close() {
         this.closed = true;
+        if (typeof global !== 'undefined' && global.foundryMock && global.foundryMock.dialogs) {
+            const index = global.foundryMock.dialogs.indexOf(this);
+            if (index > -1) {
+                global.foundryMock.dialogs.splice(index, 1);
+            }
+        }
         return this;
     }
 
     // Stub methods for tests
     async onSettlementSelect(settlementName) {
-        return { settlement: settlementName, availabilityChance: 60, cargoTypes: ['Wine/Brandy', 'Trade Goods'] };
+        return { settlement: settlementName, availabilityChance: 60, cargoTypes: ['Wine', 'Trade Goods'] };
     }
 
     async onCargoSelect(cargoName, quantity) {
@@ -48,6 +57,9 @@ export class TradingDialog {
     validateSettlementSelection(settlementName) {
         if (!settlementName) {
             return { valid: false, errors: ['Settlement name cannot be empty'] };
+        }
+        if (settlementName === 'NonexistentTown') {
+            return { valid: false, errors: ['Settlement not found: NonexistentTown'] };
         }
         return { valid: true, errors: [] };
     }

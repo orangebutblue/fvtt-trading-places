@@ -641,6 +641,20 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Ruler:</label>
                     <input type="text" id="settlement-ruler" value="Local Authority" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;">
                 </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Notes:</label>
+                    <textarea id="settlement-notes" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; height: 80px;"></textarea>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Produces:</label>
+                    <input type="text" id="settlement-produces" value="" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;" placeholder="e.g. Wine, Brandy, Pottery">
+                    <small style="color: #666; display: block; margin-top: 2px;">Separate multiple cargo types with commas.</small>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Demands:</label>
+                    <input type="text" id="settlement-demands" value="" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;" placeholder="e.g. Grain, Timber">
+                    <small style="color: #666; display: block; margin-top: 2px;">Separate multiple cargo types with commas.</small>
+                </div>
                 <div style="margin-bottom: 10px; position: relative;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Production Categories (Flags):</label>
                     <div id="flags-container" class="trading-places-flags-container"></div>
@@ -653,6 +667,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
 
         const dialog = new foundry.applications.api.DialogV2({
             window: { title: "Add New Settlement" },
+            position: { width: 500, height: 600 },
             content: content,
             buttons: [{
                 action: "save",
@@ -667,10 +682,10 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         size: parseInt(element.querySelector('#settlement-size').value),
                         population: parseInt(element.querySelector('#settlement-population').value),
                         ruler: element.querySelector('#settlement-ruler').value,
-                        notes: '',
+                        notes: element.querySelector('#settlement-notes').value,
                         garrison: {},
-                        produces: [],
-                        demands: [],
+                        produces: element.querySelector('#settlement-produces').value.split(',').map(s => s.trim()).filter(s => s),
+                        demands: element.querySelector('#settlement-demands').value.split(',').map(s => s.trim()).filter(s => s),
                         flags: element.querySelector('#settlement-flags').value.split(',').map(s => s.trim()).filter(s => s)
                     };
                     
@@ -780,6 +795,16 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Notes:</label>
                     <textarea id="settlement-notes" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; height: 80px;">${settlement.notes || ''}</textarea>
                 </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Produces:</label>
+                    <input type="text" id="settlement-produces" value="${(settlement.produces || []).join(', ')}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;" placeholder="e.g. Wine, Brandy, Pottery">
+                    <small style="color: #666; display: block; margin-top: 2px;">Separate multiple cargo types with commas.</small>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Demands:</label>
+                    <input type="text" id="settlement-demands" value="${(settlement.demands || []).join(', ')}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px;" placeholder="e.g. Grain, Timber">
+                    <small style="color: #666; display: block; margin-top: 2px;">Separate multiple cargo types with commas.</small>
+                </div>
                 <div style="margin-bottom: 10px; position: relative;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Production Categories (Flags):</label>
                     <div id="flags-container" class="trading-places-flags-container" data-initial-flags="${(settlement.flags || []).join(',')}"></div>
@@ -792,6 +817,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
 
         const editDialog = new foundry.applications.api.DialogV2({
             window: { title: `Edit Settlement: ${name}` },
+            position: { width: 500, height: 600 },
             content: content,
             buttons: [{
                 action: "save",
@@ -809,6 +835,7 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
                         ruler: element.querySelector('#settlement-ruler').value,
                         notes: element.querySelector('#settlement-notes').value,
                         produces: element.querySelector('#settlement-produces').value.split(',').map(s => s.trim()).filter(s => s),
+                        demands: element.querySelector('#settlement-demands').value.split(',').map(s => s.trim()).filter(s => s),
                         flags: element.querySelector('#settlement-flags').value.split(',').map(s => s.trim()).filter(s => s)
                     };
                     
@@ -1030,13 +1057,6 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
         // Track current flags
         let currentFlags = [];
         
-        // Load initial flags if editing
-        const initialFlags = container.dataset.initialFlags;
-        if (initialFlags) {
-            currentFlags = initialFlags.split(',').filter(f => f.trim());
-            currentFlags.forEach(flag => addFlagTag(flag));
-        }
-
         // Update hidden input
         const updateHiddenInput = () => {
             hiddenInput.value = currentFlags.join(', ');
@@ -1070,6 +1090,13 @@ class DataManagementV2 extends foundry.applications.api.HandlebarsApplicationMix
             });
             updateHiddenInput();
         };
+
+        // Load initial flags if editing
+        const initialFlags = container.dataset.initialFlags;
+        if (initialFlags) {
+            const parsedFlags = initialFlags.split(',').filter(f => f.trim());
+            parsedFlags.forEach(flag => addFlagTag(flag));
+        }
 
         // Handle remove button clicks
         container.addEventListener('click', (e) => {

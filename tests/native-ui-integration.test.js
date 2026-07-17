@@ -171,7 +171,7 @@ describe('WFRPNativeUIIntegration', () => {
             const season = global.game.tradingPlaces.getCurrentSeason();
 
             expect(season).toBe('summer');
-            expect(global.game.settings.get).toHaveBeenCalledWith('trading-places', 'currentSeason');
+            expect(global.game.settings.get).toHaveBeenCalledWith('fvtt-trading-places', 'currentSeason');
         });
 
         test('setSeason should validate and set season', async () => {
@@ -182,7 +182,7 @@ describe('WFRPNativeUIIntegration', () => {
             nativeUI.initializeGlobalAPI();
             await global.game.tradingPlaces.setSeason('winter');
 
-            expect(global.game.settings.set).toHaveBeenCalledWith('trading-places', 'currentSeason', 'winter');
+            expect(global.game.settings.set).toHaveBeenCalledWith('fvtt-trading-places', 'currentSeason', 'winter');
             expect(global.ui.notifications.info).toHaveBeenCalledWith('Trading season changed to winter');
         });
 

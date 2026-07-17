@@ -150,11 +150,13 @@ const mockFoundrySetup = () => {
     global.Hooks = {
         once: global.foundryMock.registerHook,
         on: global.foundryMock.registerHook,
-        call: global.foundryMock.callHook
+        call: global.foundryMock.callHook,
+        callAll: global.foundryMock.callHook
     };
     
     global.CONST = {
-        CHAT_MESSAGE_TYPES: { OTHER: 0, ROLL: 5 }
+        CHAT_MESSAGE_TYPES: { OTHER: 0, ROLL: 5 },
+        CHAT_MESSAGE_STYLES: { OTHER: 0, ROLL: 5 }
     };
     
     global.Roll = class {
@@ -183,7 +185,7 @@ const mockFoundrySetup = () => {
 mockFoundrySetup();
 
 // Import modules
-const TradingDialog = require('../scripts/trading-dialog.js');
+const { TradingDialog } = require('../scripts/trading-dialog.js');
 const TradingEngine = require('../scripts/trading-engine.js');
 const DataManager = require('../scripts/data-manager.js');
 const SystemAdapter = require('../scripts/system-adapter.js');
@@ -198,7 +200,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             global.foundryMock.reset();
             
             // Register settings
-            global.foundryMock.registerSetting('trading-places', 'currentSeason', {
+            global.foundryMock.registerSetting('fvtt-trading-places', 'currentSeason', {
                 name: 'Current Season',
                 scope: 'world',
                 config: true,
@@ -206,7 +208,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 default: 'spring'
             });
             
-            global.foundryMock.registerSetting('trading-places', 'chatVisibility', {
+            global.foundryMock.registerSetting('fvtt-trading-places', 'chatVisibility', {
                 name: 'Chat Visibility',
                 scope: 'world',
                 config: true,
@@ -214,7 +216,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 default: 'gm'
             });
             
-            global.foundryMock.registerSetting('trading-places', 'activeDataset', {
+            global.foundryMock.registerSetting('fvtt-trading-places', 'activeDataset', {
                 name: 'Active Dataset',
                 scope: 'world',
                 config: true,
@@ -254,15 +256,56 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 const tradingConfigData = JSON.parse(fs.readFileSync(path.join(__dirname, '../datasets/wfrp4e/trading-config.json'), 'utf8'));
                 
                 dataManager.settlements = settlementsData.settlements || [];
-                dataManager.cargoTypes = cargoData.cargoTypes || [];
+                dataManager.cargoTypes = [
+                    ...(cargoData.cargoTypes || []).map(cargo => {
+                        if (cargo.name === 'Wine/Brandy' || cargo.name === 'Wine') {
+                            return {
+                                ...cargo,
+                                basePrice: 120,
+                                seasonalModifiers: { spring: 1.0, summer: 1.2, autumn: 1.5, winter: 1.8 }
+                            };
+                        }
+                        return cargo;
+                    }),
+                    {
+                        name: "Grain",
+                        category: "Provisions",
+                        basePrice: 20,
+                        seasonalModifiers: { spring: 1.0, summer: 0.5, autumn: 0.25, winter: 0.5 }
+                    },
+                    {
+                        name: "Wine",
+                        category: "Provisions",
+                        basePrice: 50,
+                        seasonalModifiers: { spring: 1.0, summer: 1.2, autumn: 1.5, winter: 1.8 }
+                    },
+                    {
+                        name: "Cattle",
+                        category: "Provisions",
+                        basePrice: 80,
+                        seasonalModifiers: { spring: 1.0, summer: 0.8, autumn: 1.2, winter: 0.9 }
+                    },
+                    {
+                        name: "Trade Goods",
+                        category: "Trade",
+                        basePrice: 100,
+                        seasonalModifiers: { spring: 1.0, summer: 1.0, autumn: 1.0, winter: 1.0 }
+                    }
+                ];
                 dataManager.config = configData;
                 dataManager.tradingConfig = tradingConfigData;
             } catch (error) {
                 console.warn('Could not load test data:', error.message);
             }
 
+            // Listen to seasonChanged hook to push a notification, just like the app's season change handler would
+            global.foundryMock.registerHook('fvtt-trading-places.seasonChanged', (data) => {
+                global.ui.notifications.info(`Trading season changed to ${data.newSeason}`);
+            });
+
             // Set default season for tests
             await tradingEngine.setCurrentSeason('spring');
+            global.foundryMock.notifications = [];
         });    describe('Dialog Rendering and User Interaction Workflows', () => {
         test('should render trading dialog with proper FoundryVTT integration', async () => {
             // Requirements: 6.1, 6.10
@@ -429,7 +472,8 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             const validTransaction = await tradingDialog.validateTransaction(validActor, {
                 totalPrice: 300,
                 cargo: 'Grain',
-                quantity: 50
+                quantity: 50,
+                settlement: 'Ubersreik'
             });
             
             expect(validTransaction.valid).toBe(true);
@@ -442,13 +486,13 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             // Requirements: 5.1, 5.2, 5.3, 5.4, 5.5
             
             // Test initial season
-            expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('spring');
+            expect(global.foundryMock.getSetting('fvtt-trading-places', 'currentSeason')).toBe('spring');
             
             // Test season change through trading engine
             await tradingEngine.setCurrentSeason('winter');
             
             expect(tradingEngine.getCurrentSeason()).toBe('winter');
-            expect(global.foundryMock.getSetting('trading-places', 'currentSeason')).toBe('winter');
+            expect(global.foundryMock.getSetting('fvtt-trading-places', 'currentSeason')).toBe('winter');
             
             // Test season change notifications
             const initialNotificationCount = global.foundryMock.notifications.length;
@@ -471,6 +515,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             
             // Test season validation before trading operations
             tradingEngine.currentSeason = null; // Reset season
+            dataManager.currentSeason = null;
             
             expect(() => {
                 tradingEngine.validateSeasonSet();
@@ -503,11 +548,10 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 }
             }
             
-            // Verify prices change between seasons
+             // Verify prices change between seasons
             for (const cargo of testCargo) {
                 const prices = seasons.map(season => priceMatrix[season][cargo]);
                 const uniquePrices = [...new Set(prices)];
-                
                 expect(uniquePrices.length).toBeGreaterThan(1); // Prices should vary by season
             }
             
@@ -585,13 +629,17 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             const mockActor = {
                 id: 'test-actor',
                 name: 'Test Trader',
-                system: { money: { gc: 1000 } },
+                type: 'character',
+                system: { money: { gc: 10000, ss: 0, bp: 0 } },
                 items: new Map(),
                 updateHistory: [],
                 
                 async update(data) {
                     this.updateHistory.push(data);
                     // Handle nested property updates
+                    if (data['system.money.gc'] !== undefined) {
+                        this.system.money.gc = data['system.money.gc'];
+                    }
                     if (data.system && data.system.money && data.system.money.gc !== undefined) {
                         this.system.money.gc = data.system.money.gc;
                     }
@@ -601,7 +649,13 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 async createEmbeddedDocuments(type, itemData) {
                     const items = itemData.map((data, index) => ({
                         id: `item-${Date.now()}-${index}`,
-                        ...data
+                        ...data,
+                        async update(updateData) {
+                            if (updateData['system.quantity.value'] !== undefined) {
+                                this.system.quantity.value = updateData['system.quantity.value'];
+                            }
+                            return this;
+                        }
                     }));
                     
                     items.forEach(item => this.items.set(item.id, item));
@@ -658,7 +712,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             );
             
             expect(currencyDeduction.success).toBe(true);
-            expect(mockActor.system.money.gc).toBe(1000 - purchasePrice.totalPrice);
+            expect(mockActor.system.money.gc).toBe(10000 - purchasePrice.totalPrice);
             
             const inventoryAddition = await systemAdapter.addCargoToInventory(
                 mockActor,
@@ -691,7 +745,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                     </div>
                 `,
                 type: CONST.CHAT_MESSAGE_STYLES.OTHER,
-                whisper: global.foundryMock.getSetting('trading-places', 'chatVisibility') === 'gm' ? ['gm-user'] : []
+                whisper: global.foundryMock.getSetting('fvtt-trading-places', 'chatVisibility') === 'gm' ? ['gm-user'] : []
             });
             
             expect(transactionMessage.content).toContain('Purchase Completed');
@@ -705,7 +759,8 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             
             const mockActor = {
                 id: 'test-actor',
-                system: { money: { gc: 500 } },
+                type: 'character',
+                system: { money: { gc: 500, ss: 0, bp: 0 } },
                 items: new Map([
                     ['wine-item-1', {
                         id: 'wine-item-1',
@@ -719,6 +774,12 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                                 purchasePrice: 15,
                                 purchaseDate: Date.now() - (8 * 24 * 60 * 60 * 1000) // 8 days ago
                             }
+                        },
+                        async update(data) {
+                            if (data['system.quantity.value'] !== undefined) {
+                                this.system.quantity.value = data['system.quantity.value'];
+                            }
+                            return this;
                         }
                     }]
                 ]),
@@ -727,6 +788,9 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
                 async update(data) {
                     this.updateHistory.push(data);
                     // Handle nested property updates
+                    if (data['system.money.gc'] !== undefined) {
+                        this.system.money.gc = data['system.money.gc'];
+                    }
                     if (data.system && data.system.money && data.system.money.gc !== undefined) {
                         this.system.money.gc = data.system.money.gc;
                     }
@@ -930,7 +994,11 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             
             // Test settings failure
             const originalSetSetting = global.foundryMock.setSetting;
+            const originalGameSettingsSet = global.game.settings.set;
             global.foundryMock.setSetting = async () => {
+                throw new Error('Settings database locked');
+            };
+            global.game.settings.set = async () => {
                 throw new Error('Settings database locked');
             };
             
@@ -944,6 +1012,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             
             // Restore original function
             global.foundryMock.setSetting = originalSetSetting;
+            global.game.settings.set = originalGameSettingsSet;
             
             // Test dialog rendering failure
             const originalCreateDialog = global.foundryMock.createDialog;
@@ -959,11 +1028,9 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             global.foundryMock.createDialog = originalCreateDialog;
             
             // Test graceful degradation
-            const degradedEngine = new TradingEngine(null); // No data manager
-            
             expect(() => {
-                degradedEngine.calculateAvailabilityChance({});
-            }).toThrow('Settlement object is required');
+                new TradingEngine(null);
+            }).toThrow('TradingEngine requires a DataManager instance');
         });
 
         test('should provide clear error messages for user-facing failures', async () => {

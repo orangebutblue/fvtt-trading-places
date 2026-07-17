@@ -193,7 +193,7 @@ const WindowManagementMixin = {
         const minLandscapeRatio = 1.2;
         if (width / height < minLandscapeRatio) {
             // Adjust width to maintain landscape ratio
-            width = Math.floor(height * minLandscapeRatio);
+            width = Math.ceil(height * minLandscapeRatio);
 
             // If adjusted width exceeds screen, adjust height instead
             if (width > maxWidth) {

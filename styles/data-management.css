@@ -1458,3 +1458,9 @@
     background: #2c3e50 !important;
     color: #cccccc !important;
 }
+
+/* Ensure Dialog V2 contents scroll when constrained */
+.dialog-content.standard-form {
+    max-height: 480px !important;
+    overflow-y: auto !important;
+}

@@ -109,6 +109,28 @@ class MockDataManager {
 
         return basePrice;
     }
+
+    getTradingConfig() {
+        return {
+            skillDistribution: {
+                type: "piecewise",
+                baseSkill: 25,
+                wealthModifier: 8,
+                variance: 20,
+                percentileTable: {
+                    "10": -15,
+                    "25": -8,
+                    "50": 0,
+                    "75": 8,
+                    "90": 15,
+                    "95": 25,
+                    "99": 35
+                },
+                minSkill: 5,
+                maxSkill: 95
+            }
+        };
+    }
 }
 
 // Import TradingEngine (in Node.js environment)
@@ -1015,12 +1037,12 @@ async function runSaleRestrictionsTests() {
 
     // Invalid sale (same settlement)
     const invalidSale = engine.checkSaleEligibility(cargo, { name: 'Averheim' }, purchaseData);
-    console.log(`Invalid sale (same settlement): ${validSale.eligible}`);
+    console.log(`Invalid sale (same settlement): ${invalidSale.eligible}`);
     console.assert(invalidSale.eligible === false, 'Should not allow sale in same settlement');
 
     // Time-based sale (same settlement after waiting)
-    const timePurchaseData = { settlementName: 'Averheim', purchaseTime: 0 };
-    const timeBasedSale = engine.checkSaleEligibility(cargo, { name: 'Averheim' }, timePurchaseData, 8);
+    const timePurchaseData = { settlementName: 'Averheim', purchaseTime: 1000 };
+    const timeBasedSale = engine.checkSaleEligibility(cargo, { name: 'Averheim' }, timePurchaseData, 1000 + 8 * 24 * 60 * 60 * 1000);
     console.log(`Time-based sale (after 8 days): ${timeBasedSale.eligible}`);
     console.assert(timeBasedSale.eligible === true, 'Should allow sale after 1 week wait');
 
@@ -1031,17 +1053,19 @@ async function runSaleRestrictionsTests() {
 
 // Run tests if in Node.js environment
 if (typeof require !== 'undefined') {
-    (async () => {
-        runCargoAvailabilityTests();
-        runPurchasePriceTests();
-        runSaleMechanicsTests();
-        runSpecialSaleMethodsTests();
-        runErrorConditionTests();
-        await runComprehensiveAlgorithmTests();
-        runCargoTypeSeasonalTests();
-        await runHagglingMechanicsTests();
-        await runSaleRestrictionsTests();
-    })();
+    describe('TradingEngine Legacy Tests', () => {
+        test('should run all trading engine verification suites', async () => {
+            runCargoAvailabilityTests();
+            runPurchasePriceTests();
+            runSaleMechanicsTests();
+            runSpecialSaleMethodsTests();
+            runErrorConditionTests();
+            await runComprehensiveAlgorithmTests();
+            runCargoTypeSeasonalTests();
+            await runHagglingMechanicsTests();
+            await runSaleRestrictionsTests();
+        });
+    });
 }
 
 // Export for browser testing

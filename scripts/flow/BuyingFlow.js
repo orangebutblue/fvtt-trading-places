@@ -307,7 +307,7 @@ export class BuyingFlow {
                             });
                             
                             if (matchingSlot) {
-                                const cargo = successfulCargo.find(c => c.name === matchingSlot.cargo.name);
+                                const cargo = successfulCargo.find(c => c.name === matchingSlot.cargo?.name);
                                 if (cargo) {
                                     const actualSlotNum = outcome.slotNumber; // Use the slot number from the roll outcome
                                     
@@ -550,7 +550,7 @@ export class BuyingFlow {
                 `;
 
                 successfulCargo.forEach((cargo, index) => {
-                    const slot = pipelineResult.slots.find(s => s.cargo.name === cargo.name);
+                    const slot = pipelineResult.slots.find(s => s.cargo?.name === cargo.name);
                     if (slot) {
                         summaryContent += `
                             <div class="cargo-result">

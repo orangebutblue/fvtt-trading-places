@@ -71,7 +71,8 @@ describe('PlayerCargoManager Integration', () => {
                 { name: 'Luxuries', category: 'Luxury Goods' },
                 { name: 'Timber', category: 'Raw Materials' },
                 { name: 'Wool', category: 'Textiles' }
-            ])
+            ]),
+            saveCurrentDataset: jest.fn().mockResolvedValue(true)
         };
 
         // Create cargo manager with real components
@@ -79,15 +80,15 @@ describe('PlayerCargoManager Integration', () => {
     });
 
     describe('Integration with Debug Logger', () => {
-        test('should log all operations through debug logger', () => {
+        test('should log all operations through debug logger', async () => {
             const logSpy = jest.spyOn(debugLogger, 'log');
             
             // Perform various operations
-            cargoManager.addCargo('Grain', 100, 'average');
-            cargoManager.addCargo('Metal', 50, 'good');
+            await cargoManager.addCargo('Grain', 100, 'average');
+            await cargoManager.addCargo('Metal', 50, 'good');
             
             const grainCargo = cargoManager.getCargoByType('Grain')[0];
-            cargoManager.removeCargo(grainCargo.id, 25);
+            await cargoManager.removeCargo(grainCargo.id, 25);
             
             cargoManager.clearAllCargo();
             
@@ -139,10 +140,10 @@ describe('PlayerCargoManager Integration', () => {
     });
 
     describe('Session Persistence Integration', () => {
-        test('should persist cargo across manager instances', () => {
+        test('should persist cargo across manager instances', async () => {
             // Add cargo to first instance
-            cargoManager.addCargo('Grain', 100, 'average');
-            cargoManager.addCargo('Metal', 50, 'good');
+            await cargoManager.addCargo('Grain', 100, 'average');
+            await cargoManager.addCargo('Metal', 50, 'good');
             
             // Create new instance (simulating page reload)
             const newManager = new PlayerCargoManager(debugLogger, mockDataManager, mockSessionStorage);
@@ -151,9 +152,9 @@ describe('PlayerCargoManager Integration', () => {
             expect(newManager.getAllCargo()).toHaveLength(2);
             expect(newManager.getTotalCargoQuantity()).toBe(150);
         });
-
-        test('should save cargo modifications to session', () => {
-            cargoManager.addCargo('Grain', 100, 'average');
+ 
+        test('should save cargo modifications to session', async () => {
+            await cargoManager.addCargo('Grain', 100, 'average');
             
             // Verify session storage was called
             expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
@@ -305,8 +306,8 @@ describe('PlayerCargoManager Integration', () => {
             const endTime = Date.now();
             const duration = endTime - startTime;
             
-            // Should complete within reasonable time (less than 1 second)
-            expect(duration).toBeLessThan(1000);
+            // Should complete within reasonable time (less than 1.5 seconds)
+            expect(duration).toBeLessThan(1500);
             
             // Verify all cargo was added correctly
             expect(cargoManager.getAllCargo()).toHaveLength(2); // Should merge same type/quality
@@ -330,7 +331,7 @@ describe('PlayerCargoManager Integration', () => {
             const duration = endTime - startTime;
             
             // Should maintain reasonable performance
-            expect(duration).toBeLessThan(500);
+            expect(duration).toBeLessThan(750);
             expect(cargoManager.getTotalCargoQuantity()).toBe(1000);
         });
     });

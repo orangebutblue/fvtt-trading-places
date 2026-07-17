@@ -783,7 +783,7 @@ class DataManager {
         let basePrice;
 
         // Calculate seasonal price from basePrice * seasonalModifiers
-        if (cargo.basePrice && cargo.seasonalModifiers && cargo.seasonalModifiers.hasOwnProperty(season)) {
+        if (cargo.basePrice !== undefined && cargo.seasonalModifiers && cargo.seasonalModifiers.hasOwnProperty(season)) {
             basePrice = cargo.basePrice * cargo.seasonalModifiers[season];
         } else if (cargo.basePrices && cargo.basePrices.hasOwnProperty(season)) {
             // Backwards compatibility: direct seasonal prices (deprecated)
@@ -2312,7 +2312,7 @@ class DataManager {
                 return true;
             }
             // Check for legacy format (basePrice + seasonalModifiers)
-            if (cargo.basePrice && cargo.seasonalModifiers && cargo.seasonalModifiers.hasOwnProperty(season)) {
+            if (cargo.basePrice !== undefined && cargo.seasonalModifiers && cargo.seasonalModifiers.hasOwnProperty(season)) {
                 return true;
             }
             return false;

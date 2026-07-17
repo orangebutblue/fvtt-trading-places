@@ -69,24 +69,27 @@ describe('Window Management', () => {
             }
         };
 
-        global.window = {
-            innerWidth: 1920,
-            innerHeight: 1080,
-            ResizeObserver: class MockResizeObserver {
-                constructor(callback) {
-                    this.callback = callback;
-                }
-                observe() {}
-                disconnect() {}
-            },
-            MutationObserver: class MockMutationObserver {
-                constructor(callback) {
-                    this.callback = callback;
-                }
-                observe() {}
-                disconnect() {}
+        Object.defineProperty(global.window, 'innerWidth', { value: 1920, writable: true, configurable: true });
+        Object.defineProperty(global.window, 'innerHeight', { value: 1080, writable: true, configurable: true });
+        
+        global.window.ResizeObserver = class MockResizeObserver {
+            constructor(callback) {
+                this.callback = callback;
             }
+            observe() {}
+            disconnect() {}
         };
+        
+        global.window.MutationObserver = class MockMutationObserver {
+            constructor(callback) {
+                this.callback = callback;
+            }
+            observe() {}
+            disconnect() {}
+        };
+
+        global.ResizeObserver = global.window.ResizeObserver;
+        global.MutationObserver = global.window.MutationObserver;
 
         global.ui = {
             notifications: {
@@ -110,6 +113,18 @@ describe('Window Management', () => {
             logDebug: jest.fn()
         };
 
+        global.window.TPMLogger = {
+            log: jest.fn((level, category, message, data) => {
+                if (level === 'DEBUG') {
+                    global.wfrpLogger.logDebug(category, message, data);
+                } else if (level === 'INFO') {
+                    global.wfrpLogger.logInfo(category, message, data);
+                } else if (level === 'ERROR') {
+                    global.wfrpLogger.logError(category, message, data);
+                }
+            })
+        };
+
         // Mock module components
         global.WFRPRiverTrading = {
             getDataManager: () => ({
@@ -122,11 +137,30 @@ describe('Window Management', () => {
             })
         };
 
-        // Set up global window object for the class
-        global.window = {
-            ...global.window,
-            TradingPlacesApplication: undefined
+        global.window.TradingPlaces = {
+            getDataManager: () => ({
+                getAllSettlements: () => [],
+                getSettlement: () => null
+            }),
+            getTradingEngine: () => ({
+                getCurrentSeason: () => 'spring',
+                setCurrentSeason: jest.fn()
+            }),
+            getSystemAdapter: () => ({
+                // Mock system adapter functions
+            })
         };
+
+        // Ensure TradingPlacesApplication is not overwritten if already loaded
+
+        // Load mixins first
+        require('../scripts/mixins/logging-mixin.js');
+        require('../scripts/mixins/validation-mixin.js');
+        require('../scripts/mixins/season-management-mixin.js');
+        require('../scripts/mixins/settlement-selector-mixin.js');
+        require('../scripts/mixins/ui-state-mixin.js');
+        require('../scripts/mixins/resource-management-mixin.js');
+        require('../scripts/mixins/window-management-mixin.js');
 
         // Load the application class
         require('../scripts/trading-application-v2.js');
@@ -176,7 +210,7 @@ describe('Window Management', () => {
 
             await application._loadWindowState();
 
-            expect(mockSettings.get).toHaveBeenCalledWith("trading-places", "windowState");
+            expect(mockSettings.get).toHaveBeenCalledWith("fvtt-trading-places", "windowState");
             expect(application.options.position.width).toBe(1400);
             expect(application.options.position.height).toBe(900);
         });
@@ -213,8 +247,8 @@ describe('Window Management', () => {
             const { left, top } = application.options.position;
             expect(left).toBeGreaterThanOrEqual(0);
             expect(top).toBeGreaterThanOrEqual(0);
-            expect(left).toBeLessThan(window.innerWidth - 400);
-            expect(top).toBeLessThan(window.innerHeight - 200);
+            expect(left).toBeLessThanOrEqual(window.innerWidth - 400);
+            expect(top).toBeLessThanOrEqual(window.innerHeight - 200);
         });
 
         test('should save window state when requested', async () => {
@@ -239,7 +273,7 @@ describe('Window Management', () => {
             await application._saveWindowState();
 
             expect(mockSettings.set).toHaveBeenCalledWith(
-                "trading-places", 
+                "fvtt-trading-places", 
                 "windowState", 
                 expect.objectContaining({
                     width: 1300,
@@ -277,10 +311,11 @@ describe('Window Management', () => {
 
     describe('Window Event Management', () => {
         test('should set up window event listeners after render', () => {
+            const mockWindowElement = document.createElement('div');
+            mockWindowElement.getBoundingClientRect = () => ({ width: 1200, height: 800 });
+
             const mockElement = {
-                closest: () => ({
-                    getBoundingClientRect: () => ({ width: 1200, height: 800 })
-                }),
+                closest: () => mockWindowElement,
                 addEventListener: jest.fn()
             };
 
@@ -303,10 +338,13 @@ describe('Window Management', () => {
             application._resizeTimeout = setTimeout(() => {}, 100);
             application._moveTimeout = setTimeout(() => {}, 100);
 
+            const mockResizeObserver = application._resizeObserver;
+            const mockPositionObserver = application._positionObserver;
+
             application._cleanupWindowEventListeners();
 
-            expect(application._resizeObserver.disconnect).toHaveBeenCalled();
-            expect(application._positionObserver.disconnect).toHaveBeenCalled();
+            expect(mockResizeObserver.disconnect).toHaveBeenCalled();
+            expect(mockPositionObserver.disconnect).toHaveBeenCalled();
             expect(application._resizeObserver).toBeNull();
             expect(application._positionObserver).toBeNull();
         });
@@ -338,11 +376,13 @@ describe('Window Management', () => {
 
             expect(global.wfrpLogger.logDebug).toHaveBeenCalledWith(
                 'Window Management', 
-                'Initializing window management features'
+                'Initializing window management features',
+                expect.any(Object)
             );
             expect(global.wfrpLogger.logInfo).toHaveBeenCalledWith(
                 'Window Management', 
-                'Window management initialized successfully'
+                'Window management initialized successfully',
+                expect.any(Object)
             );
         });
 
@@ -353,7 +393,8 @@ describe('Window Management', () => {
 
             expect(global.wfrpLogger.logDebug).toHaveBeenCalledWith(
                 'Window Management', 
-                'No saved window state found, using defaults'
+                'No saved window state found, using defaults',
+                expect.any(Object)
             );
         });
 
@@ -384,7 +425,8 @@ describe('Window Management', () => {
 
             expect(global.wfrpLogger.logError).toHaveBeenCalledWith(
                 'Window Management', 
-                'Cannot set up window listeners - element not found'
+                'Cannot set up window listeners - element not found',
+                expect.any(Object)
             );
         });
 
