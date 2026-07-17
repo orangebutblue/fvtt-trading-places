@@ -942,7 +942,16 @@ export default class TradingUIRenderer {
             const discountPercent = parseFloat(discountSlider.value) || 0;
             if (quantity > 0) {
                 try {
-                    await this._handlePurchase(cargo, quantity, discountPercent);
+                    if (this.app.eventHandlers && this.app.eventHandlers._onCargoPurchase) {
+                        const pricePerEP = this._getPricePerEP(cargo);
+                        const discountMultiplier = 1 + (discountPercent / 100);
+                        const adjustedPricePerEP = pricePerEP * discountMultiplier;
+                        const totalCost = quantity * adjustedPricePerEP;
+                        const roundedTotalCost = parseFloat(totalCost.toFixed(2));
+                        await this.app.eventHandlers._onCargoPurchase(cargo, quantity, roundedTotalCost, discountPercent);
+                    } else {
+                        await this._handlePurchase(cargo, quantity, discountPercent);
+                    }
                 } catch (error) {
                     console.error('Failed to complete purchase:', error);
                     if (ui?.notifications) {

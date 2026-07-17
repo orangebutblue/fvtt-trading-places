@@ -785,11 +785,10 @@ export class TradingUIEventHandlers {
                     isSale: false,
                     contraband: cargo.contraband || false,
                     merchant: merchantName,
-                    // Include quality information
-                    quality: cargo.quality?.tier || 'Average',
-                    actualTier: cargo.quality?.actualTier,
-                    dishonest: cargo.quality?.dishonest || false,
-                    system: cargo.quality?.system || 'standard'
+                    quality: cargo.quality?.tier || (typeof cargo.quality === 'string' ? cargo.quality : 'Average'),
+                    actualTier: cargo.actualTier || cargo.quality?.actualTier || (typeof cargo.quality === 'string' ? cargo.quality : 'Average'),
+                    dishonest: cargo.dishonest || cargo.quality?.dishonest || false,
+                    system: cargo.system || cargo.quality?.system || 'standard'
                 });
                 
                 // Add to transaction history
