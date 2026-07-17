@@ -44,7 +44,9 @@ class WFRPProperSceneControls {
             console.log('Trading Places | Registering getSceneControlButtons hook...');
             Hooks.on('getSceneControlButtons', (controls) => {
                 console.log('Trading Places | *** getSceneControlButtons hook FIRED! ***');
-                console.log('Trading Places | Controls array received:', controls.length, 'controls');
+                if (!controls) return;
+                const controlsCount = Array.isArray(controls) ? controls.length : Object.keys(controls).length;
+                console.log('Trading Places | Controls received:', controlsCount, 'controls');
                 try {
                     this.addTradingControls(controls);
                 } catch (hookError) {
@@ -219,9 +221,17 @@ class WFRPProperSceneControls {
     addTradingControls(controls) {
         this.log('Adding trading button to scene controls');
         
-        // Safety check - make sure controls is a valid array
-        if (!controls || !Array.isArray(controls)) {
-            console.log('Trading Places | Controls is not a valid array in addTradingControls:', typeof controls);
+        if (!controls) return;
+        
+        let existingControl;
+        if (Array.isArray(controls)) {
+            existingControl = controls.find(c => c.name === 'trading-places');
+        } else if (typeof controls === 'object') {
+            existingControl = Object.values(controls).find(c => c.name === 'trading-places');
+        }
+
+        if (existingControl) {
+            this.log('Trading control already exists, skipping duplicate');
             return;
         }
         
@@ -242,7 +252,11 @@ class WFRPProperSceneControls {
             ]
         };
         
-        controls.push(tradingControls);
+        if (Array.isArray(controls)) {
+            controls.push(tradingControls);
+        } else if (typeof controls === 'object') {
+            controls['trading-places'] = tradingControls;
+        }
         this.log('Trading controls added to scene controls successfully');
     }
 
