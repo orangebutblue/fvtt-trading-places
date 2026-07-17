@@ -2043,8 +2043,15 @@ async function initializeBasicSceneControls() {
         Hooks.on('getSceneControlButtons', (controls) => {
             console.log('Trading Places | getSceneControlButtons hook fired - adding trading controls');
             
-            // Check if our control already exists to prevent duplicates
-            const existingControl = controls.find(c => c.name === 'trading-places');
+            if (!controls) return;
+
+            let existingControl;
+            if (Array.isArray(controls)) {
+                existingControl = controls.find(c => c.name === 'trading-places');
+            } else if (typeof controls === 'object') {
+                existingControl = Object.values(controls).find(c => c.name === 'trading-places');
+            }
+
             if (existingControl) {
                 console.log('Trading Places | Trading control already exists, skipping duplicate');
                 return;
@@ -2118,7 +2125,11 @@ async function initializeBasicSceneControls() {
                 }]
             };
             
-            controls.push(tradingControls);
+            if (Array.isArray(controls)) {
+                controls.push(tradingControls);
+            } else if (typeof controls === 'object') {
+                controls['trading-places'] = tradingControls;
+            }
             console.log('Trading Places | Trading controls added successfully to scene controls');
         });
         

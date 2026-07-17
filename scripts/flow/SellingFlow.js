@@ -105,7 +105,7 @@ export class SellingFlow {
                     const randomCargoIndex = Math.floor(Math.random() * currentCargo.length);
                     const selectedCargo = currentCargo[randomCargoIndex];
 
-                    console.log(`  ├─ Selected Cargo: ${selectedCargo.type} (${selectedCargo.quantity} EP available)`);
+                    console.log(`  ├─ Selected Cargo: ${selectedCargo.cargo} (${selectedCargo.quantity} EP available)`);
 
                     // Step 4: Generate offer price (placeholder algorithm)
                     const basePrice = this._calculateOfferPrice(selectedCargo, this.app.selectedSettlement, this.app.currentSeason);
@@ -127,7 +127,7 @@ export class SellingFlow {
                     };
 
                     sellerOffers.push(offer);
-                    console.log(`  └─ Offer: ${offer.buyerName} wants ${selectedCargo.type}, offers ${offerPricePerEP} GC/EP, max ${maxEP} EP, skill ${skillRating}`);
+                    console.log(`  └─ Offer: ${offer.buyerName} wants ${selectedCargo.cargo}, offers ${offerPricePerEP} GC/EP, max ${maxEP} EP, skill ${skillRating}`);
                 } else {
                     console.log(`  └─ No buyer in this slot`);
                 }
@@ -169,7 +169,7 @@ export class SellingFlow {
         let basePrice = 1.0; // Default fallback
 
         try {
-            const cargoType = this.dataManager.getCargoType(cargo.type);
+            const cargoType = this.dataManager.getCargoType(cargo.cargo);
             if (cargoType) {
                 // Use the cargo's quality tier for pricing (default to 'average' if not set)
                 const qualityTier = cargo.quality || 'average';
@@ -320,7 +320,7 @@ export class SellingFlow {
         // Use exact same structure as buying tab
         let basicInfo = `
             <div class="cargo-header">
-                <div class="trading-places-cargo-name">${offer.cargo.type}</div>
+                <div class="trading-places-cargo-name">${offer.cargo.cargo}</div>
                 <div class="cargo-category">${offer.cargo.category || 'Goods'}</div>
                 ${offer.cargo.quality ? (offer.cargo.dishonest ? 
                     `<div class="cargo-quality">${offer.cargo.quality} (${offer.cargo.actualTier})</div>` : 
@@ -545,7 +545,7 @@ export class SellingFlow {
         try {
             // Add transaction to history
             const transaction = {
-                cargo: offer.cargo.type,
+                cargo: offer.cargo.cargo,
                 category: offer.cargo.category,
                 quantity: quantity,
                 pricePerEP: finalPrice / quantity,
@@ -579,7 +579,7 @@ export class SellingFlow {
             // Update cargo in settings
             const allCargoData = await game.settings.get(this.MODULE_ID, "currentCargo") || {};
             const currentCargo = allCargoData[datasetId] || [];
-            const cargoIndex = currentCargo.findIndex(c => c.cargo === offer.cargo.type);
+            const cargoIndex = currentCargo.findIndex(c => c.cargo === offer.cargo.cargo);
             if (cargoIndex !== -1) {
                 if (currentCargo[cargoIndex].quantity <= quantity) {
                     currentCargo.splice(cargoIndex, 1);
@@ -592,7 +592,7 @@ export class SellingFlow {
             }
 
             // Show success message
-            ui.notifications.success(`Sold ${quantity} EP of ${offer.cargo.type} for ${this._formatCurrencyFromDenomination(finalPrice)}`);
+            ui.notifications.success(`Sold ${quantity} EP of ${offer.cargo.cargo} for ${this._formatCurrencyFromDenomination(finalPrice)}`);
 
             // Update the buyer's "wants to buy" amount
             offer.maxEP -= quantity;
@@ -607,7 +607,7 @@ export class SellingFlow {
             }
 
             this._logInfo('Sale Completed', 'Cargo sold successfully', {
-                cargo: offer.cargo.type,
+                cargo: offer.cargo.cargo,
                 quantity,
                 finalPrice,
                 discountPercent,

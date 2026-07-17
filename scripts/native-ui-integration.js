@@ -45,7 +45,8 @@ class WFRPNativeUIIntegration {
         this.log('Initializing scene controls integration', null);
 
         Hooks.on('getSceneControlButtons', (controls) => {
-            controls.push({
+            if (!controls) return;
+            const newControl = {
                 name: 'trading-places',
                 title: 'Trading Places',
                 icon: 'fas fa-coins',
@@ -66,7 +67,12 @@ class WFRPNativeUIIntegration {
                         button: true
                     }
                 ]
-            });
+            };
+            if (Array.isArray(controls)) {
+                controls.push(newControl);
+            } else if (typeof controls === 'object') {
+                controls['trading-places'] = newControl;
+            }
         });
     }
 
