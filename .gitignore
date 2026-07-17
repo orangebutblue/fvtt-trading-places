@@ -1,12 +1,10 @@
-node_modules/*
+.agents/
 .vscode/*
-.idea/*
 .github/*
 .kilocode/*
-AGENTS.md
-module.zip
-.agents/
+node_modules/*
+*.md
 foundry-docs/
-questions-books/
-questions.txt*
+questions*
 external-resources/
+module.zip
