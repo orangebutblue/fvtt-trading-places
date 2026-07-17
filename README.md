@@ -17,9 +17,9 @@ A river trading tool for FoundryVTT that helps you buy and sell cargo, manage in
 
 | Cargo Availability | Goods Distribution | Selling Cargo |
 | :---: | :---: | :---: |
-| ![Goods Distribution](README-images/goods-distribution.png) | ![Cargo Availability](README-images/cargo-availability.png) |  ![Selling Cargo](README-images/selling-cargo.png) |
+| ![Goods Distribution](README-images/goods-distribution.png) | ![Cargo Availability](README-images/cargo-availability.png) | ![Selling Cargo](README-images/selling-cargo.png) |
 | *Cargo Availability* | *Goods Distribution* | *Selling Cargo* |
-| | | |
+
 
 ## Installation
 

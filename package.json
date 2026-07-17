@@ -1,6 +1,6 @@
 {
   "name": "fvtt-trading-places",
-  "version": "1.0.0",
+  "version": "0.7.0",
   "description": "FoundryVTT module for trading",
   "scripts": {
     "test": "jest",
