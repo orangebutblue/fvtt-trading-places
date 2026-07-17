@@ -43,7 +43,7 @@ export class QualitySystem {
      */
     isWineBrandyCargo(cargoData) {
         return cargoData && cargoData.category === 'Brews' && 
-               (cargoData.name === 'Wine' || cargoData.name === 'Brandy');
+               (cargoData.name === 'Wine' || cargoData.name === 'Brandy' || cargoData.name === 'Wine/Brandy');
     }
 
     /**
