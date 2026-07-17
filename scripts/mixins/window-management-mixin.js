@@ -49,12 +49,20 @@ const WindowManagementMixin = {
                             width: adjustedWidth,
                             height: height
                         };
+                        if (this.position) {
+                            this.position.width = adjustedWidth;
+                            this.position.height = height;
+                        }
                     } else {
                         this.options.position = {
                             ...this.options.position,
                             width: width,
                             height: height
                         };
+                        if (this.position) {
+                            this.position.width = width;
+                            this.position.height = height;
+                        }
                     }
                 }
 
@@ -72,6 +80,10 @@ const WindowManagementMixin = {
                         left: left,
                         top: top
                     };
+                    if (this.position) {
+                        this.position.left = left;
+                        this.position.top = top;
+                    }
                 }
 
                 this._logInfo('Window Management', 'Window state loaded successfully', {
