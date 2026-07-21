@@ -120,7 +120,7 @@ const WindowManagementMixin = {
         }
 
         try {
-            const windowElement = this.element.closest('.app');
+            const windowElement = this.element.closest('.application') || this.element.closest('.window-app') || this.element.closest('.app') || this.element;
             if (!windowElement) {
                 this._logDebug('Window Management', 'Window element not found, cannot save state');
                 return;
@@ -235,7 +235,7 @@ const WindowManagementMixin = {
             return;
         }
 
-        const windowElement = this.element.closest('.app');
+        const windowElement = this.element.closest('.application') || this.element.closest('.window-app') || this.element.closest('.app') || this.element;
         if (!windowElement) {
             this._logError('Window Management', 'Cannot find window element for event listeners');
             return;
