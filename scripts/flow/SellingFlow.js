@@ -609,13 +609,12 @@ export class SellingFlow {
                     await this.app.systemAdapter.removeCargoFromInventory(actor, itemToRemove.id, quantity);
                 }
 
-                // Add currency to actor (expects GC, finalPrice is BP)
-                const schema = this.app.systemAdapter.getCurrencySchema();
-                const primaryDenom = schema.denominations.find(d => d.abbreviation === 'GC');
-                const primaryDenomValue = primaryDenom?.value || 240;
-                const priceInPrimary = finalPrice / primaryDenomValue;
-                
-                await this.app.systemAdapter.addCurrency(actor, priceInPrimary, `Sold ${quantity} EP of ${offer.cargo.cargo}`);
+                // Add currency to actor. offerPricePerEP (and therefore finalPrice) is expressed
+                // in the primary denomination (GC) — the same unit addCurrency() expects and the
+                // same unit shown to the player in the UI/notifications. Pass it through directly.
+                // (Previously this divided finalPrice by 240 before crediting, underpaying the
+                //  seller by a factor of 240 — the "seller receives 0 / 1-2 BP per EP" bug.)
+                await this.app.systemAdapter.addCurrency(actor, finalPrice, `Sold ${quantity} EP of ${offer.cargo.cargo}`);
             }
 
             // Update cargo in settings
