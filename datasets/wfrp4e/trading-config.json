@@ -23,12 +23,12 @@
   },
   "candidateWeights": {
     "baseline": 1,
-    "producesBonus": 12,
-    "demandsBonus": 10,
-    "producesWeight": 12,
-    "demandsWeight": 10,
-    "flagTransferMultiplier": 10,
-    "seasonalWeightScale": 5,
+    "producesBonus": 3,
+    "demandsBonus": 2,
+    "producesWeight": 3,
+    "demandsWeight": 2,
+    "flagTransferMultiplier": 2,
+    "seasonalWeightScale": 2,
     "minimumWeight": 1
   },
   "seasonalCategoryTags": {
