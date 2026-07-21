@@ -215,6 +215,47 @@ describe('Window Management', () => {
             expect(application.options.position.height).toBe(900);
         });
 
+        test('should apply saved size to runtime this.position (ApplicationV2)', () => {
+            // ApplicationV2 reads active coordinates from this.position during render,
+            // not from this.options.position. Simulate a constructed app that already
+            // has a live position object.
+            application.position = { width: 1200, height: 800, left: 100, top: 100 };
+
+            const savedState = {
+                width: 1400,
+                height: 900,
+                left: 200,
+                top: 150,
+                timestamp: Date.now()
+            };
+
+            mockSettings.get.mockReturnValue(savedState);
+
+            application._loadWindowState();
+
+            expect(application.position.width).toBe(1400);
+            expect(application.position.height).toBe(900);
+        });
+
+        test('should apply saved position (left/top) to runtime this.position (ApplicationV2)', () => {
+            application.position = { width: 1200, height: 800, left: 100, top: 100 };
+
+            const savedState = {
+                width: 1400,
+                height: 900,
+                left: 200,
+                top: 150,
+                timestamp: Date.now()
+            };
+
+            mockSettings.get.mockReturnValue(savedState);
+
+            application._loadWindowState();
+
+            expect(application.position.left).toBe(200);
+            expect(application.position.top).toBe(150);
+        });
+
         test('should enforce landscape orientation when loading saved state', () => {
             const savedState = {
                 width: 600,  // Portrait orientation
