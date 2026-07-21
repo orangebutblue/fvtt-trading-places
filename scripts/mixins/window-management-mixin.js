@@ -121,17 +121,23 @@ const WindowManagementMixin = {
 
         try {
             const windowElement = this.element.closest('.application') || this.element.closest('.window-app') || this.element.closest('.app') || this.element;
-            if (!windowElement) {
-                this._logDebug('Window Management', 'Window element not found, cannot save state');
+            const rect = windowElement ? windowElement.getBoundingClientRect() : null;
+
+            const width = this.position?.width || rect?.width;
+            const height = this.position?.height || rect?.height;
+            const left = this.position?.left ?? rect?.left;
+            const top = this.position?.top ?? rect?.top;
+
+            if (!width || !height) {
+                this._logDebug('Window Management', 'Invalid dimensions, cannot save state');
                 return;
             }
 
-            const rect = windowElement.getBoundingClientRect();
             const windowState = {
-                width: rect.width,
-                height: rect.height,
-                left: rect.left,
-                top: rect.top,
+                width: Math.max(width, 800),
+                height: Math.max(height, 600),
+                left: left ?? 50,
+                top: top ?? 50,
                 timestamp: Date.now()
             };
 

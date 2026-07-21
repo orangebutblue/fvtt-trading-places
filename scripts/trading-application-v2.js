@@ -77,6 +77,14 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
         }
     };
 
+    /** @override */
+    _configureRenderOptions(options) {
+        super._configureRenderOptions(options);
+        if (typeof this._loadWindowState === 'function') {
+            this._loadWindowState();
+        }
+    }
+
     /**
      * Constructor for TradingPlacesApplication
      * @param {Object} options - Application options
