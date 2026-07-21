@@ -3,6 +3,7 @@
 .github/*
 .kilocode/*
 node_modules/*
+.claude/
 **.md
 foundry-docs/
 questions*
