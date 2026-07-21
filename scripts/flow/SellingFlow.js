@@ -111,19 +111,8 @@ export class SellingFlow {
                     const basePrice = this._calculateOfferPrice(selectedCargo, this.app.selectedSettlement, this.app.currentSeason);
                     const offerPricePerEP = basePrice;
 
-                    // Step 5: Generate maximum EP buyer will purchase based on official WFRP 4e formula
-                    const settlementInfo = this.dataManager?.getSettlementProperties(this.app.selectedSettlement);
-                    const size = settlementInfo?.sizeNumeric || 2; // Default to Town (2) if not found
-                    const wealth = settlementInfo?.wealthRating || 2;
-                    
-                    // Official WFRP 4e River Trading formula: (Size + Wealth) * ceil(d100 / 10) * 10
-                    const rollObj = new Roll("1d100");
-                    await rollObj.evaluate();
-                    const d100Roll = rollObj.total;
-                    const formulaEP = (size + wealth) * Math.ceil(d100Roll / 10) * 10;
-                    
-                    let maxEP = Math.min(selectedCargo.quantity, formulaEP);
-                    maxEP = Math.max(1, maxEP); // Ensure they always buy at least 1 EP
+                    // Step 5: Maximum EP buyer will purchase (full cargo stack held by player)
+                    let maxEP = selectedCargo.quantity;
 
                     // Step 6: Assign skill rating (same as buying algorithm)
                     const skillRating = await this._generateSkillRating();
