@@ -2,7 +2,7 @@
   "id": "fvtt-trading-places",
   "title": "Trading Places",
   "description": "Trading Module",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "compatibility": {
     "minimum": "12",
     "verified": "13",

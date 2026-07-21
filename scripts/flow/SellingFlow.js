@@ -141,6 +141,14 @@ export class SellingFlow {
                     console.log(`  └─ Offer: ${offer.buyerName} wants ${selectedCargo.cargo}, offers ${offerPricePerEP} GC/EP, max ${maxEP} EP, skill ${skillRating}`);
                 } else {
                     console.log(`  └─ No buyer in this slot`);
+                    sellerOffers.push({
+                        slotNumber,
+                        isAvailable: false,
+                        buyerName: "No Buyer Available",
+                        roll: buyerRoll,
+                        chance: 80,
+                        success: false
+                    });
                 }
 
                 slotNumber++;
@@ -308,7 +316,8 @@ export class SellingFlow {
         this._attachSellerControls(sellerOffers);
 
         if (notify) {
-            ui.notifications.success(`Found ${sellerOffers.length} buyer${sellerOffers.length > 1 ? 's' : ''} for your cargo!`);
+            const activeCount = sellerOffers.filter(o => o.isAvailable !== false).length;
+            ui.notifications.success(`Found ${activeCount} buyer${activeCount !== 1 ? 's' : ''} for your cargo!`);
         }
     }
 
@@ -321,8 +330,26 @@ export class SellingFlow {
     _createSellerCargoCard(offer) {
         const card = document.createElement('div');
         
+        if (offer.isAvailable === false) {
+            card.className = 'cargo-card slot-failure';
+            card.dataset.offerId = offer.slotNumber;
+            card.innerHTML = `
+                <div class="cargo-header">
+                    <div class="trading-places-cargo-name">No Buyer Available</div>
+                    <div class="cargo-category">Slot ${offer.slotNumber}</div>
+                </div>
+                <div class="trading-places-cargo-details">
+                    <div class="price-info">
+                        <span class="price-label">Status:</span>
+                        <span class="price-value">No Buyer (Roll ${offer.roll || 0} > 80%)</span>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
         // Check if cargo is contraband
-        const isContraband = offer.cargo.contraband || false;
+        const isContraband = offer.cargo ? (offer.cargo.contraband || false) : false;
         const contrabandClass = isContraband ? 'contraband' : '';
         
         card.className = `cargo-card slot-success ${contrabandClass}`;
