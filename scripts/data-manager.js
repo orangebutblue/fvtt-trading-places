@@ -891,8 +891,8 @@ class DataManager {
      * @returns {number} - Numeric size value (1-5)
      */
     convertSizeToNumeric(sizeEnum) {
-        // If it's already a number, return it (handles numeric size format)
-        if (typeof sizeEnum === 'number' && sizeEnum >= 1 && sizeEnum <= 5) {
+        // If it's already a number, return it (handles numeric size format 0-5)
+        if (typeof sizeEnum === 'number' && sizeEnum >= 0 && sizeEnum <= 5) {
             return sizeEnum;
         }
 
@@ -928,11 +928,11 @@ class DataManager {
             5: 1.10  // Prosperous - 110% base price
         };
 
-        if (!wealthModifiers.hasOwnProperty(wealthRating)) {
-            throw new Error(`Invalid wealth rating: ${wealthRating}. Must be between 1-5`);
+        if (wealthModifiers.hasOwnProperty(wealthRating)) {
+            return wealthModifiers[wealthRating];
         }
 
-        return wealthModifiers[wealthRating];
+        throw new Error(`Invalid wealth rating: ${wealthRating}. Must be between 1-5`);
     }
 
     /**
