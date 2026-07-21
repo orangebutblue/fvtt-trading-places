@@ -42,8 +42,29 @@ export class QualitySystem {
      * @returns {boolean}
      */
     isWineBrandyCargo(cargoData) {
-        return cargoData && cargoData.category === 'Brews' && 
-               (cargoData.name === 'Wine' || cargoData.name === 'Brandy' || cargoData.name === 'Wine/Brandy');
+        if (!cargoData) {
+            return false;
+        }
+
+        // Explicit opt-in via the dataset field is the most reliable signal.
+        if (typeof cargoData.qualitySystem === 'string' &&
+            cargoData.qualitySystem.trim().toLowerCase() === 'wine_brandy') {
+            return true;
+        }
+
+        // Fall back to name matching (robust to case and surrounding whitespace)
+        // for entries that predate the qualitySystem field.
+        if (cargoData.category !== 'Brews') {
+            return false;
+        }
+
+        const normalizedName = typeof cargoData.name === 'string'
+            ? cargoData.name.trim().toLowerCase()
+            : '';
+
+        return normalizedName === 'wine' ||
+               normalizedName === 'brandy' ||
+               normalizedName === 'wine/brandy';
     }
 
     /**
