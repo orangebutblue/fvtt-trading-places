@@ -111,25 +111,18 @@ export class SellingFlow {
                     const basePrice = this._calculateOfferPrice(selectedCargo, this.app.selectedSettlement, this.app.currentSeason);
                     const offerPricePerEP = basePrice;
 
-                    // Step 5: Generate maximum EP buyer will purchase based on settlement size (to prevent fleamarket spam)
+                    // Step 5: Generate maximum EP buyer will purchase based on official WFRP 4e formula
                     const settlementInfo = this.dataManager?.getSettlementProperties(this.app.selectedSettlement);
                     const size = settlementInfo?.sizeNumeric || 2; // Default to Town (2) if not found
+                    const wealth = settlementInfo?.wealthRating || 2;
                     
-                    let maxEP = selectedCargo.quantity;
-                    if (size === 1) {
-                        // Village has limited demand (1d10 EP)
-                        maxEP = Math.min(selectedCargo.quantity, Math.floor(Math.random() * 10) + 1);
-                    } else if (size === 2) {
-                        // Town wants multiples of 10, up to 50 EP
-                        const limit = (Math.floor(Math.random() * 5) + 1) * 10;
-                        maxEP = Math.min(selectedCargo.quantity, limit);
-                    } else if (size === 3) {
-                        // City wants multiples of 10, up to 100 EP
-                        const limit = (Math.floor(Math.random() * 10) + 1) * 10;
-                        maxEP = Math.min(selectedCargo.quantity, limit);
-                    }
-                    // Metropolis / size >= 4 has unlimited demand (buys everything)
+                    // Official WFRP 4e River Trading formula: (Size + Wealth) * ceil(d100 / 10) * 10
+                    const rollObj = new Roll("1d100");
+                    await rollObj.evaluate();
+                    const d100Roll = rollObj.total;
+                    const formulaEP = (size + wealth) * Math.ceil(d100Roll / 10) * 10;
                     
+                    let maxEP = Math.min(selectedCargo.quantity, formulaEP);
                     maxEP = Math.max(1, maxEP); // Ensure they always buy at least 1 EP
 
                     // Step 6: Assign skill rating (same as buying algorithm)
