@@ -2004,7 +2004,10 @@ export class TradingUIEventHandlers {
             const totalPrice = parseFloat(this.app.element.querySelector('#add-cargo-price')?.value);
             const settlement = this.app.element.querySelector('#add-cargo-settlement')?.value?.trim() || 'Unknown';
             const season = this.app.element.querySelector('#add-cargo-season')?.value;
-            
+            const quality = this.app.element.querySelector('#add-cargo-quality')?.value || 'average';
+
+            this._logDebug('Add Cargo', 'Manual add-cargo form values', { cargoName, category, quantity, totalPrice, quality });
+
             // Validate inputs
             const validation = this._validateAddCargoInputs({
                 cargoName, category, quantity
@@ -2034,6 +2037,7 @@ export class TradingUIEventHandlers {
                 cargo: cargoName,
                 category: category,
                 quantity: quantity,
+                quality: quality,
                 pricePerEP: Number.isFinite(pricePerEP) ? pricePerEP : 0,
                 pricePerEPCanonical: typeof pricePerEPCanonical === 'number' ? pricePerEPCanonical : null,
                 totalCost: Number.isFinite(totalCost) ? totalCost : 0,
