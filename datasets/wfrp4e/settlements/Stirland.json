@@ -12,7 +12,7 @@
       "agriculture"
     ],
     "produces": [
-      "Wine/Brandy",
+      "Wine",
       "Grain"
     ],
     "demands": [
@@ -36,7 +36,7 @@
       "agriculture"
     ],
     "produces": [
-      "Wine/Brandy",
+      "Wine",
       "Grain"
     ],
     "demands": [],
@@ -96,7 +96,7 @@
       "agriculture"
     ],
     "produces": [
-      "Wine/Brandy",
+      "Wine",
       "Grain"
     ],
     "demands": [],

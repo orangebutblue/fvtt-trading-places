@@ -134,7 +134,7 @@
     ],
     "produces": [
       "Grain",
-      "Wine/Brandy"
+      "Wine"
     ],
     "demands": [],
     "garrison": {
