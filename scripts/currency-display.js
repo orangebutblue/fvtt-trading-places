@@ -110,28 +110,28 @@ function enrichPricing(pricing, quantity, context) {
         : (finalPerEp !== null && qty ? finalPerEp * qty : null);
 
     if (context && CurrencyUtils) {
+        // The pricing pipeline already emits every value in the CANONICAL unit
+        // (Brass Pennies). They must NOT be re-scaled through the primary display
+        // denomination (Gold Crown = 240 BP): doing so multiplied every buying
+        // price ~240x, e.g. 288 BP/EP brandy was shown as "288 GC/EP" and a
+        // 260 EP stack totalled ~74,000 GC. Treat the values as canonical and
+        // only format them for display.
         if (basePerEp !== null) {
-            const canonical = convertDenominationToCanonical(basePerEp, context);
-            if (canonical !== null) {
-                enriched.basePricePerEPCanonical = canonical;
-                enriched.formattedBasePricePerEP = formatCanonicalValue(canonical, context);
-            }
+            const canonical = Math.round(basePerEp);
+            enriched.basePricePerEPCanonical = canonical;
+            enriched.formattedBasePricePerEP = formatCanonicalValue(canonical, context);
         }
 
         if (finalPerEp !== null) {
-            const canonical = convertDenominationToCanonical(finalPerEp, context);
-            if (canonical !== null) {
-                enriched.finalPricePerEPCanonical = canonical;
-                enriched.formattedFinalPricePerEP = formatCanonicalValue(canonical, context);
-            }
+            const canonical = Math.round(finalPerEp);
+            enriched.finalPricePerEPCanonical = canonical;
+            enriched.formattedFinalPricePerEP = formatCanonicalValue(canonical, context);
         }
 
         if (typeof totalValue === 'number' && !Number.isNaN(totalValue)) {
-            const canonical = convertDenominationToCanonical(totalValue, context);
-            if (canonical !== null) {
-                enriched.totalValueCanonical = canonical;
-                enriched.formattedTotalValue = formatCanonicalValue(canonical, context);
-            }
+            const canonical = Math.round(totalValue);
+            enriched.totalValueCanonical = canonical;
+            enriched.formattedTotalValue = formatCanonicalValue(canonical, context);
         }
     } else {
         const label = getCurrencyLabel(context);

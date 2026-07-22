@@ -315,7 +315,7 @@ export class BuyingFlow {
                                     console.log(`  ├─ Availability Roll: ${outcome.roll} ≤ ${availabilityResult.availabilityCheck.chance} (success)`);
                                     console.log(`  ├─ Quantity: ${cargo.quantity} units (${cargo.totalEP} EP)`);
                                     console.log(`  ├─ Quality: ${cargo.quality}`);
-                                    console.log(`  ├─ Price: ${cargo.currentPrice} GC per EP`);
+                                    console.log(`  ├─ Price: ${cargo.formattedPricePerEP || (cargo.currentPrice + ' BP')} per EP (raw ${cargo.currentPrice} BP/EP)`);
                                     console.log(`  ├─ Merchant: ${cargo.merchant.name} (${cargo.merchant.skillDescription})`);
                                     console.log(`  ├─ Market Balance: ${matchingSlot.balance.state} (${matchingSlot.balance.supply}/${matchingSlot.balance.demand})`);
                                     if (cargo.slotInfo?.contraband) {
@@ -329,7 +329,7 @@ export class BuyingFlow {
                                             <h5>${cargo.name} (Slot ${actualSlotNum})</h5>
                                             <p><strong>Quantity:</strong> ${cargo.quantity} EP</p>
                                             <p><strong>Quality:</strong> ${cargo.quality}</p>
-                                            <p><strong>Price:</strong> ${cargo.currentPrice} GC/EP</p>
+                                            <p><strong>Price:</strong> ${cargo.formattedPricePerEP || (cargo.currentPrice + ' BP')} per EP</p>
                                             <p><strong>Merchant:</strong> ${cargo.merchant.name} (${cargo.merchant.skillDescription})</p>
                                             <p><strong>Market Balance:</strong> ${matchingSlot.balance.state} (${matchingSlot.balance.supply}/${matchingSlot.balance.demand})</p>
                                             ${cargo.slotInfo?.contraband ? '<p><strong>⚠️ Contraband</strong></p>' : ''}
@@ -557,7 +557,7 @@ export class BuyingFlow {
                                 <h5>${cargo.name} (Slot ${slot.slotNumber || index + 1})</h5>
                                 <p><strong>Quantity:</strong> ${cargo.quantity} EP</p>
                                 <p><strong>Quality:</strong> ${cargo.quality}</p>
-                                <p><strong>Price:</strong> ${cargo.currentPrice} GC/EP</p>
+                                <p><strong>Price:</strong> ${cargo.formattedPricePerEP || (cargo.currentPrice + ' BP')} per EP</p>
                                 <p><strong>Merchant:</strong> ${cargo.merchant.name} (${cargo.merchant.skillDescription})</p>
                                 <p><strong>Market Balance:</strong> ${slot.balance.state} (${slot.balance.supply}/${slot.balance.demand})</p>
                                 ${cargo.slotInfo?.contraband?.contraband ? '<p><strong>⚠️ Contraband</strong></p>' : ''}

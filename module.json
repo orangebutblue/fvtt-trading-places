@@ -2,7 +2,7 @@
   "id": "fvtt-trading-places",
   "title": "Trading Places",
   "description": "Trading Module",
-  "version": "0.7.10-quality-badges",
+  "version": "0.7.11-buying-price-fix",
   "compatibility": {
     "minimum": "12",
     "verified": "13",
