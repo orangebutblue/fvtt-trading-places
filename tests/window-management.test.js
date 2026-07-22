@@ -27,15 +27,16 @@ describe('Window Management', () => {
                     HandlebarsApplicationMixin: (app) => app,
                     ApplicationV2: class MockApplicationV2 {
                         constructor(options = {}) {
-                            this.options = {
-                                position: {
+                            this.options = Object.freeze({
+                                position: Object.freeze({
                                     width: 1200,
                                     height: 800,
                                     top: 100,
                                     left: 100
-                                },
+                                }),
                                 ...options
-                            };
+                            });
+                            this.position = { width: 1200, height: 800, top: 100, left: 100 };
                             this.element = null;
                             this._windowStatePersistenceEnabled = false;
                         }
@@ -211,8 +212,8 @@ describe('Window Management', () => {
             application._loadWindowState();
 
             expect(mockSettings.get).toHaveBeenCalledWith("fvtt-trading-places", "windowState");
-            expect(application.options.position.width).toBe(1400);
-            expect(application.options.position.height).toBe(900);
+            expect(application.position.width).toBe(1400);
+            expect(application.position.height).toBe(900);
         });
 
         test('should apply saved size to runtime this.position (ApplicationV2)', () => {
@@ -324,6 +325,44 @@ describe('Window Management', () => {
                     timestamp: expect.any(Number)
                 })
             );
+        });
+
+        test('should save DOM bounding rect position over static this.position defaults', async () => {
+            // Setup static initial position defaults
+            application.position = { width: 1200, height: 800, left: 100, top: 100 };
+            
+            // Setup DOM bounding rect representing actual moved/resized window on screen
+            const mockRect = { width: 1450, height: 900, left: 350, top: 220 };
+            const mockWindowElement = { getBoundingClientRect: () => mockRect, style: {} };
+            application.element = { closest: () => mockWindowElement };
+            application._windowStatePersistenceEnabled = true;
+
+            await application._saveWindowState();
+
+            // Verify settings.set received the DOM rect coordinates rather than stale initial position
+            expect(mockSettings.set).toHaveBeenCalledWith(
+                "fvtt-trading-places",
+                "windowState",
+                expect.objectContaining({
+                    width: 1450,
+                    height: 900,
+                    left: 350,
+                    top: 220
+                })
+            );
+        });
+
+        test('should apply loaded position to element inline styles', () => {
+            application.position = { width: 1400, height: 850, left: 300, top: 150 };
+            const mockStyle = {};
+            const mockWindowElement = { style: mockStyle };
+
+            application._applyWindowStateToElement(mockWindowElement);
+
+            expect(mockStyle.width).toBe('1400px');
+            expect(mockStyle.height).toBe('850px');
+            expect(mockStyle.left).toBe('300px');
+            expect(mockStyle.top).toBe('150px');
         });
     });
 

@@ -23,80 +23,103 @@ const WindowManagementMixin = {
     },
 
     /**
+     * Apply loaded window position and size directly to DOM element and ApplicationV2 position
+     * @param {HTMLElement} windowElement - The target DOM element
+     * @private
+     */
+    _applyWindowStateToElement(windowElement) {
+        if (!windowElement) return;
+        try {
+            const pos = this.position || this.options?.position;
+            if (!pos) return;
+
+            if (pos.width) windowElement.style.width = `${pos.width}px`;
+            if (pos.height) windowElement.style.height = `${pos.height}px`;
+            if (pos.left !== undefined && pos.left !== null) windowElement.style.left = `${pos.left}px`;
+            if (pos.top !== undefined && pos.top !== null) windowElement.style.top = `${pos.top}px`;
+
+            console.log('Trading Places | Window Management | Applied saved position/size to DOM element style:', {
+                width: windowElement.style.width,
+                height: windowElement.style.height,
+                left: windowElement.style.left,
+                top: windowElement.style.top
+            });
+
+            if (typeof this.setPosition === 'function') {
+                this.setPosition(pos);
+            }
+        } catch (error) {
+            console.error('Trading Places | Window Management | Failed applying window state to element:', error);
+        }
+    },
+
+    /**
      * Load saved window position and size from settings
      * @private
      */
     _loadWindowState() {
         try {
             const savedState = game.settings.get(MODULE_ID, "windowState");
+            console.log('Trading Places | Window Management | Loading saved window state from settings:', savedState);
 
-            if (savedState && typeof savedState === 'object') {
-                this._logDebug('Window Management', 'Loading saved window state', savedState);
+            if (!this.position) {
+                this.position = {};
+            }
+
+            if (savedState && typeof savedState === 'object' && Object.keys(savedState).length > 0) {
+                this._logDebug?.('Window Management', 'Loading saved window state', savedState);
 
                 // Apply saved dimensions if valid
                 if (savedState.width && savedState.height) {
-                    // Ensure landscape orientation (width > height)
                     const width = Math.max(savedState.width, 800); // Minimum width
                     const height = Math.max(savedState.height, 600); // Minimum height
 
+                    let finalWidth = width;
+                    let finalHeight = height;
+
                     // Enforce landscape orientation
                     if (width <= height) {
-                        this._logDebug('Window Management', 'Adjusting dimensions to maintain landscape orientation');
-                        // Make width at least 1.5x height for landscape
-                        const adjustedWidth = Math.max(width, Math.floor(height * 1.5));
-                        this.options.position = {
-                            ...this.options.position,
-                            width: adjustedWidth,
-                            height: height
-                        };
-                        if (this.position) {
-                            this.position.width = adjustedWidth;
-                            this.position.height = height;
-                        }
-                    } else {
-                        this.options.position = {
-                            ...this.options.position,
-                            width: width,
-                            height: height
-                        };
-                        if (this.position) {
-                            this.position.width = width;
-                            this.position.height = height;
-                        }
+                        this._logDebug?.('Window Management', 'Adjusting dimensions to maintain landscape orientation');
+                        finalWidth = Math.max(width, Math.floor(height * 1.5));
                     }
+
+                    this.position.width = finalWidth;
+                    this.position.height = finalHeight;
                 }
 
                 // Apply saved position if valid (ensure it's on screen)
                 if (savedState.top !== undefined && savedState.left !== undefined) {
-                    const screenWidth = window.innerWidth;
-                    const screenHeight = window.innerHeight;
+                    const screenWidth = window.innerWidth || 1920;
+                    const screenHeight = window.innerHeight || 1080;
 
                     // Ensure window is visible on screen
                     const left = Math.max(0, Math.min(savedState.left, screenWidth - 400));
                     const top = Math.max(0, Math.min(savedState.top, screenHeight - 200));
 
-                    this.options.position = {
-                        ...this.options.position,
-                        left: left,
-                        top: top
-                    };
-                    if (this.position) {
-                        this.position.left = left;
-                        this.position.top = top;
-                    }
+                    this.position.left = left;
+                    this.position.top = top;
                 }
 
-                this._logInfo('Window Management', 'Window state loaded successfully', {
-                    width: this.options.position.width,
-                    height: this.options.position.height,
-                    left: this.options.position.left,
-                    top: this.options.position.top
+                this._logInfo?.('Window Management', 'Window state loaded successfully', {
+                    width: this.position.width,
+                    height: this.position.height,
+                    left: this.position.left,
+                    top: this.position.top
+                });
+
+                console.log('Trading Places | Window Management | Window state loaded successfully onto this.position:', {
+                    width: this.position.width,
+                    height: this.position.height,
+                    left: this.position.left,
+                    top: this.position.top
                 });
             } else {
-                this._logDebug('Window Management', 'No saved window state found, using defaults');
+                this._logDebug?.('Window Management', 'No saved window state found, using defaults', {});
+                console.log('Trading Places | Window Management | No saved window state found in settings, using defaults');
             }
         } catch (error) {
-            this._logError('Window Management', 'Failed to load window state', { error: error.message });
+            this._logError?.('Window Management', 'Failed to load window state', { error: error.message });
+            console.error('Trading Places | Window Management | Failed to load window state:', error);
         }
     },
 
@@ -107,7 +130,7 @@ const WindowManagementMixin = {
     _setupWindowStatePersistence() {
         // We'll set up the actual listeners after render when the window element exists
         this._windowStatePersistenceEnabled = true;
-        this._logDebug('Window Management', 'Window state persistence enabled');
+        this._logDebug?.('Window Management', 'Window state persistence enabled', {});
     },
 
     /**
@@ -116,6 +139,10 @@ const WindowManagementMixin = {
      */
     async _saveWindowState() {
         if (!this._windowStatePersistenceEnabled || !this.element) {
+            console.log('Trading Places | Window Management | Cannot save state: persistence disabled or element unmounted', {
+                enabled: this._windowStatePersistenceEnabled,
+                hasElement: !!this.element
+            });
             return;
         }
 
@@ -123,13 +150,22 @@ const WindowManagementMixin = {
             const windowElement = this.element.closest('.application') || this.element.closest('.window-app') || this.element.closest('.app') || this.element;
             const rect = windowElement ? windowElement.getBoundingClientRect() : null;
 
-            const width = this.position?.width || rect?.width;
-            const height = this.position?.height || rect?.height;
-            const left = this.position?.left ?? rect?.left;
-            const top = this.position?.top ?? rect?.top;
+            // BUG FIX: Prioritize real DOM bounding rect (where user dragged/resized window)
+            // over static/stale this.position properties!
+            const width = rect?.width || this.position?.width;
+            const height = rect?.height || this.position?.height;
+            const left = (rect?.left !== undefined && rect?.left !== null) ? rect.left : this.position?.left;
+            const top = (rect?.top !== undefined && rect?.top !== null) ? rect.top : this.position?.top;
+
+            console.log('Trading Places | Window Management | Saving window state...', {
+                domRect: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null,
+                fallbackPosition: this.position,
+                chosen: { left, top, width, height }
+            });
 
             if (!width || !height) {
-                this._logDebug('Window Management', 'Invalid dimensions, cannot save state');
+                this._logDebug?.('Window Management', 'Invalid dimensions, cannot save state', {});
+                console.warn('Trading Places | Window Management | Invalid dimensions, cannot save state');
                 return;
             }
 
@@ -141,12 +177,26 @@ const WindowManagementMixin = {
                 timestamp: Date.now()
             };
 
-            await game.settings.set(MODULE_ID, "windowState", windowState);
+            // Synchronize internal position properties
+            if (!this.position) {
+                this.position = {};
+            }
+            try {
+                this.position.width = windowState.width;
+                this.position.height = windowState.height;
+                this.position.left = windowState.left;
+                this.position.top = windowState.top;
+            } catch (e) {
+                // Ignore proxy assignment errors in V12+ ApplicationV2
+            }
 
-            this._logDebug('Window Management', 'Window state saved', windowState);
+            await game.settings.set(MODULE_ID, "windowState", windowState);
+            this._logDebug?.('Window Management', 'Window state saved', windowState);
+            console.log('Trading Places | Window Management | ✅ Window state saved to game.settings:', windowState);
 
         } catch (error) {
-            this._logError('Window Management', 'Failed to save window state', { error: error.message });
+            this._logError?.('Window Management', 'Failed to save window state', { error: error.message });
+            console.error('Trading Places | Window Management | Failed to save window state:', error);
         }
     },
 
@@ -156,7 +206,8 @@ const WindowManagementMixin = {
      * @private
      */
     _onWindowResize(event) {
-        this._logDebug('Window Management', 'Window resize detected');
+        this._logDebug?.('Window Management', 'Window resize detected', {});
+        console.log('Trading Places | Window Management | Window resize detected');
 
         // Debounce the save operation
         if (this._resizeTimeout) {
@@ -174,7 +225,8 @@ const WindowManagementMixin = {
      * @private
      */
     _onWindowMove(event) {
-        this._logDebug('Window Management', 'Window move detected');
+        this._logDebug?.('Window Management', 'Window move detected', {});
+        console.log('Trading Places | Window Management | Window move detected');
 
         // Debounce the save operation
         if (this._moveTimeout) {
@@ -220,7 +272,7 @@ const WindowManagementMixin = {
             }
         }
 
-        this._logDebug('Window Management', 'Validated landscape orientation', {
+        this._logDebug?.('Window Management', 'Validated landscape orientation', {
             originalWidth: arguments[0],
             originalHeight: arguments[1],
             validatedWidth: width,
@@ -237,30 +289,36 @@ const WindowManagementMixin = {
      */
     _setupWindowEventListeners() {
         if (!this.element) {
-            this._logError('Window Management', 'Cannot set up window listeners - element not found');
+            this._logError?.('Window Management', 'Cannot set up window listeners - element not found', {});
+            console.warn('Trading Places | Window Management | Cannot set up window listeners - element not found');
             return;
         }
 
         const windowElement = this.element.closest('.application') || this.element.closest('.window-app') || this.element.closest('.app') || this.element;
         if (!windowElement) {
-            this._logError('Window Management', 'Cannot find window element for event listeners');
+            this._logError?.('Window Management', 'Cannot find window element for event listeners', {});
+            console.warn('Trading Places | Window Management | Cannot find window element for event listeners');
             return;
         }
 
-        this._logDebug('Window Management', 'Setting up window event listeners');
+        this._logDebug?.('Window Management', 'Setting up window event listeners', {});
+        console.log('Trading Places | Window Management | Setting up window event listeners & applying loaded state');
+        this._applyWindowStateToElement(windowElement);
 
         // Set up resize observer for size changes
         if (window.ResizeObserver) {
             this._resizeObserver = new ResizeObserver((entries) => {
                 for (const entry of entries) {
                     const { width, height } = entry.contentRect;
-                    this._logDebug('Window Management', 'Resize observed', { width, height });
+                    this._logDebug?.('Window Management', 'Resize observed', { width, height });
+                    console.log('Trading Places | Window Management | Resize observed:', { width, height });
                     this._onWindowResize();
                 }
             });
 
             this._resizeObserver.observe(windowElement);
-            this._logDebug('Window Management', 'ResizeObserver attached');
+            this._logDebug?.('Window Management', 'ResizeObserver attached', {});
+            console.log('Trading Places | Window Management | ResizeObserver attached');
         }
 
         // Set up mutation observer for position changes
@@ -269,7 +327,8 @@ const WindowManagementMixin = {
                 mutations.forEach((mutation) => {
                     if (mutation.type === 'attributes' &&
                         (mutation.attributeName === 'style')) {
-                        this._logDebug('Window Management', 'Position change observed');
+                        this._logDebug?.('Window Management', 'Position change observed', {});
+                        console.log('Trading Places | Window Management | Position change observed via style mutation');
                         this._onWindowMove();
                     }
                 });
@@ -279,16 +338,18 @@ const WindowManagementMixin = {
                 attributes: true,
                 attributeFilter: ['style']
             });
-            this._logDebug('Window Management', 'MutationObserver attached');
+            this._logDebug?.('Window Management', 'MutationObserver attached', {});
+            console.log('Trading Places | Window Management | MutationObserver attached');
         }
 
         // Also listen for window close to save final state
         this.element.addEventListener('close', () => {
-            this._logDebug('Window Management', 'Window closing, saving final state');
+            this._logDebug?.('Window Management', 'Window closing, saving final state', {});
+            console.log('Trading Places | Window Management | Window closing, saving final state');
             this._saveWindowState();
         });
 
-        this._logInfo('Window Management', 'Window event listeners set up successfully');
+        this._logInfo?.('Window Management', 'Window event listeners set up successfully', {});
     },
 
     /**
