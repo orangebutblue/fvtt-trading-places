@@ -88,16 +88,67 @@ const SeasonManagementMixin = {
                     return cargo;
                 }
                 try {
-                    const basePrice = this.tradingEngine.calculateBasePrice(
-                        cargo.name,
-                        this.currentSeason,
-                        cargo.quality || 'average'
-                    );
+                    const oldPricing = cargo.slotInfo?.pricing;
+                    if (!oldPricing) {
+                        // No slot pricing context to reprice against; just record the season.
+                        return { ...cargo, season: this.currentSeason };
+                    }
+
+                    // Wine/Brandy prices come from a fixed quality table and do not shift
+                    // with the season; regular cargo re-derives its seasonal base.
+                    const isWineBrandy = cargo.system === 'wine_brandy'
+                        || cargo.slotInfo?.quality?.system === 'wine_brandy';
+
+                    const oldBasePer10 = Number(oldPricing.basePricePer10);
+                    const oldFinalPer10 = Number(oldPricing.finalPricePer10);
+                    // Preserve the non-seasonal multiplier chain (quality / contraband / market state).
+                    const multiplier = (Number.isFinite(oldBasePer10) && oldBasePer10 !== 0 && Number.isFinite(oldFinalPer10))
+                        ? oldFinalPer10 / oldBasePer10
+                        : 1;
+
+                    let newBasePer10 = oldBasePer10;
+                    if (!isWineBrandy) {
+                        const cargoData = this.dataManager.getCargoType(cargo.name);
+                        const seasonalBase = this.dataManager.getSeasonalPrice(cargoData, this.currentSeason);
+                        if (Number.isFinite(seasonalBase)) {
+                            newBasePer10 = seasonalBase;
+                        }
+                    }
+
+                    const round2 = (n) => Number(Number(n).toFixed(2));
+                    const newFinalPer10 = newBasePer10 * multiplier;
+                    const newFinalPerEP = newFinalPer10 / 10;
+                    const newBasePerEP = newBasePer10 / 10;
+                    const quantity = cargo.slotInfo?.amount?.totalEP
+                        ?? cargo.totalEP ?? cargo.quantity ?? oldPricing.quantity ?? 0;
+
+                    // slotInfo.pricing is the source of truth the renderer re-enriches from, so
+                    // updating its raw BP values refreshes per-EP price, total, canonical and
+                    // formatted currency together (fixes stale prices after a season change).
+                    const newPricing = {
+                        ...oldPricing,
+                        season: this.currentSeason,
+                        basePricePer10: round2(newBasePer10),
+                        basePricePerEP: round2(newBasePerEP),
+                        finalPricePer10: round2(newFinalPer10),
+                        finalPricePerEP: round2(newFinalPerEP),
+                        totalValue: round2(newFinalPerEP * quantity),
+                        quantity
+                    };
+
+                    console.log(`Trading Places | Pricing Update | ${cargo.name} repriced for ${this.currentSeason}:`, {
+                        oldFinalPricePerEP: oldPricing.finalPricePerEP,
+                        newFinalPricePerEP: newPricing.finalPricePerEP,
+                        multiplier: round2(multiplier),
+                        isWineBrandy
+                    });
 
                     return {
                         ...cargo,
-                        currentPrice: basePrice,
-                        season: this.currentSeason
+                        season: this.currentSeason,
+                        basePrice: newPricing.basePricePerEP,
+                        currentPrice: newPricing.finalPricePerEP,
+                        slotInfo: { ...cargo.slotInfo, pricing: newPricing }
                     };
                 } catch (error) {
                     this._logError('Pricing Update', `Failed to update price for ${cargo.name}`, { error: error.message });
