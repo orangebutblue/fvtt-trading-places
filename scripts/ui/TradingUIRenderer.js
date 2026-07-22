@@ -1544,31 +1544,38 @@ export default class TradingUIRenderer {
      * Formats quality display with dishonesty indication and tooltip
      */
     _formatQualityDisplay(cargo) {
-        const rawQuality = cargo.quality || cargo.qualityTier || 'Average';
-        const qualityStr = typeof rawQuality === 'object' ? (rawQuality.tier || 'Average') : String(rawQuality);
-        const capitalizedQuality = qualityStr.charAt(0).toUpperCase() + qualityStr.slice(1);
-        
+        const quality = cargo.quality || 'Average';
         const actualQuality = cargo.actualTier || cargo.actualQuality;
         const isDishonest = cargo.dishonest || false;
         const system = cargo.system || 'standard';
-        
-        let displayText = capitalizedQuality;
-        
-        if (isDishonest && actualQuality && actualQuality !== capitalizedQuality) {
-            const capActual = String(actualQuality).charAt(0).toUpperCase() + String(actualQuality).slice(1);
-            displayText = `<span class="quality-badge quality-dishonest">${capitalizedQuality} (True: ${capActual})</span>`;
+
+        let displayText = quality;
+        let tooltipContent = '';
+
+        // Show actual quality in parentheses if merchant is dishonest
+        if (isDishonest && actualQuality && actualQuality !== quality) {
+            displayText = `<span class="quality-dishonest">${quality} (${actualQuality})</span>`;
         } else {
-            displayText = `<span class="quality-badge quality-honest quality-${capitalizedQuality.toLowerCase()}">${capitalizedQuality}</span>`;
+            displayText = `<span class="quality-honest">${displayText}</span>`;
         }
-        
-        let tooltipContent = system === 'wine_brandy' 
-            ? 'Wine/Brandy Quality: 1=Swill, 2-3=Passable, 4-5=Average, 6-7=Good, 8-9=Excellent, 10+=Top Shelf'
-            : 'Quality Tiers: Poor < Common < Average < High < Exceptional';
-            
+
+        // Generate tooltip content based on system type
+        if (system === 'wine_brandy') {
+            tooltipContent = 'Wine/Brandy Quality: 1=Swill (0.5GC), 2-3=Passable (1GC), 4-5=Average (1.5GC), 6-7=Good (3GC), 8-9=Excellent (6GC), 10+=Top Shelf (12GC)';
+        } else {
+            tooltipContent = 'Quality Tiers: Poor < Common < Average < High < Exceptional';
+        }
+
+        // Add evaluate instructions if merchant is dishonest
         if (isDishonest) {
-            tooltipContent += '. GM: Evaluate Test required to detect merchant dishonesty.';
+            if (system === 'wine_brandy') {
+                tooltipContent += '. GM: Ask players to make Evaluate Test (Challenging +0, or Average +20 if Consume Alcohol ≥50) to detect true quality.';
+            } else {
+                tooltipContent += '. GM: Ask players to make Evaluate Test (Challenging +0) to detect merchant dishonesty.';
+            }
         }
-        
+
+        // Use existing tooltip system
         return `${displayText} <span class="info-indicator" data-info-tooltip="${tooltipContent}">?</span>`;
     }
 }

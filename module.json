@@ -2,7 +2,7 @@
   "id": "fvtt-trading-places",
   "title": "Trading Places",
   "description": "Trading Module",
-  "version": "0.7.12-season-reprice",
+  "version": "0.7.13-restore-quality",
   "compatibility": {
     "minimum": "12",
     "verified": "13",
