@@ -780,6 +780,9 @@ class DataManager {
             throw new Error(`Invalid season: ${season}. Must be one of: ${validSeasons.join(', ')}`);
         }
 
+        // Normalize quality to ensure object inputs ({ tier: 'Good' }) are handled properly
+        const normalizedQuality = (typeof quality === 'object' && quality.tier) ? quality.tier.toLowerCase() : String(quality).toLowerCase();
+
         let basePrice;
 
         // Calculate seasonal price from basePrice * seasonalModifiers
@@ -793,8 +796,8 @@ class DataManager {
         }
 
         // Apply quality tier multiplier if cargo has quality tiers (wine/brandy)
-        if (cargo.qualityTiers && cargo.qualityTiers.hasOwnProperty(quality)) {
-            basePrice *= cargo.qualityTiers[quality];
+        if (cargo.qualityTiers && cargo.qualityTiers.hasOwnProperty(normalizedQuality)) {
+            basePrice *= cargo.qualityTiers[normalizedQuality];
         }
 
         return basePrice;

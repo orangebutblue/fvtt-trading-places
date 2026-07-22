@@ -348,7 +348,21 @@ class TradingPlacesApplication extends foundry.applications.api.HandlebarsApplic
             return [];
         }
 
-        return cargoList.map(cargo => this._prepareCurrencyRecord(cargo, { deriveTotalFromQuantity: true }));
+        return cargoList.map(cargo => {
+            const prepared = this._prepareCurrencyRecord(cargo, { deriveTotalFromQuantity: true });
+            if (!prepared || typeof prepared !== 'object') return prepared;
+            
+            const cargoName = prepared.cargo || prepared.type || prepared.name || 'Unknown Cargo';
+            prepared.cargo = cargoName;
+            prepared.type = cargoName;
+            prepared.name = cargoName;
+
+            const rawQuality = prepared.quality || prepared.qualityTier || 'Average';
+            const qualityStr = typeof rawQuality === 'object' ? (rawQuality.tier || 'Average') : String(rawQuality);
+            prepared.quality = qualityStr.charAt(0).toUpperCase() + qualityStr.slice(1);
+
+            return prepared;
+        });
     }
 
     /**

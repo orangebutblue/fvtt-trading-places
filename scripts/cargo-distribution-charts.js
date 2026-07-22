@@ -28,18 +28,17 @@ class CargoDistributionCharts {
                 season
             );
 
-            if (!candidateTable || !candidateTable.entries) {
+            if (!candidateTable || !candidateTable.entries || candidateTable.entries.length === 0) {
                 return { entries: [], totalWeight: 0 };
             }
 
-            // Calculate percentages based on count of cargo types per category for chart display
-            const totalCount = candidateTable.entries.length;
-            const totalWeight = totalCount; // For return compatibility
+            // Calculate actual percentages based on candidate weights
+            const totalWeight = candidateTable.entries.reduce((sum, entry) => sum + (entry.weight || 0), 0);
             const distributionData = candidateTable.entries.map(entry => ({
                 name: entry.name,
                 category: entry.category,
-                weight: entry.weight || 0, // Keep actual weight for reasons
-                percentage: totalCount > 0 ? 100 / totalCount : 0, // Equal weight per type for chart
+                weight: entry.weight || 0,
+                percentage: totalWeight > 0 ? ((entry.weight || 0) / totalWeight) * 100 : 0,
                 reasons: entry.reasons || []
             }));
 
@@ -300,7 +299,14 @@ class CargoDistributionCharts {
         // Calculate separate distributions
         const merchantDistribution = this.calculateCargoDistribution(settlement, season);
         const buyerDistribution = this.calculateBuyerDemandDistribution(settlement, season);
-        
+
+        const consolidatedMerchant = this._consolidateByCategory(merchantDistribution.entries);
+        const consolidatedBuyer = this._consolidateByCategory(buyerDistribution.entries);
+
+        console.log(`Trading Places | Chart-Legend | Settlement: ${settlement.name || settlement.id || 'Selected Settlement'} (${season})`);
+        console.log('  ├─ Merchant Supply (buying-chart-legend):', consolidatedMerchant.map(c => `${c.name}: ${c.percentage.toFixed(1)}%`));
+        console.log('  └─ Buyer Demand (selling-chart-legend):', consolidatedBuyer.map(c => `${c.name}: ${c.percentage.toFixed(1)}%`));
+
         // Update buying chart (what cargo merchants are selling)
         this.renderPieChart(
             'buying-cargo-distribution-chart', 

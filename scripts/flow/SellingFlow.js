@@ -107,12 +107,18 @@ export class SellingFlow {
 
                     console.log(`  ├─ Selected Cargo: ${selectedCargo.cargo} (${selectedCargo.quantity} EP available)`);
 
-                    // Step 4: Generate offer price (placeholder algorithm)
+                    // Step 4: Generate offer price
                     const basePrice = this._calculateOfferPrice(selectedCargo, this.app.selectedSettlement, this.app.currentSeason);
                     const offerPricePerEP = basePrice;
 
-                    // Step 5: Maximum EP buyer will purchase (full cargo stack held by player)
-                    let maxEP = selectedCargo.quantity;
+                    // Step 5: Maximum EP buyer will purchase based on official WFRP 4e cargoSizeFormula
+                    // Formula: (settlementSizeRating + settlementWealthRating) * ceil(d100 / 10) * 10
+                    const settlement = this.app?.selectedSettlement;
+                    const sizeRating = Number(settlement?.sizeNumeric || settlement?.sizeRating || settlement?.size) || 3;
+                    const wealthRating = Number(settlement?.wealth || settlement?.wealthRating) || 3;
+                    const d100Roll = Math.floor(Math.random() * 100) + 1;
+                    const rolledDemand = (sizeRating + wealthRating) * Math.ceil(d100Roll / 10) * 10;
+                    let maxEP = Math.max(10, rolledDemand);
 
                     // Step 6: Assign skill rating (same as buying algorithm)
                     const skillRating = await this._generateSkillRating();
@@ -127,7 +133,7 @@ export class SellingFlow {
                     };
 
                     sellerOffers.push(offer);
-                    console.log(`  └─ Offer: ${offer.buyerName} wants ${selectedCargo.cargo}, offers ${offerPricePerEP} GC/EP, max ${maxEP} EP, skill ${skillRating}`);
+                    console.log(`  └─ Offer: ${offer.buyerName} wants ${selectedCargo.cargo}, offers ${offerPricePerEP} GC/EP, max ${maxEP} EP (formula: (${sizeRating}+${wealthRating}) * ceil(${d100Roll}/10) * 10), skill ${skillRating}`);
                 } else {
                     console.log(`  └─ No buyer in this slot`);
                     sellerOffers.push({
@@ -173,25 +179,52 @@ export class SellingFlow {
      * @private
      */
     _calculateOfferPrice(cargo, settlement, season) {
-        // Get base price from cargo type or use fallback
-        let basePrice = 1.0; // Default fallback
+        let basePriceInBP = 240; // Default fallback (1 GC per 10 EP)
 
         try {
-            const cargoType = this.dataManager.getCargoType(cargo.cargo);
+            const cargoType = this.dataManager.getCargoType(cargo.cargo || cargo.name || cargo.type);
             if (cargoType) {
-                // Use the cargo's quality tier for pricing (default to 'average' if not set)
-                const qualityTier = cargo.quality || 'average';
-                basePrice = this.dataManager.getSeasonalPrice(cargoType, season, qualityTier) / 10;
+                // Normalize quality tier name to match qualityTiers keys
+                let qualityTier = String(cargo.quality || 'average').toLowerCase().trim().replace(/\s+/g, '_');
+                
+                // Map common tier aliases to wine/brandy qualityTiers if needed
+                if (cargoType.qualityTiers) {
+                    if (!cargoType.qualityTiers.hasOwnProperty(qualityTier)) {
+                        const tierAliasMap = {
+                            'poor': 'swill',
+                            'common': 'passable',
+                            'high': 'excellent',
+                            'exceptional': 'top_shelf',
+                            'top-shelf': 'top_shelf'
+                        };
+                        if (tierAliasMap[qualityTier] && cargoType.qualityTiers.hasOwnProperty(tierAliasMap[qualityTier])) {
+                            qualityTier = tierAliasMap[qualityTier];
+                        }
+                    }
+                }
+
+                basePriceInBP = this.dataManager.getSeasonalPrice(cargoType, season, qualityTier);
             }
         } catch (error) {
-            console.warn('Could not get cargo type price, using fallback:', error.message);
+            console.warn('Trading Places | Selling Flow | Could not get cargo type price, using fallback:', error.message);
         }
 
         // Apply settlement wealth modifier
-        const wealthModifier = this.dataManager.getWealthModifier(settlement.wealth);
-        const finalPrice = basePrice * wealthModifier;
+        const wealthRating = Number(settlement?.wealth || settlement?.wealthRating) || 3;
+        const wealthModifier = this.dataManager.getWealthModifier(wealthRating);
+        
+        // Base offer price in BP per 1 EP
+        const pricePerEPInBP = Math.max(1, (basePriceInBP / 10) * wealthModifier);
 
-        return Math.max(0.1, finalPrice); // Minimum 0.1 GC/EP
+        console.log(`Trading Places | Selling Flow | Price calculation for ${cargo.cargo || cargo.name || 'Cargo'}:`, {
+            basePriceInBP,
+            quality: cargo.quality,
+            wealthRating,
+            wealthModifier,
+            finalPricePerEPInBP: pricePerEPInBP
+        });
+
+        return pricePerEPInBP; // Return price in BP per EP
     }
 
     /**
@@ -463,6 +496,10 @@ export class SellingFlow {
      * @private
      */
     _attachSellingInterfaceListeners(card, offer) {
+        if (!offer || offer.isAvailable === false) {
+            return;
+        }
+
         const quantityInput = card.querySelector('.quantity-input');
         const quantitySlider = card.querySelector('.quantity-slider');
         const discountSlider = card.querySelector('.discount-slider');
@@ -629,7 +666,21 @@ export class SellingFlow {
             // Update cargo in settings
             const allCargoData = await game.settings.get(this.MODULE_ID, "currentCargo") || {};
             const currentCargo = allCargoData[datasetId] || [];
-            const cargoIndex = currentCargo.findIndex(c => c.id === offer.cargo.id);
+            
+            // Match by ID, or fallback to matching cargo name + quality, or cargo name
+            const cargoIndex = currentCargo.findIndex(c => 
+                (offer.cargo.id && c.id === offer.cargo.id) ||
+                (c.cargo === offer.cargo.cargo && c.quality === offer.cargo.quality) ||
+                (c.cargo === offer.cargo.cargo)
+            );
+
+            console.log('Trading Places | Selling Flow | Removing sold cargo from settings/dataset:', {
+                targetCargo: offer.cargo,
+                quantity,
+                cargoIndex,
+                foundCargo: cargoIndex !== -1 ? currentCargo[cargoIndex] : null
+            });
+
             if (cargoIndex !== -1) {
                 if (currentCargo[cargoIndex].quantity <= quantity) {
                     currentCargo.splice(cargoIndex, 1);
@@ -642,6 +693,8 @@ export class SellingFlow {
                 // Keep dataManager and app state in sync
                 this.dataManager.cargo = currentCargo;
                 this.app.currentCargo = currentCargo;
+            } else {
+                console.warn('Trading Places | Selling Flow | Warning: Could not find matching cargo item in currentCargo array to remove', offer.cargo);
             }
 
             // Save dataset changes to ensure persistence across tab shifts and reloads

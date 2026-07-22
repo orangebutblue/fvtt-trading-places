@@ -1139,6 +1139,34 @@
     font-size: 12px;
 }
 
+/* Quality Badge — high-contrast chrome so quality text is always readable
+   in the dark theme (fixes the unreadable dark-brown-on-dark-gray badges). */
+.trading-places .quality-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1.4;
+    background: var(--bg-secondary, #252932);
+    border: 1px solid var(--border-medium, #4a5058);
+    color: var(--text-primary, #ffffff);
+    vertical-align: middle;
+}
+
+/* Per-tier accent stripe (mirrors the manual-entry colour scheme).
+   Text colour still comes from .quality-honest / .quality-dishonest. */
+.trading-places .quality-badge.quality-poor,
+.trading-places .quality-badge.quality-swill { border-left: 3px solid #dc3545; }
+.trading-places .quality-badge.quality-common,
+.trading-places .quality-badge.quality-passable,
+.trading-places .quality-badge.quality-average { border-left: 3px solid #6c757d; }
+.trading-places .quality-badge.quality-high,
+.trading-places .quality-badge.quality-good { border-left: 3px solid #28a745; }
+.trading-places .quality-badge.quality-exceptional,
+.trading-places .quality-badge.quality-excellent { border-left: 3px solid #007bff; }
+.trading-places .quality-badge.quality-top_shelf { border-left: 3px solid #ffc107; }
+
 /* Info Tooltip */
 .trading-places .info-tooltip {
     position: absolute;

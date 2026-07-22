@@ -111,7 +111,10 @@ class PurchasePriceCalculator {
 
         const cargo = this.getCargoByName(cargoName);
         const season = options.season || this.tradingEngine.getCurrentSeason();
-        const quality = options.quality || 'average';
+        const rawQuality = options.quality || 'average';
+        const quality = (typeof rawQuality === 'object' && rawQuality.tier) ? rawQuality.tier.toLowerCase() : String(rawQuality).toLowerCase();
+
+        console.log('Trading Places Pricing | Step 1: Base Price Retrieved', { cargoName, season, rawQuality, normalizedQuality: quality, assumedUnit: 'BP' });
 
         // Calculate base price per unit
         const basePricePerUnit = this.calculateBasePrice(cargoName, season, quality);
@@ -139,6 +142,8 @@ class PurchasePriceCalculator {
             modifiers.push(haggleModifier);
         }
 
+        console.log('Trading Places Pricing | Step 2: Modifiers Applied', { basePricePerUnit, finalPricePerUnit, modifiers });
+
         // Calculate total price
         const totalPrice = finalPricePerUnit * quantity;
 
@@ -151,14 +156,17 @@ class PurchasePriceCalculator {
         let formattedTotalPrice = null;
 
         if (currencyContext && currencyContext.denominationKey && CurrencyUtils) {
-            const { denominationKey, config } = currencyContext;
+            const { config } = currencyContext;
             try {
-                basePricePerUnitCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: basePricePerUnit }, config);
-                finalPricePerUnitCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: finalPricePerUnit }, config);
+                console.log('Trading Places Pricing | Step 3: Currency Conversion Input', { finalPricePerUnit, convertingFrom: 'bp' });
+                // Fix: getSeasonalPrice returns Brass Pennies (bp). Do not use the dynamic denominationKey which might be 'gc'
+                basePricePerUnitCanonical = CurrencyUtils.convertToCanonical({ bp: basePricePerUnit }, config);
+                finalPricePerUnitCanonical = CurrencyUtils.convertToCanonical({ bp: finalPricePerUnit }, config);
                 totalPriceCanonical = Math.round(finalPricePerUnitCanonical * quantity);
                 formattedBasePricePerUnit = CurrencyUtils.formatCurrency(basePricePerUnitCanonical, config);
                 formattedFinalPricePerUnit = CurrencyUtils.formatCurrency(finalPricePerUnitCanonical, config);
                 formattedTotalPrice = CurrencyUtils.formatCurrency(totalPriceCanonical, config);
+                console.log('Trading Places Pricing | Step 4: Currency Conversion Result', { totalPriceCanonical, formattedTotalPrice });
             } catch (error) {
                 console.error('PurchasePriceCalculator: Currency conversion failed', error);
             }
@@ -235,13 +243,16 @@ class PurchasePriceCalculator {
      * @param {string} season - Season for base pricing
      * @returns {Object} - Quality pricing information
      */
-    calculateQualityTierPricing(cargoName, quality, season = null) {
+    calculateQualityTierPricing(cargoName, qualityRaw, season = null) {
         const cargo = this.getCargoByName(cargoName);
         const currentSeason = season || this.tradingEngine.getCurrentSeason();
+        const quality = (typeof qualityRaw === 'object' && qualityRaw.tier) ? qualityRaw.tier.toLowerCase() : String(qualityRaw).toLowerCase();
 
         if (!cargo.qualityTiers) {
             throw new Error(`Cargo ${cargoName} does not have quality tiers`);
         }
+
+        console.log('Trading Places Pricing | Tier Lookup', { cargoName, rawQuality: qualityRaw, normalizedQuality: quality, availableTiers: Object.keys(cargo.qualityTiers) });
 
         if (!cargo.qualityTiers.hasOwnProperty(quality)) {
             const availableTiers = Object.keys(cargo.qualityTiers);
@@ -260,10 +271,10 @@ class PurchasePriceCalculator {
         let formattedFinalPrice = null;
 
         if (currencyContext && currencyContext.denominationKey && CurrencyUtils) {
-            const { denominationKey, config } = currencyContext;
+            const { config } = currencyContext;
             try {
-                baseSeasonalPriceCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: baseSeasonalPrice }, config);
-                finalPriceCanonical = CurrencyUtils.convertToCanonical({ [denominationKey]: finalPrice }, config);
+                baseSeasonalPriceCanonical = CurrencyUtils.convertToCanonical({ bp: baseSeasonalPrice }, config);
+                finalPriceCanonical = CurrencyUtils.convertToCanonical({ bp: finalPrice }, config);
                 formattedFinalPrice = CurrencyUtils.formatCurrency(finalPriceCanonical, config);
             } catch (error) {
                 console.error('PurchasePriceCalculator: Quality pricing currency conversion failed', error);
