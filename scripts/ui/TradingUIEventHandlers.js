@@ -1824,13 +1824,67 @@ export class TradingUIEventHandlers {
             if (categorySelect) {
                 categorySelect.value = matchingCargo.category;
                 this._filterAddCargoDatalist(matchingCargo.category);
-                
+
                 this._logDebug('Add Cargo Auto-Select', 'Category auto-selected for cargo', {
                     cargo: cargoName,
                     category: matchingCargo.category
                 });
             }
         }
+
+        // Swap the quality dropdown to match the cargo's quality system
+        // (Wine/Brandy uses Swill -> Top Shelf; everything else uses the standard tiers).
+        this._updateAddCargoQualityOptions(matchingCargo);
+    }
+
+    /**
+     * Rebuild the manual Add Cargo quality dropdown to match the selected cargo's
+     * quality system. Wine/Brandy cargo uses a distinct tier scale derived from the
+     * dataset's qualityTiers; all other cargo uses the standard Poor/Average/Good/
+     * Excellent tiers. Preserves the current selection when it remains valid.
+     * @param {Object|undefined} matchingCargo - Resolved cargo type, if any
+     * @private
+     */
+    _updateAddCargoQualityOptions(matchingCargo) {
+        const qualitySelect = this.app.element.querySelector('#add-cargo-quality');
+        if (!qualitySelect) {
+            return;
+        }
+
+        const previousValue = qualitySelect.value;
+
+        const isWineBrandy = !!matchingCargo && (
+            (typeof matchingCargo.qualitySystem === 'string'
+                && matchingCargo.qualitySystem.trim().toLowerCase() === 'wine_brandy')
+            || (matchingCargo.qualityTiers && typeof matchingCargo.qualityTiers === 'object')
+        );
+
+        let options;
+        if (isWineBrandy && matchingCargo.qualityTiers) {
+            // Derive tiers straight from the dataset so the values always match the
+            // qualityTiers keys the pricing code looks up.
+            options = Object.keys(matchingCargo.qualityTiers).map(key => ({
+                value: key,
+                label: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+            }));
+        } else {
+            options = [
+                { value: 'poor', label: 'Poor' },
+                { value: 'average', label: 'Average' },
+                { value: 'good', label: 'Good' },
+                { value: 'excellent', label: 'Excellent' }
+            ];
+        }
+
+        qualitySelect.innerHTML = options
+            .map(o => `<option value="${o.value}">${o.label}</option>`)
+            .join('');
+
+        // Keep the prior selection if it is still offered, otherwise default to average.
+        const values = options.map(o => o.value);
+        qualitySelect.value = values.includes(previousValue)
+            ? previousValue
+            : (values.includes('average') ? 'average' : values[0]);
     }
 
     /**

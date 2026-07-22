@@ -2,7 +2,7 @@
   "id": "fvtt-trading-places",
   "title": "Trading Places",
   "description": "Trading Module",
-  "version": "0.7.14-manual-quality",
+  "version": "0.7.15-winebrandy-tiers",
   "compatibility": {
     "minimum": "12",
     "verified": "13",
