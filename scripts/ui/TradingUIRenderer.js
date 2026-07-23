@@ -1293,7 +1293,7 @@ export default class TradingUIRenderer {
 
         const price = pricing?.finalPricePerEP ?? cargo.currentPrice ?? cargo.basePrice;
         if (typeof price === 'number') {
-            return this._formatCurrencyFromDenomination(price);
+            return this._formatCurrencyFromCanonical(price);
         }
 
         return 'N/A';
@@ -1325,13 +1325,13 @@ export default class TradingUIRenderer {
 
         const totalValue = pricing?.totalValue ?? cargo.totalValue;
         if (typeof totalValue === 'number') {
-            return this._formatCurrencyFromDenomination(totalValue);
+            return this._formatCurrencyFromCanonical(totalValue);
         }
 
         const pricePerEp = pricing?.finalPricePerEP ?? cargo.currentPrice ?? cargo.basePrice;
         const availableEp = cargo.totalEP ?? cargo.quantity ?? pricing?.quantity ?? cargo.slotInfo?.amount?.totalEP;
         if (typeof pricePerEp === 'number' && typeof availableEp === 'number') {
-            return this._formatCurrencyFromDenomination(pricePerEp * availableEp);
+            return this._formatCurrencyFromCanonical(pricePerEp * availableEp);
         }
 
         return 'N/A';

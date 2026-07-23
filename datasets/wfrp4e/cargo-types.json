@@ -82,27 +82,6 @@
             }
         },
         {
-            "name": "Wine/Brandy",
-            "category": "Brews",
-            "description": "Fermented grape beverage or distilled spirit made from fermented fruit. Quality varies widely.",
-            "basePrice": 360,
-            "seasonalModifiers": {
-                "spring": 1,
-                "summer": 1,
-                "autumn": 1,
-                "winter": 1
-            },
-            "qualitySystem": "wine_brandy",
-            "qualityTiers": {
-                "swill": 0.3333333333333333,
-                "passable": 0.6666666666666666,
-                "average": 1.0,
-                "good": 2.0,
-                "excellent": 4.0,
-                "top_shelf": 8.0
-            }
-        },
-        {
             "name": "Cattle",
             "category": "Livestock",
             "description": "Livestock and cattle products.",

@@ -685,7 +685,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             // Step 2: Determine available cargo types
             const cargoTypes = tradingEngine.determineCargoTypes(settlement, 'spring');
             
-            expect(cargoTypes).toContain('Wine/Brandy');
+            expect(cargoTypes).toContain('Wine');
             expect(cargoTypes).toContain('Trade Goods');
             
             // Step 3: Calculate cargo size
@@ -695,12 +695,12 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             expect(cargoSize.tradeBonus).toBe(true);
             
             // Step 4: Calculate purchase price
-            const purchasePrice = tradingEngine.calculatePurchasePrice('Wine/Brandy', 20, {
+            const purchasePrice = tradingEngine.calculatePurchasePrice('Wine', 20, {
                 season: 'spring',
                 quality: 'good'
             });
             
-            expect(purchasePrice.cargoName).toBe('Wine/Brandy');
+            expect(purchasePrice.cargoName).toBe('Wine');
             expect(purchasePrice.quantity).toBe(20);
             expect(purchasePrice.totalPrice).toBeGreaterThan(0);
             
@@ -832,7 +832,7 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             
             // Step 1: Check sale eligibility
             const saleEligibility = tradingEngine.checkSaleEligibility(
-                { name: 'Wine/Brandy', quantity: 20 },
+                { name: 'Wine', quantity: 20 },
                 settlement,
                 purchaseData,
                 Date.now()
@@ -841,18 +841,18 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             expect(saleEligibility.eligible).toBe(true);
             
             // Step 2: Find buyer
-            const buyerResult = await tradingEngine.findBuyer(settlement, 'Wine/Brandy', () => 40);
+            const buyerResult = await tradingEngine.findBuyer(settlement, 'Wine', () => 40);
             
             expect(buyerResult.buyerFound).toBe(true);
             expect(buyerResult.chance).toBe(60); // Size 3 × 10 + 30 (Trade bonus)
             
             // Step 3: Calculate sale price
-            const salePrice = tradingEngine.calculateSalePrice('Wine/Brandy', 20, settlement, {
+            const salePrice = tradingEngine.calculateSalePrice('Wine', 20, settlement, {
                 season: 'spring',
                 quality: 'good'
             });
             
-            expect(salePrice.cargoName).toBe('Wine/Brandy');
+            expect(salePrice.cargoName).toBe('Wine');
             expect(salePrice.quantity).toBe(20);
             expect(salePrice.wealthModifier).toBe(1.0); // Average wealth
             
@@ -931,8 +931,8 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             expect(haggleResult.player.success).toBe(true);
             
             // Step 2: Apply haggle result to purchase price
-            const basePrice = tradingEngine.calculatePurchasePrice('Wine/Brandy', 15);
-            const hagglePrice = tradingEngine.calculatePurchasePrice('Wine/Brandy', 15, {
+            const basePrice = tradingEngine.calculatePurchasePrice('Wine', 15);
+            const hagglePrice = tradingEngine.calculatePurchasePrice('Wine', 15, {
                 haggleResult: haggleResult
             });
             
@@ -946,10 +946,10 @@ describe('Comprehensive FoundryVTT Integration Tests', () => {
             expect(gossipResult.modifiedSkill).toBe(25); // 35 - 10 (Difficult modifier)
             
             // Step 4: Generate rumor from successful gossip
-            const rumor = await tradingEngine.generateRumorFromGossip(gossipResult, 'Wine/Brandy', settlement);
+            const rumor = await tradingEngine.generateRumorFromGossip(gossipResult, 'Wine', settlement);
             
             expect(rumor).toBeDefined();
-            expect(rumor.cargoName).toBe('Wine/Brandy');
+            expect(rumor.cargoName).toBe('Wine');
             expect(rumor.multiplier).toBeGreaterThan(1);
             
             // Step 5: Generate haggle test chat message

@@ -702,7 +702,7 @@ class TradingEngine {
             'Metal': 'Metal',
             'Fur': 'Luxuries',
             'Government': 'Armaments',
-            'Wine': 'Wine/Brandy'
+            'Wine': 'Wine'
         };
 
         // Handle specific goods (non-Trade categories)

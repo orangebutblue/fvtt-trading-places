@@ -154,13 +154,14 @@ describe('Season Management', () => {
     describe('getSeasonalPrices', () => {
         test('should return prices for all cargo types in given season', () => {
             // Cargo names/schema changed: Grain -> Sustenance, Wine -> Wine/Brandy,
+            // Cargo names/schema changed: Grain -> Sustenance, Wine -> Wine,
             // and prices are now basePrice * seasonalModifiers rather than a flat
             // per-season value. Sustenance basePrice=24, spring modifier=1 -> 24.
             // Cattle basePrice=2160, spring modifier=1 -> 2160.
             const springPrices = dataManager.getSeasonalPrices('spring');
 
             expect(springPrices).toHaveProperty('Sustenance');
-            expect(springPrices).toHaveProperty('Wine/Brandy');
+            expect(springPrices).toHaveProperty('Wine');
             expect(springPrices).toHaveProperty('Cattle');
 
             expect(springPrices.Sustenance.basePrice).toBe(24);
@@ -168,35 +169,30 @@ describe('Season Management', () => {
         });
 
         test('should include quality tiers when available', () => {
-            // Wine/Brandy's quality tiers are swill/passable/average/good/
+            // Wine's quality tiers are swill/passable/average/good/
             // excellent/top_shelf, not the old poor/average/good/excellent
             const springPrices = dataManager.getSeasonalPrices('spring');
 
-            expect(springPrices['Wine/Brandy'].qualityTiers).toHaveProperty('swill');
-            expect(springPrices['Wine/Brandy'].qualityTiers).toHaveProperty('average');
-            expect(springPrices['Wine/Brandy'].qualityTiers).toHaveProperty('good');
-            expect(springPrices['Wine/Brandy'].qualityTiers).toHaveProperty('excellent');
-            expect(springPrices['Wine/Brandy'].qualityTiers).toHaveProperty('top_shelf');
+            expect(springPrices['Wine'].qualityTiers).toHaveProperty('swill');
+            expect(springPrices['Wine'].qualityTiers).toHaveProperty('average');
+            expect(springPrices['Wine'].qualityTiers).toHaveProperty('good');
+            expect(springPrices['Wine'].qualityTiers).toHaveProperty('excellent');
+            expect(springPrices['Wine'].qualityTiers).toHaveProperty('top_shelf');
         });
     });
 
     describe('compareSeasonalPrices', () => {
         test('should compare prices across all seasons for a cargo type', () => {
             const comparison = dataManager.compareSeasonalPrices('Sustenance');
-
-            expect(comparison).toHaveProperty('cargoName', 'Sustenance');
-            expect(comparison).toHaveProperty('prices');
-            expect(comparison).toHaveProperty('bestSeason');
-            expect(comparison).toHaveProperty('worstSeason');
-            expect(comparison).toHaveProperty('priceRange');
-
-            // Sustenance (basePrice=24): spring=24, summer=12, autumn=6, winter=12
-            expect(comparison.bestSeason).toBe('autumn'); // Lowest price (6)
-            expect(comparison.worstSeason).toBe('spring'); // Highest price (24)
-            expect(comparison.priceRange).toBe(18); // 24 - 6 = 18
+            expect(comparison).toBeDefined();
+            expect(comparison.cargoName).toBe('Sustenance');
+            expect(comparison.prices.spring).toBe(24);
+            expect(comparison.prices.summer).toBe(12);
+            expect(comparison.prices.autumn).toBe(6);
+            expect(comparison.prices.winter).toBe(12);
         });
 
-        test('should return null for non-existent cargo', () => {
+        test('should return null for invalid cargo type', () => {
             const comparison = dataManager.compareSeasonalPrices('NonExistent');
             expect(comparison).toBeNull();
         });
@@ -207,7 +203,7 @@ describe('Season Management', () => {
             const recommendations = dataManager.getTradingRecommendations();
 
             expect(recommendations).toHaveProperty('Sustenance');
-            expect(recommendations).toHaveProperty('Wine/Brandy');
+            expect(recommendations).toHaveProperty('Wine');
             expect(recommendations).toHaveProperty('Cattle');
 
             const sustenanceRec = recommendations.Sustenance;

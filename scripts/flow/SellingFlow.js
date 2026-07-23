@@ -395,11 +395,11 @@ export class SellingFlow {
                 </div>
                 <div class="price-info">
                     <span class="price-label">Price per EP:</span>
-                    <span class="price-value">${this._formatCurrencyFromDenomination(offer.offerPricePerEP)}</span>
+                    <span class="price-value">${this._formatCurrencyFromCanonical(offer.offerPricePerEP)}</span>
                 </div>
                 <div class="price-info">
                     <span class="price-label">Total Price:</span>
-                    <span class="price-value">${this._formatCurrencyFromDenomination(offer.maxEP * offer.offerPricePerEP)}</span>
+                    <span class="price-value">${this._formatCurrencyFromCanonical(offer.maxEP * offer.offerPricePerEP)}</span>
                 </div>`;
 
         // Add contraband warning if applicable
@@ -458,7 +458,7 @@ export class SellingFlow {
                         </button>
                         <div class="total-price-display">
                             <span class="total-price-label">Total Revenue:</span>
-                            <span class="total-price-value">${this._formatCurrencyFromDenomination(Math.min(offer.maxEP, offer.cargo.quantity) * offer.offerPricePerEP)}</span>
+                            <span class="total-price-value">${this._formatCurrencyFromCanonical(Math.min(offer.maxEP, offer.cargo.quantity) * offer.offerPricePerEP)}</span>
                         </div>
                     </div>
                 </div>
@@ -520,7 +520,7 @@ export class SellingFlow {
             const discountMultiplier = 1 + (discountPercent / 100);
             const adjustedPricePerEP = pricePerEP * discountMultiplier;
             const totalPrice = quantity * adjustedPricePerEP;
-            totalPriceValue.textContent = this._formatCurrencyFromDenomination(totalPrice);
+            totalPriceValue.textContent = this._formatCurrencyFromCanonical(totalPrice);
         };
 
         // Function to update the discount display
@@ -623,12 +623,10 @@ export class SellingFlow {
             };
             
             // Add formatted currency fields
-            transaction.formattedPricePerEP = this._formatCurrencyFromDenomination(transaction.pricePerEP);
-            transaction.formattedTotalCost = this._formatCurrencyFromDenomination(transaction.totalCost);
-            const priceCanonical = this._convertDenominationToCanonical(transaction.pricePerEP);
-            const totalCanonical = this._convertDenominationToCanonical(transaction.totalCost);
-            if (priceCanonical !== null) transaction.pricePerEPCanonical = priceCanonical;
-            if (totalCanonical !== null) transaction.totalCostCanonical = totalCanonical;
+            transaction.formattedPricePerEP = this._formatCurrencyFromCanonical(transaction.pricePerEP);
+            transaction.formattedTotalCost = this._formatCurrencyFromCanonical(transaction.totalCost);
+            transaction.pricePerEPCanonical = Math.round(transaction.pricePerEP);
+            transaction.totalCostCanonical = Math.round(transaction.totalCost);
 
             const datasetId = this.dataManager?.activeDatasetName || 'default';
             const allTransactionData = await game.settings.get(this.MODULE_ID, "transactionHistory") || {};
@@ -656,11 +654,10 @@ export class SellingFlow {
                 }
 
                 // Add currency to actor. offerPricePerEP (and therefore finalPrice) is expressed
-                // in the primary denomination (GC) — the same unit addCurrency() expects and the
-                // same unit shown to the player in the UI/notifications. Pass it through directly.
-                // (Previously this divided finalPrice by 240 before crediting, underpaying the
-                //  seller by a factor of 240 — the "seller receives 0 / 1-2 BP per EP" bug.)
-                await this.app.systemAdapter.addCurrency(actor, finalPrice, `Sold ${quantity} EP of ${offer.cargo.cargo}`);
+                // in canonical Brass Pennies (BP). SystemAdapter.addCurrency() expects amount in primary
+                // denomination (GC) and multiplies by 240 internally. Convert finalPrice (BP) to GC (finalPrice / 240).
+                const finalPriceInGC = finalPrice / 240;
+                await this.app.systemAdapter.addCurrency(actor, finalPriceInGC, `Sold ${quantity} EP of ${offer.cargo.cargo}`);
             }
 
             // Update cargo in settings
@@ -701,7 +698,7 @@ export class SellingFlow {
             await this.dataManager.saveCurrentDataset();
 
             // Show success message
-            ui.notifications.success(`Sold ${quantity} EP of ${offer.cargo.cargo} for ${this._formatCurrencyFromDenomination(finalPrice)}`);
+            ui.notifications.success(`Sold ${quantity} EP of ${offer.cargo.cargo} for ${this._formatCurrencyFromCanonical(finalPrice)}`);
 
             // Update the buyer's "wants to buy" amount
             offer.maxEP -= quantity;
@@ -748,7 +745,7 @@ export class SellingFlow {
         // Update total price
         const totalPriceElement = card.querySelectorAll('.price-info .price-value')[2]; // Third price-info is total price
         if (totalPriceElement) {
-            totalPriceElement.textContent = this._formatCurrencyFromDenomination(offer.maxEP * offer.offerPricePerEP);
+            totalPriceElement.textContent = this._formatCurrencyFromCanonical(offer.maxEP * offer.offerPricePerEP);
         }
 
         // If maxEP is 0, deactivate the card (make it look like a failed slot)
@@ -775,7 +772,7 @@ export class SellingFlow {
             // Update the total price display
             const totalPriceValue = card.querySelector('.total-price-value');
             if (totalPriceValue) {
-                totalPriceValue.textContent = this._formatCurrencyFromDenomination(0);
+                totalPriceValue.textContent = this._formatCurrencyFromCanonical(0);
             }
         } else {
             // Update quantity controls max values
@@ -804,7 +801,7 @@ export class SellingFlow {
             
             const totalPriceValue = card.querySelector('.total-price-value');
             if (totalPriceValue) {
-                totalPriceValue.textContent = this._formatCurrencyFromDenomination(totalPrice);
+                totalPriceValue.textContent = this._formatCurrencyFromCanonical(totalPrice);
             }
         }
     }

@@ -130,7 +130,7 @@ describe('Complete WFRP Dataset Integration', () => {
             expect(cargoData).toHaveProperty('cargoTypes');
             expect(Array.isArray(cargoData.cargoTypes)).toBe(true);
             
-            const requiredCargos = ['Sustenance', 'Armaments', 'Timber', 'Wine/Brandy', 'Wool'];
+            const requiredCargos = ['Sustenance', 'Armaments', 'Timber', 'Wine', 'Wool'];
             const foundCargos = cargoData.cargoTypes.map(c => c.name);
             
             requiredCargos.forEach(cargo => {
@@ -138,11 +138,11 @@ describe('Complete WFRP Dataset Integration', () => {
             });
         });
 
-        test('should have quality tiers for Wine/Brandy', () => {
+        test('should have quality tiers for Wine', () => {
             const cargoPath = path.join(datasetPath, 'cargo-types.json');
             const cargoData = JSON.parse(fs.readFileSync(cargoPath, 'utf8'));
             
-            const wineCargo = cargoData.cargoTypes.find(c => c.name === 'Wine/Brandy');
+            const wineCargo = cargoData.cargoTypes.find(c => c.name === 'Wine');
             expect(wineCargo).toBeDefined();
             expect(wineCargo).toHaveProperty('qualityTiers');
             expect(typeof wineCargo.qualityTiers).toBe('object');

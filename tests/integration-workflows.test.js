@@ -374,7 +374,7 @@ describe('Complete Trading Workflows Integration Tests', () => {
             // Step 2: Determine available cargo types
             const cargoTypes = tradingEngine.determineCargoTypes(settlement, season);
             
-            expect(cargoTypes).toContain('Wine/Brandy'); // Settlement produces Wine
+            expect(cargoTypes).toContain('Wine'); // Settlement produces Wine
             expect(cargoTypes).toContain('Trade Goods'); // Settlement has Trade
             
             // Step 3: Calculate cargo size
